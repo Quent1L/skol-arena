@@ -34,6 +34,8 @@ import {
 import type {
   CreateRankedSeasonInput,
   UpdateRankedSeasonInput,
+  CreateRankTierInput,
+  UpdateRankTierInput,
   ClientPlayerMmr,
   ClientRankTier,
   ClientSeasonMmrPlayer,
@@ -759,6 +761,54 @@ export class RankedSeasonService {
     viewerId?: string;
   }) {
     return await rankedSeasonRepository.listSeasons(filters);
+  }
+
+  /**
+   * Tier administration.
+   *
+   * These four wrap the repository rather than letting a route reach it directly:
+   * rewriting the ladder reclassifies every player in the season, so it belongs to
+   * whoever may manage the season — the same bar as starting or ending it.
+   */
+  async createTier(seasonId: string, data: CreateRankTierInput, userId: string) {
+    await this.assertCanManage(userId);
+    return await rankedSeasonRepository.insertTier(seasonId, data);
+  }
+
+  async updateTier(
+    seasonId: string,
+    level: number,
+    data: UpdateRankTierInput,
+    userId: string,
+  ) {
+    await this.assertCanManage(userId);
+    const tier = await rankedSeasonRepository.updateTier(seasonId, level, data);
+    if (!tier) {
+      throw new NotFoundError(ErrorCode.RANK_TIER_NOT_FOUND);
+    }
+    return tier;
+  }
+
+  async deleteTier(seasonId: string, level: number, userId: string) {
+    await this.assertCanManage(userId);
+    return await rankedSeasonRepository.deleteTier(seasonId, level);
+  }
+
+  /**
+   * Re-derives every threshold from the season's current distribution and hands
+   * back the resulting ladder. Wraps recalculateTierMinMmr, whose signature stays
+   * as it is: it is also called from paths that have no caller to authorise.
+   */
+  async recalculateTiers(seasonId: string, userId: string) {
+    await this.assertCanManage(userId);
+
+    const config = await rankedSeasonRepository.getConfigByTournamentId(seasonId);
+    if (!config) {
+      throw new NotFoundError(ErrorCode.SEASON_NOT_FOUND);
+    }
+
+    await this.recalculateTierMinMmr(seasonId, config.baseMmr);
+    return await rankedSeasonRepository.getRankTiers(seasonId);
   }
 
   /**

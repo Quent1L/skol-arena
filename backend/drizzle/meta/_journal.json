@@ -575,6 +575,13 @@
       "when": 1777526400037,
       "tag": "0081_translatable_tier_and_round_names",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1777526400038,
+      "tag": "0082_rate_limit",
+      "breakpoints": true
     }
   ]
 }

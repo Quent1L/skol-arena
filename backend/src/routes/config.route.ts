@@ -1,4 +1,5 @@
 import { describe } from "../api/describe";
+import { showEmailPasswordForm } from "../config/auth";
 import { appConfigSchema } from "@skol-arena/shared/types/index";
 import { createAppHono } from "../types/hono";
 import { rankedMatchMaxAgeHours } from "../config/ranked";
@@ -17,7 +18,8 @@ configRoute.get(
     success: { description: "Current configuration", schema: appConfigSchema },
   }),
   (c) => {
-    const isEmailPasswordEnabled = process.env.ENABLE_EMAIL_PASSWORD !== "false";
+    // Resolved once in config/auth.ts, including the deprecated-name fallback.
+    const isEmailPasswordEnabled = showEmailPasswordForm;
     const isKeycloakEnabled = !!(
       process.env.KEYCLOAK_CLIENT_ID &&
       process.env.KEYCLOAK_CLIENT_SECRET &&

@@ -1,4 +1,5 @@
 import type { Context, Next } from "hono";
+import { z } from "zod";
 import { cors } from "hono/cors";
 import { serveStatic, upgradeWebSocket, websocket } from "hono/bun";
 import { HTTPException } from "hono/http-exception";
@@ -25,6 +26,7 @@ import { createAppHonoOptional } from "./types/hono";
 import { webSocketService } from "./services/websocket.service";
 import { emailService } from "./services/email.service";
 import { userService } from "./services/user.service";
+import { tournamentService } from "./services/tournament.service";
 import { startJobScheduler } from "./jobs/scheduler";
 import { runMigrations } from "./utils/migrate";
 import { initializeAdminIfNeeded } from "./utils/init-admin";
@@ -79,6 +81,15 @@ try {
   logger.error({ err }, "Failed to start Graphile Worker — MMR jobs will not be processed");
 }
 
+/**
+ * What a client may send over the socket. The browser WebSocket API cannot carry
+ * headers, so nothing upstream validates this frame — it arrives exactly as typed.
+ */
+const wsClientMessageSchema = z.object({
+  event: z.enum(["subscribe_tournament", "unsubscribe_tournament"]),
+  tournamentId: z.uuid(),
+});
+
 const app = createAppHonoOptional();
 
 // HTTP request logger middleware - logs at debug level.
@@ -95,6 +106,16 @@ async function requestLogger(c: Context, next: Next) {
   await next();
   const ms = Date.now() - start;
   logger.debug(`--> ${method} ${path} ${c.res.status} ${ms}ms`);
+}
+
+// Falling back to the dev origin in production blocks the real frontend on every
+// credentialed request, which surfaces as an app that loads and then does nothing.
+// Say so at boot rather than leaving it to be diagnosed from the browser console.
+if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL) {
+  logger.warn(
+    "FRONTEND_URL is not set in production: CORS falls back to http://localhost:5173, " +
+      "so requests from the deployed frontend will be refused.",
+  );
 }
 
 // CORS configuration in development mode
@@ -169,15 +190,35 @@ app.get(
         logger.debug(`[WS] App user ${appUserId} connected (BetterAuth: ${user.id})`);
         webSocketService.handleConnection(ws, appUserId);
       },
-      onMessage(event, _ws) {
+      async onMessage(event, _ws) {
+        let raw: unknown;
         try {
-          const msg = JSON.parse(String(event.data));
-          if (msg.event === 'subscribe_tournament' && msg.tournamentId) {
-            webSocketService.subscribeToTournament(msg.tournamentId, appUserId);
-          } else if (msg.event === 'unsubscribe_tournament' && msg.tournamentId) {
-            webSocketService.unsubscribeFromTournament(msg.tournamentId, appUserId);
-          }
-        } catch {}
+          raw = JSON.parse(String(event.data));
+        } catch {
+          return;
+        }
+
+        const parsed = wsClientMessageSchema.safeParse(raw);
+        if (!parsed.success) return;
+        const msg = parsed.data;
+
+        if (msg.event === "unsubscribe_tournament") {
+          webSocketService.unsubscribeFromTournament(msg.tournamentId, appUserId);
+          return;
+        }
+
+        // Subscribing is a read: it opens a feed of everything happening in that
+        // competition, so it answers to the same rule as reading it over HTTP.
+        // The protocol has no error channel, so a refusal is simply not subscribing.
+        try {
+          await tournamentService.assertCanAccess(msg.tournamentId, appUserId);
+        } catch {
+          logger.debug(
+            `[WS] App user ${appUserId} refused subscription to ${msg.tournamentId}`,
+          );
+          return;
+        }
+        webSocketService.subscribeToTournament(msg.tournamentId, appUserId);
       },
       onClose(_event, ws) {
         logger.debug(`[WS] App user ${appUserId} disconnected`);

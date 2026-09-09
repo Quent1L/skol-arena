@@ -11,6 +11,7 @@ import i18next from "./i18n";
 import { logger } from "../utils/logger";
 import { clearBootstrapPending } from "../utils/init-admin";
 import { reportEmailDeliveryFailure } from "../utils/email-delivery-context";
+import { isRateLimitEnabled } from "./rate-limit";
 
 function extractInvitationCode(cookieHeader: string | null): string | null {
   if (!cookieHeader) return null;
@@ -19,7 +20,39 @@ function extractInvitationCode(cookieHeader: string | null): string | null {
   return invitationCookie ? invitationCookie.split("=")[1] : null;
 }
 
-const isEmailPasswordEnabled = process.env.ENABLE_EMAIL_PASSWORD !== "false";
+/**
+ * Whether the frontend offers the email+password form.
+ *
+ * It says nothing about the server: /api/auth/sign-in/email stays live either way
+ * (see the emailAndPassword block below), which is why the flag is named after the
+ * form and not after the capability. The old name claimed to disable something it
+ * never disabled, so it is still read — with a warning — for instances that set it.
+ */
+function resolveShowEmailPasswordForm(): boolean {
+  const current = process.env.SHOW_EMAIL_PASSWORD_FORM;
+  if (current !== undefined) return current !== "false";
+
+  const legacy = process.env.ENABLE_EMAIL_PASSWORD;
+  if (legacy !== undefined) {
+    logger.warn(
+      "ENABLE_EMAIL_PASSWORD is deprecated: rename it to SHOW_EMAIL_PASSWORD_FORM. " +
+        "It only ever hid the sign-in form — the email+password endpoint stays enabled " +
+        "either way, so that administrators keep a way in if Keycloak is unreachable.",
+    );
+    return legacy !== "false";
+  }
+
+  return true;
+}
+
+/**
+ * Exported so GET /config reports the same answer this file resolved, rather than
+ * re-reading the environment and drifting from it — which is how the flag ended up
+ * being read two different ways.
+ */
+export const showEmailPasswordForm = resolveShowEmailPasswordForm();
+
+const isEmailPasswordEnabled = showEmailPasswordForm;
 const isKeycloakEnabled = !!(
   process.env.KEYCLOAK_CLIENT_ID &&
   process.env.KEYCLOAK_CLIENT_SECRET &&
@@ -34,7 +67,7 @@ if (!isEmailPasswordEnabled && !isKeycloakEnabled) {
 
   throw new Error(
     "AUTHENTICATION_CONFIG_ERROR: At least one authentication method must be enabled. " +
-    "Set ENABLE_EMAIL_PASSWORD=true or configure Keycloak (KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_ISSUER)"
+    "Set SHOW_EMAIL_PASSWORD_FORM=true or configure Keycloak (KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_ISSUER)"
   );
 }
 
@@ -223,19 +256,43 @@ const authConfig: any = {
       trustedProviders: ["keycloak"],
     },
   },
+  // The dev origins are dropped in production: leaving them trusted there means a
+  // page served from the victim's own localhost passes the origin check against the
+  // real deployment.
   trustedOrigins: [
-    "http://localhost:5173",
-    "http://localhost:3000",
+    ...(process.env.NODE_ENV === "production"
+      ? []
+      : ["http://localhost:5173", "http://localhost:3000"]),
     ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
     ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
   ],
   baseURL: process.env.BETTER_AUTH_URL || process.env.BASE_URL || "http://localhost:3000",
   secret: process.env.BETTER_AUTH_SECRET,
+  // Declared rather than left to the default: reading this file was previously no
+  // way of telling what, if anything, protected the login. Stored in the database so
+  // the counters survive a restart and hold across instances — an in-memory window
+  // resets every deploy. See config/rate-limit.ts for when it is armed.
+  rateLimit: {
+    enabled: isRateLimitEnabled(),
+    storage: "database",
+    window: 60,
+    max: 100,
+    // The endpoints worth guessing at. Everything else keeps the window above.
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 60, max: 5 },
+      "/forget-password": { window: 300, max: 3 },
+      "/reset-password": { window: 300, max: 5 },
+    },
+  },
   plugins,
 };
 
 // Email/password is always enabled in Better Auth to allow admin login.
-// ENABLE_EMAIL_PASSWORD=false only hides the form on the frontend side.
+// SHOW_EMAIL_PASSWORD_FORM=false only hides the form on the frontend side: the
+// endpoint below stays reachable on purpose, so an administrator is not locked out
+// when Keycloak is down. Anyone who needs it genuinely closed has to put the auth
+// subtree behind their reverse proxy — the flag will not do it.
 authConfig.emailAndPassword = {
   enabled: true,
   sendResetPassword: async ({ user, url }: any) => {
