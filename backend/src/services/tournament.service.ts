@@ -35,6 +35,48 @@ import {
 
 export class TournamentService {
   /**
+   * Refuses a read of a competition scoped to an organization the caller is not in.
+   *
+   * The rule already existed, spelled out inside tournaments.route.ts and applied
+   * only there; it lives here now so the routes that were missing it — the team
+   * list, a match, a join, a WebSocket subscription — can reach the same decision
+   * instead of each growing their own.
+   *
+   * `appUserId` is null for an anonymous caller. Competitions with no organization
+   * stay readable by anyone, which is what makes the public tournament pages work.
+   */
+  async assertCanAccess(tournamentId: string, appUserId: string | null): Promise<void> {
+    const tournament = await this.getTournamentById(tournamentId);
+    await this.assertOrganizationAccess(tournament.organizationId, appUserId);
+  }
+
+  /**
+   * The same rule, for callers that already hold the row. Saves re-reading the
+   * tournament in the middle of a flow that has just fetched it.
+   */
+  async assertOrganizationAccess(
+    organizationId: string | null | undefined,
+    appUserId: string | null,
+  ): Promise<void> {
+    if (!organizationId) return;
+
+    if (!appUserId) {
+      throw new ForbiddenError(ErrorCode.ORGANIZATION_ACCESS_DENIED);
+    }
+
+    const viewer = await userRepository.getById(appUserId);
+    if (!viewer) {
+      throw new ForbiddenError(ErrorCode.ORGANIZATION_ACCESS_DENIED);
+    }
+    if (viewer.role === "super_admin") return;
+
+    const isMember = await organizationRepository.isMember(organizationId, appUserId);
+    if (!isMember) {
+      throw new ForbiddenError(ErrorCode.ORGANIZATION_ACCESS_DENIED);
+    }
+  }
+
+  /**
    * Check if user can manage tournament (owner, co_admin, or super_admin)
    */
   async canManageTournament(
@@ -484,6 +526,11 @@ export class TournamentService {
    */
   async joinTournament(userId: string, data: JoinTournamentRequest) {
     const tournament = await this.getTournamentForJoin(data.tournamentId);
+
+    // Entering is a read plus a write: someone who may not even see a competition
+    // scoped to an organization must not be able to register themselves into it.
+    await this.assertOrganizationAccess(tournament.organizationId, userId);
+
     this.validateTournamentOpenForJoin(tournament);
     await this.checkNotAlreadyRegistered(userId, data.tournamentId);
 

@@ -40,6 +40,7 @@
     "UNAUTHORIZED": "Unauthorized",
     "FORBIDDEN": "Forbidden",
     "INSUFFICIENT_PERMISSIONS": "You do not have the necessary permissions",
+    "TOO_MANY_REQUESTS": "Too many requests. Please wait a moment and try again.",
     "USER_DEACTIVATED": "This account has been deactivated",
     "CANNOT_MODIFY_SELF": "You cannot perform this action on your own account",
     "LAST_SUPER_ADMIN": "The last super administrator cannot be removed",

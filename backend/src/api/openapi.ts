@@ -14,6 +14,7 @@ const ERROR_DESCRIPTIONS: Record<(typeof ERROR_RESPONSES)[keyof typeof ERROR_RES
   Forbidden: "Insufficient permissions",
   NotFound: "Resource not found",
   Conflict: "Conflicts with the current state",
+  TooManyRequests: "Rate limit exceeded; see the Retry-After header",
   InternalServerError: "Unexpected server error",
 };
 

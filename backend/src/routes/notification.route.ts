@@ -4,7 +4,6 @@ import { describe } from '../api/describe';
 import { notificationService } from '../services/notification.service';
 import {
   RegisterDeviceSchema,
-  NotificationResponseSchema,
   listNotificationsQuerySchema,
   paginatedNotificationsSchema,
   bulkNotificationResultSchema,
@@ -181,31 +180,6 @@ app.delete(
 
     await notificationService.removePushDevice(appUserId, id);
     return c.json({ success: true });
-  }
-);
-
-app.post(
-  '/notifications/:id/resend',
-  requireAuth,
-  describe({
-    tags: TAGS,
-    summary: 'Resend a notification',
-    description: 'Optionally under a different message key, supplied as `messageKey`.',
-    auth: true,
-    notFound: true,
-    success: { description: 'The notification that was sent again', schema: NotificationResponseSchema },
-  }),
-  async (c) => {
-    const id = c.req.param('id')!;
-    const body = await c.req.json().catch(() => ({}));
-
-    try {
-      const notification = await notificationService.resend(id, body.messageKey);
-      return c.json(notification);
-    } catch (error) {
-      logger.error(error);
-      return c.json({ error: 'Failed to resend' }, 400);
-    }
   }
 );
 

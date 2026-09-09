@@ -13,6 +13,7 @@ export const ERROR_RESPONSES = {
   403: "Forbidden",
   404: "NotFound",
   409: "Conflict",
+  429: "TooManyRequests",
   500: "InternalServerError",
 } as const;
 
@@ -49,6 +50,8 @@ export type DescribeOptions = {
   notFound?: boolean;
   /** Documents 409. Set whenever the handler can conflict with existing state. */
   conflict?: boolean;
+  /** Documents 429. Set on any route behind the rateLimit middleware. */
+  rateLimited?: boolean;
 };
 
 /**
@@ -80,6 +83,7 @@ export function describe(options: DescribeOptions): MiddlewareHandler {
       ...(options.role ? { 403: ref(403) } : {}),
       ...(options.notFound ? { 404: ref(404) } : {}),
       ...(options.conflict ? { 409: ref(409) } : {}),
+      ...(options.rateLimited ? { 429: ref(429) } : {}),
       500: ref(500),
     },
   });

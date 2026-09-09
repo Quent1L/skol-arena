@@ -28,6 +28,7 @@ export enum ErrorCode {
   UNAUTHORIZED = "UNAUTHORIZED",
   FORBIDDEN = "FORBIDDEN",
   INSUFFICIENT_PERMISSIONS = "INSUFFICIENT_PERMISSIONS",
+  TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS",
 
   // Business logic errors - Tournament
   TOURNAMENT_INVALID_STATUS = "TOURNAMENT_INVALID_STATUS",
@@ -195,6 +196,13 @@ export class NotFoundError extends AppError {
 export class ConflictError extends AppError {
   get statusCode(): number {
     return 409;
+  }
+}
+
+// 429 Too Many Requests
+export class TooManyRequestsError extends AppError {
+  get statusCode(): number {
+    return 429;
   }
 }
 

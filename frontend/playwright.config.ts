@@ -45,7 +45,7 @@ export default defineConfig({
         BETTER_AUTH_SECRET: 'e2e-secret-at-least-32-characters!!',
         BETTER_AUTH_URL: 'http://localhost:3000',
         NODE_ENV: 'development',
-        ENABLE_EMAIL_PASSWORD: 'true',
+        SHOW_EMAIL_PASSWORD_FORM: 'true',
         LOG_LEVEL: 'warn',
         // Disables Keycloak SSO which backend/.env might enable
         // (dotenv doesn't override variables that are already set)
