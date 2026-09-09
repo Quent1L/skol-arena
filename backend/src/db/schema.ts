@@ -5,6 +5,7 @@ import {
   boolean,
   uuid,
   integer,
+  bigint,
   pgEnum,
   date,
   unique,
@@ -84,6 +85,25 @@ export const verification = pgTable("verification", {
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
+});
+
+/**
+ * Backs `rateLimit: { storage: "database" }` in config/auth.ts, and the middleware
+ * that limits the public business endpoints — one mechanism for both.
+ *
+ * The export name has to stay `rateLimit`: Better Auth resolves its models by key
+ * in the schema object it is handed, so renaming this silently disables limiting.
+ * `lastRequest` is epoch milliseconds, which is what Better Auth writes and reads.
+ */
+export const rateLimit = pgTable("rateLimit", {
+  // Better Auth's Drizzle adapter puts an `id` into every row it creates and
+  // refuses a model that has no such column, so the natural key cannot be the
+  // primary key here — it is a unique column instead, which is what both the
+  // adapter's lookups and our own upsert address the row by.
+  id: text("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  lastRequest: bigint("last_request", { mode: "number" }).notNull(),
 });
 
 // ********************************************************************

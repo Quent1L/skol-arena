@@ -14,7 +14,7 @@
     "shots:db:down": "docker compose -f screenshots/docker-compose.yml down -v",
     "shots:seed": "cd ../backend && DATABASE_URL=postgres://skolarena:skolarena@localhost:5436/skolarena_showcase bun run scripts/seed-showcase.ts",
     "shots:reset": "bun run shots:db:down && bun run shots:db:up && bun run shots:seed",
-    "shots:backend": "cd ../backend && DATABASE_URL=postgres://skolarena:skolarena@localhost:5436/skolarena_showcase BETTER_AUTH_SECRET='showcase-secret-at-least-32-characters!!' BETTER_AUTH_URL=http://localhost:3000 NODE_ENV=development ENABLE_EMAIL_PASSWORD=true LOG_LEVEL=warn KEYCLOAK_CLIENT_ID= KEYCLOAK_CLIENT_SECRET= KEYCLOAK_ISSUER= bun run src/index.ts",
+    "shots:backend": "cd ../backend && DATABASE_URL=postgres://skolarena:skolarena@localhost:5436/skolarena_showcase BETTER_AUTH_SECRET='showcase-secret-at-least-32-characters!!' BETTER_AUTH_URL=http://localhost:3000 NODE_ENV=development SHOW_EMAIL_PASSWORD_FORM=true LOG_LEVEL=warn KEYCLOAK_CLIENT_ID= KEYCLOAK_CLIENT_SECRET= KEYCLOAK_ISSUER= bun run src/index.ts",
     "shots:capture": "bun run screenshots/capture.ts"
   },
   "dependencies": {

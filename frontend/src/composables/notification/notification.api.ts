@@ -57,9 +57,6 @@ export const notificationApi = {
   async markActionCompleted(id: string): Promise<void> {
     await http.post(`${BASE_URL}/me/notifications/${id}/action-completed`)
   },
-  async resend(id: string, messageKey?: string): Promise<void> {
-    await http.post(`${BASE_URL}/notifications/${id}/resend`, messageKey ? { messageKey } : undefined)
-  },
   async registerPushDevice(payload: { subscriptionEndpoint: string; subscriptionData: unknown; deviceType: 'WEB' | 'ANDROID' | 'IOS'; locale?: string; timezone?: string }): Promise<void> {
     await http.post(`${BASE_URL}/me/pushDevices`, payload)
   },

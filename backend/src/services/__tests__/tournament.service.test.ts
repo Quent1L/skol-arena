@@ -17,6 +17,10 @@ import {
   userRepository,
   UserRepository,
 } from "../../repository/user.repository";
+import {
+  organizationRepository,
+  OrganizationRepository,
+} from "../../repository/organization.repository";
 import { tournamentRulesetService } from "../tournament-ruleset.service";
 import { matchRepository } from "../../repository/match.repository";
 import { standingsService } from "../standings.service";
@@ -42,6 +46,7 @@ const tournamentService = new TournamentService();
 let tourRepo: Partial<TournamentRepository>;
 let partRepo: Partial<ParticipantRepository>;
 let usrRepo: Partial<UserRepository>;
+let orgRepo: Partial<OrganizationRepository>;
 
 /** Entered results the service should see; set per test. */
 let enteredMatchCount = 0;
@@ -88,6 +93,10 @@ beforeEach(() => {
   partRepo.deleteParticipation = async () => undefined;
   partRepo.findTournamentParticipants = async () => [];
 
+  orgRepo = organizationRepository as unknown as Partial<OrganizationRepository>;
+  orgRepo.isMember = async () => false;
+  orgRepo.getUserOrganizationIds = async () => [];
+
   usrRepo = userRepository as unknown as Partial<UserRepository>;
   usrRepo.getById = async (id: string) =>
     ({
@@ -98,6 +107,74 @@ beforeEach(() => {
       displayName: "",
       role: "player",
     }) as any;
+});
+
+describe("TournamentService - organization access", () => {
+  /** The rule only ever looks at the organization id, so the row can stay minimal. */
+  const openTournament = { id: "t-1", organizationId: null };
+  const scopedTournament = { id: "t-1", organizationId: "org-1" };
+
+  it("lets anyone read a tournament attached to no organization", async () => {
+    await expect(
+      tournamentService.assertOrganizationAccess(openTournament.organizationId, null),
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses an anonymous reader on a scoped tournament", async () => {
+    await expect(
+      tournamentService.assertOrganizationAccess(scopedTournament.organizationId, null),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("refuses a signed-in reader who is not a member", async () => {
+    usrRepo.getById = async () => ({ id: "u-1", role: "player" }) as any;
+    orgRepo.isMember = async () => false;
+
+    await expect(
+      tournamentService.assertOrganizationAccess(scopedTournament.organizationId, "u-1"),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("lets a member of the organization through", async () => {
+    usrRepo.getById = async () => ({ id: "u-1", role: "player" }) as any;
+    orgRepo.isMember = async () => true;
+
+    await expect(
+      tournamentService.assertOrganizationAccess(scopedTournament.organizationId, "u-1"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("lets a super_admin through without checking membership", async () => {
+    usrRepo.getById = async () => ({ id: "u-1", role: "super_admin" }) as any;
+    orgRepo.isMember = async () => {
+      throw new Error("membership should not be consulted for a super admin");
+    };
+
+    await expect(
+      tournamentService.assertOrganizationAccess(scopedTournament.organizationId, "u-1"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses a caller whose app user no longer exists", async () => {
+    usrRepo.getById = async () => undefined as any;
+
+    await expect(
+      tournamentService.assertOrganizationAccess(scopedTournament.organizationId, "u-gone"),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("refuses joining a tournament scoped to an organization the user is not in", async () => {
+    partRepo.findTournamentById = async () =>
+      ({ id: "t-1", status: "open", organizationId: "org-1" }) as any;
+    usrRepo.getById = async () => ({ id: "u-1", role: "player" }) as any;
+    orgRepo.isMember = async () => false;
+
+    await expect(
+      tournamentService.joinTournament("u-1", {
+        tournamentId: "t-1",
+      } as JoinTournamentRequest),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
 });
 
 describe("TournamentService - basic flows", () => {

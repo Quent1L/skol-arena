@@ -243,7 +243,7 @@ ranked.post(
   async (c) => {
     const id = c.req.param("id")!;
     const data = c.req.valid("json");
-    const tiers = await rankedSeasonRepository.insertTier(id, data);
+    const tiers = await rankedSeasonService.createTier(id, data, c.get("appUserId"));
     return c.json(tiers, 201);
   },
 );
@@ -265,8 +265,7 @@ ranked.patch(
     const id = c.req.param("id")!;
     const level = parseTierLevel(c.req.param("level")!);
     const data = c.req.valid("json");
-    const tier = await rankedSeasonRepository.updateTier(id, level, data);
-    if (!tier) throw new NotFoundError(ErrorCode.RANK_TIER_NOT_FOUND);
+    const tier = await rankedSeasonService.updateTier(id, level, data, c.get("appUserId"));
     return c.json(tier);
   },
 );
@@ -287,7 +286,7 @@ ranked.delete(
   async (c) => {
     const id = c.req.param("id")!;
     const level = parseTierLevel(c.req.param("level")!);
-    const tiers = await rankedSeasonRepository.deleteTier(id, level);
+    const tiers = await rankedSeasonService.deleteTier(id, level, c.get("appUserId"));
     return c.json(tiers);
   }
 );
@@ -306,12 +305,7 @@ ranked.post(
   }),
   async (c) => {
     const id = c.req.param("id")!;
-    const config = await rankedSeasonRepository.getConfigByTournamentId(id);
-    if (!config) {
-      throw new NotFoundError(ErrorCode.SEASON_NOT_FOUND);
-    }
-    await rankedSeasonService.recalculateTierMinMmr(id, config.baseMmr);
-    const tiers = await rankedSeasonRepository.getRankTiers(id);
+    const tiers = await rankedSeasonService.recalculateTiers(id, c.get("appUserId"));
     return c.json(tiers);
   }
 );

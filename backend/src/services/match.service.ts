@@ -5,6 +5,7 @@ import {
 } from '../repository/match.repository'
 import { matchConfirmationRepository } from '../repository/match-confirmation.repository'
 import { userRepository } from '../repository/user.repository'
+import { organizationRepository } from '../repository/organization.repository'
 import { entryRepository } from '../repository/entry.repository'
 import {
   type CreateMatchRequestData as CreateMatchInput,
@@ -55,6 +56,19 @@ const TRUST_SCORE_THRESHOLD = 10
 export class MatchService {
   async canManageMatches(tournamentId: string, userId: string): Promise<boolean> {
     return await matchPermissionValidator.canManageMatches(tournamentId, userId)
+  }
+
+  /**
+   * Which organizations a caller may see matches from. null lifts the restriction
+   * (super admins); an empty array leaves only the competitions attached to none.
+   */
+  private async visibleOrganizationIdsFor(viewerId: string | null): Promise<string[] | null> {
+    if (!viewerId) return []
+
+    const viewer = await userRepository.getById(viewerId)
+    if (viewer?.role === 'super_admin') return null
+
+    return await organizationRepository.getUserOrganizationIds(viewerId)
   }
 
   async createMatch(input: CreateMatchInput, createdBy: string) {
@@ -271,8 +285,19 @@ export class MatchService {
     return await matchRepository.list(filters)
   }
 
-  async listMatchCards(filters: ListMatchCardsQuery): Promise<PaginatedMatchCards> {
-    const { data: rows, total } = await matchRepository.listMatchCards(filters)
+  /**
+   * `viewerId` narrows the page to the competitions that caller may see — null for
+   * an anonymous request, which leaves only the ones attached to no organization.
+   */
+  async listMatchCards(
+    filters: ListMatchCardsQuery,
+    viewerId: string | null,
+  ): Promise<PaginatedMatchCards> {
+    const visibleOrganizationIds = await this.visibleOrganizationIdsFor(viewerId)
+    const { data: rows, total } = await matchRepository.listMatchCards(
+      filters,
+      visibleOrganizationIds,
+    )
     if (rows.length === 0) return { data: [], total: 0, hasMore: false }
 
     const matchIds = rows.map((r) => r.matchId)

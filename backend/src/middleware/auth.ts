@@ -1,12 +1,23 @@
 import type { Context, Next } from "hono";
 import { auth } from "../config/auth";
 import { userService } from "../services/user.service";
+import { userRepository } from "../repository/user.repository";
 import type { AppVariablesOptional } from "../types/hono";
 import { logger } from "../utils/logger";
 
 type AppContext = Context<{
   Variables: AppVariablesOptional;
 }>;
+
+/**
+ * The little a viewer lookup needs from a context. Structural on purpose: routers
+ * come in both variable flavours (appUserId guaranteed or not), and Hono's Context
+ * is invariant in them, so naming either one here would lock the helper to half the
+ * routes that need it.
+ */
+type ViewerContext = {
+  get(key: "user"): AppVariablesOptional["user"] | undefined;
+};
 
 export async function requireAuth(c: AppContext, next: () => Promise<void>) {
   const betterAuthUser = c.get("user");
@@ -59,6 +70,24 @@ export async function requireAuth(c: AppContext, next: () => Promise<void>) {
     // Other errors
     throw error;
   }
+}
+
+/**
+ * Resolves the caller's app user id on a route that stays open to anonymous
+ * visitors, so a read can be scoped without being closed.
+ *
+ * Deliberately not requireAuth, and deliberately `getByExternalId` rather than
+ * `getOrCreateAppUser`: the latter throws for a deactivated account or one that
+ * never redeemed an invitation, which would turn a public read into an error
+ * instead of simply narrowing what that caller may see. Anyone without a resolvable
+ * app profile is treated as anonymous.
+ */
+export async function resolveOptionalViewer(c: ViewerContext): Promise<string | null> {
+  const betterAuthUser = c.get("user");
+  if (!betterAuthUser) return null;
+
+  const appUser = await userRepository.getByExternalId(betterAuthUser.id);
+  return appUser?.id ?? null;
 }
 
 /**

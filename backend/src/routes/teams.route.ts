@@ -3,7 +3,7 @@ import { describe } from "../api/describe";
 import { z } from "zod";
 import { teamService } from "../services/team.service";
 import { tournamentService } from "../services/tournament.service";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, resolveOptionalViewer } from "../middleware/auth";
 import { createAppHono } from "../types/hono";
 import {
   createTeamSchema,
@@ -22,11 +22,16 @@ teams.get(
   describe({
     tags: TAGS,
     summary: "List a tournament's teams",
+    description:
+      "Public for an open competition; one scoped to an organization is only listed " +
+      "for its members.",
+    role: true,
     notFound: true,
     success: { description: "Teams in the tournament", schema: clientTeamListSchema },
   }),
   async (c) => {
     const tournamentId = c.req.param("id")!;
+    await tournamentService.assertCanAccess(tournamentId, await resolveOptionalViewer(c));
     const result = await teamService.listTeams(tournamentId);
     return c.json(result);
   }
