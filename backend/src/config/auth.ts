@@ -12,6 +12,7 @@ import { logger } from "../utils/logger";
 import { clearBootstrapPending } from "../utils/init-admin";
 import { reportEmailDeliveryFailure } from "../utils/email-delivery-context";
 import { isRateLimitEnabled } from "./rate-limit";
+import { CLIENT_IP_HEADER } from "../utils/client-ip";
 
 function extractInvitationCode(cookieHeader: string | null): string | null {
   if (!cookieHeader) return null;
@@ -102,10 +103,9 @@ async function processInvitationCode(
   }
 
   try {
-    const ipAddress =
-      request?.headers?.get("x-forwarded-for") ||
-      request?.headers?.get("x-real-ip") ||
-      "unknown";
+    // Read from the header this process writes, not from x-forwarded-for: an address
+    // the caller chose is worse than no address at all in an audit trail.
+    const ipAddress = request?.headers?.get(CLIENT_IP_HEADER) || "unknown";
 
     await invitationService.consumeCode(
       invitationCode,
@@ -272,6 +272,17 @@ const authConfig: any = {
   // way of telling what, if anything, protected the login. Stored in the database so
   // the counters survive a restart and hold across instances — an in-memory window
   // resets every deploy. See config/rate-limit.ts for when it is armed.
+  // Better Auth resolves the caller from a header rather than from x-forwarded-for
+  // directly: index.ts writes CLIENT_IP_HEADER on every request that reaches the auth
+  // handler, having placed the caller itself (see utils/client-ip). Left to its own
+  // resolution it refuses a multi-valued x-forwarded-for and counts every sign-in in
+  // one shared window, which anyone able to send that header could then exhaust for
+  // the whole instance.
+  advanced: {
+    ipAddress: {
+      ipAddressHeaders: [CLIENT_IP_HEADER],
+    },
+  },
   rateLimit: {
     enabled: isRateLimitEnabled(),
     storage: "database",
