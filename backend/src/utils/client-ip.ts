@@ -1,3 +1,5 @@
+import type { Context } from "hono";
+import { getConnInfo } from "hono/bun";
 import { logger } from "./logger";
 
 /**
@@ -80,6 +82,30 @@ export function resolveClientIp(
   if (clientIndex < 0) return socket;
 
   return forwarded[clientIndex] ?? socket;
+}
+
+/**
+ * The address the runtime saw the connection come from, when it can name it.
+ *
+ * Hono's Bun helper throws when the server is not in the environment — which is the
+ * case for `app.request()` in a test — so a failure here means "unknown" rather than
+ * a broken request.
+ */
+export function socketAddressOf(c: Context): string | null {
+  try {
+    return getConnInfo(c).remote.address ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The caller behind a request, for anything that has a context in hand: the rate
+ * limiter counting a window, and the error handler naming who hit the failure. They
+ * have to agree — a throttled caller and the log line about it are the same person.
+ */
+export function clientIpFor(c: Context): string | null {
+  return resolveClientIp(c.req.header("x-forwarded-for"), socketAddressOf(c));
 }
 
 /**

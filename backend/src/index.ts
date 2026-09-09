@@ -1,7 +1,7 @@
 import type { Context, Next } from "hono";
 import { z } from "zod";
 import { cors } from "hono/cors";
-import { getConnInfo, serveStatic, upgradeWebSocket, websocket } from "hono/bun";
+import { serveStatic, upgradeWebSocket, websocket } from "hono/bun";
 import { HTTPException } from "hono/http-exception";
 import { auth } from "./config/auth";
 import { buildVersionApp } from "./api/build";
@@ -28,7 +28,7 @@ import { emailService } from "./services/email.service";
 import { userService } from "./services/user.service";
 import { tournamentService } from "./services/tournament.service";
 import { startJobScheduler } from "./jobs/scheduler";
-import { withResolvedClientIp } from "./utils/client-ip";
+import { socketAddressOf, withResolvedClientIp } from "./utils/client-ip";
 import { runMigrations } from "./utils/migrate";
 import { initializeAdminIfNeeded } from "./utils/init-admin";
 import {
@@ -145,15 +145,9 @@ app.use("*", addUserContext);
 // The request is re-headed with the address this process resolved before Better Auth
 // sees it: its rate limiter would otherwise read x-forwarded-for itself, and a caller
 // who sends one can then decide which window everyone's sign-in attempts land in.
-app.on(["POST", "GET"], "/api/auth/*", (c) => {
-  let socket: string | null = null;
-  try {
-    socket = getConnInfo(c).remote.address ?? null;
-  } catch {
-    socket = null;
-  }
-  return auth.handler(withResolvedClientIp(c.req.raw, socket));
-});
+app.on(["POST", "GET"], "/api/auth/*", (c) =>
+  auth.handler(withResolvedClientIp(c.req.raw, socketAddressOf(c))),
+);
 
 // OpenAPI specs and the Scalar reference. Exempt from version negotiation: they
 // describe the versions rather than living inside one.

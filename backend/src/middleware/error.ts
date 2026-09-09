@@ -4,6 +4,7 @@ import { AppError } from "../types/errors";
 import { ZodError } from "zod";
 import type { ZodIssue } from "zod";
 import { t } from "../utils/i18n-context";
+import { clientIpFor, UNKNOWN_CLIENT_IP } from "../utils/client-ip";
 import { logger } from "../utils/logger";
 
 export async function errorHandler(err: Error, c: Context) {
@@ -15,7 +16,10 @@ export async function errorHandler(err: Error, c: Context) {
       url: c.req.url,
       path: c.req.path,
       userAgent: c.req.header("user-agent") || "unknown",
-      ip: c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown",
+      // Resolved rather than read straight off a header: an address the caller chose
+      // is worse than none in a log someone reaches for during an incident, and this
+      // has to name the same caller the rate limiter counted. See TRUSTED_PROXY_HOPS.
+      ip: clientIpFor(c) ?? UNKNOWN_CLIENT_IP,
     };
   } catch (_e) {
     requestInfo = {
@@ -23,7 +27,7 @@ export async function errorHandler(err: Error, c: Context) {
       url: "UNKNOWN",
       path: "UNKNOWN",
       userAgent: "UNKNOWN",
-      ip: "UNKNOWN",
+      ip: UNKNOWN_CLIENT_IP,
     };
   }
 
