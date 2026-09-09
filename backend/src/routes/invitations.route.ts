@@ -1,5 +1,6 @@
 import { validate } from "../api/validator";
 import { describe } from "../api/describe";
+import { clientIpFor } from "../utils/client-ip";
 import { createAppHono } from "../types/hono";
 import { invitationService } from "../services/invitation.service";
 import { organizationService } from "../services/organization.service";
@@ -62,7 +63,7 @@ invitations.post(
     }
 
     const { code } = c.req.valid("json");
-    const ipAddress = c.req.header("x-forwarded-for") || c.req.header("x-real-ip");
+    const ipAddress = clientIpFor(c) ?? undefined;
 
     const appUser = await invitationService.consumeCodeAndCreateAppUser(
       code,
@@ -95,7 +96,7 @@ invitations.post(
     const appUserId = c.get("appUserId");
     const betterAuthUser = c.get("user")!;
     const { code } = c.req.valid("json");
-    const ipAddress = c.req.header("x-forwarded-for") || c.req.header("x-real-ip");
+    const ipAddress = clientIpFor(c) ?? undefined;
 
     const result = await organizationService.joinViaCode(
       code,
