@@ -1,9 +1,8 @@
-import type { Context, MiddlewareHandler } from "hono";
-import { getConnInfo } from "hono/bun";
+import type { MiddlewareHandler } from "hono";
 import { isRateLimitEnabled } from "../config/rate-limit";
 import { rateLimitRepository } from "../repository/rate-limit.repository";
 import { ErrorCode, TooManyRequestsError } from "../types/errors";
-import { resolveClientIp } from "../utils/client-ip";
+import { clientIpFor, UNKNOWN_CLIENT_IP } from "../utils/client-ip";
 import { logger } from "../utils/logger";
 
 /** How often the expired-row sweep is allowed to run, at most. */
@@ -12,30 +11,6 @@ const SWEEP_INTERVAL_MS = 60 * 60 * 1000;
 const SWEEP_HORIZON_MS = 24 * 60 * 60 * 1000;
 
 let lastSweep = 0;
-
-/**
- * The socket address, when the runtime can name it. Hono's Bun helper throws when
- * the server is not in the environment — which is the case for `app.request()` in a
- * test — so a failure here means "unknown", not a broken request.
- */
-function socketAddress(c: Context): string | null {
-  try {
-    return getConnInfo(c).remote.address ?? null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * The address a window is counted against.
- *
- * Resolution lives in utils/client-ip so that this limiter and Better Auth's own
- * agree on who the caller is — see TRUSTED_PROXY_HOPS. Callers that cannot be placed
- * collapse onto one shared window: that fails closed, which is the right way round.
- */
-function clientAddress(c: Context): string {
-  return resolveClientIp(c.req.header("x-forwarded-for"), socketAddress(c)) ?? "unknown";
-}
 
 /**
  * Fixed-window limit for routes that are open to anyone.
@@ -59,7 +34,11 @@ export function rateLimit(options: {
     // disagree about whether this instance limits anything.
     if (!isRateLimitEnabled()) return await next();
 
-    const key = `route:${c.req.method}:${c.req.routePath}:${clientAddress(c)}`;
+    // Resolution lives in utils/client-ip so this limiter, Better Auth's own and the
+    // error log all name the same caller — see TRUSTED_PROXY_HOPS. Callers that
+    // cannot be placed collapse onto one shared window, which fails closed.
+    const address = clientIpFor(c) ?? UNKNOWN_CLIENT_IP;
+    const key = `route:${c.req.method}:${c.req.routePath}:${address}`;
 
     let allowed: boolean;
     try {
