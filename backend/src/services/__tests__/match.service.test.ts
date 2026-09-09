@@ -2549,7 +2549,7 @@ describe("MatchService - listMatchCards", () => {
     const res = await matchService.listMatchCards({
       offset: 0,
       limit: 10,
-    } as any);
+    } as any, null);
     expect(res).toEqual({ data: [], total: 0, hasMore: false });
   });
 
@@ -2638,7 +2638,7 @@ describe("MatchService - listMatchCards", () => {
     const res = await matchService.listMatchCards({
       offset: 0,
       limit: 10,
-    } as any);
+    } as any, null);
 
     expect(res.total).toBe(50);
     expect(res.hasMore).toBe(true);

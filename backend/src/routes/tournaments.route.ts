@@ -2,7 +2,6 @@ import { z } from "zod";
 import { validate } from "../api/validator";
 import { describe } from "../api/describe";
 import { tournamentService } from "../services/tournament.service";
-import { organizationService } from "../services/organization.service";
 import { standingsService } from "../services/standings.service";
 import { bracketService } from "../services/bracket.service";
 import { tournamentStatsService } from "../services/tournament-stats.service";
@@ -33,7 +32,6 @@ import {
 import { requireAuth } from "../middleware/auth";
 import { userRepository } from "../repository/user.repository";
 import { createAppHono } from "../types/hono";
-import { ErrorCode, ForbiddenError } from "../types/errors";
 import { rankedSeasonRepository } from "../repository/ranked-season.repository";
 import { playerStatsService } from "../services/player-stats.service";
 import { rulesService } from "../services/rules.service";
@@ -51,29 +49,22 @@ const BRACKET_TAGS = ["Brackets"];
  */
 const tournamentIdParam = validate("param", z.object({ id: z.uuid() }));
 
+/**
+ * Resolves the optional session into an app user, then defers to the service.
+ *
+ * The rule itself lives in tournamentService.assertCanAccess: the team list, the
+ * match routes and the WebSocket subscription need the same decision, and a copy
+ * per call site is how the gaps appeared in the first place.
+ */
 async function assertTournamentAccess(
   betterAuthUserId: string | null | undefined,
   tournamentId: string,
 ): Promise<void> {
-  const tournament = await tournamentService.getTournamentById(tournamentId);
-  if (!tournament.organizationId) return;
+  const appUser = betterAuthUserId
+    ? await userRepository.getByExternalId(betterAuthUserId)
+    : null;
 
-  if (!betterAuthUserId) {
-    throw new ForbiddenError(ErrorCode.ORGANIZATION_ACCESS_DENIED);
-  }
-  const appUser = await userRepository.getByExternalId(betterAuthUserId);
-  if (!appUser) {
-    throw new ForbiddenError(ErrorCode.ORGANIZATION_ACCESS_DENIED);
-  }
-  if (appUser.role === "super_admin") return;
-
-  const authorized = await organizationService.isUserAuthorizedForTournament(
-    tournament.organizationId,
-    appUser.id,
-  );
-  if (!authorized) {
-    throw new ForbiddenError(ErrorCode.ORGANIZATION_ACCESS_DENIED);
-  }
+  await tournamentService.assertCanAccess(tournamentId, appUser?.id ?? null);
 }
 
 // POST /tournaments - Create new tournament
@@ -259,7 +250,10 @@ tournaments.post(
   describe({
     tags: TAGS,
     summary: "Join a tournament",
+    description:
+      "A competition scoped to an organization only accepts entries from its members.",
     auth: true,
+    role: true,
     notFound: true,
     conflict: true,
     success: {
@@ -518,12 +512,14 @@ tournaments.get(
       "which are locked — with the number of results already entered, so the form can " +
       "explain a refusal rather than just greying a field out.",
     auth: true,
+    role: true,
     notFound: true,
     success: { description: "Editability of each field", schema: tournamentEditabilitySchema },
   }),
   tournamentIdParam,
   async (c) => {
     const tournamentId = c.req.param("id")!;
+    await assertTournamentAccess(c.get("user")?.id, tournamentId);
     const editability = await tournamentService.getEditability(tournamentId);
     return c.json(editability);
   }
@@ -541,12 +537,14 @@ tournaments.get(
       "their points, MMR multipliers and reasons, plus the team interaction mode. This " +
       "is what match entry offers and what the calculations use — not the live discipline.",
     auth: true,
+    role: true,
     notFound: true,
     success: { description: "The ruleset in force", schema: tournamentRulesetSchema },
   }),
   tournamentIdParam,
   async (c) => {
     const tournamentId = c.req.param("id")!;
+    await assertTournamentAccess(c.get("user")?.id, tournamentId);
     const payload = await tournamentRulesetService.getForTournament(tournamentId);
     const row = await tournamentRulesetService.getRow(tournamentId);
     return c.json({

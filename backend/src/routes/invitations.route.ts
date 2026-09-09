@@ -1,9 +1,11 @@
 import { validate } from "../api/validator";
 import { describe } from "../api/describe";
+import { clientIpFor } from "../utils/client-ip";
 import { createAppHono } from "../types/hono";
 import { invitationService } from "../services/invitation.service";
 import { organizationService } from "../services/organization.service";
 import { requireAuth } from "../middleware/auth";
+import { rateLimit } from "../middleware/rate-limit";
 import {
   validateInvitationCodeSchema,
   consumeInvitationCodeSchema,
@@ -16,15 +18,20 @@ const invitations = createAppHono();
 
 const TAGS = ["Invitations"];
 
+// Rate limited: this answers whether a code is real to anyone who asks, which is
+// exactly the oracle needed to guess one. Codes are the only thing standing between
+// a stranger and an account on an invite-only instance.
 invitations.post(
   "/validate",
+  rateLimit({ window: 300, max: 10 }),
   describe({
     tags: TAGS,
     summary: "Check an invitation code",
     description:
       "Pre-flight check before sign-up. Fails with the reason the code cannot be " +
-      "used: expired, exhausted, deactivated or unknown.",
+      "used: expired, exhausted, deactivated or unknown. Rate limited per client.",
     notFound: true,
+    rateLimited: true,
     success: { description: "The code is usable", schema: invitationValidationSchema },
   }),
   validate("json", validateInvitationCodeSchema),
@@ -56,7 +63,7 @@ invitations.post(
     }
 
     const { code } = c.req.valid("json");
-    const ipAddress = c.req.header("x-forwarded-for") || c.req.header("x-real-ip");
+    const ipAddress = clientIpFor(c) ?? undefined;
 
     const appUser = await invitationService.consumeCodeAndCreateAppUser(
       code,
@@ -89,7 +96,7 @@ invitations.post(
     const appUserId = c.get("appUserId");
     const betterAuthUser = c.get("user")!;
     const { code } = c.req.valid("json");
-    const ipAddress = c.req.header("x-forwarded-for") || c.req.header("x-real-ip");
+    const ipAddress = clientIpFor(c) ?? undefined;
 
     const result = await organizationService.joinViaCode(
       code,

@@ -21,8 +21,12 @@ import {
   autoFinalizeResponseSchema,
   mutationResultSchema,
 } from "@skol-arena/shared/types/index";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, resolveOptionalViewer } from "../middleware/auth";
+import { requireSuperAdmin } from "../middleware/require-role";
+import { rateLimit } from "../middleware/rate-limit";
+import { tournamentService } from "../services/tournament.service";
 import { createAppHono } from "../types/hono";
+import { ErrorCode, ForbiddenError } from "../types/errors";
 
 const matches = createAppHono();
 
@@ -58,13 +62,16 @@ matches.get(
   describe({
     tags: TAGS,
     summary: "List matches",
-    description: "Lean paginated cards, not full match models. Use GET /matches/{id} for detail.",
+    description:
+      "Lean paginated cards, not full match models. Use GET /matches/{id} for detail. " +
+      "Matches played in a competition scoped to an organization are only listed for " +
+      "its members, so signing in widens the result.",
     success: { description: "A page of match cards", schema: paginatedMatchCardsSchema },
   }),
   validate("query", listMatchCardsQuerySchema),
   async (c) => {
     const filters = c.req.valid("query");
-    const result = await matchService.listMatchCards(filters);
+    const result = await matchService.listMatchCards(filters, await resolveOptionalViewer(c));
     return c.json(result);
   }
 );
@@ -75,12 +82,17 @@ matches.get(
   describe({
     tags: TAGS,
     summary: "Get a match",
+    description:
+      "Public for an open competition; a match played in a competition scoped to an " +
+      "organization is only readable by its members.",
+    role: true,
     notFound: true,
     success: { description: "The match with its relations", schema: matchModelSchema },
   }),
   async (c) => {
     const id = c.req.param("id")!;
     const match = await matchService.getMatchById(id);
+    await tournamentService.assertCanAccess(match.tournamentId, await resolveOptionalViewer(c));
     return c.json(match);
   }
 );
@@ -351,9 +363,9 @@ matches.post(
       match.tournamentId,
       appUserId
     );
-    
+
     if (!canManage) {
-      return c.json({ error: "Insufficient permissions" }, 403);
+      throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
     }
 
     const finalizedMatch = await matchService.finalizeMatch(
@@ -367,14 +379,18 @@ matches.post(
 );
 
 // POST /matches/validate - Validate match possibility
+// Rate limited: public, and each call runs the full rule engine plus a duplicate
+// search. Cheap to send, not cheap to answer.
 matches.post(
   "/validate",
+  rateLimit({ window: 60, max: 30 }),
   describe({
     tags: TAGS,
     summary: "Check whether a match may be created",
     description:
       "Dry run against the tournament's limits. Answers 200 with valid false plus " +
-      "the reasons, rather than failing.",
+      "the reasons, rather than failing. Rate limited per client.",
+    rateLimited: true,
     success: { description: "Validation outcome", schema: validateMatchResponseSchema },
   }),
   validate("json", validateMatchSchema),
@@ -398,11 +414,16 @@ matches.post(
 matches.post(
   "/auto-finalize",
   requireAuth,
+  requireSuperAdmin,
   describe({
     tags: TAGS,
     summary: "Auto-finalize matches past their confirmation deadline",
-    description: "Contested matches are held back and reported in `disputed`.",
+    description:
+      "Contested matches are held back and reported in `disputed`. Super admins only: " +
+      "the sweep runs across every tournament, and the scheduler already performs it — " +
+      "this is the manual escape hatch, not a user action.",
     auth: true,
+    role: true,
     success: { description: "What the run settled", schema: autoFinalizeResponseSchema },
   }),
   async (c) => {

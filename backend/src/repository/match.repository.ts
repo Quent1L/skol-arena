@@ -1,4 +1,4 @@
-import { eq, and, ne, sql, count, inArray, or, lt, desc } from "drizzle-orm";
+import { eq, and, ne, sql, count, inArray, isNull, or, lt, desc } from "drizzle-orm";
 import { db } from "../config/database";
 import {
   matches,
@@ -502,8 +502,30 @@ export class MatchRepository {
    * Lean match list for the unified GET /matches endpoint.
    * Scores and team sizes are assembled from sides in the service layer.
    */
-  async listMatchCards(filters: ListMatchCardsQuery) {
+  /**
+   * `visibleOrganizationIds` scopes the page to what the caller may see: the ids of
+   * the organizations they belong to, or null to lift the restriction entirely
+   * (super admins). An empty array is not the same as null — it means the caller
+   * only gets competitions attached to no organization.
+   *
+   * The filter has to run here rather than on the result: the page is cut in SQL,
+   * so dropping rows afterwards would return short pages and a wrong total.
+   */
+  async listMatchCards(
+    filters: ListMatchCardsQuery,
+    visibleOrganizationIds: string[] | null,
+  ) {
     const conditions = [];
+    if (visibleOrganizationIds !== null) {
+      conditions.push(
+        visibleOrganizationIds.length > 0
+          ? or(
+              isNull(tournaments.organizationId),
+              inArray(tournaments.organizationId, visibleOrganizationIds),
+            )
+          : isNull(tournaments.organizationId),
+      );
+    }
     if (filters.tournamentId) {
       conditions.push(eq(matches.tournamentId, filters.tournamentId));
     }

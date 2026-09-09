@@ -12,6 +12,7 @@ import {
 
 export class GameRulesService {
   async createGameRule(input: CreateGameRuleData) {
+    await this.assertCanManage(input.createdBy);
     return await gameRulesRepository.create(input);
   }
 

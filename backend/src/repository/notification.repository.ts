@@ -257,15 +257,6 @@ export const notificationRepository = {
     return notification;
   },
 
-  async incrementResentCount(notificationId: string) {
-    return await db
-      .update(notifications)
-      .set({
-        resentCount: sql`${notifications.resentCount} + 1`,
-      })
-      .where(eq(notifications.id, notificationId));
-  },
-
   async getStatus(notificationId: string, userId: string) {
     const [status] = await db
       .select()

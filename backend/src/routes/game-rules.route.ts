@@ -38,7 +38,9 @@ gameRules.post(
   describe({
     tags: TAGS,
     summary: "Create a game rule",
+    description: "Restricted to super admins and tournament admins.",
     auth: true,
+    role: true,
     success: { status: 201, description: "Game rule created", schema: gameRuleSchema },
   }),
   validate("json", createGameRuleSchema),
@@ -54,11 +56,18 @@ gameRules.post(
 );
 
 // GET /game-rules/:id - Get single game rule (public)
+//
+// Public on purpose, and deliberately out of step with GET / above: a rule is meant
+// to be shared by link with someone who has no account. Enumerating every rule stays
+// behind a session; handing out one of them does not.
 gameRules.get(
   "/:id",
   describe({
     tags: TAGS,
     summary: "Get a game rule",
+    description:
+      "Public, so a rule can be shared by link with a reader who has no account. " +
+      "Listing them all requires a session; reading one does not.",
     notFound: true,
     success: { description: "The game rule", schema: gameRuleSchema },
   }),

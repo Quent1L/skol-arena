@@ -242,28 +242,6 @@ export const notificationService = {
     return await pushDeviceRepository.remove(userId, deviceId);
   },
 
-  async resend(originalId: string, newMessageKey?: string) {
-    const original = await notificationRepository.getById(originalId);
-    if (!original) throw new Error("Notification not found");
-
-    await notificationRepository.incrementResentCount(originalId);
-
-    const newData: CreateNotification = {
-      userId: original.userId,
-      type: original.type,
-      titleKey: original.titleKey,
-      messageKey: newMessageKey || original.messageKey,
-      // Without these the resent notification renders with empty placeholders
-      translationParams:
-        (original.translationParams as Record<string, unknown> | null) ?? undefined,
-      actionUrl: original.actionUrl || undefined,
-      requiresAction: original.requiresAction,
-      matchId: original.matchId ?? undefined,
-    };
-
-    return await this.send(newData);
-  },
-
   /**
    * A notification that asks for something cannot be dismissed while that something is
    * still owed — but the flag it carries was written once, at creation. What decides is
