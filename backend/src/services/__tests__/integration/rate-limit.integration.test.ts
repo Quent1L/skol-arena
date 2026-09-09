@@ -6,8 +6,11 @@ import * as schema from "../../../db/schema";
 // Initialize the test database BEFORE any imports that use `db`.
 const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
+import { Hono } from "hono";
 import { rateLimit } from "../../../db/schema";
 import { rateLimitRepository } from "../../../repository/rate-limit.repository";
+import { rateLimit as rateLimitMiddleware } from "../../../middleware/rate-limit";
+import { errorHandler } from "../../../middleware/error";
 import { getTableColumns } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
@@ -142,6 +145,110 @@ describe("Rate limiting (integration)", () => {
       const keys = remaining.map((r) => r.key);
       expect(keys).not.toContain(stale);
       expect(keys).toContain(fresh);
+    });
+  });
+  /**
+   * The middleware, over HTTP rather than through the repository.
+   *
+   * The counter was covered above and the key was not, which is where the whole
+   * mechanism can be defeated: a key derived from a header the caller writes gives
+   * every request a fresh window. These exercise the derivation and the response.
+   */
+  describe("the middleware", () => {
+    const previousArmed = process.env.RATE_LIMIT_ENABLED;
+    const previousHops = process.env.TRUSTED_PROXY_HOPS;
+
+    /** A distinct path per test, so one test's window is not another's. */
+    function isolated(max: number) {
+      const app = new Hono();
+      app.onError(errorHandler);
+      const path = `/validate-${crypto.randomUUID()}`;
+      app.post(path, rateLimitMiddleware({ window: 300, max }), (c) => c.json({ ok: true }));
+      return { app, path };
+    }
+
+    beforeAll(() => {
+      process.env.RATE_LIMIT_ENABLED = "true";
+      process.env.TRUSTED_PROXY_HOPS = "1";
+    });
+
+    afterAll(() => {
+      if (previousArmed === undefined) delete process.env.RATE_LIMIT_ENABLED;
+      else process.env.RATE_LIMIT_ENABLED = previousArmed;
+      if (previousHops === undefined) delete process.env.TRUSTED_PROXY_HOPS;
+      else process.env.TRUSTED_PROXY_HOPS = previousHops;
+    });
+
+    it("refuses past the limit, in the canonical envelope", async () => {
+      const { app, path } = isolated(2);
+      const send = () =>
+        app.request(path, {
+          method: "POST",
+          headers: { "x-forwarded-for": "203.0.113.10" },
+        });
+
+      expect((await send()).status).toBe(200);
+      expect((await send()).status).toBe(200);
+
+      const refused = await send();
+      expect(refused.status).toBe(429);
+      expect(refused.headers.get("retry-after")).toBe("300");
+      expect(await refused.json()).toMatchObject({
+        error: { code: "TOO_MANY_REQUESTS", details: { retryAfter: 300 } },
+      });
+    });
+
+    /**
+     * The regression this exists for: with the client's own entry read as the key, all
+     * four of these would have been allowed.
+     */
+    it("cannot be escaped by rotating the caller's own x-forwarded-for entry", async () => {
+      const { app, path } = isolated(2);
+      const statuses: number[] = [];
+
+      for (let i = 0; i < 4; i++) {
+        const res = await app.request(path, {
+          method: "POST",
+          headers: { "x-forwarded-for": `9.9.9.${i}, 203.0.113.20` },
+        });
+        statuses.push(res.status);
+      }
+
+      expect(statuses).toEqual([200, 200, 429, 429]);
+    });
+
+    it("still counts two genuinely different callers apart", async () => {
+      const { app, path } = isolated(1);
+
+      const first = await app.request(path, {
+        method: "POST",
+        headers: { "x-forwarded-for": "203.0.113.30" },
+      });
+      const second = await app.request(path, {
+        method: "POST",
+        headers: { "x-forwarded-for": "203.0.113.31" },
+      });
+
+      expect(first.status).toBe(200);
+      expect(second.status).toBe(200);
+    });
+
+    it("does nothing at all when rate limiting is not armed", async () => {
+      process.env.RATE_LIMIT_ENABLED = "false";
+      const { app, path } = isolated(1);
+
+      const first = await app.request(path, {
+        method: "POST",
+        headers: { "x-forwarded-for": "203.0.113.40" },
+      });
+      const second = await app.request(path, {
+        method: "POST",
+        headers: { "x-forwarded-for": "203.0.113.40" },
+      });
+      process.env.RATE_LIMIT_ENABLED = "true";
+
+      expect(first.status).toBe(200);
+      expect(second.status).toBe(200);
     });
   });
 });
