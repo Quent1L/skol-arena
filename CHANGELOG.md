@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.4](https://github.com/Quent1L/skol-arena/compare/2.0.3...2.0.4) (2026-09-13)
+
+### 🐛 Bug Fixes
+
+* **security:** close the audit findings on scoping, roles and limits ([838cea0](https://github.com/Quent1L/skol-arena/commit/838cea0ee5d258fe05ae204b4f762ca959ef4efc))
+* **security:** name the same caller in the logs as in the limits ([1db08ae](https://github.com/Quent1L/skol-arena/commit/1db08ae179415bc9f2e124bcbccfe73f4f099c67))
+* **security:** resolve the client address without trusting the caller ([fa9d8f2](https://github.com/Quent1L/skol-arena/commit/fa9d8f2a4624ab047b79c9ef3e696cd6cdcc7015))
+* **security:** tell a throttled caller how long to wait, in their locale ([18342f9](https://github.com/Quent1L/skol-arena/commit/18342f92a71158497c734039059f74a0b2d05a14))
+
 ## [2.0.3](https://github.com/Quent1L/skol-arena/compare/2.0.2...2.0.3) (2026-09-08)
 
 ### 🐛 Bug Fixes

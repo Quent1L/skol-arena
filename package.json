@@ -1,6 +1,6 @@
 {
   "name": "skol-arena-monorepo",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Skol Arena - open-source platform for persistent competitive communities",
   "license": "AGPL-3.0-only",
   "private": true,
