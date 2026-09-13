@@ -1409,6 +1409,11 @@
     "title": "Gestion des rangs",
     "tooltipBack": "Retour à la liste"
   },
+  "rateLimit": {
+    "retryInMinutes": "Trop de tentatives. Réessayez dans {count} minute. | Trop de tentatives. Réessayez dans {count} minutes.",
+    "retryInSeconds": "Trop de tentatives. Réessayez dans {count} seconde. | Trop de tentatives. Réessayez dans {count} secondes.",
+    "retryLater": "Trop de tentatives. Patientez un instant avant de réessayer."
+  },
   "recentFormBadges": {
     "drawsShort": "N",
     "lossesShort": "D",

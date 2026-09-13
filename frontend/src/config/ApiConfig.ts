@@ -1,6 +1,7 @@
 import xior, { XiorError } from 'xior'
 import { convertStringDatesToJS } from '@/utils/DateUtils'
 import { NETWORK_ERROR, isTransientStatus } from '@/utils/HttpErrors'
+import { isRateLimited, rateLimitMessage, retryAfterFrom } from '@/utils/RateLimit'
 export const apiBaseURL = import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin
 
 /**
@@ -38,7 +39,14 @@ http.interceptors.response.use(
     // With no application code, a missing status or >= 500 is a transient failure:
     // mark it so callers never mistake it for an auth refusal.
     const cause = apiError?.code ?? (isTransientStatus(status) ? NETWORK_ERROR : undefined)
-    const err = new Error(apiError?.message ?? error.message, { cause })
+    // A throttled call is the one case where the server's own sentence is dropped:
+    // it is written in the browser's Accept-Language, not the locale picked in the
+    // app, and it says nothing about how long the wait is.
+    const rateLimited = isRateLimited({ status, code: apiError?.code, details: apiError?.details })
+    const message = rateLimited
+      ? rateLimitMessage(retryAfterFrom({ details: apiError?.details }, error.response?.headers))
+      : (apiError?.message ?? error.message)
+    const err = new Error(message, { cause })
     if (apiError?.details) (err as Error & { details: unknown }).details = apiError.details
     ;(err as Error & { status?: number }).status = status
     throw err

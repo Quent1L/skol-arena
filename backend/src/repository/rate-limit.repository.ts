@@ -11,14 +11,19 @@ import { rateLimit } from "../db/schema";
  */
 export const rateLimitRepository = {
   /**
-   * Records one hit against `key` and answers whether it is allowed.
+   * Records one hit against `key` and answers whether it is allowed, along with the
+   * number of seconds left before the current window rolls over.
    *
    * The whole decision is a single statement so that concurrent requests cannot
    * both read a stale count and both conclude they are under the limit: the
    * ON CONFLICT branch decides, from the row as it is being locked, whether the
    * window has rolled over (reset to 1) or is still running (increment).
    */
-  async consume(key: string, windowSeconds: number, max: number): Promise<boolean> {
+  async consume(
+    key: string,
+    windowSeconds: number,
+    max: number
+  ): Promise<{ allowed: boolean; retryAfter: number }> {
     const now = Date.now();
     const windowStart = now - windowSeconds * 1000;
 
@@ -35,9 +40,16 @@ export const rateLimitRepository = {
           lastRequest: sql`CASE WHEN ${rateLimit.lastRequest} < ${windowStart} THEN ${now} ELSE ${rateLimit.lastRequest} END`,
         },
       })
-      .returning({ count: rateLimit.count });
+      .returning({ count: rateLimit.count, lastRequest: rateLimit.lastRequest });
 
-    return (row?.count ?? 1) <= max;
+    // Counted from the window's own start rather than from now: telling a caller to
+    // wait a full window when only a few seconds are left is a wrong answer, and the
+    // one the client shows the user.
+    const windowStartedAt = Number(row?.lastRequest ?? now);
+    const remainingMs = windowStartedAt + windowSeconds * 1000 - now;
+    const retryAfter = Math.max(1, Math.ceil(remainingMs / 1000));
+
+    return { allowed: (row?.count ?? 1) <= max, retryAfter };
   },
 
   /**

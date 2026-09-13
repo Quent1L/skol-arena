@@ -40,9 +40,9 @@ export function rateLimit(options: {
     const address = clientIpFor(c) ?? UNKNOWN_CLIENT_IP;
     const key = `route:${c.req.method}:${c.req.routePath}:${address}`;
 
-    let allowed: boolean;
+    let verdict: { allowed: boolean; retryAfter: number };
     try {
-      allowed = await rateLimitRepository.consume(key, options.window, options.max);
+      verdict = await rateLimitRepository.consume(key, options.window, options.max);
     } catch (error) {
       // A limiter that cannot reach the database must not take the endpoint down
       // with it. Let the request through and say so.
@@ -50,10 +50,13 @@ export function rateLimit(options: {
       return await next();
     }
 
-    if (!allowed) {
-      c.header("Retry-After", String(options.window));
+    if (!verdict.allowed) {
+      // Both spellings of the same number: `Retry-After` is the standard one, and the
+      // body carries it too so a client that cannot read the header — a browser is
+      // only handed the headers CORS exposes — still knows how long to wait.
+      c.header("Retry-After", String(verdict.retryAfter));
       throw new TooManyRequestsError(ErrorCode.TOO_MANY_REQUESTS, {
-        retryAfter: options.window,
+        retryAfter: verdict.retryAfter,
       });
     }
 
