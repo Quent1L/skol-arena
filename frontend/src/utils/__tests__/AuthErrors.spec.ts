@@ -31,6 +31,22 @@ describe('translateAuthError', () => {
     expect(message).toBe('Something new')
   })
 
+  it('replaces the throttle answer with a localised one carrying the wait', () => {
+    i18n.global.locale.value = 'fr'
+
+    const message = translateAuthError(
+      {
+        status: 429,
+        code: 'TOO_MANY_REQUESTS',
+        message: 'Too many requests. Please try again later.',
+        retryAfter: 45,
+      },
+      'auth.errors.login',
+    )
+
+    expect(message).toBe('Trop de tentatives. Réessayez dans 45 secondes.')
+  })
+
   it('falls back to the provided key when there is nothing usable', () => {
     i18n.global.locale.value = 'fr'
 

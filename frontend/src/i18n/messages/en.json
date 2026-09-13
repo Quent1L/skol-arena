@@ -1409,6 +1409,11 @@
     "title": "Tier management",
     "tooltipBack": "Back to list"
   },
+  "rateLimit": {
+    "retryInMinutes": "Too many attempts. Try again in {count} minute. | Too many attempts. Try again in {count} minutes.",
+    "retryInSeconds": "Too many attempts. Try again in {count} second. | Too many attempts. Try again in {count} seconds.",
+    "retryLater": "Too many attempts. Please wait a moment before trying again."
+  },
   "recentFormBadges": {
     "drawsShort": "D",
     "lossesShort": "L",

@@ -84,7 +84,7 @@ describe("Rate limiting (integration)", () => {
 
       const verdicts: boolean[] = [];
       for (let i = 0; i < 4; i++) {
-        verdicts.push(await rateLimitRepository.consume(key, 60, 3));
+        verdicts.push((await rateLimitRepository.consume(key, 60, 3)).allowed);
       }
 
       expect(verdicts).toEqual([true, true, true, false]);
@@ -94,17 +94,17 @@ describe("Rate limiting (integration)", () => {
       const a = `sep-a-${Date.now()}`;
       const b = `sep-b-${Date.now()}`;
 
-      expect(await rateLimitRepository.consume(a, 60, 1)).toBe(true);
-      expect(await rateLimitRepository.consume(a, 60, 1)).toBe(false);
+      expect((await rateLimitRepository.consume(a, 60, 1)).allowed).toBe(true);
+      expect((await rateLimitRepository.consume(a, 60, 1)).allowed).toBe(false);
       // b has its own window, untouched by a exhausting its own.
-      expect(await rateLimitRepository.consume(b, 60, 1)).toBe(true);
+      expect((await rateLimitRepository.consume(b, 60, 1)).allowed).toBe(true);
     });
 
     it("starts a fresh window once the old one has elapsed", async () => {
       const key = `rollover-${Date.now()}`;
 
-      expect(await rateLimitRepository.consume(key, 60, 1)).toBe(true);
-      expect(await rateLimitRepository.consume(key, 60, 1)).toBe(false);
+      expect((await rateLimitRepository.consume(key, 60, 1)).allowed).toBe(true);
+      expect((await rateLimitRepository.consume(key, 60, 1)).allowed).toBe(false);
 
       // Age the row past the window rather than waiting for it.
       await testDb
@@ -112,7 +112,24 @@ describe("Rate limiting (integration)", () => {
         .set({ lastRequest: Date.now() - 61_000 })
         .where(sql`${rateLimit.key} = ${key}`);
 
-      expect(await rateLimitRepository.consume(key, 60, 1)).toBe(true);
+      expect((await rateLimitRepository.consume(key, 60, 1)).allowed).toBe(true);
+    });
+
+    it("counts the retry delay down from the window's start, not from now", async () => {
+      const key = `retry-after-${Date.now()}`;
+
+      expect((await rateLimitRepository.consume(key, 60, 1)).retryAfter).toBe(60);
+
+      // Half the window gone: a caller refused now waits for what is left of it.
+      await testDb
+        .update(rateLimit)
+        .set({ lastRequest: Date.now() - 30_000 })
+        .where(sql`${rateLimit.key} = ${key}`);
+
+      const refused = await rateLimitRepository.consume(key, 60, 1);
+      expect(refused.allowed).toBe(false);
+      expect(refused.retryAfter).toBeLessThanOrEqual(30);
+      expect(refused.retryAfter).toBeGreaterThan(25);
     });
 
     it("does not let concurrent calls both read a stale count", async () => {
@@ -123,7 +140,7 @@ describe("Rate limiting (integration)", () => {
         Array.from({ length: 6 }, () => rateLimitRepository.consume(key, 60, 3)),
       );
 
-      expect(verdicts.filter(Boolean)).toHaveLength(3);
+      expect(verdicts.filter((verdict) => verdict.allowed)).toHaveLength(3);
     });
   });
 

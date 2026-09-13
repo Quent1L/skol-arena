@@ -29,6 +29,7 @@ import { userService } from "./services/user.service";
 import { tournamentService } from "./services/tournament.service";
 import { startJobScheduler } from "./jobs/scheduler";
 import { socketAddressOf, withResolvedClientIp } from "./utils/client-ip";
+import { normalizeAuthRateLimitResponse } from "./utils/auth-rate-limit";
 import { runMigrations } from "./utils/migrate";
 import { initializeAdminIfNeeded } from "./utils/init-admin";
 import {
@@ -132,7 +133,10 @@ app.use(
     allowHeaders: ["Content-Type", "Authorization", API_VERSION_REQUEST_HEADER],
     // Without this the browser hides X-API-VERSION from page scripts entirely,
     // so a client could never read back the version it was actually served.
-    exposeHeaders: [API_VERSION_RESPONSE_HEADER],
+    // Retry-After joins it for the same reason: a throttled call has to be able to
+    // tell the user how long to wait, and a header the browser hides is a header the
+    // page does not have.
+    exposeHeaders: [API_VERSION_RESPONSE_HEADER, "Retry-After"],
   })
 );
 
@@ -145,9 +149,13 @@ app.use("*", addUserContext);
 // The request is re-headed with the address this process resolved before Better Auth
 // sees it: its rate limiter would otherwise read x-forwarded-for itself, and a caller
 // who sends one can then decide which window everyone's sign-in attempts land in.
-app.on(["POST", "GET"], "/api/auth/*", (c) =>
-  auth.handler(withResolvedClientIp(c.req.raw, socketAddressOf(c))),
-);
+app.on(["POST", "GET"], "/api/auth/*", async (c) => {
+  const response = await auth.handler(withResolvedClientIp(c.req.raw, socketAddressOf(c)));
+
+  // Its throttle response is the one thing it answers that no client can use as it
+  // stands — untyped body, no error code, non-standard delay header.
+  return normalizeAuthRateLimitResponse(response);
+});
 
 // OpenAPI specs and the Scalar reference. Exempt from version negotiation: they
 // describe the versions rather than living inside one.
