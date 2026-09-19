@@ -121,6 +121,8 @@
     "RANDOM_NOT_ALLOWED_ON_BADGE": "The random roll cannot be used in a badge rule",
     "INVALID_OPERATOR_FOR_FACT": "This operator does not apply to this variable: the condition could never be true",
     "REWIND_NOT_FOUND": "This Rewind is not available yet",
+    "SEASON_AUTOMATION_NOT_FOUND": "This season has no automatic chaining configured",
+    "SEASON_NAME_COLLISION": "Could not derive a free name for the next season",
     "REWIND_VERSION_FROZEN": "This Rewind was built in an older format and is kept as it was",
     "MATCH_MESSAGE_INVALID_BODY": "The message must be between 1 and 1000 characters",
     "MATCH_THREAD_CLOSED": "The discussion for this match is closed",

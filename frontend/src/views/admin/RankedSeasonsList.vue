@@ -49,7 +49,19 @@
         </template>
       </Column>
 
-      <Column :header="t('common.actions')" style="width: 12rem">
+      <Column :header="t('rankedSeasonsList.colChaining')">
+        <template #body="{ data }">
+          <Tag
+            v-if="data.automation?.enabled"
+            severity="info"
+            :value="chainingLabel(data)"
+            v-tooltip.top="t('rankedSeasonsList.tooltipChaining')"
+          />
+          <span v-else class="text-surface-400">—</span>
+        </template>
+      </Column>
+
+      <Column :header="t('common.actions')" style="width: 14rem">
         <template #body="{ data }">
           <div class="flex gap-2">
             <Button
@@ -102,6 +114,16 @@
               v-tooltip.top="t('rankedSeasonsList.tooltipEnd')"
             />
             <Button
+              v-if="data.status === 'ongoing' && data.automation?.enabled"
+              icon="fa fa-forward"
+              size="small"
+              text
+              rounded
+              severity="warn"
+              @click="confirmRollover(data)"
+              v-tooltip.top="t('rankedSeasonsList.tooltipRollover')"
+            />
+            <Button
               v-if="data.status === 'finished'"
               icon="fa fa-film"
               size="small"
@@ -148,6 +170,38 @@
         />
       </template>
     </Dialog>
+
+    <Dialog
+      v-model:visible="rolloverDialogVisible"
+      :header="t('rankedSeasonsList.rolloverDialogHeader')"
+      :modal="true"
+      :style="{ width: '480px' }"
+    >
+      <div class="flex items-start gap-3 mb-4">
+        <i class="pi pi-exclamation-triangle text-3xl text-orange-500"></i>
+        <div>
+          <p>{{ t('rankedSeasonsList.rolloverDialogConfirm', { name: seasonToRollover?.name }) }}</p>
+          <p class="text-sm text-surface-400 mt-2">
+            {{ t('rankedSeasonsList.rolloverDialogDetail') }}
+          </p>
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          icon="pi pi-times"
+          @click="rolloverDialogVisible = false"
+          text
+        />
+        <Button
+          :label="t('rankedSeasonsList.rollover')"
+          icon="pi pi-check"
+          @click="handleRollover"
+          severity="warn"
+          :loading="loading"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -163,10 +217,13 @@ import type { RankedSeason } from '@/composables/ranked/ranked.api'
 const router = useRouter()
 const { t } = useI18n()
 const toast = useAppToast()
-const { seasons, loading, error, loadSeasons, startSeason, endSeason } = useRankedService()
+const { seasons, loading, error, loadSeasons, startSeason, endSeason, rolloverNow } =
+  useRankedService()
 
 const endDialogVisible = ref(false)
 const seasonToEnd = ref<RankedSeason | null>(null)
+const rolloverDialogVisible = ref(false)
+const seasonToRollover = ref<RankedSeason | null>(null)
 const regeneratingId = ref<string | null>(null)
 
 function formatDate(date: string) {
@@ -175,6 +232,14 @@ function formatDate(date: string) {
     month: '2-digit',
     year: 'numeric',
   })
+}
+
+/** "Auto · 12/04/2026" while a term is scheduled, plain "Auto" on a draft that has none yet. */
+function chainingLabel(season: RankedSeason) {
+  const at = season.automation?.nextRolloverAt
+  return at
+    ? t('rankedSeasonsList.chainingNext', { date: formatDate(at) })
+    : t('rankedSeasonsList.chainingOn')
 }
 
 function statusLabel(status: string) {
@@ -238,6 +303,34 @@ async function handleRegenerateRewind(season: RankedSeason) {
   } finally {
     regeneratingId.value = null
   }
+}
+
+function confirmRollover(season: RankedSeason) {
+  seasonToRollover.value = season
+  rolloverDialogVisible.value = true
+}
+
+async function handleRollover() {
+  if (!seasonToRollover.value) return
+  const next = await rolloverNow(seasonToRollover.value.id)
+  if (!next) {
+    toast.add({
+      severity: 'error',
+      summary: t('common.error'),
+      detail: error.value ?? t('rankedSeasonsList.rolloverFailedDetail'),
+      life: 6000,
+    })
+    return
+  }
+  rolloverDialogVisible.value = false
+  seasonToRollover.value = null
+  toast.add({
+    severity: 'success',
+    summary: t('rankedSeasonsList.rolloverDone'),
+    detail: t('rankedSeasonsList.rolloverDoneDetail', { name: next.name }),
+    life: 5000,
+  })
+  await loadSeasons()
 }
 
 async function handleEnd() {

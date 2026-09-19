@@ -7,6 +7,7 @@
     "db:generate": "bun run drizzle-kit generate",
     "db:push": "bun run drizzle-kit push",
     "job:auto-finalize": "bun run src/jobs/auto-finalize-matches.job.ts",
+    "job:rollover-seasons": "bun run src/jobs/rollover-ranked-seasons.job.ts",
     "seed:matches": "bun run scripts/seed-ranked-matches.ts",
     "test": "bun run test:unit && bun run test:integration",
     "test:unit": "DATABASE_POOL_MAX=2 bun test src/services/__tests__/*.test.ts src/utils/__tests__/*.test.ts src/api/__tests__/*.test.ts --isolate",

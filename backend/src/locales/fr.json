@@ -121,6 +121,8 @@
     "RANDOM_NOT_ALLOWED_ON_BADGE": "Le tirage aléatoire ne peut pas être utilisé dans une règle de type badge",
     "INVALID_OPERATOR_FOR_FACT": "Cet opérateur ne s'applique pas à cette variable : la condition ne pourrait jamais être vraie",
     "REWIND_NOT_FOUND": "Ce Rewind n'est pas encore disponible",
+    "SEASON_AUTOMATION_NOT_FOUND": "Cette saison n'a pas d'enchaînement automatique configuré",
+    "SEASON_NAME_COLLISION": "Impossible de trouver un nom libre pour la saison suivante",
     "REWIND_VERSION_FROZEN": "Ce Rewind a été créé dans un format plus ancien et est conservé tel quel",
     "MATCH_MESSAGE_INVALID_BODY": "Le message doit contenir entre 1 et 1000 caractères",
     "MATCH_THREAD_CLOSED": "La discussion de ce match est close",

@@ -1,6 +1,7 @@
 import { withAdvisoryLock } from './advisory-lock';
 import { autoFinalizeMatchesJob } from './auto-finalize-matches.job';
 import { pruneNotificationsJob } from './prune-notifications.job';
+import { rolloverRankedSeasonsJob } from './rollover-ranked-seasons.job';
 import { getPool } from '../config/database';
 import { enqueueBadgeReconciliation } from '../services/mmr-job-queue.service';
 import { logger } from '../utils/logger';
@@ -8,6 +9,7 @@ import { logger } from '../utils/logger';
 const LOCK_KEYS = {
   AUTO_FINALIZE: 1,
   PRUNE_NOTIFICATIONS: 2,
+  ROLLOVER_SEASONS: 3,
 } as const;
 
 export function startJobScheduler(): { stop(): void } {
@@ -25,6 +27,23 @@ export function startJobScheduler(): { stop(): void } {
       logger.error({ err }, '[Scheduler] auto-finalize error');
     } finally {
       Bun.gc(true);
+    }
+  });
+
+  // Chained ranked seasons, on the half hour rather than on the hour: the auto-finalize above
+  // has to settle the pending matches of a season before its rollover freezes the standings.
+  const rolloverJob = Bun.cron('30 * * * *', async () => {
+    try {
+      const lockResult = await withAdvisoryLock(
+        getPool(),
+        LOCK_KEYS.ROLLOVER_SEASONS,
+        () => rolloverRankedSeasonsJob()
+      );
+      if (!lockResult.ran) {
+        logger.info('[Scheduler] season rollover skipped — lock held by another instance');
+      }
+    } catch (err) {
+      logger.error({ err }, '[Scheduler] season rollover error');
     }
   });
 
@@ -56,11 +75,12 @@ export function startJobScheduler(): { stop(): void } {
   });
 
   logger.info(
-    '[Scheduler] Bun.cron started (auto-finalize hourly, badge reconciliation nightly at 03:00, notification prune at 03:30)'
+    '[Scheduler] Bun.cron started (auto-finalize hourly, ranked season rollover hourly at :30, badge reconciliation nightly at 03:00, notification prune at 03:30)'
   );
   return {
     stop() {
       job.stop();
+      rolloverJob.stop();
       badgeJob.stop();
       pruneJob.stop();
     },

@@ -18,6 +18,7 @@ import type {
   OpponentQualityStats,
   MmrChartPoint,
   WeeklyMmrLeaders,
+  RankedSeasonAutomationInput,
 } from '@skol-arena/shared/types/index'
 import { calculateExpectedScore, formDataToApiPayload } from '@skol-arena/shared/types/index'
 
@@ -219,6 +220,60 @@ export function useRankedService() {
       error.value =
         err instanceof Error ? err.message : i18n.global.t('rankedService.errors.endSeasonFailed')
       return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function setAutomation(
+    id: string,
+    data: RankedSeasonAutomationInput,
+  ): Promise<boolean> {
+    loading.value = true
+    error.value = null
+    try {
+      const automation = await rankedApi.setAutomation(id, data)
+      if (currentSeason.value?.id === id) currentSeason.value.automation = automation
+      return true
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : i18n.global.t('rankedService.errors.setAutomationFailed')
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function deleteAutomation(id: string): Promise<boolean> {
+    loading.value = true
+    error.value = null
+    try {
+      await rankedApi.deleteAutomation(id)
+      if (currentSeason.value?.id === id) currentSeason.value.automation = null
+      return true
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : i18n.global.t('rankedService.errors.deleteAutomationFailed')
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /** Ends the season and opens its successor now, instead of waiting for the scheduled term. */
+  async function rolloverNow(id: string): Promise<RankedSeason | null> {
+    loading.value = true
+    error.value = null
+    try {
+      return await rankedApi.rolloverNow(id)
+    } catch (err) {
+      error.value =
+        err instanceof Error ? err.message : i18n.global.t('rankedService.errors.rolloverFailed')
+      return null
     } finally {
       loading.value = false
     }
@@ -446,6 +501,9 @@ export function useRankedService() {
     updateSeason,
     startSeason,
     endSeason,
+    setAutomation,
+    deleteAutomation,
+    rolloverNow,
     loadLeaderboard,
     loadProvisionalLeaderboard,
     loadSeasonMmrLeaderboard,

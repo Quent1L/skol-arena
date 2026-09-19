@@ -162,6 +162,15 @@ export class RankedSeasonRepository {
     });
   }
 
+  /** `tournaments.name` is UNIQUE — the chained-season name generator probes it. */
+  async existsByName(name: string): Promise<boolean> {
+    const row = await db.query.tournaments.findFirst({
+      where: eq(tournaments.name, name),
+      columns: { id: true },
+    });
+    return row !== undefined;
+  }
+
   async updateConfig(tournamentId: string, data: UpdateRankedConfigData) {
     const [updated] = await db
       .update(rankedSeasonConfigs)
@@ -503,6 +512,7 @@ export class RankedSeasonRepository {
       where: and(eq(tournaments.id, id), eq(tournaments.mode, "ranked")),
       with: {
         rankedConfig: true,
+        automation: true,
         rankTiers: true,
         discipline: true,
         rules: {
@@ -541,6 +551,7 @@ export class RankedSeasonRepository {
       },
       with: {
         discipline: { columns: { id: true, name: true, icon: true } },
+        automation: true,
       },
       orderBy: (t, { desc }) => [desc(t.startDate)],
     });

@@ -1,5 +1,6 @@
 import { eq, and, inArray } from "drizzle-orm";
 import { rankedSeasonRepository } from "../repository/ranked-season.repository";
+import { rankedSeasonAutomationRepository } from "../repository/ranked-season-automation.repository";
 import { playerMmrRepository } from "../repository/player-mmr.repository";
 import { mmrSeedRepository } from "../repository/mmr-seed.repository";
 import type {
@@ -44,6 +45,7 @@ import type {
   WeeklyMmrLeader,
   WeeklyMmrLeaders,
   TierScalingMode,
+  RankedSeasonAutomationInput,
   TeamInteractionMode,
   RulesetOutcomeType,
 } from "@skol-arena/shared/types/index";
@@ -320,6 +322,23 @@ function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Where a season that runs `durationDays` from `startDate` ends.
+ *
+ * `endDate` is the calendar day, `rolloverAt` the instant the scheduler compares against — the
+ * end of that day, so a one-day season gets its full day rather than expiring at midnight.
+ */
+export function seasonTerm(
+  startDate: string,
+  durationDays: number,
+): { endDate: string; rolloverAt: Date } {
+  const start = new Date(`${startDate}T00:00:00.000Z`);
+  const rolloverAt = new Date(start.getTime() + durationDays * DAY_MS);
+  return { endDate: rolloverAt.toISOString().slice(0, 10), rolloverAt };
+}
+
 /** Latest of two `YYYY-MM-DD` days — that format orders correctly as a string. */
 function laterIsoDate(a: string, b: string): string {
   return a >= b ? a : b;
@@ -392,7 +411,17 @@ function isSameSeasonValue(submitted: unknown, current: unknown): boolean {
 export class RankedSeasonService {
   async createSeason(input: CreateRankedSeasonInput, createdBy: string) {
     await this.assertCanManage(createdBy);
+    return await this.runCreateSeason(input, createdBy);
+  }
 
+  /**
+   * The create itself, without the permission gate.
+   *
+   * The gate lives on the public method because the rollover job has no user to check: it acts
+   * on a chain an admin already set up. Splitting it here is what lets the job reuse the exact
+   * same code path instead of inventing a system account.
+   */
+  async runCreateSeason(input: CreateRankedSeasonInput, createdBy: string) {
     const existing = await rankedSeasonRepository.getActiveSeasonByDiscipline(
       input.disciplineId,
     );
@@ -443,6 +472,11 @@ export class RankedSeasonService {
 
   async startSeason(id: string, userId: string) {
     await this.assertCanManage(userId);
+    return await this.runStartSeason(id);
+  }
+
+  /** @see runCreateSeason — same reason for the split. */
+  async runStartSeason(id: string) {
     const season = await this.getSeasonOrThrow(id);
 
     if (season.status !== "draft") {
@@ -465,10 +499,18 @@ export class RankedSeasonService {
     // when the admin presses start. Realigning it here keeps the window that
     // everything else reads (momentum chart, rewind, "days played") from
     // counting days the season spent as a draft.
+    const startDate = todayIsoDate();
+    // A chained season's term is its duration, not the date typed on the draft. Writing it back
+    // onto `endDate` keeps every screen that already reads that column truthful.
+    const term = await this.resolveAutomationTerm(id, startDate);
     await tournamentRepository.update(id, {
       status: "ongoing",
-      startDate: todayIsoDate(),
+      startDate,
+      ...(term && { endDate: term.endDate }),
     });
+    if (term) {
+      await rankedSeasonAutomationRepository.scheduleRollover(id, term.rolloverAt);
+    }
     const copied = config?.sourceTierSeasonId
       ? await this.copyTiersFromSeason(id, config.sourceTierSeasonId, config)
       : false;
@@ -558,6 +600,11 @@ export class RankedSeasonService {
 
   async endSeason(id: string, userId: string) {
     await this.assertCanManage(userId);
+    return await this.runEndSeason(id);
+  }
+
+  /** @see runCreateSeason — same reason for the split. */
+  async runEndSeason(id: string) {
     const season = await this.getSeasonOrThrow(id);
 
     if (season.status !== "ongoing") {
@@ -1153,6 +1200,64 @@ export class RankedSeasonService {
     ].sort((a, b) => b.currentMmr - a.currentMmr);
   }
 
+  /**
+   * The term of a season that is part of an automatic chain, or null when it is not.
+   * `endDate` is the day it lands on; `rolloverAt` the instant the scheduler acts.
+   */
+  /**
+   * Creates or updates a season's chaining settings.
+   *
+   * Deliberately not routed through `updateSeason`: that path treats a change to an MMR field as
+   * a reason to replay the whole season, and a duration or a name template must never cost a
+   * recalculation.
+   */
+  async setAutomation(
+    id: string,
+    input: RankedSeasonAutomationInput,
+    userId: string,
+  ) {
+    await this.assertCanManage(userId);
+    const season = await this.getSeasonOrThrow(id);
+
+    const row = await rankedSeasonAutomationRepository.upsert(id, input);
+
+    // Turning the chain on mid-season: the term is counted from when the season actually began,
+    // not from today, but never lands in the past — an already-elapsed duration should roll over
+    // on the next tick rather than be silently missed.
+    if (input.enabled && season.status === "ongoing") {
+      const { rolloverAt } = seasonTerm(season.startDate, input.durationDays);
+      await rankedSeasonAutomationRepository.scheduleRollover(
+        id,
+        rolloverAt > new Date() ? rolloverAt : new Date(),
+      );
+    }
+    return await rankedSeasonAutomationRepository.getByTournamentId(id) ?? row;
+  }
+
+  async deleteAutomation(id: string, userId: string) {
+    await this.assertCanManage(userId);
+    await this.getSeasonOrThrow(id);
+    const existing = await rankedSeasonAutomationRepository.getByTournamentId(id);
+    if (!existing) {
+      throw new NotFoundError(ErrorCode.SEASON_AUTOMATION_NOT_FOUND);
+    }
+    await rankedSeasonAutomationRepository.delete(id);
+  }
+
+  async getAutomation(id: string) {
+    return await rankedSeasonAutomationRepository.getByTournamentId(id);
+  }
+
+  private async resolveAutomationTerm(
+    seasonId: string,
+    startDate: string,
+  ): Promise<{ endDate: string; rolloverAt: Date } | null> {
+    const automation =
+      await rankedSeasonAutomationRepository.getByTournamentId(seasonId);
+    if (!automation?.enabled) return null;
+    return seasonTerm(startDate, automation.durationDays);
+  }
+
   private async getSeasonOrThrow(id: string) {
     const season = await rankedSeasonRepository.getSeasonWithConfig(id);
     if (!season) {
@@ -1161,7 +1266,11 @@ export class RankedSeasonService {
     return season;
   }
 
-  private async assertCanManage(userId: string) {
+  /**
+   * Public because the rollover service gates its admin-triggered entry point on it, and
+   * importing it the other way round would close a cycle.
+   */
+  async assertCanManage(userId: string) {
     const user = await userRepository.getById(userId);
     if (!user) {
       throw new ForbiddenError(ErrorCode.FORBIDDEN);

@@ -15,6 +15,8 @@ import type {
   WeeklyMmrLeaders,
   MmrSnapshotEntry,
   MmrSnapshotResponse,
+  RankedSeasonAutomation,
+  RankedSeasonAutomationInput,
 } from '@skol-arena/shared/types/index'
 
 const BASE_URL = '/api/ranked'
@@ -58,6 +60,7 @@ export type RankedSeason = {
   rankTiers?: ClientRankTier[]
   discipline?: { id: string; name: string } | null
   rules?: { id: string; title: string } | null
+  automation?: RankedSeasonAutomation | null
 }
 
 export type LeaderboardResponse = {
@@ -204,6 +207,26 @@ export const rankedApi = {
    * MMR of each player as of `at`. A match can be entered late, so the wizard's
    * balance preview prices the line-up on the day it was played.
    */
+  async setAutomation(
+    seasonId: string,
+    data: RankedSeasonAutomationInput,
+  ): Promise<RankedSeasonAutomation> {
+    const response = await http.put<RankedSeasonAutomation>(
+      `${BASE_URL}/seasons/${seasonId}/automation`,
+      data,
+    )
+    return response.data
+  },
+
+  async deleteAutomation(seasonId: string): Promise<void> {
+    await http.delete(`${BASE_URL}/seasons/${seasonId}/automation`)
+  },
+
+  async rolloverNow(seasonId: string): Promise<RankedSeason> {
+    const response = await http.post<RankedSeason>(`${BASE_URL}/seasons/${seasonId}/rollover`)
+    return response.data
+  },
+
   async getMmrSnapshot(
     seasonId: string,
     playerIds: string[],

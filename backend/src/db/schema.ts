@@ -992,6 +992,59 @@ export const mmrAnimationEvents = pgTable(
   ],
 );
 
+/**
+ * Turns a season into a link in a chain: how long it runs, what the next one inherits,
+ * and where the chain currently stands.
+ *
+ * Kept out of `ranked_season_configs` on purpose. That row is the MMR maths of one season and
+ * `ranked-season.service` replays the season whenever one of its fields moves; a duration or a
+ * name template must never trigger a recalculation.
+ *
+ * `nextSeasonId` is the idempotence marker: it records the successor once it exists, so a
+ * rollover interrupted between the end and the create is resumed on the next tick rather than
+ * either stalling or producing a second successor.
+ */
+export const rankedSeasonAutomations = pgTable(
+  "ranked_season_automations",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    tournamentId: uuid("tournament_id")
+      .notNull()
+      .unique()
+      .references(() => tournaments.id, { onDelete: "cascade" }),
+    enabled: boolean("enabled").notNull().default(true),
+    durationDays: integer("duration_days").notNull(),
+    // Carries `{n}`, replaced by `seasonNumber` at rollover. `tournaments.name` is UNIQUE, so a
+    // template without it would collide on the very first chained season.
+    nameTemplate: text("name_template").notNull(),
+    seasonNumber: integer("season_number").notNull().default(1),
+    carryParticipants: boolean("carry_participants").notNull().default(true),
+    // 0 keeps everyone who was registered; above that, only players who actually played that
+    // many matches are carried over.
+    participantsMinMatches: integer("participants_min_matches").notNull().default(0),
+    carryTiers: boolean("carry_tiers").notNull().default(true),
+    tierScalingMode: text("tier_scaling_mode")
+      .$type<TierScalingMode>()
+      .notNull()
+      .default("keep"),
+    carryMmr: boolean("carry_mmr").notNull().default(true),
+    softResetFactor: real("soft_reset_factor").notNull().default(0.5),
+    // Null while the season is still a draft: the term is only known once it starts.
+    nextRolloverAt: timestamp("next_rollover_at", { withTimezone: true }),
+    nextSeasonId: uuid("next_season_id").references(() => tournaments.id, {
+      onDelete: "set null",
+    }),
+    lastRolloverAt: timestamp("last_rollover_at", { withTimezone: true }),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("ranked_season_automations_due_idx")
+      .on(table.nextRolloverAt)
+      .where(sql`${table.enabled} AND ${table.nextSeasonId} IS NULL`),
+  ],
+);
+
 // ********************************************************************
 // [End] Ranked season tables
 // ***************************************************************
@@ -1405,6 +1458,10 @@ export const tournamentsRelations = relations(tournaments, ({ one, many }) => ({
     fields: [tournaments.id],
     references: [rankedSeasonConfigs.tournamentId],
   }),
+  automation: one(rankedSeasonAutomations, {
+    fields: [tournaments.id],
+    references: [rankedSeasonAutomations.tournamentId],
+  }),
   rankTiers: many(rankTiers),
   playerMmrs: many(playerMmr),
   computedData: many(computedData),
@@ -1768,6 +1825,16 @@ export const rankTiersRelations = relations(
   ({ one }) => ({
     season: one(tournaments, {
       fields: [rankTiers.seasonId],
+      references: [tournaments.id],
+    }),
+  }),
+);
+
+export const rankedSeasonAutomationsRelations = relations(
+  rankedSeasonAutomations,
+  ({ one }) => ({
+    season: one(tournaments, {
+      fields: [rankedSeasonAutomations.tournamentId],
       references: [tournaments.id],
     }),
   }),

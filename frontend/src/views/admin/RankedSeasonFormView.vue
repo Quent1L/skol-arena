@@ -192,6 +192,156 @@
               </div>
             </div>
 
+            <!-- Enchaînement automatique des saisons -->
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold mb-4">
+                {{ t('rankedSeasonFormView.automationTitle') }}
+              </h3>
+              <p class="text-sm text-surface-400 mb-4">
+                {{ t('rankedSeasonFormView.automationIntro') }}
+              </p>
+
+              <div class="flex items-center gap-2">
+                <Checkbox id="automationEnabled" v-model="automationEnabled" :binary="true" />
+                <label for="automationEnabled" class="text-sm">
+                  {{ t('rankedSeasonFormView.labelAutomationEnabled') }}
+                </label>
+              </div>
+
+              <div v-if="automationEnabled" class="mt-4 pl-6 flex flex-col gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label for="durationDays" class="block text-sm font-medium mb-2">
+                      {{ t('rankedSeasonFormView.labelDurationDays') }}
+                    </label>
+                    <InputNumber
+                      id="durationDays"
+                      v-model="automation.durationDays"
+                      :min="1"
+                      :max="365"
+                      class="w-full"
+                      :class="{ 'p-invalid': automationErrors.durationDays }"
+                    />
+                    <small v-if="automationErrors.durationDays" class="p-error">{{
+                      automationErrors.durationDays
+                    }}</small>
+                    <small v-else class="text-surface-400">
+                      {{ t('rankedSeasonFormView.helpDurationDays') }}
+                    </small>
+                  </div>
+
+                  <div>
+                    <label for="nameTemplate" class="block text-sm font-medium mb-2">
+                      {{ t('rankedSeasonFormView.labelNameTemplate') }}
+                    </label>
+                    <InputText
+                      id="nameTemplate"
+                      v-model="automation.nameTemplate"
+                      class="w-full"
+                      :class="{ 'p-invalid': automationErrors.nameTemplate }"
+                    />
+                    <small v-if="automationErrors.nameTemplate" class="p-error">{{
+                      automationErrors.nameTemplate
+                    }}</small>
+                    <small v-else class="text-surface-400">
+                      {{
+                        t('rankedSeasonFormView.helpNameTemplate', {
+                          placeholder: seasonNumberPlaceholder,
+                          example: nameTemplatePreview,
+                        })
+                      }}
+                    </small>
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                  <div class="flex items-center gap-2">
+                    <Checkbox
+                      id="carryParticipants"
+                      v-model="automation.carryParticipants"
+                      :binary="true"
+                    />
+                    <label for="carryParticipants" class="text-sm">
+                      {{ t('rankedSeasonFormView.labelCarryParticipants') }}
+                    </label>
+                  </div>
+                  <small class="text-surface-400 pl-6 -mt-2">
+                    {{ t('rankedSeasonFormView.helpCarryParticipants') }}
+                  </small>
+
+                  <div v-if="automation.carryParticipants" class="pl-6">
+                    <label for="participantsMinMatches" class="block text-sm font-medium mb-2">
+                      {{ t('rankedSeasonFormView.labelParticipantsMinMatches') }}
+                    </label>
+                    <InputNumber
+                      id="participantsMinMatches"
+                      v-model="automation.participantsMinMatches"
+                      :min="0"
+                      :max="50"
+                      class="w-full sm:w-48"
+                    />
+                    <small class="block text-surface-400 mt-1">
+                      {{ t('rankedSeasonFormView.helpParticipantsMinMatches') }}
+                    </small>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <Checkbox id="carryTiers" v-model="automation.carryTiers" :binary="true" />
+                    <label for="carryTiers" class="text-sm">
+                      {{ t('rankedSeasonFormView.labelCarryTiers') }}
+                    </label>
+                  </div>
+
+                  <div v-if="automation.carryTiers" class="pl-6">
+                    <label for="automationTierScaling" class="block text-sm font-medium mb-2">
+                      {{ t('rankedSeasonFormView.labelTierScalingMode') }}
+                    </label>
+                    <Select
+                      id="automationTierScaling"
+                      v-model="automation.tierScalingMode"
+                      :options="tierScalingOptions"
+                      option-label="label"
+                      option-value="value"
+                      class="w-full"
+                    />
+                    <small class="text-surface-400">
+                      {{
+                        automation.tierScalingMode === 'percentile'
+                          ? t('rankedSeasonFormView.helpTierScalingPercentile')
+                          : t('rankedSeasonFormView.helpTierScalingKeep')
+                      }}
+                    </small>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <Checkbox id="carryMmr" v-model="automation.carryMmr" :binary="true" />
+                    <label for="carryMmr" class="text-sm">
+                      {{ t('rankedSeasonFormView.labelCarryMmr') }}
+                    </label>
+                  </div>
+
+                  <div v-if="automation.carryMmr" class="pl-6">
+                    <label for="automationSoftReset" class="block text-sm font-medium mb-2">
+                      {{ t('rankedSeasonFormView.labelSoftResetFactor') }}
+                    </label>
+                    <InputNumber
+                      id="automationSoftReset"
+                      v-model="automation.softResetFactor"
+                      :min="0"
+                      :max="1"
+                      :step="0.05"
+                      :min-fraction-digits="0"
+                      :max-fraction-digits="2"
+                      class="w-full sm:w-48"
+                    />
+                    <small class="block text-surface-400 mt-1">
+                      {{ t('rankedSeasonFormView.helpSoftResetFactor') }}
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Contraintes de score -->
             <div class="mb-6">
               <ScoreConstraintsSection />
@@ -236,8 +386,12 @@ import { useAppToast } from '@/composables/useAppToast'
 import {
   type CreateRankedSeasonFormData,
   type UpdateRankedSeasonFormData,
+  type RankedSeasonAutomationInput,
   createRankedSeasonFormSchema,
   updateRankedSeasonFormSchema,
+  rankedSeasonAutomationFormSchema,
+  renderSeasonName,
+  SEASON_NUMBER_PLACEHOLDER,
 } from '@skol-arena/shared/types/index'
 import { useRankedService } from '@/composables/ranked/ranked.service'
 import { useFormReferences } from '@/composables/useFormReferences'
@@ -258,6 +412,8 @@ const {
   loadSeasonById,
   createSeason,
   updateSeason,
+  setAutomation,
+  deleteAutomation,
   loadFinishedSeasons,
 } = useRankedService()
 
@@ -288,6 +444,63 @@ const [allowAsymmetricMatches] = defineField('allowAsymmetricMatches')
 const [sourceTierSeasonId] = defineField('sourceTierSeasonId')
 const [tierScalingMode] = defineField('tierScalingMode')
 const [sourceMmrSeasonId] = defineField('sourceMmrSeasonId')
+
+/**
+ * The chain settings are not part of the season payload — they live behind their own endpoint
+ * and must never travel through `updateSeason`, which replays the season's MMR whenever a
+ * config field moves. Hence plain refs validated by hand rather than vee-validate fields.
+ */
+const automationEnabled = ref(false)
+const automationErrors = ref<Record<string, string>>({})
+const seasonNumberPlaceholder = SEASON_NUMBER_PLACEHOLDER
+
+function defaultAutomation(): RankedSeasonAutomationInput {
+  return {
+    enabled: true,
+    durationDays: 30,
+    nameTemplate: `${t('rankedSeasonFormView.defaultNameWord')} ${SEASON_NUMBER_PLACEHOLDER}`,
+    carryParticipants: true,
+    participantsMinMatches: 0,
+    carryTiers: true,
+    tierScalingMode: 'keep',
+    carryMmr: true,
+    softResetFactor: 0.5,
+  }
+}
+
+const automation = ref<RankedSeasonAutomationInput>(defaultAutomation())
+
+/** What the next season will be called, so the template is not read blind. */
+const nameTemplatePreview = computed(() =>
+  renderSeasonName(automation.value.nameTemplate, (currentSeason.value?.automation?.seasonNumber ?? 1) + 1),
+)
+
+/** Returns false and fills `automationErrors` when the chain settings do not validate. */
+function validateAutomation(): boolean {
+  automationErrors.value = {}
+  if (!automationEnabled.value) return true
+
+  const parsed = rankedSeasonAutomationFormSchema.safeParse(automation.value)
+  if (parsed.success) return true
+
+  for (const issue of parsed.error.issues) {
+    const key = issue.path[0]
+    if (typeof key === 'string') automationErrors.value[key] = issue.message
+  }
+  return false
+}
+
+/**
+ * Saved after the season itself: on a create the season has no id until then, and on an edit
+ * the two are independent writes anyway.
+ */
+async function persistAutomation(seasonId: string): Promise<void> {
+  if (automationEnabled.value) {
+    await setAutomation(seasonId, { ...automation.value, enabled: true })
+  } else if (currentSeason.value?.automation) {
+    await deleteAutomation(seasonId)
+  }
+}
 
 const tierScalingOptions = computed(() => [
   { label: t('rankedSeasonFormView.tierScalingKeep'), value: 'keep' },
@@ -354,18 +567,31 @@ const fieldLabels: Record<string, string> = {
 
 const onSubmit = handleSubmit(
   async (values) => {
+    if (!validateAutomation()) {
+      toast.add({
+        severity: 'error',
+        summary: t('rankedSeasonFormView.invalidFieldsTitle'),
+        detail: Object.values(automationErrors.value).join('\n'),
+        life: 8000,
+      })
+      return
+    }
+
     if (isEditMode.value) {
       const id = route.params.id as string
       const changes = changedValues(values as FormValues)
-      if (Object.keys(changes).length === 0) {
-        router.push('/admin/ranked')
-        return
-      }
-      const success = await updateSeason(id, changes as UpdateRankedSeasonFormData)
-      if (success) router.push('/admin/ranked')
+      const seasonChanged = Object.keys(changes).length > 0
+      const success = seasonChanged
+        ? await updateSeason(id, changes as UpdateRankedSeasonFormData)
+        : true
+      if (!success) return
+      await persistAutomation(id)
+      router.push('/admin/ranked')
     } else {
       const season = await createSeason(values as CreateRankedSeasonFormData)
-      if (season) router.push('/admin/ranked')
+      if (!season) return
+      await persistAutomation(season.id)
+      router.push('/admin/ranked')
     }
   },
   ({ errors: formErrors }) => {
@@ -416,6 +642,20 @@ onMounted(async () => {
       }
       setValues(loaded)
       initialValues.value = { ...loaded }
+      if (s.automation) {
+        automationEnabled.value = s.automation.enabled
+        automation.value = {
+          enabled: s.automation.enabled,
+          durationDays: s.automation.durationDays,
+          nameTemplate: s.automation.nameTemplate,
+          carryParticipants: s.automation.carryParticipants,
+          participantsMinMatches: s.automation.participantsMinMatches,
+          carryTiers: s.automation.carryTiers,
+          tierScalingMode: s.automation.tierScalingMode,
+          carryMmr: s.automation.carryMmr,
+          softResetFactor: s.automation.softResetFactor,
+        }
+      }
     }
   } else {
     setValues({

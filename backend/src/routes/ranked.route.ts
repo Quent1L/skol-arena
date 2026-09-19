@@ -2,6 +2,7 @@ import { validate } from "../api/validator";
 import { describe, type DescribeOptions } from "../api/describe";
 import { z } from "zod";
 import { rankedSeasonService, startOfWeekUtc } from "../services/ranked-season.service";
+import { rankedSeasonRolloverService } from "../services/ranked-season-rollover.service";
 import { mmrAnimationEventService } from "../services/mmr-animation-event.service";
 import { rulesService } from "../services/rules.service";
 import { mmrCalculationService } from "../services/mmr-calculation.service";
@@ -36,6 +37,8 @@ import {
   mutationResultSchema,
   mmrSnapshotRequestSchema,
   mmrSnapshotResponseSchema,
+  rankedSeasonAutomationSchema,
+  rankedSeasonAutomationInputSchema,
 } from "@skol-arena/shared/types/index";
 import { requireAuth } from "../middleware/auth";
 import { createAppHono } from "../types/hono";
@@ -206,6 +209,73 @@ ranked.post(
     const season = await rankedSeasonService.endSeason(id, appUserId);
     return c.json(season);
   }
+);
+
+// PUT /ranked/seasons/:id/automation - Configure automatic season chaining
+ranked.put(
+  "/seasons/:id/automation",
+  requireAuth,
+  seasonRoute({
+    summary: "Configure automatic season chaining",
+    description:
+      "Sets how long the season runs and what its successor inherits. Creating or editing " +
+      "this never replays the season's MMR, unlike the season config itself.",
+    auth: true,
+    role: true,
+    notFound: true,
+    success: { description: "The stored automation", schema: rankedSeasonAutomationSchema },
+  }),
+  validate("json", rankedSeasonAutomationInputSchema),
+  async (c) => {
+    const id = c.req.param("id")!;
+    const data = c.req.valid("json");
+    const appUserId = c.get("appUserId");
+    const automation = await rankedSeasonService.setAutomation(id, data, appUserId);
+    return c.json(automation);
+  },
+);
+
+// DELETE /ranked/seasons/:id/automation - Stop chaining this season
+ranked.delete(
+  "/seasons/:id/automation",
+  requireAuth,
+  seasonRoute({
+    summary: "Stop automatic season chaining",
+    description: "The season keeps running; only the chain is dropped.",
+    auth: true,
+    role: true,
+    notFound: true,
+    success: { description: "Automation removed", schema: mutationResultSchema },
+  }),
+  async (c) => {
+    const id = c.req.param("id")!;
+    const appUserId = c.get("appUserId");
+    await rankedSeasonService.deleteAutomation(id, appUserId);
+    return c.json({ success: true });
+  },
+);
+
+// POST /ranked/seasons/:id/rollover - Chain to the next season now
+ranked.post(
+  "/seasons/:id/rollover",
+  requireAuth,
+  seasonRoute({
+    summary: "Roll the season over now",
+    description:
+      "Runs the scheduled rollover immediately: ends the season, opens its successor and " +
+      "re-registers the players. Same code path as the hourly job.",
+    auth: true,
+    role: true,
+    notFound: true,
+    conflict: true,
+    success: { description: "The season that was created", schema: rankedSeasonDetailSchema },
+  }),
+  async (c) => {
+    const id = c.req.param("id")!;
+    const appUserId = c.get("appUserId");
+    const season = await rankedSeasonRolloverService.rolloverNow(id, appUserId);
+    return c.json(season);
+  },
 );
 
 // GET /ranked/seasons/:id/tiers - List rank tiers

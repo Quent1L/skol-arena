@@ -303,6 +303,91 @@ export const playerMmrProfileSchema = z
   .meta({ id: "PlayerMmrProfile" });
 
 /** Season summary row, as listed by GET /ranked/seasons. */
+// ============================================
+// Automatic season chaining
+// ============================================
+
+/**
+ * The `{n}` placeholder a season-name template must carry. `tournaments.name` is UNIQUE, so a
+ * template without it would collide the first time the chain rolls over.
+ */
+export const SEASON_NUMBER_PLACEHOLDER = "{n}";
+
+/** Substitutes the season number into a name template. */
+export function renderSeasonName(template: string, seasonNumber: number): string {
+  return template.split(SEASON_NUMBER_PLACEHOLDER).join(String(seasonNumber));
+}
+
+export const rankedSeasonAutomationSchema = z
+  .object({
+    id: z.string(),
+    tournamentId: z.string(),
+    enabled: z.boolean(),
+    durationDays: z.number().int(),
+    nameTemplate: z.string(),
+    seasonNumber: z.number().int(),
+    carryParticipants: z.boolean(),
+    participantsMinMatches: z.number().int(),
+    carryTiers: z.boolean(),
+    tierScalingMode: z.enum(["keep", "percentile"]),
+    carryMmr: z.boolean(),
+    softResetFactor: z.number(),
+    /** When the chain rolls over. Null while the season is still a draft. */
+    nextRolloverAt: z.iso.datetime().nullish(),
+    /** Set once the successor exists — the marker that makes a rollover idempotent. */
+    nextSeasonId: z.string().nullish(),
+    lastRolloverAt: z.iso.datetime().nullish(),
+    lastError: z.string().nullish(),
+  })
+  .meta({ id: "RankedSeasonAutomation" });
+
+export type RankedSeasonAutomation = z.infer<typeof rankedSeasonAutomationSchema>;
+
+/** The knobs an admin sets. Everything else on the row is chain state the server owns. */
+const rankedSeasonAutomationFields = {
+  enabled: z.boolean(),
+  durationDays: z.number().int().min(1).max(365),
+  nameTemplate: z
+    .string()
+    .min(3)
+    .max(100)
+    .refine((value) => value.includes(SEASON_NUMBER_PLACEHOLDER), {
+      message: `Le gabarit doit contenir ${SEASON_NUMBER_PLACEHOLDER}`,
+    }),
+  carryParticipants: z.boolean(),
+  participantsMinMatches: z.number().int().min(0).max(50),
+  carryTiers: z.boolean(),
+  tierScalingMode: z.enum(["keep", "percentile"]),
+  carryMmr: z.boolean(),
+  softResetFactor: z.number().min(0).max(1),
+};
+
+/** Request body of `PUT /ranked/seasons/:id/automation`. */
+export const rankedSeasonAutomationInputSchema = z.object(rankedSeasonAutomationFields);
+
+export type RankedSeasonAutomationInput = z.infer<
+  typeof rankedSeasonAutomationInputSchema
+>;
+
+/** Same fields, for the vee-validate form. Identical here — no date field to revive. */
+export const rankedSeasonAutomationFormSchema = z.object(rankedSeasonAutomationFields);
+
+export type RankedSeasonAutomationFormData = z.infer<
+  typeof rankedSeasonAutomationFormSchema
+>;
+
+export const AUTOMATION_DEFAULTS: RankedSeasonAutomationInput = {
+  enabled: true,
+  durationDays: 30,
+  nameTemplate: `Saison ${SEASON_NUMBER_PLACEHOLDER}`,
+  carryParticipants: true,
+  participantsMinMatches: 0,
+  carryTiers: true,
+  tierScalingMode: "keep",
+  carryMmr: true,
+  softResetFactor: 0.5,
+};
+
 export const rankedSeasonListItemSchema = z
   .object({
     id: z.string(),
@@ -319,6 +404,7 @@ export const rankedSeasonListItemSchema = z
     participantCount: z.number().int(),
     /** Whether the requesting user has a player_mmr row in the season. */
     isParticipant: z.boolean(),
+    automation: rankedSeasonAutomationSchema.nullish(),
   })
   .meta({ id: "RankedSeasonListItem" });
 
@@ -352,6 +438,7 @@ export const rankedSeasonDetailSchema = z
       .object({ id: z.string(), name: z.string(), icon: z.string().nullable() })
       .nullable(),
     rules: z.object({ id: z.string() }).nullable(),
+    automation: rankedSeasonAutomationSchema.nullish(),
   })
   .meta({ id: "RankedSeasonDetail" });
 
