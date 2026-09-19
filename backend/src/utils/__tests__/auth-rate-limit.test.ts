@@ -29,10 +29,11 @@ describe("normalizeAuthRateLimitResponse", () => {
   });
 
   it("translates the message with the request language", async () => {
-    const [fr, en] = [
-      await runWithLang("fr", () => normalizeAuthRateLimitResponse(throttled("10")).json()),
-      await runWithLang("en", () => normalizeAuthRateLimitResponse(throttled("10")).json()),
-    ];
+    const messageIn = async (lang: "fr" | "en"): Promise<{ message: string }> =>
+      (await runWithLang(lang, () => normalizeAuthRateLimitResponse(throttled("10")).json())) as {
+        message: string;
+      };
+    const [fr, en] = [await messageIn("fr"), await messageIn("en")];
 
     expect(fr.message).not.toBe(en.message);
     expect(fr.message).not.toContain("Too many");

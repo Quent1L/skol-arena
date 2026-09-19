@@ -84,6 +84,9 @@ const SERVICE_ENFORCED = new Map<string, string>([
   ["DELETE /ranked/seasons/:id/tiers/:level", "rankedSeasonService.deleteTier"],
   ["POST /ranked/seasons/:id/tiers/recalculate", "rankedSeasonService.recalculateTiers"],
   ["POST /ranked/seasons/:id/rewind/regenerate", "rankedSeasonService.regenerateRewind"],
+  ["PUT /ranked/seasons/:id/automation", "rankedSeasonService.setAutomation"],
+  ["DELETE /ranked/seasons/:id/automation", "rankedSeasonService.deleteAutomation"],
+  ["POST /ranked/seasons/:id/rollover", "rankedSeasonRolloverService.rolloverNow"],
 
   // gameRulesService.assertCanManage
   ["POST /game-rules", "gameRulesService.createGameRule"],
