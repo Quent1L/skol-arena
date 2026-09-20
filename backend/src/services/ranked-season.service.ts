@@ -46,6 +46,7 @@ import type {
   WeeklyMmrLeaders,
   TierScalingMode,
   RankedSeasonAutomationInput,
+  SeasonAutomationMode,
   TeamInteractionMode,
   RulesetOutcomeType,
 } from "@skol-arena/shared/types/index";
@@ -339,6 +340,30 @@ export function seasonTerm(
   return { endDate: rolloverAt.toISOString().slice(0, 10), rolloverAt };
 }
 
+/**
+ * When a `close` automation ends a season: once its last day is over, so the end date typed by
+ * the admin is played in full rather than lost at its first midnight.
+ */
+export function closeInstant(endDate: string): Date {
+  return new Date(new Date(`${endDate}T00:00:00.000Z`).getTime() + DAY_MS);
+}
+
+type SeasonTerm = { endDate: string; rolloverAt: Date };
+
+/**
+ * The term an automation gives a season. A chain counts its duration from the start and moves
+ * the end date onto it; a close keeps the end date the admin chose and acts once it is over.
+ */
+export function automationTerm(
+  automation: { mode: SeasonAutomationMode; durationDays: number },
+  season: { startDate: string; endDate: string },
+): SeasonTerm {
+  if (automation.mode === "close") {
+    return { endDate: season.endDate, rolloverAt: closeInstant(season.endDate) };
+  }
+  return seasonTerm(season.startDate, automation.durationDays);
+}
+
 /** Latest of two `YYYY-MM-DD` days — that format orders correctly as a string. */
 function laterIsoDate(a: string, b: string): string {
   return a >= b ? a : b;
@@ -501,8 +526,12 @@ export class RankedSeasonService {
     // counting days the season spent as a draft.
     const startDate = todayIsoDate();
     // A chained season's term is its duration, not the date typed on the draft. Writing it back
-    // onto `endDate` keeps every screen that already reads that column truthful.
-    const term = await this.resolveAutomationTerm(id, startDate);
+    // onto `endDate` keeps every screen that already reads that column truthful. A close-only
+    // automation keeps the typed date and just schedules the close.
+    const term = await this.resolveAutomationTerm(id, {
+      startDate,
+      endDate: season.endDate,
+    });
     await tournamentRepository.update(id, {
       status: "ongoing",
       startDate,
@@ -510,6 +539,8 @@ export class RankedSeasonService {
     });
     if (term) {
       await rankedSeasonAutomationRepository.scheduleRollover(id, term.rolloverAt);
+      // The season now counts towards `{n}`, so its successor's number moved with it.
+      await this.refreshNextSeasonNumber(id);
     }
     const copied = config?.sourceTierSeasonId
       ? await this.copyTiersFromSeason(id, config.sourceTierSeasonId, config)
@@ -669,6 +700,7 @@ export class RankedSeasonService {
     this.assertSeasonFieldsEditable(season, enteredMatchCount, input);
 
     await this.applyTournamentUpdate(id, input);
+    if (input.endDate) await this.rescheduleCloseIfNeeded(id);
     const affectsMmr = await this.applyConfigUpdate(id, input);
 
     // Every match of the season was priced with the old settings.
@@ -1201,10 +1233,6 @@ export class RankedSeasonService {
   }
 
   /**
-   * The term of a season that is part of an automatic chain, or null when it is not.
-   * `endDate` is the day it lands on; `rolloverAt` the instant the scheduler acts.
-   */
-  /**
    * Creates or updates a season's chaining settings.
    *
    * Deliberately not routed through `updateSeason`: that path treats a change to an MMR field as
@@ -1221,16 +1249,13 @@ export class RankedSeasonService {
 
     const row = await rankedSeasonAutomationRepository.upsert(id, input);
 
-    // Turning the chain on mid-season: the term is counted from when the season actually began,
-    // not from today, but never lands in the past — an already-elapsed duration should roll over
-    // on the next tick rather than be silently missed.
+    // Turning the automation on mid-season: a chain's term is counted from when the season
+    // actually began, not from today, but never lands in the past — an already-elapsed term
+    // should act on the next tick rather than be silently missed.
     if (input.enabled && season.status === "ongoing") {
-      const { rolloverAt } = seasonTerm(season.startDate, input.durationDays);
-      await rankedSeasonAutomationRepository.scheduleRollover(
-        id,
-        rolloverAt > new Date() ? rolloverAt : new Date(),
-      );
+      await this.scheduleTerm(id, automationTerm(input, season));
     }
+    if (input.enabled) await this.refreshNextSeasonNumber(id);
     return await rankedSeasonAutomationRepository.getByTournamentId(id) ?? row;
   }
 
@@ -1248,14 +1273,66 @@ export class RankedSeasonService {
     return await rankedSeasonAutomationRepository.getByTournamentId(id);
   }
 
+  /**
+   * The term of a season driven by an enabled automation, or null when it is not.
+   * `endDate` is the day it lands on; `rolloverAt` the instant the scheduler acts.
+   */
   private async resolveAutomationTerm(
     seasonId: string,
-    startDate: string,
-  ): Promise<{ endDate: string; rolloverAt: Date } | null> {
+    season: { startDate: string; endDate: string },
+  ): Promise<SeasonTerm | null> {
     const automation =
       await rankedSeasonAutomationRepository.getByTournamentId(seasonId);
     if (!automation?.enabled) return null;
-    return seasonTerm(startDate, automation.durationDays);
+    return automationTerm(automation, season);
+  }
+
+  /**
+   * What `{n}` renders to on the next rollover: the seasons the scope has already run, plus one.
+   *
+   * Counted rather than incremented from the previous automation, which is the whole point —
+   * a chain enabled after three seasons entered by hand has to name the next one 4, not 2. The
+   * result is only cached for the admin form's preview; `rolloverOne` recounts at the moment it
+   * names the successor.
+   */
+  async refreshNextSeasonNumber(id: string): Promise<number> {
+    const season = await this.getSeasonOrThrow(id);
+    const next = await this.nextSeasonNumber(season);
+    await rankedSeasonAutomationRepository.setNextSeasonNumber(id, next);
+    return next;
+  }
+
+  /**
+   * A draft is not counted yet but will be the moment it starts — and a rollover can only
+   * happen once it has — so the season after it sits one further still.
+   */
+  async nextSeasonNumber(season: {
+    status: string;
+    organizationId: string | null;
+    disciplineId: string | null;
+  }): Promise<number> {
+    const started = await rankedSeasonRepository.countStartedSeasons(season);
+    return season.status === "draft" ? started + 2 : started + 1;
+  }
+
+  private async scheduleTerm(id: string, term: SeasonTerm): Promise<void> {
+    const now = new Date();
+    await rankedSeasonAutomationRepository.scheduleRollover(
+      id,
+      term.rolloverAt > now ? term.rolloverAt : now,
+    );
+  }
+
+  /**
+   * A close-only automation acts on the season's end date, so moving that date while the
+   * season runs has to move the scheduled close with it. A chain ignores the typed date.
+   */
+  private async rescheduleCloseIfNeeded(id: string): Promise<void> {
+    const season = await this.getSeasonOrThrow(id);
+    if (season.status !== "ongoing") return;
+    const automation = await rankedSeasonAutomationRepository.getByTournamentId(id);
+    if (!automation?.enabled || automation.mode !== "close") return;
+    await this.scheduleTerm(id, automationTerm(automation, season));
   }
 
   private async getSeasonOrThrow(id: string) {

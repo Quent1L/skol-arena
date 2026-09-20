@@ -589,6 +589,13 @@
       "when": 1777526400039,
       "tag": "0083_ranked_season_automation",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1777526400040,
+      "tag": "0084_ranked_season_automation_mode",
+      "breakpoints": true
     }
   ]
 }

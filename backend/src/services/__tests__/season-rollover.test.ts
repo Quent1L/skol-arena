@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { seasonTerm } from "../ranked-season.service";
+import { automationTerm, closeInstant, seasonTerm } from "../ranked-season.service";
 import {
   renderSeasonName,
   SEASON_NUMBER_PLACEHOLDER,
@@ -26,6 +26,32 @@ describe("seasonTerm", () => {
   });
 });
 
+describe("closeInstant", () => {
+  it("lets the end date be played in full before closing", () => {
+    expect(closeInstant("2026-06-30").toISOString()).toBe("2026-07-01T00:00:00.000Z");
+  });
+
+  it("crosses a year boundary", () => {
+    expect(closeInstant("2026-12-31").toISOString()).toBe("2027-01-01T00:00:00.000Z");
+  });
+});
+
+describe("automationTerm", () => {
+  const season = { startDate: "2026-01-01", endDate: "2026-03-15" };
+
+  it("counts a chain's term from the start and ignores the typed end date", () => {
+    expect(automationTerm({ mode: "chain", durationDays: 30 }, season).endDate).toBe(
+      "2026-01-31",
+    );
+  });
+
+  it("keeps a close-only season on the end date the admin chose", () => {
+    const term = automationTerm({ mode: "close", durationDays: 30 }, season);
+    expect(term.endDate).toBe("2026-03-15");
+    expect(term.rolloverAt.toISOString()).toBe("2026-03-16T00:00:00.000Z");
+  });
+});
+
 describe("renderSeasonName", () => {
   it("substitutes the season number", () => {
     expect(renderSeasonName(`Saison ${SEASON_NUMBER_PLACEHOLDER}`, 4)).toBe("Saison 4");
@@ -45,6 +71,7 @@ describe("renderSeasonName", () => {
 describe("rankedSeasonAutomationInputSchema", () => {
   const valid = {
     enabled: true,
+    mode: "chain" as const,
     durationDays: 30,
     nameTemplate: `Saison ${SEASON_NUMBER_PLACEHOLDER}`,
     carryParticipants: true,
@@ -57,6 +84,18 @@ describe("rankedSeasonAutomationInputSchema", () => {
 
   it("accepts a well-formed chain", () => {
     expect(rankedSeasonAutomationInputSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("accepts a close-only automation", () => {
+    expect(
+      rankedSeasonAutomationInputSchema.safeParse({ ...valid, mode: "close" }).success,
+    ).toBe(true);
+  });
+
+  it("rejects an unknown mode", () => {
+    expect(
+      rankedSeasonAutomationInputSchema.safeParse({ ...valid, mode: "pause" }).success,
+    ).toBe(false);
   });
 
   it("rejects a name template without the placeholder", () => {

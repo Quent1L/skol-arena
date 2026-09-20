@@ -10,6 +10,7 @@ import * as schema from "../../../db/schema";
 const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
 import { rankedSeasonRolloverService } from "../../ranked-season-rollover.service";
+import { rankedSeasonService } from "../../ranked-season.service";
 import {
   appUsers,
   disciplines,
@@ -76,6 +77,7 @@ describe("Ranked season rollover", () => {
   async function seedOngoingSeason(opts?: {
     participantsMinMatches?: number;
     carryParticipants?: boolean;
+    mode?: "chain" | "close";
   }) {
     const label = `case${++caseCounter}`;
     const nameTemplate = `Saison ${label} {n}`;
@@ -133,9 +135,10 @@ describe("Ranked season rollover", () => {
       .values({
         tournamentId: season.id,
         enabled: true,
+        mode: opts?.mode ?? "chain",
         durationDays: 30,
         nameTemplate,
-        seasonNumber: 1,
+        nextSeasonNumber: 1,
         carryParticipants: opts?.carryParticipants ?? true,
         participantsMinMatches: opts?.participantsMinMatches ?? 0,
         carryTiers: true,
@@ -242,7 +245,9 @@ describe("Ranked season rollover", () => {
       .select()
       .from(rankedSeasonAutomations)
       .where(eq(rankedSeasonAutomations.tournamentId, nextId));
-    expect(carried.seasonNumber).toBe(2);
+    // The source season is the scope's only started one, so the successor is number 2 and the
+    // one after it number 3.
+    expect(carried.nextSeasonNumber).toBe(3);
     expect(carried.enabled).toBe(true);
     expect(carried.nextSeasonId).toBeNull();
     expect(carried.nextRolloverAt).not.toBeNull();
@@ -329,5 +334,193 @@ describe("Ranked season rollover", () => {
       .where(eq(tournaments.id, outcome!.nextSeasonId));
 
     expect(next.name).toBe(`Saison ${label} 2 (2)`);
+  });
+
+  describe("{n} numbering", () => {
+    /** A season of the same scope, as if an admin had run it by hand before the chain existed. */
+    async function seedManualSeason(
+      disciplineId: string,
+      status: "draft" | "ongoing" | "finished",
+    ) {
+      await testDb.insert(tournaments).values({
+        name: `Manual ${Date.now()}-${Math.random()}`,
+        mode: "ranked",
+        teamMode: "flex",
+        minTeamSize: 1,
+        maxTeamSize: 2,
+        createdBy: adminId,
+        disciplineId,
+        status,
+        startDate: shift(-60),
+        endDate: shift(-30),
+        validationMode: "strict",
+      });
+    }
+
+    it("counts the seasons already run instead of the chain's own position", async () => {
+      const { season, disciplineId, label } = await seedOngoingSeason();
+      // Three seasons ran before the chain was ever enabled: the two below plus the source.
+      await seedManualSeason(disciplineId, "finished");
+      await seedManualSeason(disciplineId, "finished");
+
+      const report = await rankedSeasonRolloverService.rolloverDue();
+      const outcome = report.rolledOver.find((row) => row.seasonId === season.id);
+      const [next] = await testDb
+        .select()
+        .from(tournaments)
+        .where(eq(tournaments.id, outcome!.nextSeasonId));
+
+      expect(next.name).toBe(`Saison ${label} 4`);
+    });
+
+    it("ignores a draft, which has not run yet", async () => {
+      const { season, disciplineId, label } = await seedOngoingSeason();
+      await seedManualSeason(disciplineId, "draft");
+
+      const report = await rankedSeasonRolloverService.rolloverDue();
+      const outcome = report.rolledOver.find((row) => row.seasonId === season.id);
+      const [next] = await testDb
+        .select()
+        .from(tournaments)
+        .where(eq(tournaments.id, outcome!.nextSeasonId));
+
+      expect(next.name).toBe(`Saison ${label} 2`);
+    });
+
+    it("keeps a separate count per discipline", async () => {
+      const { season, label } = await seedOngoingSeason();
+      // Another discipline's history must not push this chain's numbering forward.
+      await seedManualSeason(await freshDiscipline(), "finished");
+      await seedManualSeason(await freshDiscipline(), "finished");
+
+      const report = await rankedSeasonRolloverService.rolloverDue();
+      const outcome = report.rolledOver.find((row) => row.seasonId === season.id);
+      const [next] = await testDb
+        .select()
+        .from(tournaments)
+        .where(eq(tournaments.id, outcome!.nextSeasonId));
+
+      expect(next.name).toBe(`Saison ${label} 2`);
+    });
+
+    it("caches the next number on the automation when it is enabled", async () => {
+      const { season, disciplineId } = await seedOngoingSeason();
+      await seedManualSeason(disciplineId, "finished");
+      await seedManualSeason(disciplineId, "finished");
+
+      const refreshed = await rankedSeasonService.refreshNextSeasonNumber(season.id);
+
+      expect(refreshed).toBe(4);
+      const [row] = await testDb
+        .select()
+        .from(rankedSeasonAutomations)
+        .where(eq(rankedSeasonAutomations.tournamentId, season.id));
+      expect(row.nextSeasonNumber).toBe(4);
+    });
+  });
+
+  describe("close-only automation", () => {
+    async function seasonsOfDiscipline(disciplineId: string) {
+      return await testDb
+        .select()
+        .from(tournaments)
+        .where(eq(tournaments.disciplineId, disciplineId));
+    }
+
+    async function automationOf(seasonId: string) {
+      const [row] = await testDb
+        .select()
+        .from(rankedSeasonAutomations)
+        .where(eq(rankedSeasonAutomations.tournamentId, seasonId));
+      return row;
+    }
+
+    it("ends the season on its end date and opens nothing after it", async () => {
+      const { season, disciplineId } = await seedOngoingSeason({ mode: "close" });
+
+      const report = await rankedSeasonRolloverService.rolloverDue();
+
+      expect(report.closed).toContain(season.id);
+      expect(report.rolledOver.some((row) => row.seasonId === season.id)).toBe(false);
+      const seasons = await seasonsOfDiscipline(disciplineId);
+      expect(seasons).toHaveLength(1);
+      expect(seasons[0].status).toBe("finished");
+
+      const automation = await automationOf(season.id);
+      expect(automation.nextSeasonId).toBeNull();
+      expect(automation.nextRolloverAt).toBeNull();
+      expect(automation.lastRolloverAt).not.toBeNull();
+    });
+
+    it("is not picked up again once the season is finished", async () => {
+      const { season, disciplineId } = await seedOngoingSeason({ mode: "close" });
+
+      await rankedSeasonRolloverService.rolloverDue();
+      const second = await rankedSeasonRolloverService.rolloverDue();
+
+      expect(second.closed).not.toContain(season.id);
+      expect(second.rolledOver.some((row) => row.seasonId === season.id)).toBe(false);
+      expect(await seasonsOfDiscipline(disciplineId)).toHaveLength(1);
+    });
+
+    it("leaves a season whose end date is still ahead running", async () => {
+      const { season } = await seedOngoingSeason({ mode: "close" });
+      await testDb
+        .update(rankedSeasonAutomations)
+        .set({ nextRolloverAt: new Date(Date.now() + 86_400_000) })
+        .where(eq(rankedSeasonAutomations.tournamentId, season.id));
+
+      const report = await rankedSeasonRolloverService.rolloverDue();
+
+      expect(report.closed).not.toContain(season.id);
+      const [still] = await testDb.select().from(tournaments).where(eq(tournaments.id, season.id));
+      expect(still.status).toBe("ongoing");
+    });
+
+    it("schedules the close after the end date when enabled mid-season", async () => {
+      const { season } = await seedOngoingSeason({ mode: "close" });
+      const endDate = shift(10);
+      await testDb.update(tournaments).set({ endDate }).where(eq(tournaments.id, season.id));
+
+      const rest = await automationOf(season.id);
+      await rankedSeasonService.setAutomation(
+        season.id,
+        {
+          enabled: true,
+          mode: "close",
+          durationDays: rest.durationDays,
+          nameTemplate: rest.nameTemplate,
+          carryParticipants: rest.carryParticipants,
+          participantsMinMatches: rest.participantsMinMatches,
+          carryTiers: rest.carryTiers,
+          tierScalingMode: rest.tierScalingMode,
+          carryMmr: rest.carryMmr,
+          softResetFactor: rest.softResetFactor,
+        },
+        adminId,
+      );
+
+      const automation = await automationOf(season.id);
+      expect(automation.nextRolloverAt?.toISOString()).toBe(
+        new Date(`${shift(11)}T00:00:00.000Z`).toISOString(),
+      );
+    });
+
+    it("moves the scheduled close when the end date is edited", async () => {
+      const { season } = await seedOngoingSeason({ mode: "close" });
+
+      await rankedSeasonService.updateSeason(season.id, { endDate: shift(20) }, adminId);
+
+      const automation = await automationOf(season.id);
+      expect(automation.nextRolloverAt?.toISOString()).toBe(
+        new Date(`${shift(21)}T00:00:00.000Z`).toISOString(),
+      );
+    });
+
+    it("refuses an early rollover, which has no successor to open", async () => {
+      const { season } = await seedOngoingSeason({ mode: "close" });
+
+      await expect(rankedSeasonRolloverService.rolloverNow(season.id, adminId)).rejects.toThrow();
+    });
   });
 });

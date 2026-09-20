@@ -19,6 +19,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import type {
+  SeasonAutomationMode,
   TierScalingMode,
   TournamentRulesetPayload,
 } from "@skol-arena/shared/types/index";
@@ -1013,11 +1014,17 @@ export const rankedSeasonAutomations = pgTable(
       .unique()
       .references(() => tournaments.id, { onDelete: "cascade" }),
     enabled: boolean("enabled").notNull().default(true),
+    // 'chain' opens a successor at term; 'close' only ends the season on its own `endDate`, and
+    // every chain setting below is then kept but ignored.
+    mode: text("mode").$type<SeasonAutomationMode>().notNull().default("chain"),
     durationDays: integer("duration_days").notNull(),
-    // Carries `{n}`, replaced by `seasonNumber` at rollover. `tournaments.name` is UNIQUE, so a
+    // Carries `{n}`, replaced by `nextSeasonNumber` at rollover. `tournaments.name` is UNIQUE, so a
     // template without it would collide on the very first chained season.
     nameTemplate: text("name_template").notNull(),
-    seasonNumber: integer("season_number").notNull().default(1),
+    // The number `{n}` renders to on the next rollover. Derived from how many ranked seasons
+    // the scope (organization + discipline) already holds, so seasons created by hand count;
+    // stored only so the admin form can preview the name without recounting.
+    nextSeasonNumber: integer("next_season_number").notNull().default(1),
     carryParticipants: boolean("carry_participants").notNull().default(true),
     // 0 keeps everyone who was registered; above that, only players who actually played that
     // many matches are carried over.

@@ -192,7 +192,7 @@
               </div>
             </div>
 
-            <!-- Enchaînement automatique des saisons -->
+            <!-- Fin de saison automatique : enchaînement ou simple clôture -->
             <div class="mb-6">
               <h3 class="text-lg font-semibold mb-4">
                 {{ t('rankedSeasonFormView.automationTitle') }}
@@ -209,6 +209,28 @@
               </div>
 
               <div v-if="automationEnabled" class="mt-4 pl-6 flex flex-col gap-4">
+                <div>
+                  <label for="automationMode" class="block text-sm font-medium mb-2">
+                    {{ t('rankedSeasonFormView.labelAutomationMode') }}
+                  </label>
+                  <SelectButton
+                    id="automationMode"
+                    v-model="automation.mode"
+                    :options="automationModeOptions"
+                    option-label="label"
+                    option-value="value"
+                    :allow-empty="false"
+                  />
+                  <small class="block text-surface-400 mt-1">
+                    {{
+                      automation.mode === 'close'
+                        ? t('rankedSeasonFormView.helpAutomationModeClose')
+                        : t('rankedSeasonFormView.helpAutomationModeChain')
+                    }}
+                  </small>
+                </div>
+
+                <template v-if="automation.mode === 'chain'">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label for="durationDays" class="block text-sm font-medium mb-2">
@@ -339,6 +361,7 @@
                     </small>
                   </div>
                 </div>
+                </template>
               </div>
             </div>
 
@@ -457,6 +480,7 @@ const seasonNumberPlaceholder = SEASON_NUMBER_PLACEHOLDER
 function defaultAutomation(): RankedSeasonAutomationInput {
   return {
     enabled: true,
+    mode: 'chain',
     durationDays: 30,
     nameTemplate: `${t('rankedSeasonFormView.defaultNameWord')} ${SEASON_NUMBER_PLACEHOLDER}`,
     carryParticipants: true,
@@ -470,9 +494,16 @@ function defaultAutomation(): RankedSeasonAutomationInput {
 
 const automation = ref<RankedSeasonAutomationInput>(defaultAutomation())
 
-/** What the next season will be called, so the template is not read blind. */
+/**
+ * What the next season will be called, so the template is not read blind. The number is the
+ * server's: it counts the seasons already run for this organization and discipline, which a
+ * form that has never been saved cannot know — hence the 1 until it has.
+ */
 const nameTemplatePreview = computed(() =>
-  renderSeasonName(automation.value.nameTemplate, (currentSeason.value?.automation?.seasonNumber ?? 1) + 1),
+  renderSeasonName(
+    automation.value.nameTemplate,
+    currentSeason.value?.automation?.nextSeasonNumber ?? 1,
+  ),
 )
 
 /** Returns false and fills `automationErrors` when the chain settings do not validate. */
@@ -501,6 +532,11 @@ async function persistAutomation(seasonId: string): Promise<void> {
     await deleteAutomation(seasonId)
   }
 }
+
+const automationModeOptions = computed(() => [
+  { label: t('rankedSeasonFormView.automationModeChain'), value: 'chain' },
+  { label: t('rankedSeasonFormView.automationModeClose'), value: 'close' },
+])
 
 const tierScalingOptions = computed(() => [
   { label: t('rankedSeasonFormView.tierScalingKeep'), value: 'keep' },
@@ -646,6 +682,7 @@ onMounted(async () => {
         automationEnabled.value = s.automation.enabled
         automation.value = {
           enabled: s.automation.enabled,
+          mode: s.automation.mode,
           durationDays: s.automation.durationDays,
           nameTemplate: s.automation.nameTemplate,
           carryParticipants: s.automation.carryParticipants,

@@ -26,6 +26,8 @@ export interface RolloverOutcome {
 
 export interface RolloverReport {
   rolledOver: RolloverOutcome[];
+  /** Seasons ended by a close-only automation, with no successor. */
+  closed: string[];
   failed: { seasonId: string; error: string }[];
 }
 
@@ -40,14 +42,18 @@ export interface RolloverReport {
  * `nextSeasonId` records completion, so a crash mid-rollover is resumed on the next tick.
  */
 export class RankedSeasonRolloverService {
-  /** Every chain whose term has passed. One failure never stops the others. */
+  /** Every automation whose term has passed. One failure never stops the others. */
   async rolloverDue(now: Date = new Date()): Promise<RolloverReport> {
     const due = await rankedSeasonAutomationRepository.listDue(now);
-    const report: RolloverReport = { rolledOver: [], failed: [] };
+    const report: RolloverReport = { rolledOver: [], closed: [], failed: [] };
 
     for (const entry of due) {
       try {
-        report.rolledOver.push(await this.rolloverOne(entry));
+        if (entry.automation.mode === "close") {
+          report.closed.push(await this.closeOne(entry));
+        } else {
+          report.rolledOver.push(await this.rolloverOne(entry));
+        }
       } catch (err) {
         const error = err instanceof Error ? err.message : String(err);
         logger.error({ err, seasonId: entry.season.id }, "[SeasonRollover] failed");
@@ -76,13 +82,32 @@ export class RankedSeasonRolloverService {
     }
     // Already chained, or never started: neither has a successor to produce. A draft in
     // particular would slip past the "one active season per discipline" guard and leave the
-    // discipline with two.
-    if (automation.nextSeasonId || season.status !== "ongoing") {
+    // discipline with two. A close-only automation never has one either — the plain End
+    // action is what ends it early.
+    if (
+      automation.mode !== "chain" ||
+      automation.nextSeasonId ||
+      season.status !== "ongoing"
+    ) {
       throw new BadRequestError(ErrorCode.TOURNAMENT_INVALID_STATUS);
     }
 
     const { nextSeasonId } = await this.rolloverOne({ automation, season });
     return await rankedSeasonRepository.getSeasonWithConfig(nextSeasonId);
+  }
+
+  /**
+   * A close-only automation: the season ends on its own date and nothing opens after it.
+   * `markClosed` clears the schedule, and `listDue` never resumes a finished `close` season,
+   * so this runs once per season.
+   */
+  async closeOne({ season }: DueAutomation): Promise<string> {
+    if (season.status === "ongoing") {
+      await rankedSeasonService.runEndSeason(season.id);
+    }
+    await rankedSeasonAutomationRepository.markClosed(season.id);
+    logger.info({ seasonId: season.id }, "[SeasonRollover] season closed");
+    return season.id;
   }
 
   async rolloverOne({ automation, season }: DueAutomation): Promise<RolloverOutcome> {
@@ -113,8 +138,13 @@ export class RankedSeasonRolloverService {
 
     // Before the start, deliberately. Should starting fail, the successor still carries the
     // chain, so the admin pressing Start on the leftover draft resumes it — `runStartSeason`
-    // reads the automation to set the term. The other order kills the chain silently.
-    await rankedSeasonAutomationRepository.createForSuccessor(nextSeasonId, automation);
+    // reads the automation to set the term and to renumber `{n}`. The other order kills the
+    // chain silently.
+    await rankedSeasonAutomationRepository.createForSuccessor(
+      nextSeasonId,
+      automation,
+      await rankedSeasonService.nextSeasonNumber({ ...season, status: "draft" }),
+    );
 
     // Sets the successor's end date and schedules the next rollover from the automation above.
     await rankedSeasonService.runStartSeason(nextSeasonId);
@@ -149,9 +179,11 @@ export class RankedSeasonRolloverService {
     const { endDate } = seasonTerm(startDate, automation.durationDays);
 
     return {
+      // Recounted rather than read off the automation: seasons entered by hand between two
+      // rollovers count too, and the row is only a cache for the admin form.
       name: await this.resolveUniqueName(
         automation.nameTemplate,
-        automation.seasonNumber + 1,
+        await rankedSeasonService.nextSeasonNumber(season),
       ),
       ...(season.description && { description: season.description }),
       disciplineId: season.disciplineId as string,

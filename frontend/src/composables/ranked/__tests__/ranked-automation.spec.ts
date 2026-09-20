@@ -16,6 +16,7 @@ vi.mock('@/i18n', () => ({
 
 const input = {
   enabled: true,
+  mode: 'chain' as const,
   durationDays: 30,
   nameTemplate: 'Saison {n}',
   carryParticipants: true,
@@ -26,7 +27,7 @@ const input = {
   softResetFactor: 0.5,
 }
 
-const storedAutomation = { id: 'auto-1', tournamentId: 'season-1', ...input, seasonNumber: 1 }
+const storedAutomation = { id: 'auto-1', tournamentId: 'season-1', ...input, nextSeasonNumber: 4 }
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -60,6 +61,15 @@ describe('setAutomation', () => {
     expect(await service.setAutomation('season-1', input)).toBe(false)
     expect(service.error.value).toBe('SEASON_NOT_FOUND')
     expect(service.loading.value).toBe(false)
+  })
+
+  it('sends a close-only automation as is', async () => {
+    const service = useRankedService()
+    vi.mocked(rankedApi.setAutomation).mockResolvedValue(storedAutomation as never)
+
+    await service.setAutomation('season-1', { ...input, mode: 'close' })
+
+    expect(rankedApi.setAutomation).toHaveBeenCalledWith('season-1', { ...input, mode: 'close' })
   })
 })
 

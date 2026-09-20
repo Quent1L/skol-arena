@@ -55,7 +55,11 @@
             v-if="data.automation?.enabled"
             severity="info"
             :value="chainingLabel(data)"
-            v-tooltip.top="t('rankedSeasonsList.tooltipChaining')"
+            v-tooltip.top="
+              data.automation.mode === 'close'
+                ? t('rankedSeasonsList.tooltipClosing')
+                : t('rankedSeasonsList.tooltipChaining')
+            "
           />
           <span v-else class="text-surface-400">—</span>
         </template>
@@ -114,7 +118,11 @@
               v-tooltip.top="t('rankedSeasonsList.tooltipEnd')"
             />
             <Button
-              v-if="data.status === 'ongoing' && data.automation?.enabled"
+              v-if="
+                data.status === 'ongoing' &&
+                data.automation?.enabled &&
+                data.automation.mode === 'chain'
+              "
               icon="fa fa-forward"
               size="small"
               text
@@ -234,12 +242,16 @@ function formatDate(date: string) {
   })
 }
 
-/** "Auto · 12/04/2026" while a term is scheduled, plain "Auto" on a draft that has none yet. */
+/**
+ * "Auto · 12/04/2026" while a term is scheduled, plain "Auto" on a draft that has none yet;
+ * the "Clôture" variants for an automation that only ends the season.
+ */
 function chainingLabel(season: RankedSeason) {
   const at = season.automation?.nextRolloverAt
+  const prefix = season.automation?.mode === 'close' ? 'closing' : 'chaining'
   return at
-    ? t('rankedSeasonsList.chainingNext', { date: formatDate(at) })
-    : t('rankedSeasonsList.chainingOn')
+    ? t(`rankedSeasonsList.${prefix}Next`, { date: formatDate(at) })
+    : t(`rankedSeasonsList.${prefix}On`)
 }
 
 function statusLabel(status: string) {

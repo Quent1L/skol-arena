@@ -24,8 +24,8 @@ export class RankedSeasonAutomationRepository {
 
   /**
    * Creates or replaces the chain settings of a season. The chain state columns
-   * (`seasonNumber`, `nextRolloverAt`, `nextSeasonId`, …) are deliberately absent: they belong
-   * to the server, and an admin editing a duration must not reset the chain's position.
+   * (`nextSeasonNumber`, `nextRolloverAt`, `nextSeasonId`, …) are deliberately absent: they
+   * belong to the server, and an admin editing a duration must not renumber the chain.
    */
   async upsert(
     tournamentId: string,
@@ -42,22 +42,32 @@ export class RankedSeasonAutomationRepository {
     return row;
   }
 
+  /** Caches the number `{n}` will render to on the next rollover. */
+  async setNextSeasonNumber(tournamentId: string, next: number): Promise<void> {
+    await db
+      .update(rankedSeasonAutomations)
+      .set({ nextSeasonNumber: next })
+      .where(eq(rankedSeasonAutomations.tournamentId, tournamentId));
+  }
+
   /**
-   * Seeds the successor's chain settings, carrying the position forward. A no-op when the row
-   * is already there, so a resumed rollover does not reset the chain it is finishing.
+   * Seeds the successor's chain settings. A no-op when the row is already there, so a resumed
+   * rollover does not renumber the chain it is finishing.
    */
   async createForSuccessor(
     tournamentId: string,
     source: RankedSeasonAutomationRow,
+    nextSeasonNumber: number,
   ): Promise<void> {
     await db
       .insert(rankedSeasonAutomations)
       .values({
         tournamentId,
         enabled: source.enabled,
+        mode: source.mode,
         durationDays: source.durationDays,
         nameTemplate: source.nameTemplate,
-        seasonNumber: source.seasonNumber + 1,
+        nextSeasonNumber,
         carryParticipants: source.carryParticipants,
         participantsMinMatches: source.participantsMinMatches,
         carryTiers: source.carryTiers,
@@ -80,6 +90,9 @@ export class RankedSeasonAutomationRepository {
    * Two cases, and the second is what makes the job resumable: an `ongoing` season whose term
    * has passed is the normal rollover, while a `finished` season with no successor is a
    * rollover that died between ending the old season and creating the new one.
+   *
+   * That second case is chain-only: a `close` automation never gets a successor, so its
+   * season would otherwise come back on every tick once finished.
    */
   async listDue(now: Date): Promise<DueAutomation[]> {
     const rows = await db
@@ -95,7 +108,10 @@ export class RankedSeasonAutomationRepository {
               eq(tournaments.status, "ongoing"),
               lte(rankedSeasonAutomations.nextRolloverAt, now),
             ),
-            eq(tournaments.status, "finished"),
+            and(
+              eq(tournaments.status, "finished"),
+              eq(rankedSeasonAutomations.mode, "chain"),
+            ),
           ),
         ),
       );
@@ -125,6 +141,14 @@ export class RankedSeasonAutomationRepository {
       )
       .returning({ id: rankedSeasonAutomations.id });
     return updated.length > 0;
+  }
+
+  /** A `close` automation is done once its season has ended: nothing left to schedule. */
+  async markClosed(tournamentId: string): Promise<void> {
+    await db
+      .update(rankedSeasonAutomations)
+      .set({ nextRolloverAt: null, lastRolloverAt: sql`now()`, lastError: null })
+      .where(eq(rankedSeasonAutomations.tournamentId, tournamentId));
   }
 
   async recordError(tournamentId: string, message: string): Promise<void> {

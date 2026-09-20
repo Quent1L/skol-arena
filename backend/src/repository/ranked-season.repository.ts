@@ -1,4 +1,4 @@
-import { eq, and, inArray, asc, sql, count } from "drizzle-orm";
+import { eq, and, inArray, asc, isNull, sql, count } from "drizzle-orm";
 import type {
   CreateRankTierInput,
   UpdateRankTierInput,
@@ -160,6 +160,36 @@ export class RankedSeasonRepository {
         inArray(tournaments.status, ["open", "ongoing"] as TournamentStatus[]),
       ),
     });
+  }
+
+  /**
+   * How many ranked seasons the scope has actually run — what `{n}` counts.
+   *
+   * Scoped by organization *and* discipline: a season belonging to an organization numbers
+   * itself among that organization's, and two global disciplines keep separate numbering rather
+   * than interleaving. Drafts are left out: one abandoned before it ever started must not eat a
+   * season number.
+   */
+  async countStartedSeasons(scope: {
+    organizationId: string | null;
+    disciplineId: string | null;
+  }): Promise<number> {
+    const [row] = await db
+      .select({ total: count() })
+      .from(tournaments)
+      .where(
+        and(
+          eq(tournaments.mode, "ranked"),
+          inArray(tournaments.status, ["ongoing", "finished"] as TournamentStatus[]),
+          scope.organizationId
+            ? eq(tournaments.organizationId, scope.organizationId)
+            : isNull(tournaments.organizationId),
+          scope.disciplineId
+            ? eq(tournaments.disciplineId, scope.disciplineId)
+            : isNull(tournaments.disciplineId),
+        ),
+      );
+    return row?.total ?? 0;
   }
 
   /** `tournaments.name` is UNIQUE — the chained-season name generator probes it. */

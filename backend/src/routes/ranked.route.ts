@@ -216,10 +216,12 @@ ranked.put(
   "/seasons/:id/automation",
   requireAuth,
   seasonRoute({
-    summary: "Configure automatic season chaining",
+    summary: "Configure the season's automatic end",
     description:
-      "Sets how long the season runs and what its successor inherits. Creating or editing " +
-      "this never replays the season's MMR, unlike the season config itself.",
+      "In `chain` mode, sets how long the season runs and what its successor inherits. In " +
+      "`close` mode, the season is only ended once its end date is over and nothing is opened " +
+      "after it. Creating or editing this never replays the season's MMR, unlike the season " +
+      "config itself.",
     auth: true,
     role: true,
     notFound: true,
@@ -263,7 +265,8 @@ ranked.post(
     summary: "Roll the season over now",
     description:
       "Runs the scheduled rollover immediately: ends the season, opens its successor and " +
-      "re-registers the players. Same code path as the hourly job.",
+      "re-registers the players. Same code path as the hourly job. Refused for a `close` " +
+      "automation, which has no successor.",
     auth: true,
     role: true,
     notFound: true,

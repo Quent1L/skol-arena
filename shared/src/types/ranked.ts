@@ -25,6 +25,14 @@ export type TierScalingMode = "keep" | "percentile";
 
 export const tierScalingModes: readonly TierScalingMode[] = ["keep", "percentile"];
 
+/**
+ * What a season automation does at term. `chain` ends the season and opens its successor;
+ * `close` only ends it on its own end date, and nothing is opened after it.
+ */
+export const seasonAutomationModeSchema = z.enum(["chain", "close"]);
+
+export type SeasonAutomationMode = z.infer<typeof seasonAutomationModeSchema>;
+
 export const rankedSeasonConfigSchema = z
   .object({
     id: z.string(),
@@ -323,9 +331,11 @@ export const rankedSeasonAutomationSchema = z
     id: z.string(),
     tournamentId: z.string(),
     enabled: z.boolean(),
+    mode: seasonAutomationModeSchema,
     durationDays: z.number().int(),
     nameTemplate: z.string(),
-    seasonNumber: z.number().int(),
+    /** What `{n}` renders to on the next rollover, counted from the seasons already run. */
+    nextSeasonNumber: z.number().int(),
     carryParticipants: z.boolean(),
     participantsMinMatches: z.number().int(),
     carryTiers: z.boolean(),
@@ -346,6 +356,7 @@ export type RankedSeasonAutomation = z.infer<typeof rankedSeasonAutomationSchema
 /** The knobs an admin sets. Everything else on the row is chain state the server owns. */
 const rankedSeasonAutomationFields = {
   enabled: z.boolean(),
+  mode: seasonAutomationModeSchema,
   durationDays: z.number().int().min(1).max(365),
   nameTemplate: z
     .string()
@@ -378,6 +389,7 @@ export type RankedSeasonAutomationFormData = z.infer<
 
 export const AUTOMATION_DEFAULTS: RankedSeasonAutomationInput = {
   enabled: true,
+  mode: "chain",
   durationDays: 30,
   nameTemplate: `Saison ${SEASON_NUMBER_PLACEHOLDER}`,
   carryParticipants: true,

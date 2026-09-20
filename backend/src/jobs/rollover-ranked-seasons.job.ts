@@ -2,7 +2,7 @@ import { rankedSeasonRolloverService } from "../services/ranked-season-rollover.
 import { logger } from "../utils/logger";
 
 /**
- * Closes every ranked season whose term has passed and opens its successor.
+ * Closes every ranked season whose term has passed and, for a chain, opens its successor.
  *
  * Run hourly by the scheduler. Also picks up chains left half-rolled by an interrupted run,
  * so a restart repairs itself rather than stalling.
@@ -14,7 +14,11 @@ export async function rolloverRankedSeasonsJob() {
     const result = await rankedSeasonRolloverService.rolloverDue();
 
     logger.info(
-      { rolledOver: result.rolledOver.length, failed: result.failed.length },
+      {
+        rolledOver: result.rolledOver.length,
+        closed: result.closed.length,
+        failed: result.failed.length,
+      },
       "[SeasonRollover] Job completed:",
     );
 
