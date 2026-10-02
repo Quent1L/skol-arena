@@ -23,6 +23,7 @@ import type {
   PlayerComparisonResponse,
 } from "@skol-arena/shared";
 import { visibleOrganizationIdsFor } from "./visibility";
+import { winRatePercent } from "../utils/win-rate";
 
 type ExtendedFilters = PlayerStatsFilters & { allowedModes?: string[] };
 
@@ -62,7 +63,7 @@ function groupPlayersByEntry(
   return map;
 }
 
-type H2HAcc = { playerAWins: number; playerBWins: number; draws: number };
+type H2HAcc = { played: number; playerAWins: number; playerBWins: number; draws: number };
 
 function tabulateH2HMatch(
   r: MatchResult,
@@ -73,19 +74,19 @@ function tabulateH2HMatch(
   const aCount = playerCounts.get(r.entryId) ?? 1;
   const bCount = playerCounts.get(r.oppEntryId) ?? 1;
   const acc = aCount === 1 && bCount === 1 ? soloAcc : teamAcc;
+  acc.played++;
   if (isWinResult(r)) acc.playerAWins++;
   else if (isLossResult(r)) acc.playerBWins++;
   else if (r.winnerSide === null && r.allowDraw) acc.draws++;
 }
 
 function buildH2HSubRecord(acc: H2HAcc): H2HSubRecord {
-  const matchesPlayed = acc.playerAWins + acc.playerBWins + acc.draws;
   return {
-    matchesPlayed,
+    matchesPlayed: acc.played,
     playerAWins: acc.playerAWins,
     playerBWins: acc.playerBWins,
     draws: acc.draws,
-    playerAWinRate: matchesPlayed > 0 ? Math.round((acc.playerAWins / matchesPlayed) * 100) : 0,
+    playerAWinRate: winRatePercent(acc.playerAWins, acc.played),
   };
 }
 
@@ -372,13 +373,13 @@ export class PlayerStatsService {
       else if (r.winnerSide === null && r.allowDraw) draws++;
     }
 
-    const matchesPlayed = wins + losses + draws;
+    const matchesPlayed = seenMatches.size;
     return {
       matchesPlayed,
       wins,
       losses,
       draws,
-      winRate: matchesPlayed > 0 ? Math.round((wins / matchesPlayed) * 100) : 0,
+      winRate: winRatePercent(wins, matchesPlayed),
     };
   }
 
@@ -418,8 +419,8 @@ export class PlayerStatsService {
     const playerCounts = await playerStatsRepository.getEntryPlayerCounts([...relevantOwnEntryIds, ...relevantOppEntryIds]);
 
     const seenMatches = new Set<string>();
-    const soloAcc: H2HAcc = { playerAWins: 0, playerBWins: 0, draws: 0 };
-    const teamAcc: H2HAcc = { playerAWins: 0, playerBWins: 0, draws: 0 };
+    const soloAcc: H2HAcc = { played: 0, playerAWins: 0, playerBWins: 0, draws: 0 };
+    const teamAcc: H2HAcc = { played: 0, playerAWins: 0, playerBWins: 0, draws: 0 };
 
     for (const r of matchResults) {
       if (seenMatches.has(r.matchId)) continue;
@@ -433,14 +434,14 @@ export class PlayerStatsService {
     const totalWins = solo.playerAWins + team.playerAWins;
     const totalLosses = solo.playerBWins + team.playerBWins;
     const totalDraws = solo.draws + team.draws;
-    const matchesPlayed = totalWins + totalLosses + totalDraws;
+    const matchesPlayed = solo.matchesPlayed + team.matchesPlayed;
 
     return {
       matchesPlayed,
       playerAWins: totalWins,
       playerBWins: totalLosses,
       draws: totalDraws,
-      playerAWinRate: matchesPlayed > 0 ? Math.round((totalWins / matchesPlayed) * 100) : 0,
+      playerAWinRate: winRatePercent(totalWins, matchesPlayed),
       solo,
       team,
     };
@@ -476,7 +477,7 @@ export class PlayerStatsService {
       wins,
       draws,
       losses,
-      winRate: totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0,
+      winRate: winRatePercent(wins, totalMatches),
       averageScore: totalMatches > 0 ? Math.round((totalScore / totalMatches) * 10) / 10 : 0,
     };
   }
@@ -497,14 +498,15 @@ export class PlayerStatsService {
 
   private async computeOutcomeTypeStats(matchResults: MatchResult[]): Promise<PlayerOutcomeTypeStat[]> {
     const seen = new Set<string>();
-    const byType = new Map<string, { wins: number; losses: number; draws: number; allowDraw: boolean }>();
+    const byType = new Map<string, { played: number; wins: number; losses: number; draws: number }>();
 
     for (const r of matchResults) {
       if (seen.has(r.matchId)) continue;
       seen.add(r.matchId);
       if (!r.outcomeTypeId) continue;
-      if (!byType.has(r.outcomeTypeId)) byType.set(r.outcomeTypeId, { wins: 0, losses: 0, draws: 0, allowDraw: r.allowDraw ?? false });
+      if (!byType.has(r.outcomeTypeId)) byType.set(r.outcomeTypeId, { played: 0, wins: 0, losses: 0, draws: 0 });
       const s = byType.get(r.outcomeTypeId)!;
+      s.played++;
       if (isWinResult(r)) s.wins++;
       else if (isLossResult(r)) s.losses++;
       else if (r.winnerSide === null && r.allowDraw) s.draws++;
@@ -516,7 +518,7 @@ export class PlayerStatsService {
 
     return [...byType.entries()]
       .map(([id, s]) => {
-        const matchesPlayed = s.wins + s.losses + s.draws;
+        const matchesPlayed = s.played;
         return {
           outcomeTypeId: id,
           outcomeTypeName: nameMap.get(id) ?? id,
@@ -524,7 +526,7 @@ export class PlayerStatsService {
           losses: s.losses,
           draws: s.draws,
           matchesPlayed,
-          winRate: matchesPlayed > 0 ? Math.round((s.wins / matchesPlayed) * 100) : 0,
+          winRate: winRatePercent(s.wins, matchesPlayed),
         };
       })
       .sort((a, b) => b.matchesPlayed - a.matchesPlayed);
@@ -542,7 +544,7 @@ export class PlayerStatsService {
 
     return [...h2h.entries()]
       .map(([id, s]) => {
-        const matchesPlayed = s.wins + s.losses + s.draws;
+        const matchesPlayed = s.count;
         return {
           opponentId: id,
           displayName: s.displayName,
@@ -551,7 +553,7 @@ export class PlayerStatsService {
           wins: s.wins,
           losses: s.losses,
           draws: s.draws,
-          winRate: matchesPlayed > 0 ? Math.round((s.wins / matchesPlayed) * 100) : 0,
+          winRate: winRatePercent(s.wins, matchesPlayed),
         };
       })
       .sort((a, b) => b.matchesPlayed - a.matchesPlayed)
@@ -571,7 +573,7 @@ export class PlayerStatsService {
     const partnerStats = tallyRelations(matchResults, entryToPlayers, (r) => r.entryId, playerId);
 
     const allPartners = Array.from(partnerStats.entries()).map(([id, s]): PlayerRelationStat => {
-      const winRate = s.count > 0 ? Math.round((s.wins / s.count) * 100) : 0;
+      const winRate = winRatePercent(s.wins, s.count);
       return {
         playerId: id,
         displayName: s.displayName,
@@ -609,7 +611,7 @@ export class PlayerStatsService {
       count: s.count,
       wins: s.wins,
       losses: s.losses,
-      winRate: s.count > 0 ? Math.round((s.wins / s.count) * 100) : 0,
+      winRate: winRatePercent(s.wins, s.count),
     }));
 
     return rankRelationsByWeightedRate(allOpponents, (o) => o.losses / o.count);

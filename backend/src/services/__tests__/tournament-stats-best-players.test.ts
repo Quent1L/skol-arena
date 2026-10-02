@@ -134,3 +134,23 @@ describe("computeBestTeams", () => {
     ]);
   });
 });
+
+describe("computeBestTeams without draws", () => {
+  it("counts a tie as played, not as a draw, when draws are not allowed", () => {
+    const matches = [
+      ...series(["regular", "mate"], ["foil", "foil2"], 3),
+      match(null, ["regular", "mate"], ["foil", "foil2"]),
+    ];
+
+    const strict = computeBestTeams(matches as any, false).entries;
+    const regular = strict.find((team) => team.displayName.includes("REGULAR"))!;
+    expect(regular).toMatchObject({ wins: 3, draws: 0, matchesPlayed: 4, winRate: 75 });
+
+    const lenient = computeBestTeams(matches as any, true).entries;
+    expect(lenient.find((team) => team.displayName.includes("REGULAR"))).toMatchObject({
+      draws: 1,
+      matchesPlayed: 4,
+      winRate: 75,
+    });
+  });
+});

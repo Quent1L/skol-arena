@@ -33,6 +33,7 @@ import type {
   OutcomeTypeLeader,
   OutcomeTypeLeaderboard,
 } from "@skol-arena/shared";
+import { winRatePercent } from "../utils/win-rate";
 
 /** How many names an "and N others" tooltip carries before the count speaks alone. */
 const MAX_OMITTED_NAMES = 20;
@@ -118,7 +119,7 @@ function rankBestPlayers(stats: Map<string, PlayerWLStats>): BestPlayersBoard {
     wins: s.wins,
     losses: s.losses,
     matchesPlayed: s.played,
-    winRate: s.played > 0 ? Math.round((s.wins / s.played) * 100) : 0,
+    winRate: winRatePercent(s.wins, s.played),
     score: weightedScore(s.played > 0 ? s.wins / s.played : 0, s.played),
   }));
 
@@ -191,12 +192,17 @@ function collectPlayerResults<T>(
   return map;
 }
 
-export function computeBestTeams(matchesData: MatchData[]): BestTeamsBoard {
+/**
+ * A match with no winner is a draw only where draws are allowed; elsewhere it still
+ * counts as played, like on every other stat screen (see `winRatePercent`).
+ */
+export function computeBestTeams(matchesData: MatchData[], allowDraw = true): BestTeamsBoard {
   const entryStats = new Map<
     string,
     {
       displayName: string;
       players: StatPlayerRef[];
+      played: number;
       wins: number;
       losses: number;
       draws: number;
@@ -225,6 +231,7 @@ export function computeBestTeams(matchesData: MatchData[]): BestTeamsBoard {
                 ]
               : [],
           ),
+          played: 0,
           wins: 0,
           losses: 0,
           draws: 0,
@@ -233,8 +240,9 @@ export function computeBestTeams(matchesData: MatchData[]): BestTeamsBoard {
       }
       const stats = entryStats.get(entryId)!;
 
+      stats.played++;
       if (!match.winnerSide) {
-        stats.draws++;
+        if (allowDraw) stats.draws++;
       } else if (isWinner(side, match.winnerSide)) {
         stats.wins++;
       } else {
@@ -246,7 +254,7 @@ export function computeBestTeams(matchesData: MatchData[]): BestTeamsBoard {
   const teams = Array.from(entryStats.entries())
     .filter(([, s]) => s.playerCount > 1)
     .map(([entryId, s]) => {
-      const matchesPlayed = s.wins + s.losses + s.draws;
+      const matchesPlayed = s.played;
       return {
         entryId,
         displayName: s.displayName,
@@ -255,7 +263,7 @@ export function computeBestTeams(matchesData: MatchData[]): BestTeamsBoard {
         losses: s.losses,
         draws: s.draws,
         matchesPlayed,
-        winRate: matchesPlayed > 0 ? Math.round((s.wins / matchesPlayed) * 100) : 0,
+        winRate: winRatePercent(s.wins, matchesPlayed),
         score: weightedScore(matchesPlayed > 0 ? s.wins / matchesPlayed : 0, matchesPlayed),
       };
     });
@@ -647,7 +655,7 @@ class TournamentStatsService {
 
     const bestTeams: BestTeamsBoard =
       tournamentInfo.teamMode === "flex"
-        ? computeBestTeams(matchesData)
+        ? computeBestTeams(matchesData, tournamentInfo.allowDraw ?? true)
         : EMPTY_TEAMS_BOARD;
 
     const winStreaks: WinStreakEntry[] = computeWinStreaks(matchesData);

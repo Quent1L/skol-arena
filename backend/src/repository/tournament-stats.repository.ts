@@ -14,7 +14,7 @@ export class TournamentStatsRepository {
   async getTournamentMode(tournamentId: string) {
     return db.query.tournaments.findFirst({
       where: eq(tournaments.id, tournamentId),
-      columns: { mode: true, teamMode: true, startDate: true, endDate: true },
+      columns: { mode: true, teamMode: true, startDate: true, endDate: true, allowDraw: true },
       with: { rankedConfig: { columns: { allowAsymmetricMatches: true } } },
     });
   }

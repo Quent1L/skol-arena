@@ -426,8 +426,9 @@ const mmrDelta = computed(() => {
   return props.mmr.currentMmr - props.initialMmr
 })
 
+// Same rate as every other stat screen: wins over every match played, draws included.
 const winrate = computed(() => {
-  const total = props.mmr.wins + props.mmr.losses
+  const total = props.mmr.matchesPlayed
   if (total === 0) return 0
   return Math.round((props.mmr.wins / total) * 100)
 })
