@@ -266,6 +266,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useMatchService } from '@/composables/match/match.service'
 import { useAuth } from '@/composables/useAuth'
+import { useViewport } from '@/composables/useViewport'
 import type { MenuItem } from 'primevue/menuitem'
 import type {
   ClientMatchDetail,
@@ -297,6 +298,7 @@ import { useMMrAnimationQueue } from '@/composables/ranked/useMMrAnimationQueue'
 import { onWsEvent } from '@/composables/notification/notification.socket'
 
 const { t, locale } = useI18n()
+const { isMobile } = useViewport()
 const { statusLabel, statusDotClass, statusTextClass } = useMatchStatus()
 const route = useRoute()
 const router = useRouter()
@@ -810,16 +812,27 @@ function getFinalizationReasonLabel(reason: string): string {
   return labels[reason] || reason
 }
 
+const LONG_DATE_FORMAT: Intl.DateTimeFormatOptions = {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+}
+
+// The meta strip is two columns on a phone: a spelled-out month pushes the time out of view
+const COMPACT_DATE_FORMAT: Intl.DateTimeFormatOptions = {
+  day: '2-digit',
+  month: '2-digit',
+  year: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+}
+
 function formatDate(date?: Date | string) {
   if (!date) return ''
   const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleDateString(locale.value, {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return d.toLocaleDateString(locale.value, isMobile.value ? COMPACT_DATE_FORMAT : LONG_DATE_FORMAT)
 }
 
 onMounted(() => {
