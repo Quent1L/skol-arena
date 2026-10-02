@@ -19,6 +19,7 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import type * as schema from "../db/schema";
 import type { TournamentStatus } from "@skol-arena/shared/types/index";
+import { organizationVisibilityCondition } from "./organization-visibility";
 
 type DbTransaction = NodePgDatabase<typeof schema> | typeof db;
 
@@ -307,11 +308,13 @@ export class RankedSeasonRepository {
     }
   }
 
-  async getFinishedSeasons() {
+  /** `visibleOrganizationIds`: see `organizationVisibilityCondition`; null shows all. */
+  async getFinishedSeasons(visibleOrganizationIds: string[] | null = null) {
     return await db.query.tournaments.findMany({
       where: and(
         eq(tournaments.mode, "ranked"),
         eq(tournaments.status, "finished"),
+        organizationVisibilityCondition(tournaments.organizationId, visibleOrganizationIds),
       ),
       columns: { id: true, name: true, startDate: true, endDate: true },
       with: { discipline: { columns: { id: true, name: true, icon: true } } },
@@ -335,6 +338,7 @@ export class RankedSeasonRepository {
         startDate: true,
         endDate: true,
         disciplineId: true,
+        organizationId: true,
       },
       with: { discipline: { columns: { id: true, name: true, icon: true } } },
       orderBy: (t, { desc }) => [desc(t.endDate)],
@@ -559,8 +563,15 @@ export class RankedSeasonRepository {
     status?: TournamentStatus;
     /** Requesting user, used to resolve `isParticipant`. Omit for anonymous callers. */
     viewerId?: string;
+    /** See `organizationVisibilityCondition`; omitted or null shows every season. */
+    visibleOrganizationIds?: string[] | null;
   }) {
     const conditions = [eq(tournaments.mode, "ranked")];
+    const visibility = organizationVisibilityCondition(
+      tournaments.organizationId,
+      filters?.visibleOrganizationIds ?? null,
+    );
+    if (visibility) conditions.push(visibility);
     if (filters?.disciplineId) {
       conditions.push(eq(tournaments.disciplineId, filters.disciplineId));
     }

@@ -11,6 +11,7 @@ import {
   disciplines,
   outcomeTypes,
 } from "../db/schema";
+import { organizationVisibilityCondition } from "./organization-visibility";
 
 export class PlayerStatsRepository {
   async getPlayerProfile(playerId: string) {
@@ -20,11 +21,20 @@ export class PlayerStatsRepository {
     });
   }
 
+  /**
+   * `visibleOrganizationIds` leaves out the competitions of organizations the viewer
+   * is not part of (null: no restriction). Every stat is derived from these entries,
+   * so filtering them here scopes the whole page.
+   */
   async getPlayerEntries(
     playerId: string,
-    filters?: { tournamentId?: string; disciplineId?: string; tournamentMode?: string; teamMode?: string; allowedModes?: string[] }
+    filters?: { tournamentId?: string; disciplineId?: string; tournamentMode?: string; teamMode?: string; allowedModes?: string[] },
+    visibleOrganizationIds: string[] | null = null,
   ) {
-    const conditions = [eq(tournamentEntryPlayers.playerId, playerId)];
+    const conditions = [
+      eq(tournamentEntryPlayers.playerId, playerId),
+      organizationVisibilityCondition(tournaments.organizationId, visibleOrganizationIds),
+    ];
 
     const entries = await db
       .select({
@@ -187,10 +197,16 @@ export class PlayerStatsRepository {
     });
   }
 
-  async getPlayerRecentForm(playerId: string, limit = 10, tournamentId?: string) {
+  async getPlayerRecentForm(
+    playerId: string,
+    limit = 10,
+    tournamentId?: string,
+    visibleOrganizationIds: string[] | null = null,
+  ) {
     const conditions = [
       eq(tournamentEntryPlayers.playerId, playerId),
       eq(matches.status, "finalized"),
+      organizationVisibilityCondition(tournaments.organizationId, visibleOrganizationIds),
       ...(tournamentId ? [eq(matches.tournamentId, tournamentId)] : []),
     ];
     return db
@@ -219,7 +235,7 @@ export class PlayerStatsRepository {
       .where(inArray(outcomeTypes.id, outcomeTypeIds));
   }
 
-  async getPlayerTournaments(playerId: string) {
+  async getPlayerTournaments(playerId: string, visibleOrganizationIds: string[] | null = null) {
     return db
       .select({
         id: tournaments.id,
@@ -233,7 +249,12 @@ export class PlayerStatsRepository {
       .innerJoin(tournamentEntries, eq(tournamentEntryPlayers.entryId, tournamentEntries.id))
       .innerJoin(tournaments, eq(tournamentEntries.tournamentId, tournaments.id))
       .leftJoin(disciplines, eq(tournaments.disciplineId, disciplines.id))
-      .where(eq(tournamentEntryPlayers.playerId, playerId))
+      .where(
+        and(
+          eq(tournamentEntryPlayers.playerId, playerId),
+          organizationVisibilityCondition(tournaments.organizationId, visibleOrganizationIds),
+        ),
+      )
       .groupBy(tournaments.id, disciplines.name);
   }
 

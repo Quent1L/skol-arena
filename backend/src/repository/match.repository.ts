@@ -1,4 +1,4 @@
-import { eq, and, ne, sql, count, inArray, isNull, or, lt, desc } from "drizzle-orm";
+import { eq, and, ne, sql, count, inArray, or, lt, desc } from "drizzle-orm";
 import { db } from "../config/database";
 import {
   matches,
@@ -28,6 +28,7 @@ import { TOURNAMENT_CONFIGS_WITH } from "./tournament-config.columns";
 import { entryRepository } from "./entry.repository";
 import { matchSidesRepository } from "./match-sides.repository";
 import { matchResultRepository } from "./match-result.repository";
+import { organizationVisibilityCondition } from "./organization-visibility";
 
 // Type for synthetic team object
 type AppUser = typeof appUsers.$inferSelect;
@@ -520,16 +521,8 @@ export class MatchRepository {
     visibleOrganizationIds: string[] | null,
   ) {
     const conditions = [];
-    if (visibleOrganizationIds !== null) {
-      conditions.push(
-        visibleOrganizationIds.length > 0
-          ? or(
-              isNull(tournaments.organizationId),
-              inArray(tournaments.organizationId, visibleOrganizationIds),
-            )
-          : isNull(tournaments.organizationId),
-      );
-    }
+    const visibility = organizationVisibilityCondition(tournaments.organizationId, visibleOrganizationIds);
+    if (visibility) conditions.push(visibility);
     if (filters.tournamentId) {
       conditions.push(eq(matches.tournamentId, filters.tournamentId));
     }

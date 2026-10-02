@@ -381,10 +381,12 @@ matches.post(
 );
 
 // POST /matches/validate - Validate match possibility
-// Rate limited: public, and each call runs the full rule engine plus a duplicate
-// search. Cheap to send, not cheap to answer.
+// Rate limited: each call runs the full rule engine plus a duplicate search. Cheap
+// to send, not cheap to answer. Only someone about to create a match needs it, and
+// its answer names the tournament and players: it is scoped like the tournament.
 matches.post(
   "/validate",
+  requireAuth,
   rateLimit({ window: 60, max: 30 }),
   describe({
     tags: TAGS,
@@ -392,12 +394,15 @@ matches.post(
     description:
       "Dry run against the tournament's limits. Answers 200 with valid false plus " +
       "the reasons, rather than failing. Rate limited per client.",
+    auth: true,
+    role: true,
     rateLimited: true,
     success: { description: "Validation outcome", schema: validateMatchResponseSchema },
   }),
   validate("json", validateMatchSchema),
   async (c) => {
     const data = c.req.valid("json");
+    await tournamentService.assertCanAccess(data.tournamentId, c.get("appUserId"));
 
     const validation = await matchService.validateMatch({
       tournamentId: data.tournamentId,

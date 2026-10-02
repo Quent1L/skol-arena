@@ -22,6 +22,7 @@ import type {
   PlayerTeamupRecord,
   PlayerComparisonResponse,
 } from "@skol-arena/shared";
+import { visibleOrganizationIdsFor } from "./visibility";
 
 type ExtendedFilters = PlayerStatsFilters & { allowedModes?: string[] };
 
@@ -204,8 +205,9 @@ export class PlayerStatsService {
     return { id: user.id, displayName: user.displayName, shortName: user.shortName };
   }
 
-  async getPlayerTournaments(playerId: string): Promise<PlayerTournamentOption[]> {
-    const rows = await playerStatsRepository.getPlayerTournaments(playerId);
+  async getPlayerTournaments(playerId: string, viewerId: string | null): Promise<PlayerTournamentOption[]> {
+    const visibleOrganizationIds = await visibleOrganizationIdsFor(viewerId);
+    const rows = await playerStatsRepository.getPlayerTournaments(playerId, visibleOrganizationIds);
     const seen = new Set<string>();
     return rows
       .filter((r) => {
@@ -223,17 +225,37 @@ export class PlayerStatsService {
       }));
   }
 
-  /** Returns the cache key for these filters, or null when the result is not cacheable */
-  private statsCacheKey(filters: PlayerStatsFilters): string | null {
-    const isFiltered = !!(filters.tournamentId || filters.disciplineId || filters.tournamentMode);
-    if (!isFiltered) return "stats:global";
+  /**
+   * Returns the cache key for these filters, or null when the result is not cacheable.
+   * The global view depends on which organizations the viewer may see, so it is keyed
+   * by that scope: a member's cached page must never be served to an outsider.
+   */
+  private statsCacheKey(filters: ExtendedFilters, visibleOrganizationIds: string[] | null): string | null {
+    const isNarrowed = !!(filters.disciplineId || filters.tournamentMode || filters.teamMode || filters.allowedModes?.length);
+    if (isNarrowed) return null;
+    if (filters.tournamentId) return `stats:tournament:${filters.tournamentId}`;
 
-    const isTournamentOnly = !!(filters.tournamentId && !filters.disciplineId && !filters.tournamentMode);
-    return isTournamentOnly ? `stats:tournament:${filters.tournamentId}` : null;
+    const scope = visibleOrganizationIds === null
+      ? "all"
+      : Bun.hash([...visibleOrganizationIds].sort().join(",")).toString(36);
+    return `stats:global:${scope}`;
   }
 
-  async getPlayerStats(playerId: string, filters: PlayerStatsFilters): Promise<PlayerStatsResponse> {
-    const cacheKey = this.statsCacheKey(filters);
+  async getPlayerStats(
+    playerId: string,
+    filters: PlayerStatsFilters,
+    viewerId: string | null,
+  ): Promise<PlayerStatsResponse> {
+    const visibleOrganizationIds = await visibleOrganizationIdsFor(viewerId);
+    return await this.computePlayerStats(playerId, filters, visibleOrganizationIds);
+  }
+
+  private async computePlayerStats(
+    playerId: string,
+    filters: ExtendedFilters,
+    visibleOrganizationIds: string[] | null,
+  ): Promise<PlayerStatsResponse> {
+    const cacheKey = this.statsCacheKey(filters, visibleOrganizationIds);
 
     if (cacheKey) {
       const cached = await playerComputedDataRepository.get(playerId, cacheKey);
@@ -244,7 +266,7 @@ export class PlayerStatsService {
     }
 
     const player = await this.getPlayerProfile(playerId);
-    const entries = await playerStatsRepository.getPlayerEntries(playerId, filters);
+    const entries = await playerStatsRepository.getPlayerEntries(playerId, filters, visibleOrganizationIds);
 
     if (entries.length === 0) {
       return this.buildEmptyResponse(player, filters);
@@ -263,7 +285,7 @@ export class PlayerStatsService {
     const h2hStats = await this.computeH2HStats(matchResults, playerId);
     const outcomeTypeStats = await this.computeOutcomeTypeStats(matchResults);
     const tournamentHistory = await this.buildTournamentHistory(entries, matchResults);
-    const recentForm = await this.computeRecentForm(playerId, filters.tournamentId);
+    const recentForm = await this.computeRecentForm(playerId, filters.tournamentId, visibleOrganizationIds);
 
     const stats: PlayerDetailStats = {
       ...baseStats,
@@ -288,7 +310,9 @@ export class PlayerStatsService {
     playerAId: string,
     playerBId: string,
     userFilters: PlayerStatsFilters,
+    viewerId: string | null,
   ): Promise<PlayerComparisonResponse> {
+    const visibleOrganizationIds = await visibleOrganizationIdsFor(viewerId);
     const validModes = ['championship', 'ranked'] as const;
     const mode = validModes.includes(userFilters.tournamentMode as typeof validModes[number])
       ? userFilters.tournamentMode
@@ -302,10 +326,10 @@ export class PlayerStatsService {
     };
 
     const [playerA, playerB, headToHead, together] = await Promise.all([
-      this.getPlayerStats(playerAId, filters),
-      this.getPlayerStats(playerBId, filters),
-      this.computeDirectH2H(playerAId, playerBId, filters),
-      this.computeTogether(playerAId, playerBId, filters),
+      this.computePlayerStats(playerAId, filters, visibleOrganizationIds),
+      this.computePlayerStats(playerBId, filters, visibleOrganizationIds),
+      this.computeDirectH2H(playerAId, playerBId, filters, visibleOrganizationIds),
+      this.computeTogether(playerAId, playerBId, filters, visibleOrganizationIds),
     ]);
 
     return { playerA, playerB, headToHead, together, filters };
@@ -316,10 +340,11 @@ export class PlayerStatsService {
     playerAId: string,
     playerBId: string,
     filters: ExtendedFilters,
+    visibleOrganizationIds: string[] | null,
   ): Promise<PlayerTeamupRecord> {
     const empty: PlayerTeamupRecord = { matchesPlayed: 0, wins: 0, losses: 0, draws: 0, winRate: 0 };
 
-    const entries = await playerStatsRepository.getPlayerEntries(playerAId, filters);
+    const entries = await playerStatsRepository.getPlayerEntries(playerAId, filters, visibleOrganizationIds);
     if (entries.length === 0) return empty;
 
     const playerEntryIds = entries.map((e) => e.entryId);
@@ -362,11 +387,12 @@ export class PlayerStatsService {
     playerAId: string,
     playerBId: string,
     filters: ExtendedFilters,
+    visibleOrganizationIds: string[] | null,
   ): Promise<PlayerHeadToHeadRecord> {
     const emptySubRecord: H2HSubRecord = { matchesPlayed: 0, playerAWins: 0, playerBWins: 0, draws: 0, playerAWinRate: 0 };
     const empty: PlayerHeadToHeadRecord = { ...emptySubRecord, solo: { ...emptySubRecord }, team: { ...emptySubRecord } };
 
-    const entries = await playerStatsRepository.getPlayerEntries(playerAId, filters);
+    const entries = await playerStatsRepository.getPlayerEntries(playerAId, filters, visibleOrganizationIds);
     if (entries.length === 0) return empty;
 
     const playerAEntryIds = entries.map((e) => e.entryId);
@@ -455,8 +481,12 @@ export class PlayerStatsService {
     };
   }
 
-  private async computeRecentForm(playerId: string, tournamentId?: string): Promise<Array<'V' | 'D' | 'N'>> {
-    const rows = await playerStatsRepository.getPlayerRecentForm(playerId, 10, tournamentId);
+  private async computeRecentForm(
+    playerId: string,
+    tournamentId: string | undefined,
+    visibleOrganizationIds: string[] | null,
+  ): Promise<Array<'V' | 'D' | 'N'>> {
+    const rows = await playerStatsRepository.getPlayerRecentForm(playerId, 10, tournamentId, visibleOrganizationIds);
     // Reverse so index 0 = oldest, last = most recent (left→right = old→recent)
     return [...rows].reverse().map((r) => {
       if (isWinResult(r)) return 'V';

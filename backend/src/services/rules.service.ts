@@ -28,6 +28,7 @@ import { rulesEvaluationService } from "./rules-evaluation.service";
 import { badgeReconciliationService } from "./badge-reconciliation.service";
 import { enqueueBadgeReconciliation } from "./mmr-job-queue.service";
 import { BadRequestError, NotFoundError, ErrorCode } from "../types/errors";
+import { isOrganizationVisible, visibleOrganizationIdsFor } from "./visibility";
 
 function isTriggerEvent(value: string): value is TriggerEvent {
   return (TRIGGER_EVENTS as readonly string[]).includes(value);
@@ -221,8 +222,15 @@ export class RulesService {
    * back three times. Collapsing them into a single badge with a count is the
    * client's job, and it needs the individual seasons to show the breakdown.
    */
-  async getPlayerBadges(playerId: string) {
-    const rows = await rulesRepository.listBadgesByPlayer(playerId);
+  /** Badges earned in a season of an organization the viewer is not part of are left out. */
+  async getPlayerBadges(playerId: string, viewerId: string | null) {
+    const [allRows, visibleOrganizationIds] = await Promise.all([
+      rulesRepository.listBadgesByPlayer(playerId),
+      visibleOrganizationIdsFor(viewerId),
+    ]);
+    const rows = allRows.filter((row) =>
+      isOrganizationVisible(row.season?.organizationId, visibleOrganizationIds),
+    );
     return rows.map((row) => {
       const action = row.rule.action as RuleAction;
       const badge =

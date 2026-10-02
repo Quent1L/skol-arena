@@ -146,7 +146,7 @@ export class RulesRepository {
     return await db.query.playerBadges.findMany({
       where: eq(playerBadges.playerId, playerId),
       orderBy: [desc(playerBadges.awardedAt)],
-      with: { rule: true, season: { columns: { name: true } } },
+      with: { rule: true, season: { columns: { name: true, organizationId: true } } },
     });
   }
 

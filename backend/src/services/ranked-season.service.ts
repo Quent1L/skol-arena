@@ -58,6 +58,7 @@ import {
   BadRequestError,
 } from "../types/errors";
 import { sanitizeOptionalRichText } from "../utils/sanitize-html";
+import { isOrganizationVisible, visibleOrganizationIdsFor } from "./visibility";
 
 type ProvisionalOutcome = "win" | "loss" | "draw";
 type MatchResult = 1 | 0 | 0.5;
@@ -835,12 +836,19 @@ export class RankedSeasonService {
     return this.getSeasonOrThrow(id);
   }
 
+  /** Seasons of organizations the viewer is not part of are left out. */
   async listSeasons(filters?: {
     disciplineId?: string;
     status?: TournamentStatus;
     viewerId?: string;
   }) {
-    return await rankedSeasonRepository.listSeasons(filters);
+    const visibleOrganizationIds = await visibleOrganizationIdsFor(filters?.viewerId ?? null);
+    return await rankedSeasonRepository.listSeasons({ ...filters, visibleOrganizationIds });
+  }
+
+  async getFinishedSeasons(viewerId: string | null) {
+    const visibleOrganizationIds = await visibleOrganizationIdsFor(viewerId);
+    return await rankedSeasonRepository.getFinishedSeasons(visibleOrganizationIds);
   }
 
   /**
@@ -1036,13 +1044,12 @@ export class RankedSeasonService {
   // Uncached for the same reason as the leaderboard, plus one of its own: a season
   // recalculation wipes and rebuilds mmr_history wholesale, so any cache derived
   // from it would have to be invalidated by the recalculation worker.
-  async getPlayerCareer(playerId: string): Promise<PlayerCareerSeason[]> {
-    const stats = await playerMmrRepository.getPlayerCareerMmrStats(playerId);
+  async getPlayerCareer(playerId: string, viewerId: string | null): Promise<PlayerCareerSeason[]> {
+    const { stats, seasons } = await this.visibleCareerSeasons(playerId, viewerId);
     if (stats.length === 0) return [];
+    const seasonIds = seasons.map((season) => season.id);
 
-    const seasonIds = stats.map((stat) => stat.seasonId);
-    const [seasons, tiers, configs, mmrRows] = await Promise.all([
-      rankedSeasonRepository.getSeasonsByIds(seasonIds),
+    const [tiers, configs, mmrRows] = await Promise.all([
       rankedSeasonRepository.getRankTiersForSeasons(seasonIds),
       rankedSeasonRepository.getConfigsByTournamentIds(seasonIds),
       playerMmrRepository.getByPlayerAcrossSeasons(playerId),
@@ -1061,6 +1068,22 @@ export class RankedSeasonService {
     return career.sort(
       (a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime(),
     );
+  }
+
+  /** A season of an organization the viewer is not part of stays out of the career. */
+  private async visibleCareerSeasons(playerId: string, viewerId: string | null) {
+    const [allStats, visibleOrganizationIds] = await Promise.all([
+      playerMmrRepository.getPlayerCareerMmrStats(playerId),
+      visibleOrganizationIdsFor(viewerId),
+    ]);
+    if (allStats.length === 0) return { stats: allStats, seasons: [] };
+
+    const allSeasons = await rankedSeasonRepository.getSeasonsByIds(allStats.map((s) => s.seasonId));
+    const seasons = allSeasons.filter((season) =>
+      isOrganizationVisible(season.organizationId, visibleOrganizationIds),
+    );
+    const visibleIds = new Set(seasons.map((season) => season.id));
+    return { stats: allStats.filter((stat) => visibleIds.has(stat.seasonId)), seasons };
   }
 
   async computeAndCacheOfficial(seasonId: string): Promise<void> {

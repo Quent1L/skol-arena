@@ -5,7 +5,7 @@ import {
 } from '../repository/match.repository'
 import { matchConfirmationRepository } from '../repository/match-confirmation.repository'
 import { userRepository } from '../repository/user.repository'
-import { organizationRepository } from '../repository/organization.repository'
+import { visibleOrganizationIdsFor } from './visibility'
 import { entryRepository } from '../repository/entry.repository'
 import {
   type CreateMatchRequestData as CreateMatchInput,
@@ -56,19 +56,6 @@ const TRUST_SCORE_THRESHOLD = 10
 export class MatchService {
   async canManageMatches(tournamentId: string, userId: string): Promise<boolean> {
     return await matchPermissionValidator.canManageMatches(tournamentId, userId)
-  }
-
-  /**
-   * Which organizations a caller may see matches from. null lifts the restriction
-   * (super admins); an empty array leaves only the competitions attached to none.
-   */
-  private async visibleOrganizationIdsFor(viewerId: string | null): Promise<string[] | null> {
-    if (!viewerId) return []
-
-    const viewer = await userRepository.getById(viewerId)
-    if (viewer?.role === 'super_admin') return null
-
-    return await organizationRepository.getUserOrganizationIds(viewerId)
   }
 
   async createMatch(input: CreateMatchInput, createdBy: string) {
@@ -293,7 +280,7 @@ export class MatchService {
     filters: ListMatchCardsQuery,
     viewerId: string | null,
   ): Promise<PaginatedMatchCards> {
-    const visibleOrganizationIds = await this.visibleOrganizationIdsFor(viewerId)
+    const visibleOrganizationIds = await visibleOrganizationIdsFor(viewerId)
     const { data: rows, total } = await matchRepository.listMatchCards(
       filters,
       visibleOrganizationIds,
@@ -992,9 +979,9 @@ export class MatchService {
         },
       }
     } catch (error) {
-      errors.push(
-        error instanceof Error ? error.message : 'Erreur inattendue lors de la validation',
-      )
+      // A raw error message can carry internals (SQL, ids): log it, answer generically.
+      logger.error({ err: error }, 'Match validation failed')
+      errors.push(t('errors.UNKNOWN'))
       return { valid: false, errors, warnings }
     }
   }

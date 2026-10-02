@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, resolveOptionalViewer } from "../middleware/auth";
 import { userService } from "../services/user.service";
 import { createAppHono } from "../types/hono";
 import { userRepository } from "../repository/user.repository";
@@ -186,7 +186,7 @@ users.get(
   validate("query", playerComparisonSchema),
   async (c) => {
     const { playerA, playerB, ...filters } = c.req.valid("query");
-    const result = await playerStatsService.getComparison(playerA, playerB, filters);
+    const result = await playerStatsService.getComparison(playerA, playerB, filters, c.get("appUserId"));
     return c.json(result);
   }
 );
@@ -222,7 +222,7 @@ users.get(
   }),
   async (c) => {
     const id = c.req.param("id");
-    const tournaments = await playerStatsService.getPlayerTournaments(id);
+    const tournaments = await playerStatsService.getPlayerTournaments(id, await resolveOptionalViewer(c));
     return c.json({ tournaments });
   }
 );
@@ -243,7 +243,7 @@ users.get(
   async (c) => {
     const id = c.req.param("id");
     const filters = c.req.valid("query");
-    const result = await playerStatsService.getPlayerStats(id, filters);
+    const result = await playerStatsService.getPlayerStats(id, filters, await resolveOptionalViewer(c));
     return c.json(result);
   }
 );
@@ -261,7 +261,7 @@ users.get(
   }),
   async (c) => {
     const id = c.req.param("id");
-    const badges = await rulesService.getPlayerBadges(id);
+    const badges = await rulesService.getPlayerBadges(id, await resolveOptionalViewer(c));
     return c.json({ badges });
   }
 );

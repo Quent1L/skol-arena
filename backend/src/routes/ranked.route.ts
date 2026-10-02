@@ -40,12 +40,18 @@ import {
   rankedSeasonAutomationSchema,
   rankedSeasonAutomationInputSchema,
 } from "@skol-arena/shared/types/index";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, resolveOptionalViewer } from "../middleware/auth";
+import { requireTournamentAccess } from "../middleware/tournament-access";
 import { createAppHono } from "../types/hono";
 import { NotFoundError, BadRequestError, ErrorCode } from "../types/errors";
 import type { TournamentStatus } from "@skol-arena/shared/types/index";
 
 const ranked = createAppHono();
+
+// A season is a tournament row and carries its organization: every season route,
+// leaderboards and player histories included, is scoped by it.
+ranked.use("/seasons/:id", requireTournamentAccess());
+ranked.use("/seasons/:id/*", requireTournamentAccess());
 
 const TAGS = ["Ranked"];
 const REWIND_TAGS = ["Season rewind"];
@@ -126,7 +132,7 @@ ranked.get(
     success: { description: "Finished seasons", schema: z.array(finishedRankedSeasonSchema) },
   }),
   async (c) => {
-    const seasons = await rankedSeasonRepository.getFinishedSeasons();
+    const seasons = await rankedSeasonService.getFinishedSeasons(await resolveOptionalViewer(c));
     return c.json(seasons);
   }
 );
@@ -564,7 +570,7 @@ ranked.get(
   }),
   async (c) => {
     const playerId = c.req.param("playerId")!;
-    const seasons = await rankedSeasonService.getPlayerCareer(playerId);
+    const seasons = await rankedSeasonService.getPlayerCareer(playerId, await resolveOptionalViewer(c));
     return c.json({ seasons });
   }
 );

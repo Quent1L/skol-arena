@@ -54,6 +54,7 @@ const SERVICE_ENFORCED = new Map<string, string>([
   ["GET /tournaments/:id/teams", "tournamentService.assertCanAccess"],
   ["POST /tournaments/:id/participants", "tournamentService.joinTournament"],
   ["GET /matches/:id", "tournamentService.assertCanAccess"],
+  ["POST /matches/validate", "tournamentService.assertCanAccess"],
 
   // teamService — the route computes isAdmin, the service refuses without it
   ["POST /tournaments/:id/teams", "teamService.createTeam"],
@@ -74,7 +75,7 @@ const SERVICE_ENFORCED = new Map<string, string>([
   ["GET /matches/:id/messages", "matchMessageService.assertCanRead"],
   ["POST /matches/:id/messages", "matchMessageService.assertCanRead"],
 
-  // rankedSeasonService.assertCanManage — super_admin or tournament_admin
+  // rankedSeasonService.assertCanManage — super_admin only
   ["POST /ranked/seasons", "rankedSeasonService.createSeason"],
   ["PATCH /ranked/seasons/:id", "rankedSeasonService.updateSeason"],
   ["POST /ranked/seasons/:id/start", "rankedSeasonService.startSeason"],
@@ -88,7 +89,7 @@ const SERVICE_ENFORCED = new Map<string, string>([
   ["DELETE /ranked/seasons/:id/automation", "rankedSeasonService.deleteAutomation"],
   ["POST /ranked/seasons/:id/rollover", "rankedSeasonRolloverService.rolloverNow"],
 
-  // gameRulesService.assertCanManage
+  // gameRulesService.assertCanManage — super_admin only
   ["POST /game-rules", "gameRulesService.createGameRule"],
   ["PATCH /game-rules/:id", "gameRulesService.updateGameRule"],
   ["DELETE /game-rules/:id", "gameRulesService.deleteGameRule"],
