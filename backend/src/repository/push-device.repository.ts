@@ -5,6 +5,14 @@ import { RegisterDevice } from "@skol-arena/shared";
 import { logger } from "../utils/logger";
 
 export const pushDeviceRepository = {
+  async findByEndpoint(endpoint: string) {
+    const [device] = await db
+      .select()
+      .from(userPushDevices)
+      .where(eq(userPushDevices.subscriptionEndpoint, endpoint));
+    return device ?? null;
+  },
+
   async register(userId: string, data: RegisterDevice) {
     logger.debug({ userId }, '[PushDeviceRepo] Registering device for user:');
     logger.debug({ endpoint: data.subscriptionEndpoint }, '[PushDeviceRepo] Endpoint:');

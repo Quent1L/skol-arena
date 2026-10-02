@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { pushEndpointSchema } from "./push-endpoint";
 
 export const NotificationTypeEnum = z.enum([
   "MATCH_CREATED",
@@ -27,7 +28,7 @@ export const CreateNotificationSchema = z.object({
 
 export const RegisterDeviceSchema = z.object({
   deviceType: DeviceTypeEnum,
-  subscriptionEndpoint: z.string(),
+  subscriptionEndpoint: pushEndpointSchema,
   subscriptionData: z.record(z.string(), z.any()).optional(),
   locale: z.string().optional(),
   timezone: z.string().optional(),
@@ -97,7 +98,7 @@ export const PushDeviceSchema = z
     id: z.string(),
     userId: z.string(),
     deviceType: DeviceTypeEnum,
-    subscriptionEndpoint: z.string(),
+    subscriptionEndpoint: pushEndpointSchema,
     subscriptionData: z.string().nullable(),
     active: z.boolean(),
     locale: z.string().nullable(),

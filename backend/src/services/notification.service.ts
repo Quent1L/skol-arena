@@ -6,8 +6,8 @@ import { pushDeviceRepository } from "../repository/push-device.repository";
 import { webSocketService } from "./websocket.service";
 import { localizeNotificationParams } from "../utils/notification-format";
 import { notificationActionService } from "./notification-action.service";
-import { BadRequestError, NotFoundError, ErrorCode } from "../types/errors";
-import { CreateNotification, RegisterDevice, PaginatedNotifications } from "@skol-arena/shared";
+import { BadRequestError, ForbiddenError, NotFoundError, ErrorCode } from "../types/errors";
+import { CreateNotification, RegisterDevice, PaginatedNotifications, pushEndpointSchema } from "@skol-arena/shared";
 
 // Configure web-push
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -57,7 +57,45 @@ function isExpiredSubscriptionError(error: unknown): boolean {
   );
 }
 
+function authSecretOf(subscriptionData: unknown): string | undefined {
+  const parsed = typeof subscriptionData === "string" ? safeJsonParse(subscriptionData) : subscriptionData;
+  const keys = (parsed as { keys?: { auth?: unknown } } | null)?.keys;
+  return typeof keys?.auth === "string" ? keys.auth : undefined;
+}
+
+function safeJsonParse(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Re-registering a known endpoint moves the device to the caller, which is how a
+ * browser changes hands between accounts. Only the browser holding the subscription
+ * knows its auth secret: without a match, knowing someone's endpoint would be enough
+ * to receive their notifications.
+ */
+async function assertCanClaimDevice(userId: string, data: RegisterDevice): Promise<void> {
+  const existing = await pushDeviceRepository.findByEndpoint(data.subscriptionEndpoint);
+  if (!existing || existing.userId === userId) return;
+
+  const storedSecret = authSecretOf(existing.subscriptionData);
+  if (!storedSecret || storedSecret !== authSecretOf(data.subscriptionData)) {
+    throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
+  }
+}
+
 async function sendPushToDevice(device: PushDevice, pushPayload: unknown): Promise<void> {
+  // Rows registered before the endpoint allowlist existed are re-checked here: the
+  // server must never POST to an address a caller chose.
+  if (!pushEndpointSchema.safeParse(device.subscriptionEndpoint).success) {
+    logger.warn(`[Push] Removing device ${device.id}: endpoint is not a known push service`);
+    await pushDeviceRepository.remove(device.userId, device.id);
+    return;
+  }
+
   logger.debug(
     `[Push] Processing device ${device.id}, endpoint: ${device.subscriptionEndpoint.substring(0, 50)}...`,
   );
@@ -226,6 +264,7 @@ export const notificationService = {
       { userId },
       "[NotificationService] Registering push device for user:",
     );
+    await assertCanClaimDevice(userId, data);
     const result = await pushDeviceRepository.register(userId, data);
     logger.debug(
       { result },
