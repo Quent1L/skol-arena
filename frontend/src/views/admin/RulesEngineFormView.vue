@@ -209,6 +209,7 @@
             option-value="id"
             :placeholder="t('rulesEngineFormView.placeholderPlayer')"
             filter
+            filter-match-mode="accentInsensitive"
             display="chip"
             class="w-full"
           />
@@ -220,6 +221,7 @@
             option-value="id"
             :placeholder="t('rulesEngineFormView.placeholderPlayer')"
             filter
+            filter-match-mode="accentInsensitive"
             class="w-full"
           />
           <DatePicker

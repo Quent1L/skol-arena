@@ -17,6 +17,7 @@ import router from './router'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
+import { FilterService } from '@primevue/core/api'
 import frLocale from 'primelocale/fr.json'
 import enLocale from 'primelocale/en.json'
 import themePreset from './config/PrimevuePreset'
@@ -24,6 +25,7 @@ import { errorService } from './composables/useErrorService'
 import { checkVersion } from './composables/pwa/pwa.update'
 import { markLeaving } from './utils/app-lifecycle'
 import { i18n, getInitialLocale } from './i18n'
+import { matchesSearch } from './utils/StringUtils'
 
 // Deployment detection: these checks only raise a flag, they never reload.
 // Navigation is what applies the update (see router/index.ts), so input in
@@ -89,6 +91,12 @@ app.use(PrimeVue, {
     },
   },
 })
+
+// Select/MultiSelect `filter` only folds case: register an accent-insensitive mode so
+// "eloise" finds "Éloïse" there too (use with filter-match-mode="accentInsensitive").
+FilterService.register('accentInsensitive', (value: unknown, filter: unknown) =>
+  matchesSearch(value == null ? '' : String(value), filter == null ? '' : String(filter)),
+)
 
 app.use(i18n)
 app.use(createPinia())

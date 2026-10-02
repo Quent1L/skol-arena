@@ -73,6 +73,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { matchesSearch } from '@/utils/StringUtils'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import ProgressSpinner from 'primevue/progressspinner'
 
@@ -113,9 +114,9 @@ const liveResults = ref<Player[]>([])
 const searching = ref(false)
 
 const filteredPlayers = computed(() => {
-  const query = searchQuery.value.toLowerCase().trim()
+  const query = searchQuery.value.trim()
   if (!query) return props.players
-  return props.players.filter((p) => p.displayName.toLowerCase().includes(query))
+  return props.players.filter((p) => matchesSearch(p.displayName, query))
 })
 
 const displayedPlayers = computed(() =>

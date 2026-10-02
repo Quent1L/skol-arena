@@ -31,6 +31,7 @@ import { startJobScheduler } from "./jobs/scheduler";
 import { socketAddressOf, withResolvedClientIp } from "./utils/client-ip";
 import { normalizeAuthRateLimitResponse } from "./utils/auth-rate-limit";
 import { runMigrations } from "./utils/migrate";
+import { detectAccentFolding } from "./utils/accent-folding";
 import { initializeAdminIfNeeded } from "./utils/init-admin";
 import {
   clearStaleRecalcMarkers,
@@ -42,6 +43,8 @@ import { taskList } from "./workers/mmr-recalculation.worker";
 import { migrateStoredRules } from "./services/rules-migration.service";
 
 await runMigrations();
+// After migrations: 0085 may have been allowed to skip `unaccent`; logs a warning if so.
+await detectAccentFolding();
 // Rules are data, so they migrate like the schema does: forward-only, at startup,
 // before anything can read or validate them against the current fact catalog.
 await migrateStoredRules();

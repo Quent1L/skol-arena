@@ -141,6 +141,7 @@
 import { ref, computed, defineAsyncComponent, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
+import { matchesSearch } from '@/utils/StringUtils'
 import { useInfiniteScroll } from '@vueuse/core'
 import { matchApi } from '@/composables/match/match.api'
 import type { ClientMatchCard, MatchCardSide } from '@skol-arena/shared/types/index'
@@ -284,11 +285,11 @@ const displayedMatches = computed(() => {
 })
 
 function onSearch(event: { query: string }) {
-  const q = event.query.toLowerCase()
+  const q = event.query
   suggestions.value = (props.players ?? [])
     .filter(
       (p) =>
-        p.displayName.toLowerCase().includes(q) &&
+        matchesSearch(p.displayName, q) &&
         !selectedPlayers.value.find((s) => s.id === p.id),
     )
     .slice(0, 8)

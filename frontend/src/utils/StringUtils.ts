@@ -32,3 +32,15 @@ export function getAvatarBg(name: string): string {
   const idx = name.charCodeAt(0) % AVATAR_COLORS.length
   return AVATAR_COLORS[idx]
 }
+
+/**
+ * Folds case and diacritics so "eloise" finds "Éloïse". NFD splits an accented
+ * letter into its base plus a combining mark, which the regex then drops.
+ */
+export function normalizeForSearch(value: string): string {
+  return value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
+}
+
+export function matchesSearch(text: string | null | undefined, query: string): boolean {
+  return normalizeForSearch(text ?? '').includes(normalizeForSearch(query))
+}

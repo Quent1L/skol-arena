@@ -106,6 +106,42 @@ empty database:
    cleartext in the logs, so treat those logs as a secret until you have replaced
    it.
 
+## Accent-insensitive search (`unaccent`)
+
+Player and user searches (the comparison page, the admin user list, the live player
+picker) ignore case **and accents** — `eloise` finds `Éloïse` — through the PostgreSQL
+[`unaccent`](https://www.postgresql.org/docs/current/unaccent.html) extension. A
+migration creates it automatically.
+
+This works out of the box with the Compose file above: the official `postgres` images
+ship the contrib modules, and the `POSTGRES_USER` role owns the database. It can fail
+elsewhere:
+
+- the database role only owns a schema. `unaccent` is a trusted extension, so no
+  superuser is needed, but creating it still requires `CREATE` **on the database**;
+- the server was installed without the contrib modules (some distro packages split
+  them into a separate `postgresql-contrib` package).
+
+Neither case blocks the instance. The migration downgrades the error to a warning and
+commits, and the app logs this at every startup:
+
+```
+PostgreSQL extension 'unaccent' unavailable — player/user search stays case-insensitive but accent-sensitive.
+```
+
+Search keeps working, only accent folding is lost. To enable it, have a privileged role
+create the extension once, then restart the app:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS unaccent;
+-- or let the app's role do it itself on the next restart:
+GRANT CREATE ON DATABASE skol_arena TO skol;
+```
+
+The check runs at startup only, so the restart is required. Searches done in the
+browser (match entry, player filters) fold accents on their own and do not depend on
+the extension.
+
 ## Upgrading
 
 ### Back up the database first

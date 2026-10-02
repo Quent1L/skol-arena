@@ -93,6 +93,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { matchesSearch } from '@/utils/StringUtils'
 import Button from 'primevue/button'
 import AutoComplete from 'primevue/autocomplete'
 import Message from 'primevue/message'
@@ -163,9 +164,8 @@ watch(
 )
 
 function searchPlayers(e: AutoCompleteCompleteEvent) {
-  const query = e.query.toLowerCase()
   filteredPlayers.value = allPlayers.value.filter(
-    (p) => p.displayName.toLowerCase().includes(query) && !allPlayerIdsModel.value.includes(p.id),
+    (p) => matchesSearch(p.displayName, e.query) && !allPlayerIdsModel.value.includes(p.id),
   )
 }
 

@@ -83,6 +83,7 @@
         "@fontsource/space-grotesk": "^5.3.0",
         "@fortawesome/fontawesome-free": "^7.3.1",
         "@primeuix/themes": "^2.0.3",
+        "@primevue/core": "^4.5.5",
         "@skol-arena/shared": "workspace:*",
         "@tiptap/extension-image": "^3.30.2",
         "@tiptap/extension-text-align": "^3.30.2",

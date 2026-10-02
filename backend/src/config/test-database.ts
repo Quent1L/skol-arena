@@ -3,6 +3,7 @@
  * This allows running tests without a real database connection.
  */
 import { PGlite } from "@electric-sql/pglite";
+import { unaccent } from "@electric-sql/pglite/contrib/unaccent";
 import { drizzle } from "drizzle-orm/pglite";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../db/schema";
@@ -21,8 +22,9 @@ let pgliteInstance: PGlite | null = null;
 export async function createTestDatabase(): Promise<
   PgliteDatabase<typeof schema>
 > {
-  // Create a new PGlite in-memory database
-  pgliteInstance = new PGlite();
+  // Create a new PGlite in-memory database. Contrib extensions are not bundled
+  // by default: migration 0085 creates `unaccent`, so it must be loadable here.
+  pgliteInstance = new PGlite({ extensions: { unaccent } });
 
   // Create drizzle instance with the pglite client
   testDbInstance = drizzle(pgliteInstance, { schema });

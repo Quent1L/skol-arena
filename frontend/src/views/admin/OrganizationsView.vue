@@ -167,6 +167,7 @@
               :placeholder="t('organizationsView.selectUsersPlaceholder')"
               class="w-full"
               filter
+              filter-match-mode="accentInsensitive"
               display="chip"
             />
           </div>

@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, gte, isNotNull, isNull, lt, or, ilike, sql } from "drizzle-orm";
 import { db } from "../config/database";
+import { foldedILike } from "../utils/accent-folding";
 import { appUsers, organizationMembers, organizations, session, user } from "../db/schema";
 import type {
   AdminUserDeletionBlocker,
@@ -9,6 +10,11 @@ import type {
   AdminUserStats,
   UserRole,
 } from "@skol-arena/shared";
+
+/** `%term%` with the LIKE wildcards escaped, so a typed `_` or `%` matches literally. */
+function containsPattern(term: string): string {
+  return `%${term.replace(/[\\%_]/g, "\\$&")}%`;
+}
 
 export class UserRepository {
   /**
@@ -61,12 +67,15 @@ export class UserRepository {
   }
 
   /**
-   * Search users by display name or short name (case-insensitive)
+   * Search users by display name or short name (case- and accent-insensitive)
    */
   async searchByName(query: string, limit = 10) {
-    const pattern = `%${query}%`;
+    const pattern = containsPattern(query);
     return await db.query.appUsers.findMany({
-      where: or(ilike(appUsers.displayName, pattern), ilike(appUsers.shortName, pattern)),
+      where: or(
+        foldedILike(appUsers.displayName, pattern),
+        foldedILike(appUsers.shortName, pattern),
+      ),
       columns: { id: true, displayName: true, shortName: true },
       orderBy: (users, { asc }) => [asc(users.displayName)],
       limit,
@@ -141,11 +150,11 @@ export class UserRepository {
     const conditions = [];
 
     if (filters.search) {
-      const pattern = `%${filters.search}%`;
+      const pattern = containsPattern(filters.search);
       conditions.push(
         or(
-          ilike(appUsers.displayName, pattern),
-          ilike(appUsers.shortName, pattern),
+          foldedILike(appUsers.displayName, pattern),
+          foldedILike(appUsers.shortName, pattern),
           ilike(user.email, pattern),
         ),
       );

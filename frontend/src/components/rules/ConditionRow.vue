@@ -39,6 +39,7 @@
         option-value="id"
         :placeholder="t('conditionRow.placeholderPlayer')"
         filter
+        filter-match-mode="accentInsensitive"
         class="w-56"
       />
       <MultiSelect
@@ -49,6 +50,7 @@
         option-value="id"
         :placeholder="t('conditionRow.placeholderPlayers')"
         filter
+        filter-match-mode="accentInsensitive"
         display="chip"
         class="w-72"
       />
