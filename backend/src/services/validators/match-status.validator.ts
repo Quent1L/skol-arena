@@ -54,6 +54,15 @@ export class MatchStatusValidator {
     }
 
     /**
+     * Validate match carries a result that can be finalized
+     */
+    validateCanFinalize(status: MatchStatus): void {
+        if (!["reported", "disputed", "confirmed", "pending_confirmation"].includes(status)) {
+            throw new BadRequestError(ErrorCode.MATCH_INVALID_STATUS);
+        }
+    }
+
+    /**
      * Validate match can be cancelled
      */
     validateCanCancel(status: MatchStatus): void {

@@ -2655,3 +2655,185 @@ describe("MatchService - listMatchCards", () => {
     expect(m2.outcomeType).toEqual({ id: "ot-1", name: "Forfait" });
   });
 });
+
+describe("MatchService - lifecycle guards", () => {
+  const scheduled = (overrides: Record<string, unknown> = {}) =>
+    ({
+      id: "m-s",
+      tournamentId: "t-1",
+      status: "scheduled",
+      createdBy: "u-1",
+      sides: [{ score: null }, { score: null }],
+      ...overrides,
+    }) as any;
+
+  it("createMatch in static mode refuses a creator who belongs to neither team", async () => {
+    repo.getTournament = async () => ({ id: "t-1", status: "open", teamMode: "static" }) as any;
+    (teamRepository as any).isMember = async () => false;
+
+    const input = {
+      tournamentId: "t-1",
+      sides: [
+        { position: 1, teamId: "11111111-1111-4111-8111-111111111111", playerIds: ["u-out"] },
+        { position: 2, teamId: "22222222-2222-4222-8222-222222222222" },
+      ],
+    } as CreateMatchRequestData;
+
+    await expect(matchService.createMatch(input, "u-out")).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("createMatch in static mode accepts a member of one of the teams", async () => {
+    repo.getTournament = async () => ({ id: "t-1", status: "open", teamMode: "static" }) as any;
+    (teamRepository as any).isMember = async (teamId: string) => teamId === "team-a";
+    repo.getById = async (id: string) => ({ id, tournamentId: "t-1" }) as any;
+
+    const input = {
+      tournamentId: "t-1",
+      sides: [{ position: 1, teamId: "team-a" }, { position: 2, teamId: "team-b" }],
+    } as CreateMatchRequestData;
+
+    const result = await matchService.createMatch(input, "u-member");
+    expect(result?.id).toBe("match-1");
+  });
+
+  it("updateMatch never writes a status other than reported", async () => {
+    repo.getById = async () => scheduled();
+    repo.getTournament = async () => ({ id: "t-1", scoreEnabled: true }) as any;
+    repo.isUserInMatch = async () => true;
+    let written: UpdateMatchData | undefined;
+    repo.update = async (_id: string, data: UpdateMatchData) => {
+      written = data;
+      return { id: _id } as any;
+    };
+
+    await matchService.updateMatch(
+      "m-s",
+      { status: "finalized", playedAt: new Date().toISOString() } as any,
+      "u-1",
+    );
+
+    expect(written?.status).toBeUndefined();
+  });
+
+  it("updateMatch does not settle a result when the match stays scheduled", async () => {
+    repo.getById = async () => scheduled();
+    repo.getTournament = async () => ({ id: "t-1", scoreEnabled: true }) as any;
+    repo.isUserInMatch = async () => true;
+    let written: UpdateMatchData | undefined;
+    repo.update = async (_id: string, data: UpdateMatchData) => {
+      written = data;
+      return { id: _id } as any;
+    };
+
+    await matchService.updateMatch(
+      "m-s",
+      { status: "scheduled", scoreA: 0, scoreB: 0, winnerPosition: null, playedAt: new Date().toISOString() },
+      "u-1",
+    );
+
+    expect(written?.scoreA).toBeUndefined();
+    expect(written?.winnerPosition).toBeUndefined();
+  });
+
+  it("updateMatch refuses a first result without scores", async () => {
+    repo.getById = async () => scheduled();
+    repo.getTournament = async () => ({ id: "t-1", scoreEnabled: true }) as any;
+    repo.isUserInMatch = async () => true;
+
+    await expect(
+      matchService.updateMatch(
+        "m-s",
+        { status: "reported", playedAt: new Date().toISOString() },
+        "u-1",
+      ),
+    ).rejects.toBeInstanceOf(BadRequestError);
+  });
+
+  it("updateMatch checks the score range of a first result", async () => {
+    repo.getById = async () => scheduled();
+    repo.getTournament = async () =>
+      ({ id: "t-1", scoreEnabled: true, minScore: 0, maxScore: 10, allowDraw: false }) as any;
+    repo.isUserInMatch = async () => true;
+
+    await expect(
+      matchService.updateMatch(
+        "m-s",
+        { status: "reported", scoreA: 99, scoreB: 0, playedAt: new Date().toISOString() },
+        "u-1",
+      ),
+    ).rejects.toBeInstanceOf(BadRequestError);
+  });
+
+  it("finalizeMatch refuses a match that carries no result", async () => {
+    for (const status of ["scheduled", "cancelled"]) {
+      repo.getById = async () => scheduled({ status });
+      await expect(
+        matchService.finalizeMatch("m-s", { finalizationReason: "admin_override" }, "u-admin"),
+      ).rejects.toBeInstanceOf(BadRequestError);
+    }
+  });
+
+  it("cancelMatch refuses the opponent of the reporter", async () => {
+    repo.getById = async () =>
+      scheduled({ status: "reported", result: { reportedBy: "u-reporter" } });
+    repo.getTournament = async () => ({ id: "t-1", mode: "championship" }) as any;
+    repo.isUserInMatch = async () => true;
+
+    await expect(matchService.cancelMatch("m-s", "u-opponent")).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
+  });
+
+  it("cancelMatch lets the reporter withdraw their own result", async () => {
+    repo.getById = async () =>
+      scheduled({ status: "reported", result: { reportedBy: "u-reporter" } });
+    repo.getTournament = async () => ({ id: "t-1", mode: "championship" }) as any;
+    repo.isUserInMatch = async () => true;
+    let written: UpdateMatchData | undefined;
+    repo.update = async (_id: string, data: UpdateMatchData) => {
+      written = data;
+      return { id: _id } as any;
+    };
+
+    await matchService.cancelMatch("m-s", "u-reporter");
+    expect(written?.status).toBe("cancelled");
+  });
+
+  it("cancelMatch refuses a participant on a bracket match", async () => {
+    repo.getById = async () => scheduled();
+    repo.getTournament = async () => ({ id: "t-1", mode: "bracket" }) as any;
+    repo.isUserInMatch = async () => true;
+
+    await expect(matchService.cancelMatch("m-s", "u-1")).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("a result entered by an outsider needs both sides to agree", async () => {
+    const finalized: string[] = [];
+    repo.getById = async () =>
+      scheduled({ status: "reported", result: { reportedBy: "u-kiosk" } });
+    repo.getTournament = async () => ({ id: "t-1", validationMode: "auto" }) as any;
+    repo.isUserInMatch = async () => true;
+    repo.getParticipationsByMatchId = async () =>
+      [
+        { playerId: "u-a", teamSide: "A" },
+        { playerId: "u-b", teamSide: "B" },
+      ] as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => {
+      if (data.status === "finalized") finalized.push(_id);
+      return { id: _id } as any;
+    };
+
+    confRepo.getByMatchId = async () =>
+      [{ playerId: "u-a", isConfirmed: true, isContested: false }] as any;
+    await matchService.confirmMatch("m-s", {}, "u-a");
+    expect(finalized).toHaveLength(0);
+
+    confRepo.getByMatchId = async () =>
+      [
+        { playerId: "u-a", isConfirmed: true, isContested: false },
+        { playerId: "u-b", isConfirmed: true, isContested: false },
+      ] as any;
+    await matchService.confirmMatch("m-s", {}, "u-b");
+    expect(finalized).toEqual(["m-s"]);
+  });
+});

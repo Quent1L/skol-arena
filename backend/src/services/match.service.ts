@@ -436,39 +436,19 @@ export class MatchService {
     updatedBy: string,
     isRevision = false,
   ): Promise<UpdateMatchData> {
-    const updateData: UpdateMatchData = {}
-    if (input.scoreA !== undefined) updateData.scoreA = input.scoreA
-    if (input.scoreB !== undefined) updateData.scoreB = input.scoreB
-    if (input.status !== undefined) updateData.status = input.status
-    if (input.reportProof !== undefined) updateData.reportProof = input.reportProof
-    if (input.outcomeTypeId !== undefined) updateData.outcomeTypeId = input.outcomeTypeId
-    if (input.outcomeReasonId !== undefined) updateData.outcomeReasonId = input.outcomeReasonId
-    if (input.winnerPosition !== undefined) updateData.winnerPosition = input.winnerPosition
+    // The status is never copied from the input: the only transition a client may ask
+    // for here is "reported", applied below once the result passes validation. Result
+    // fields only travel with it, so rescheduling a match never settles a 0-0 draw.
+    const writesResult = input.status === 'reported' || isRevision
+    const updateData: UpdateMatchData = writesResult ? this.pickResultFields(input) : {}
     if (input.playedAt !== undefined) {
       updateData.playedAt = new Date(input.playedAt)
       const playerIds = await matchRepository.getPlayerIdsForMatch(id)
       await this.validateNoPlayerConflict(playerIds, input.playedAt, match.tournamentId, id)
     }
 
-    if (input.status === 'reported' || isRevision) {
-      // A revision can carry only an outcome change: the untouched side keeps the
-      // score already stored, never 0, or the range and draw checks below would
-      // validate a result the match never had.
-      const scoreA = input.scoreA ?? match.sides[0]?.score ?? 0
-      const scoreB = input.scoreB ?? match.sides[1]?.score ?? 0
-      matchInputValidator.validateScores(scoreA, scoreB)
-      matchInputValidator.validateScoreRange(
-        scoreA,
-        scoreB,
-        tournament?.minScore,
-        tournament?.maxScore,
-      )
-      await matchInputValidator.validateDrawAllowed(
-        match.tournamentId,
-        scoreA,
-        scoreB,
-        input.winnerPosition,
-      )
+    if (writesResult) {
+      await this.validateUpdatedResult(input, match, tournament)
 
       // A corrected entry re-opens the validation round, including on a contested match.
       updateData.status = 'reported'
@@ -476,6 +456,50 @@ export class MatchService {
       updateData.confirmationDeadline = this.getDeadlineForTournament(tournament)
     }
     return updateData
+  }
+
+  private pickResultFields(input: UpdateMatchInput): UpdateMatchData {
+    const data: UpdateMatchData = {}
+    if (input.scoreA !== undefined) data.scoreA = input.scoreA
+    if (input.scoreB !== undefined) data.scoreB = input.scoreB
+    if (input.reportProof !== undefined) data.reportProof = input.reportProof
+    if (input.outcomeTypeId !== undefined) data.outcomeTypeId = input.outcomeTypeId
+    if (input.outcomeReasonId !== undefined) data.outcomeReasonId = input.outcomeReasonId
+    if (input.winnerPosition !== undefined) data.winnerPosition = input.winnerPosition
+    return data
+  }
+
+  /**
+   * Runs the same checks as a report on the result an update is about to store. A
+   * scheduled match carries no result yet, so its first one must be complete: without
+   * this, `{ status: "reported" }` alone would record a 0-0 nobody entered.
+   */
+  private async validateUpdatedResult(
+    input: UpdateMatchInput,
+    match: NonNullable<Awaited<ReturnType<typeof matchRepository.getById>>>,
+    tournament: TournamentFromRepository,
+  ): Promise<void> {
+    const isFirstResult = match.status === 'scheduled'
+
+    if (tournament?.scoreEnabled === false) {
+      if (isFirstResult || input.winnerPosition !== undefined) {
+        matchInputValidator.validateWinnerRequired(input.winnerPosition, tournament.allowDraw ?? false)
+      }
+      return
+    }
+
+    if (isFirstResult && (input.scoreA == null || input.scoreB == null)) {
+      throw new BadRequestError(ErrorCode.MATCH_INVALID_SCORE)
+    }
+
+    // A revision can carry only an outcome change: the untouched side keeps the
+    // score already stored, never 0, or the range and draw checks below would
+    // validate a result the match never had.
+    const scoreA = input.scoreA ?? match.sides[0]?.score ?? 0
+    const scoreB = input.scoreB ?? match.sides[1]?.score ?? 0
+    matchInputValidator.validateScores(scoreA, scoreB)
+    matchInputValidator.validateScoreRange(scoreA, scoreB, tournament?.minScore, tournament?.maxScore)
+    await matchInputValidator.validateDrawAllowed(match.tournamentId, scoreA, scoreB, input.winnerPosition)
   }
 
   /**
@@ -1099,13 +1123,21 @@ export class MatchService {
     const reporter = match.result?.reportedBy
     const reporterSide = participants.find((p) => p.playerId === reporter)?.teamSide
 
-    const opponentConfirmed = confirmations.some((c) => {
-      if (!c.isConfirmed || c.isContested) return false
-      const side = participants.find((p) => p.playerId === c.playerId)?.teamSide
-      return reporterSide ? side !== reporterSide : c.playerId !== reporter
-    })
+    const confirmedSides = new Set(
+      confirmations
+        .filter((c) => c.isConfirmed && !c.isContested)
+        .map((c) => participants.find((p) => p.playerId === c.playerId)?.teamSide)
+        .filter((side) => side !== undefined),
+    )
 
-    if (opponentConfirmed) {
+    // A result entered by a participant needs the other side's agreement. One entered
+    // by an outsider (kiosk, admin) speaks for neither side, so both have to agree:
+    // otherwise the winners alone could validate it.
+    const isAgreed = reporterSide
+      ? [...confirmedSides].some((side) => side !== reporterSide)
+      : confirmedSides.has('A') && confirmedSides.has('B')
+
+    if (isAgreed) {
       await this.finalizeMatch(matchId, { finalizationReason: 'consensus' })
     }
   }
@@ -1119,11 +1151,7 @@ export class MatchService {
         throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS)
       }
     } else {
-      const isAdmin = await this.canManageMatches(match.tournamentId, cancelledBy)
-      const isParticipant = await matchRepository.isUserInMatch(id, cancelledBy)
-      if (!isAdmin && !isParticipant) {
-        throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS)
-      }
+      await this.checkCancelPermissions(match, cancelledBy)
     }
 
     if (match.status === 'finalized') {
@@ -1142,6 +1170,33 @@ export class MatchService {
 
     await matchRealtimeService.notifyMatchUpdated(id)
     return await matchRepository.getById(id)
+  }
+
+  /**
+   * A participant may withdraw a match they are part of, but not erase the result the
+   * other side entered: that one is contested, not cancelled. Bracket matches belong to
+   * the draw, so only its managers may cancel them.
+   */
+  private async checkCancelPermissions(
+    match: NonNullable<Awaited<ReturnType<typeof matchRepository.getById>>>,
+    cancelledBy: string,
+  ): Promise<void> {
+    if (await this.canManageMatches(match.tournamentId, cancelledBy)) return
+
+    const isParticipant = await matchRepository.isUserInMatch(match.id, cancelledBy)
+    if (!isParticipant) {
+      throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS)
+    }
+
+    const tournament = await matchRepository.getTournament(match.tournamentId)
+    if (tournament?.mode === 'bracket') {
+      throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS)
+    }
+
+    const hasResult = match.status === 'reported' || match.status === 'disputed'
+    if (hasResult && match.result?.reportedBy !== cancelledBy) {
+      throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS)
+    }
   }
 
   private async cancelFinalizedMatch(
@@ -1184,6 +1239,9 @@ export class MatchService {
     if (match.status === 'finalized') {
       throw new BadRequestError(ErrorCode.MATCH_ALREADY_FINALIZED)
     }
+    // Only a result can be finalized: a scheduled match would settle a 0-0 nobody
+    // entered, and a cancelled one would come back from the dead.
+    matchStatusValidator.validateCanFinalize(match.status)
 
     const updateData: UpdateMatchData = {
       status: 'finalized',

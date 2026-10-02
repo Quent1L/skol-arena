@@ -161,18 +161,22 @@ export class MatchRepository {
       const calcScoreB = data.scoreB ?? 0;
       const outcome = resolveMatchOutcome(data, calcScoreA, calcScoreB);
 
-      await tx
-        .update(matches)
-        .set({ winnerSide: outcome.winnerSide })
-        .where(eq(matches.id, match.id));
+      if (data.status && data.status !== "scheduled") {
+        await tx
+          .update(matches)
+          .set({ winnerSide: outcome.winnerSide })
+          .where(eq(matches.id, match.id));
+      }
 
       const scoreByPosition: Record<number, number> = {
         1: data.scoreA ?? 0,
         2: data.scoreB ?? 0,
       };
 
-      // 5. Create match_sides for all sides
-      const points = computeSidePoints(tournament, outcome);
+      // 5. Create match_sides for all sides. A scheduled match has no result yet: it
+      // earns nothing until one is reported, rather than the points of a 0-0 draw.
+      const hasResult = (data.status ?? "scheduled") !== "scheduled";
+      const points = hasResult ? computeSidePoints(tournament, outcome) : { a: 0, b: 0 };
       const sidesData = resolvedSides.map((rs) => ({
         entryId: rs.entry.id,
         position: rs.position,
@@ -610,7 +614,10 @@ export class MatchRepository {
       const updated = await this.updateMatchRecord(tx, id, data);
       if (!updated) throw new Error(`Match ${id} not found`);
 
-      if (data.scoreA !== undefined || data.scoreB !== undefined) {
+      // A winner-only result (score disabled) still has to settle the winner and points.
+      const changesResult =
+        data.scoreA !== undefined || data.scoreB !== undefined || data.winnerPosition !== undefined;
+      if (changesResult) {
         await this.applyScoreUpdates(tx, id, updated.tournamentId, data);
       }
 

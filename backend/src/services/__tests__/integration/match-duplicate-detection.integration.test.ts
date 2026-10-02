@@ -204,7 +204,7 @@ describe("Match Duplicate Detection Integration Tests", () => {
           sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamBId }],
           scoreA: 2,
           scoreB: 1,
-          status: "finalized",
+          status: "reported",
         },
         testUserId,
       );
@@ -344,7 +344,7 @@ describe("Match Duplicate Detection Integration Tests", () => {
           sides: [{ position: 1, playerIds: [player1Id, player2Id] }, { position: 2, playerIds: [player3Id, player4Id] }],
           scoreA: 2,
           scoreB: 1,
-          status: "finalized",
+          status: "reported",
         },
         testUserId,
       );
@@ -367,7 +367,7 @@ describe("Match Duplicate Detection Integration Tests", () => {
           sides: [{ position: 1, playerIds: [player1Id, player2Id] }, { position: 2, playerIds: [player3Id, player4Id] }],
           scoreA: 2,
           scoreB: 1,
-          status: "finalized",
+          status: "reported",
         },
         testUserId,
       );

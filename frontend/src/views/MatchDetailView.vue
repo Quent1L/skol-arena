@@ -552,7 +552,11 @@ const canCancelMatch = computed(() => {
   if (!match.value) return false
   if (match.value.status === 'cancelled' || match.value.tournament?.mode === 'bracket') return false
   if (match.value.status === 'finalized') return canCancelFinalizedMatch.value
-  return canManageMatch.value || isParticipant.value
+  if (canManageMatch.value) return true
+  if (!isParticipant.value) return false
+  // A result the other side entered is contested, not cancelled: only its author withdraws it.
+  const hasResult = match.value.status === 'reported' || match.value.status === 'disputed'
+  return !hasResult || match.value.result?.reportedBy === appUser.value?.id
 })
 
 /**

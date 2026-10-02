@@ -158,7 +158,7 @@ export interface CreateMatchInput {
   tournamentId: string;
   round?: number;
   sides?: MatchSideInput[];
-  status?: MatchStatus;
+  status?: WritableMatchStatus;
   scoreA?: number | null;
   scoreB?: number | null;
   reportProof?: string;
@@ -171,7 +171,7 @@ export interface UpdateMatchInput {
   round?: number;
   scoreA?: number | null;
   scoreB?: number | null;
-  status?: MatchStatus;
+  status?: WritableMatchStatus;
   reportProof?: string;
   outcomeTypeId?: string;
   outcomeReasonId?: string;
@@ -205,16 +205,37 @@ export interface FinalizeMatchInput {
 // ============================================
 
 export const matchSideInputSchema = z.object({
-  position: z.number().int().min(1),
+  position: z.number().int().min(1).max(2),
   playerIds: z.array(z.string().uuid()).optional(),
   teamId: z.string().uuid().optional(),
 });
 
+/**
+ * A match has exactly one side A (position 1) and one side B (position 2): every
+ * stat, standing and point computation reads those two positions and nothing else.
+ */
+const matchSidesSchema = z
+  .array(matchSideInputSchema)
+  .length(2)
+  .refine((sides) => sides[0].position !== sides[1].position, {
+    message: "Les camps doivent occuper les positions 1 et 2",
+  });
+
+/**
+ * The only statuses a client may write. Every later status (confirmed, disputed,
+ * finalized, cancelled) is reached through its dedicated endpoint, which runs the
+ * confirmation, finalization and MMR side effects a raw write would skip.
+ */
+export const writableMatchStatusSchema = z.enum(["scheduled", "reported"]);
+export type WritableMatchStatus = z.infer<typeof writableMatchStatusSchema>;
+
+const winnerPositionSchema = z.number().int().min(1).max(2).nullable().optional();
+
 export const createMatchSchema = z.object({
   tournamentId: z.string().uuid("ID de tournoi invalide"),
   round: z.number().int().min(1).optional(),
-  sides: z.array(matchSideInputSchema).min(2).optional(),
-  status: matchStatusSchema.optional(),
+  sides: matchSidesSchema.optional(),
+  status: writableMatchStatusSchema.optional(),
   scoreA: z.number().int().min(0).nullable().optional(),
   scoreB: z.number().int().min(0).nullable().optional(),
   reportProof: z.string().optional(),
@@ -223,7 +244,7 @@ export const createMatchSchema = z.object({
     .string()
     .uuid("ID de raison de résultat invalide")
     .optional(),
-  winnerPosition: z.number().int().min(1).nullable().optional(),
+  winnerPosition: winnerPositionSchema,
   playedAt: z.string().datetime().optional(),
 });
 
@@ -231,7 +252,7 @@ export const updateMatchSchema = z.object({
   round: z.number().int().min(1).optional(),
   scoreA: z.number().int().min(0).nullable().optional(),
   scoreB: z.number().int().min(0).nullable().optional(),
-  status: matchStatusSchema.optional(),
+  status: writableMatchStatusSchema.optional(),
   reportProof: z.string().optional(),
   playedAt: z.string().datetime(),
   outcomeTypeId: z.string().uuid("ID de type de résultat invalide").optional(),
@@ -239,14 +260,14 @@ export const updateMatchSchema = z.object({
     .string()
     .uuid("ID de raison de résultat invalide")
     .optional(),
-  winnerPosition: z.number().int().min(1).nullable().optional(),
+  winnerPosition: winnerPositionSchema,
 });
 
 export const reportMatchResultSchema = z.object({
   scoreA: z.number().int().min(0, "Le score doit être positif"),
   scoreB: z.number().int().min(0, "Le score doit être positif"),
   reportProof: z.string().optional(),
-  winnerPosition: z.number().int().min(1).nullable().optional(),
+  winnerPosition: winnerPositionSchema,
   outcomeTypeId: z.string().uuid("ID de type de résultat invalide").optional(),
   outcomeReasonId: z
     .string()

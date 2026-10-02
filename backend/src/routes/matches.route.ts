@@ -355,7 +355,6 @@ matches.post(
   async (c) => {
     const id = c.req.param("id")!;
     const appUserId = c.get("appUserId");
-    const data = c.req.valid("json");
 
     // Check if user can manage matches
     const match = await matchService.getMatchById(id);
@@ -368,9 +367,12 @@ matches.post(
       throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
     }
 
+    // The reason is the server's to state, not the caller's: an organizer settling a
+    // result is an override, and naming it "consensus" or "trust_score" would credit
+    // the reporter's trust score and open the self-cancel window.
     const finalizedMatch = await matchService.finalizeMatch(
       id,
-      data,
+      { finalizationReason: "admin_override" },
       appUserId
     );
 

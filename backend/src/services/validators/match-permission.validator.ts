@@ -1,6 +1,7 @@
 import { matchRepository } from "../../repository/match.repository";
 import { tournamentRepository } from "../../repository/tournament.repository";
 import { userRepository } from "../../repository/user.repository";
+import { teamRepository } from "../../repository/team.repository";
 import { ForbiddenError, ErrorCode } from "../../types/errors";
 import type { CreateMatchRequestData as CreateMatchInput } from "@skol-arena/shared/types/index";
 
@@ -36,9 +37,9 @@ export class MatchPermissionValidator {
     async checkCreatePermissions(
         input: CreateMatchInput,
         createdBy: string,
-        _tournament: NonNullable<TournamentFromRepository>
+        tournament: NonNullable<TournamentFromRepository>
     ): Promise<void> {
-        if (this.isPlayerInMatch(input, createdBy)) {
+        if (tournament.teamMode !== "static" && this.isPlayerInSides(input, createdBy)) {
             return;
         }
 
@@ -48,11 +49,14 @@ export class MatchPermissionValidator {
             return;
         }
 
-        const canManage = await this.canManageMatches(
-            input.tournamentId,
-            createdBy
-        );
-        if (!canManage) {
+        if (await this.canManageMatches(input.tournamentId, createdBy)) {
+            return;
+        }
+
+        const isTeamMember =
+            tournament.teamMode === "static" &&
+            (await this.isMemberOfASide(input, createdBy));
+        if (!isTeamMember) {
             throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
         }
     }
@@ -78,11 +82,22 @@ export class MatchPermissionValidator {
         }
     }
 
-    /**
-     * Check if player is in match
-     */
-    private isPlayerInMatch(input: CreateMatchInput, playerId: string): boolean {
+    private isPlayerInSides(input: CreateMatchInput, playerId: string): boolean {
         return (input.sides ?? []).some((s) => s.playerIds?.includes(playerId));
+    }
+
+    /**
+     * In static mode a side is its team: `playerIds` is never read when the entry is
+     * built, so listing yourself there proves nothing. Membership of one of the teams
+     * is what makes the creator a participant.
+     */
+    private async isMemberOfASide(input: CreateMatchInput, playerId: string): Promise<boolean> {
+        for (const side of input.sides ?? []) {
+            if (side.teamId && (await teamRepository.isMember(side.teamId, playerId))) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 
