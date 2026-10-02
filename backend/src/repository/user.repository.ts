@@ -44,6 +44,14 @@ export class UserRepository {
       .where(eq(appUsers.id, userId))
   }
 
+  /** Takes back the point a finalization credited, never below zero. */
+  async decrementTrustScore(userId: string): Promise<void> {
+    await db
+      .update(appUsers)
+      .set({ trustScoreCount: sql`GREATEST(${appUsers.trustScoreCount} - 1, 0)` })
+      .where(eq(appUsers.id, userId))
+  }
+
   async resetTrustScore(userId: string): Promise<void> {
     await db.update(appUsers).set({ trustScoreCount: 0 }).where(eq(appUsers.id, userId))
   }

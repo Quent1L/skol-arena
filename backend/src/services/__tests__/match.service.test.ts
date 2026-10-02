@@ -33,6 +33,7 @@ import { tournamentStatsRepository } from "../../repository/tournament-stats.rep
 import { matchSidesRepository } from "../../repository/match-sides.repository";
 import { matchMessageService } from "../match-message.service";
 import { matchRealtimeService } from "../match-realtime.service";
+import { matchFinalizationOrchestrator } from "../match-finalization.orchestrator";
 import {
   NotFoundError,
   BadRequestError,
@@ -200,6 +201,7 @@ afterEach(() => {
   restore(rankedSeasonService);
   restore(tournamentStatsRepository);
   restore(matchSidesRepository);
+  restore(matchFinalizationOrchestrator);
 });
 
 describe("MatchService - basic flows", () => {
@@ -2835,5 +2837,50 @@ describe("MatchService - lifecycle guards", () => {
       ] as any;
     await matchService.confirmMatch("m-s", {}, "u-b");
     expect(finalized).toEqual(["m-s"]);
+  });
+});
+
+describe("MatchService - trust score", () => {
+  const selfValidated = () =>
+    ({
+      id: "m-fin",
+      tournamentId: "t-1",
+      status: "finalized",
+      playedAt: new Date(),
+      result: {
+        reportedBy: "p2",
+        finalizedAt: new Date(Date.now() - 60 * 60 * 1000),
+        finalizationReason: "auto_validation",
+      },
+    }) as any;
+
+  let decremented: string[];
+  let reset: string[];
+
+  beforeEach(() => {
+    decremented = [];
+    reset = [];
+    usrRepo.decrementTrustScore = async (id: string) => {
+      decremented.push(id);
+    };
+    usrRepo.resetTrustScore = async (id: string) => {
+      reset.push(id);
+    };
+    repo.getById = async () => selfValidated();
+    repo.getTournament = async () =>
+      ({ id: "t-1", mode: "championship", validationMode: "none" }) as any;
+    repo.isUserInMatch = async () => true;
+    confRepo.hasPlayerDisputedPostFinalization = async () => false;
+    (matchFinalizationOrchestrator as any).runPostCancellationEffects = async () => undefined;
+  });
+
+  it("withdrawing a self-validated result takes back the trust point it earned", async () => {
+    await matchService.cancelMatch("m-fin", "p2");
+    expect(decremented).toEqual(["p2"]);
+  });
+
+  it("an opponent disputing a settled result resets the author's trust score", async () => {
+    await matchService.respondToMatch("m-fin", { type: "dispute", reason: "wrong" } as any, "p1");
+    expect(reset).toEqual(["p2"]);
   });
 });

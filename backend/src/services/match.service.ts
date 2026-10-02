@@ -784,6 +784,12 @@ export class MatchService {
     } else {
       await this.assertPostDisputeAllowed(match)
       await this.recordPostFinalizationDispute(id, input, respondedBy)
+      // Same sanction as a contestation before finalization: a result someone else
+      // disputes no longer vouches for its author.
+      const reporter = match.result?.reportedBy
+      if (reporter && reporter !== respondedBy) {
+        await userRepository.resetTrustScore(reporter)
+      }
     }
 
     return await matchRepository.getById(id)
@@ -1224,6 +1230,9 @@ export class MatchService {
     if (hoursSince > 48) throw new BadRequestError(ErrorCode.CANCEL_WINDOW_EXPIRED)
 
     await matchRepository.update(id, { status: 'cancelled' })
+    // The finalization credited the author's trust score; a result they withdraw
+    // must not keep counting towards skipping the opponents' confirmation.
+    await userRepository.decrementTrustScore(cancelledBy)
     await notificationService.deleteActionsByMatchId(id)
     await matchFinalizationOrchestrator.runPostCancellationEffects(id, match.tournamentId, match.playedAt ?? new Date())
   }
