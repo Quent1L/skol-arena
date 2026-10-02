@@ -1,5 +1,6 @@
 import { userRepository } from "../repository/user.repository";
 import { invitationRepository } from "../repository/invitation.repository";
+import { organizationRepository } from "../repository/organization.repository";
 import { organizationService } from "./organization.service";
 import { playerCacheService } from "./player-cache.service";
 import { auth } from "../config/auth";
@@ -99,7 +100,20 @@ export class UserService {
       lastLoginAt: new Date(),
     });
 
+    await this.joinRedeemedOrganization(betterAuthUserId, appUser.id);
     return appUser.id;
+  }
+
+  /**
+   * A code redeemed at sign-up (the cookie flow) is consumed before any app user
+   * exists, so the organization it was issued for could not be joined then. The
+   * profile is created here, which is the first moment membership can be recorded.
+   */
+  private async joinRedeemedOrganization(betterAuthUserId: string, appUserId: string) {
+    const organizationId = await invitationRepository.getRedeemedOrganizationId(betterAuthUserId);
+    if (!organizationId) return;
+    if (await organizationRepository.isMember(organizationId, appUserId)) return;
+    await organizationRepository.addMember(organizationId, appUserId, "member");
   }
 
   /**

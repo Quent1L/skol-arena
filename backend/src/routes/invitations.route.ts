@@ -42,8 +42,11 @@ invitations.post(
   }
 );
 
+// Rate limited like /validate: a wrong code fails here with the same reasons, so
+// without a limit this would be the unthrottled way to guess one.
 invitations.post(
   "/consume",
+  rateLimit({ window: 300, max: 10 }),
   describe({
     tags: TAGS,
     summary: "Redeem an invitation code",
@@ -52,6 +55,7 @@ invitations.post(
       "session but not an app profile, which is what this endpoint creates.",
     auth: true,
     notFound: true,
+    rateLimited: true,
     success: { description: "The app user that was created", schema: invitationConsumptionSchema },
   }),
   validate("json", consumeInvitationCodeSchema),
@@ -83,12 +87,14 @@ invitations.post(
 invitations.post(
   "/join-organization",
   requireAuth,
+  rateLimit({ window: 300, max: 10 }),
   describe({
     tags: TAGS,
     summary: "Join an organization with a code",
     auth: true,
     notFound: true,
     conflict: true,
+    rateLimited: true,
     success: { description: "The organization that was joined", schema: organizationJoinSchema },
   }),
   validate("json", validateInvitationCodeSchema),

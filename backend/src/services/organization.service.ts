@@ -45,7 +45,9 @@ export class OrganizationService {
       throw new ConflictError(ErrorCode.ORGANIZATION_ALREADY_MEMBER);
     }
 
-    await invitationRepository.incrementUsage(invitation.id);
+    if (!(await invitationRepository.claimUse(invitation.id))) {
+      throw new BadRequestError(ErrorCode.INVITATION_CODE_EXHAUSTED);
+    }
     await invitationRepository.recordUsage({
       codeId: invitation.id,
       userId: betterAuthUserId,

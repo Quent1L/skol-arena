@@ -7,6 +7,7 @@ import {
   NotFoundError,
   ConflictError,
 } from "../types/errors";
+import { toSafeDisplayName } from "../utils/display-name";
 
 export class InvitationService {
   async generateCode(data: {
@@ -87,7 +88,9 @@ export class InvitationService {
       throw new ConflictError(ErrorCode.INVITATION_CODE_ALREADY_USED);
     }
 
-    await invitationRepository.incrementUsage(invitation.id);
+    if (!(await invitationRepository.claimUse(invitation.id))) {
+      throw new BadRequestError(ErrorCode.INVITATION_CODE_EXHAUSTED);
+    }
     await invitationRepository.recordUsage({
       codeId: invitation.id,
       userId,
@@ -108,10 +111,11 @@ export class InvitationService {
     const invitation = await this.consumeCode(code, betterAuthUserId, email, ipAddress);
 
     const { userRepository } = await import("../repository/user.repository");
+    const safeName = toSafeDisplayName(displayName);
     const appUser = await userRepository.createAppUser({
       externalId: betterAuthUserId,
-      displayName: displayName,
-      shortName: displayName.substring(0, 5).toUpperCase(),
+      displayName: safeName,
+      shortName: safeName.substring(0, 5).toUpperCase(),
       role: "player",
     });
 
