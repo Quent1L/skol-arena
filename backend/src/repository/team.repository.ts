@@ -1,6 +1,6 @@
 import { eq, and, count, isNotNull } from "drizzle-orm";
 import { db } from "../config/database";
-import { teams, teamMembers, tournamentEntries } from "../db/schema";
+import { teams, teamMembers, tournamentEntries, tournaments } from "../db/schema";
 
 export class TeamRepository {
   async create(data: { tournamentId: string; name: string; createdBy: string }) {
@@ -59,6 +59,35 @@ export class TeamRepository {
       .values({ teamId, userId })
       .returning();
     return member;
+  }
+
+  /**
+   * Adds a member under a lock on the tournament row, so concurrent joins see each
+   * other: two players cannot both take the last seat, nor one player two teams.
+   */
+  async addMemberIfAllowed(
+    tournamentId: string,
+    teamId: string,
+    userId: string,
+    maxTeamSize: number,
+  ): Promise<"added" | "full" | "already_in_team"> {
+    return await db.transaction(async (tx) => {
+      await tx.select({ id: tournaments.id }).from(tournaments)
+        .where(eq(tournaments.id, tournamentId)).for("update");
+
+      const [existing] = await tx.select({ id: teamMembers.id }).from(teamMembers)
+        .innerJoin(teams, eq(teamMembers.teamId, teams.id))
+        .where(and(eq(teams.tournamentId, tournamentId), eq(teamMembers.userId, userId)))
+        .limit(1);
+      if (existing) return "already_in_team";
+
+      const [{ value }] = await tx.select({ value: count() }).from(teamMembers)
+        .where(eq(teamMembers.teamId, teamId));
+      if (value >= maxTeamSize) return "full";
+
+      await tx.insert(teamMembers).values({ teamId, userId });
+      return "added";
+    });
   }
 
   async removeMember(teamId: string, userId: string) {

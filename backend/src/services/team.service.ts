@@ -18,6 +18,31 @@ class TeamService {
     }
   }
 
+  /**
+   * Rights are checked against the tournament in the URL, so the team must belong to
+   * it: otherwise an admin of one tournament could act on the teams of any other.
+   */
+  private async getTeamInTournament(teamId: string, tournamentId: string) {
+    const team = await teamRepository.getById(teamId);
+    if (!team || team.tournamentId !== tournamentId) {
+      throw new NotFoundError(ErrorCode.TEAM_NOT_FOUND);
+    }
+    return team;
+  }
+
+  private async assertActiveParticipant(tournamentId: string, userId: string) {
+    const participant = await db.query.tournamentParticipants.findFirst({
+      where: and(
+        eq(tournamentParticipants.tournamentId, tournamentId),
+        eq(tournamentParticipants.userId, userId),
+        eq(tournamentParticipants.status, "active"),
+      ),
+    });
+    if (!participant) {
+      throw new BadRequestError(ErrorCode.NOT_A_PARTICIPANT);
+    }
+  }
+
   async createTeam(tournamentId: string, name: string, createdBy: string, isAdmin: boolean = false) {
     const tournament = await db.query.tournaments.findFirst({
       where: eq(tournaments.id, tournamentId),
@@ -32,6 +57,11 @@ class TeamService {
     }
 
     this.checkTournamentEditable(tournament);
+    // Registration is what vouches for the caller (it checks the organization), so
+    // only registered players and the organizers may create teams.
+    if (!isAdmin) {
+      await this.assertActiveParticipant(tournamentId, createdBy);
+    }
 
     const nameCheck = await db.query.teams.findFirst({
       where: and(eq(teams.tournamentId, tournamentId), eq(teams.name, name)),
@@ -44,22 +74,15 @@ class TeamService {
     const team = await teamRepository.create({ tournamentId, name, createdBy });
 
     if (!isAdmin) {
-      // Only auto-add creator if they are an active participant
-      const isParticipant = await db.query.tournamentParticipants.findFirst({
-        where: and(
-          eq(tournamentParticipants.tournamentId, tournamentId),
-          eq(tournamentParticipants.userId, createdBy),
-          eq(tournamentParticipants.status, "active"),
-        ),
-      });
-
-      if (isParticipant) {
-        const existingTeam = await teamRepository.getUserTeamInTournament(tournamentId, createdBy);
-        if (existingTeam) {
-          await teamRepository.delete(team.id);
-          throw new ConflictError(ErrorCode.PLAYER_ALREADY_IN_TEAM);
-        }
-        await teamRepository.addMember(team.id, createdBy);
+      const outcome = await teamRepository.addMemberIfAllowed(
+        tournamentId,
+        team.id,
+        createdBy,
+        tournament.maxTeamSize,
+      );
+      if (outcome !== "added") {
+        await teamRepository.delete(team.id);
+        throw new ConflictError(ErrorCode.PLAYER_ALREADY_IN_TEAM);
       }
     }
     // Admin → team created empty, no auto-add, no conflict check
@@ -93,43 +116,28 @@ class TeamService {
       throw new NotFoundError(ErrorCode.TOURNAMENT_NOT_FOUND);
     }
 
-    const teamHasMatch = await teamRepository.hasMatchEntry(teamId);
-    if (teamHasMatch) {
+    await this.getTeamInTournament(teamId, tournamentId);
+
+    if (await teamRepository.hasMatchEntry(teamId)) {
       throw new BadRequestError(ErrorCode.TEAM_HAS_MATCH);
     }
 
     this.checkTournamentEditable(tournament);
+    await this.assertActiveParticipant(tournamentId, userId);
 
-    // Check the user is a participant
-    const participant = await db.query.tournamentParticipants.findFirst({
-      where: and(
-        eq(tournamentParticipants.tournamentId, tournamentId),
-        eq(tournamentParticipants.userId, userId),
-        eq(tournamentParticipants.status, "active"),
-      ),
-    });
-
-    if (!participant) {
-      throw new BadRequestError(ErrorCode.NOT_A_PARTICIPANT);
-    }
-
-    // Check user isn't already in a team in this tournament
-    const existingTeam = await teamRepository.getUserTeamInTournament(tournamentId, userId);
-    if (existingTeam) {
+    const outcome = await teamRepository.addMemberIfAllowed(
+      tournamentId,
+      teamId,
+      userId,
+      tournament.maxTeamSize,
+    );
+    if (outcome === "already_in_team") {
       throw new ConflictError(ErrorCode.PLAYER_ALREADY_IN_TEAM);
     }
-
-    const team = await teamRepository.getById(teamId);
-    if (!team) {
-      throw new NotFoundError(ErrorCode.TEAM_NOT_FOUND);
-    }
-
-    const memberCount = await teamRepository.getMemberCount(teamId);
-    if (memberCount >= tournament.maxTeamSize) {
+    if (outcome === "full") {
       throw new BadRequestError(ErrorCode.TEAM_FULL);
     }
 
-    await teamRepository.addMember(teamId, userId);
     const updated = await teamRepository.getById(teamId);
     webSocketService.broadcastToTournament(tournamentId, { event: "team_updated", data: updated });
     return updated;
@@ -137,6 +145,7 @@ class TeamService {
 
   async leaveTeam(
     teamId: string,
+    tournamentId: string,
     userId: string,
     requestedBy: string,
     isAdmin: boolean,
@@ -145,10 +154,7 @@ class TeamService {
       throw new ForbiddenError(ErrorCode.FORBIDDEN);
     }
 
-    const team = await teamRepository.getById(teamId);
-    if (!team) {
-      throw new NotFoundError(ErrorCode.TEAM_NOT_FOUND);
-    }
+    const team = await this.getTeamInTournament(teamId, tournamentId);
 
     const teamHasMatch = await teamRepository.hasMatchEntry(teamId);
     if (teamHasMatch) {
@@ -187,11 +193,8 @@ class TeamService {
     }
   }
 
-  async deleteTeam(teamId: string, requestedBy: string, isAdmin: boolean) {
-    const team = await teamRepository.getById(teamId);
-    if (!team) {
-      throw new NotFoundError(ErrorCode.TEAM_NOT_FOUND);
-    }
+  async deleteTeam(teamId: string, tournamentId: string, requestedBy: string, isAdmin: boolean) {
+    const team = await this.getTeamInTournament(teamId, tournamentId);
 
     if (team.createdBy !== requestedBy && !isAdmin) {
       throw new ForbiddenError(ErrorCode.FORBIDDEN);

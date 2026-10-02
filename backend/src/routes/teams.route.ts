@@ -111,7 +111,7 @@ teams.delete(
     const appUserId = c.get("appUserId")!;
     const { userId } = c.req.valid("query");
     const isAdmin = await tournamentService.canManageTournament(tournamentId, appUserId);
-    await teamService.leaveTeam(teamId, userId ?? appUserId, appUserId, isAdmin);
+    await teamService.leaveTeam(teamId, tournamentId, userId ?? appUserId, appUserId, isAdmin);
     return c.json({ success: true });
   },
 );
@@ -134,7 +134,7 @@ teams.delete(
     const teamId = c.req.param("teamId")!;
     const appUserId = c.get("appUserId")!;
     const isAdmin = await tournamentService.canManageTournament(tournamentId, appUserId);
-    await teamService.deleteTeam(teamId, appUserId, isAdmin);
+    await teamService.deleteTeam(teamId, tournamentId, appUserId, isAdmin);
     return c.json({ success: true });
   },
 );
