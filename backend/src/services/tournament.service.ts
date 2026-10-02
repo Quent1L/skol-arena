@@ -33,6 +33,7 @@ import {
   ConflictError,
 } from "../types/errors";
 import { sanitizeOptionalRichText } from "../utils/sanitize-html";
+import { gameRulesRepository } from "../repository/game-rules.repository";
 
 export class TournamentService {
   /**
@@ -157,8 +158,44 @@ export class TournamentService {
    * Validate create tournament input
    */
   private validateCreateInput(input: CreateTournamentInput) {
+    // A ranked competition is a season: it needs the MMR configuration only the
+    // season service creates, so this path never produces one.
+    if (input.mode === "ranked") {
+      throw new BadRequestError(ErrorCode.INVALID_TOURNAMENT_MODE);
+    }
     this.validateDateRange(input.startDate, input.endDate);
     this.validateTeamSize(input.minTeamSize, input.maxTeamSize);
+  }
+
+  /**
+   * Guards the fields whose reach goes beyond the tournament itself. The organization
+   * decides who may see it, so moving it (or making a private one public) is a super
+   * admin's call, as the form already assumes. The mode cannot cross into or out of
+   * ranked, which belongs to the season service, and a rule must exist to be linked.
+   */
+  private async validateSensitiveUpdate(
+    tournament: { mode: TournamentMode; organizationId: string | null },
+    userId: string,
+    input: UpdateTournamentInput,
+  ) {
+    const changesOrganization =
+      input.organizationId !== undefined &&
+      (input.organizationId ?? null) !== tournament.organizationId;
+    if (changesOrganization) {
+      const user = await userRepository.getById(userId);
+      if (user?.role !== "super_admin") {
+        throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
+      }
+    }
+
+    const changesMode = input.mode !== undefined && input.mode !== tournament.mode;
+    if (changesMode && (input.mode === "ranked" || tournament.mode === "ranked")) {
+      throw new BadRequestError(ErrorCode.INVALID_TOURNAMENT_MODE);
+    }
+
+    if (input.rulesId && !(await gameRulesRepository.getById(input.rulesId))) {
+      throw new NotFoundError(ErrorCode.GAME_RULE_NOT_FOUND);
+    }
   }
 
   /**
@@ -282,6 +319,7 @@ export class TournamentService {
     const ctx = await this.buildEditabilityContext(tournament);
 
     await this.validateUpdateFields(ctx, input);
+    await this.validateSensitiveUpdate(tournament, userId, input);
     this.validateUpdateDates(tournament, input);
     this.validateUpdateTeamSize(tournament, input);
     this.validateStatusChange(tournament, input);

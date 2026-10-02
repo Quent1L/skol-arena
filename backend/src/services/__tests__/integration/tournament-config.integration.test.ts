@@ -11,6 +11,7 @@ const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
 import { tournamentService } from "../../tournament.service";
 import { tournamentRepository } from "../../../repository/tournament.repository";
+import { BadRequestError } from "../../../types/errors";
 import {
   appUsers,
   championshipConfigs,
@@ -119,21 +120,19 @@ describe("Tournament config satellites", () => {
     expect(championship).toBeUndefined();
   });
 
-  it("creates neither row for a ranked season", async () => {
-    const tournament = await tournamentService.createTournament({
-      name: `Config Ranked ${Date.now()}`,
-      mode: "ranked",
-      teamMode: "flex",
-      minTeamSize: 1,
-      maxTeamSize: 1,
-      createdBy: creatorId,
-      ...dates(),
-    });
-
-    const { scoring, championship } = await readConfigs(tournament.id);
-
-    expect(scoring).toBeUndefined();
-    expect(championship).toBeUndefined();
+  it("leaves ranked seasons to the season service", async () => {
+    // A season needs its MMR configuration, which only rankedSeasonService creates.
+    await expect(
+      tournamentService.createTournament({
+        name: `Config Ranked ${Date.now()}`,
+        mode: "ranked",
+        teamMode: "flex",
+        minTeamSize: 1,
+        maxTeamSize: 1,
+        createdBy: creatorId,
+        ...dates(),
+      }),
+    ).rejects.toBeInstanceOf(BadRequestError);
   });
 
   it("upserts the configs on update and returns them on the row", async () => {

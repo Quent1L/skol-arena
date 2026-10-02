@@ -47,12 +47,16 @@ export class GameRulesService {
     await gameRulesRepository.delete(id);
   }
 
+  /**
+   * A rule is shared by every tournament that links it and by its public page: only
+   * a super admin may write one, as the /admin/rules screens already assume.
+   */
   private async assertCanManage(userId: string) {
     const user = await userRepository.getById(userId);
     if (!user) {
       throw new ForbiddenError(ErrorCode.FORBIDDEN);
     }
-    if (user.role !== "super_admin" && user.role !== "tournament_admin") {
+    if (user.role !== "super_admin") {
       throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
     }
   }

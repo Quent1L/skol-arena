@@ -105,6 +105,7 @@ export interface UpdateTournamentInput {
   status?: TournamentStatus;
   disciplineId?: string;
   rulesId?: string | null;
+  organizationId?: string | null;
   minScore?: number | null;
   maxScore?: number | null;
   validationMode?: ValidationMode;

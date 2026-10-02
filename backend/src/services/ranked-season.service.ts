@@ -1346,14 +1346,15 @@ export class RankedSeasonService {
 
   /**
    * Public because the rollover service gates its admin-triggered entry point on it, and
-   * importing it the other way round would close a cycle.
+   * importing it the other way round would close a cycle. Seasons are shared by every tournament admin, so only a super admin may run them —
+   * the same gate the /admin/ranked screens already apply.
    */
   async assertCanManage(userId: string) {
     const user = await userRepository.getById(userId);
     if (!user) {
       throw new ForbiddenError(ErrorCode.FORBIDDEN);
     }
-    if (user.role !== "super_admin" && user.role !== "tournament_admin") {
+    if (user.role !== "super_admin") {
       throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
     }
   }

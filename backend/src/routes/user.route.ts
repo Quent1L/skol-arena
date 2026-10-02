@@ -103,7 +103,8 @@ users.get(
   describe({
     tags: TAGS,
     summary: "List all users",
-    description: "Restricted to super admins and tournament admins.",
+    description:
+      "Restricted to super admins and tournament admins. Email and account name are only returned to super admins.",
     auth: true,
     role: true,
     success: { description: "Every user", schema: z.array(appUserWithAuthSchema) },
@@ -121,6 +122,9 @@ users.get(
     }
 
     const allUsers = await userService.getAllUsers();
+    // Tournament admins pick players from this list; they get names, not contact
+    // details. The Better Auth name is often the email, so it goes with it.
+    const canSeeContact = currentUser.role === "super_admin";
 
     const usersResponse = allUsers.map((user) => ({
       id: user.id,
@@ -132,8 +136,8 @@ users.get(
       updatedAt: user.updatedAt,
       betterAuth: {
         id: user.externalUser?.id,
-        email: user.externalUser?.email,
-        name: user.externalUser?.name,
+        email: canSeeContact ? user.externalUser?.email : undefined,
+        name: canSeeContact ? user.externalUser?.name : undefined,
         image: user.externalUser?.image,
         emailVerified: user.externalUser?.emailVerified,
         createdAt: user.externalUser?.createdAt,

@@ -847,3 +847,72 @@ describe("TournamentService - basic flows", () => {
     expect(res[0].userId).toBe("u-1");
   });
 });
+
+describe("updateTournament sensitive fields", () => {
+  function draftTournament(role: string, overrides: Record<string, unknown> = {}) {
+    usrRepo.getById = async () => ({ id: "u-1", role }) as any;
+    tourRepo.isUserTournamentAdmin = async () => true;
+    tourRepo.getById = async () =>
+      ({
+        id: "t-1",
+        status: "draft",
+        mode: "championship",
+        teamMode: "flex",
+        organizationId: "org-1",
+        startDate: "2024-01-01",
+        endDate: "2024-01-02",
+        minTeamSize: 1,
+        maxTeamSize: 2,
+        ...overrides,
+      }) as any;
+  }
+
+  it("refuses a co-admin moving the tournament out of its organization", async () => {
+    draftTournament("tournament_admin");
+    await expect(
+      tournamentService.updateTournament("t-1", "u-1", { organizationId: null } as UpdateTournamentInput),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("lets a co-admin resend the organization unchanged", async () => {
+    draftTournament("tournament_admin");
+    const updated = await tournamentService.updateTournament("t-1", "u-1", {
+      organizationId: "org-1",
+      name: "Renamed",
+    } as UpdateTournamentInput);
+    expect(updated).toBeDefined();
+  });
+
+  it("lets a super admin change the organization", async () => {
+    draftTournament("super_admin");
+    const updated = await tournamentService.updateTournament("t-1", "u-1", {
+      organizationId: null,
+    } as UpdateTournamentInput);
+    expect(updated).toBeDefined();
+  });
+
+  it("refuses turning a draft into a ranked competition", async () => {
+    draftTournament("super_admin");
+    await expect(
+      tournamentService.updateTournament("t-1", "u-1", { mode: "ranked" } as UpdateTournamentInput),
+    ).rejects.toBeInstanceOf(BadRequestError);
+  });
+});
+
+describe("createTournament ranked mode", () => {
+  it("refuses to create a ranked competition outside the season service", async () => {
+    usrRepo.getById = async () => ({ id: "u-1", role: "super_admin" }) as any;
+    await expect(
+      tournamentService.createTournament({
+        name: "Ranked",
+        mode: "ranked",
+        teamMode: "flex",
+        minTeamSize: 1,
+        maxTeamSize: 1,
+        startDate: "2026-01-01",
+        endDate: "2026-12-31",
+        createdBy: "u-1",
+      } as unknown as CreateTournamentInput),
+    ).rejects.toBeInstanceOf(BadRequestError);
+  });
+});
