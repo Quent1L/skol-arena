@@ -32,6 +32,7 @@ import {
   ForbiddenError,
   ConflictError,
 } from "../types/errors";
+import { sanitizeOptionalRichText } from "../utils/sanitize-html";
 
 export class TournamentService {
   /**
@@ -189,7 +190,7 @@ export class TournamentService {
   private async createTournamentRecord(input: CreateTournamentInput) {
     return await tournamentRepository.create({
       name: input.name,
-      description: input.description,
+      description: sanitizeOptionalRichText(input.description),
       mode: input.mode,
       teamMode: input.teamMode,
       minTeamSize: input.minTeamSize,
@@ -287,6 +288,7 @@ export class TournamentService {
 
     const updated = await tournamentRepository.update(id, {
       ...input,
+      description: sanitizeOptionalRichText(input.description),
       startDate: input.startDate,
       endDate: input.endDate,
     });

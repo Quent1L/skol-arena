@@ -40,7 +40,7 @@
   "adminUserFormView": {
     "addOrganization": "Ajouter",
     "addOrganizationPlaceholder": "Choisir une organisation",
-    "archiveConfirmMessage": "Archiver le compte de <strong>{name}</strong> ?",
+    "archiveConfirmMessage": "Archiver le compte de {name} ?",
     "archiveDialogHeader": "Archiver l'utilisateur",
     "archiveExplanation": "Sa connexion (mot de passe et comptes SSO) est définitivement supprimée et son profil est anonymisé. Ses matchs, classements et historique MMR sont intégralement conservés. L'opération est irréversible.",
     "archivedNotice": "Ce compte est archivé : son identité de connexion n'existe plus. Ses données de tournoi restent consultables.",
@@ -73,7 +73,7 @@
   "adminUsersList": {
     "active": "Actif",
     "archive": "Archiver",
-    "archiveConfirmMessage": "Archiver le compte de <strong>{name}</strong> ?",
+    "archiveConfirmMessage": "Archiver le compte de {name} ?",
     "archiveDialogHeader": "Archiver l'utilisateur",
     "archiveDisplayNameLabel": "Nom affiché après archivage",
     "archiveExplanation": "Sa connexion est définitivement supprimée et son profil renommé. Ses matchs, classements et historique MMR sont conservés. S'il revient un jour, ses stats pourront lui être rendues.",
@@ -115,7 +115,7 @@
     "deactivateDialogHeader": "Désactiver le compte",
     "deactivated": "Désactivé",
     "deleteBlockedIntro": "Suppression impossible : cet utilisateur possède encore du contenu.",
-    "deleteConfirmMessage": "Supprimer définitivement le compte de <strong>{name}</strong> ?",
+    "deleteConfirmMessage": "Supprimer définitivement le compte de {name} ?",
     "deleteDialogHeader": "Suppression définitive",
     "deleteIrreversibleNotice": "Cette action est irréversible : MMR, badges et notifications seront perdus. Préférez la désactivation.",
     "deletePermanently": "Supprimer définitivement",

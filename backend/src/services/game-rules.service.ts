@@ -9,11 +9,15 @@ import {
   NotFoundError,
   ForbiddenError,
 } from "../types/errors";
+import { sanitizeOptionalRichText, sanitizeRichText } from "../utils/sanitize-html";
 
 export class GameRulesService {
   async createGameRule(input: CreateGameRuleData) {
     await this.assertCanManage(input.createdBy);
-    return await gameRulesRepository.create(input);
+    return await gameRulesRepository.create({
+      ...input,
+      content: sanitizeRichText(input.content),
+    });
   }
 
   async getGameRuleById(id: string) {
@@ -31,7 +35,10 @@ export class GameRulesService {
   async updateGameRule(id: string, userId: string, input: UpdateGameRuleData) {
     await this.assertCanManage(userId);
     await this.getGameRuleById(id);
-    return await gameRulesRepository.update(id, input);
+    return await gameRulesRepository.update(id, {
+      ...input,
+      content: sanitizeOptionalRichText(input.content),
+    });
   }
 
   async deleteGameRule(id: string, userId: string) {

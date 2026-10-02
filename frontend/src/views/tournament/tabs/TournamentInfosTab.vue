@@ -79,7 +79,7 @@
     <div
       v-if="store.tournament!.description"
       class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-6 tournament-description text-gray-700 dark:text-gray-300"
-      v-html="store.tournament!.description"
+      v-html="safeDescription"
     />
 
     <MmrExplainerCard
@@ -91,12 +91,15 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useTournamentDetailStore } from '@/stores/tournamentDetail.store'
 import MmrExplainerCard from '@/components/ranked/MmrExplainerCard.vue'
+import { sanitizeHtml } from '@/utils/sanitize-html'
 
 const store = useTournamentDetailStore()
+const safeDescription = computed(() => sanitizeHtml(store.tournament?.description))
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()

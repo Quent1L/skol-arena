@@ -234,7 +234,9 @@
       <div class="flex items-start gap-3 mb-2">
         <i class="pi pi-exclamation-triangle text-3xl text-red-500"></i>
         <div>
-          <p v-html="t('adminUsersList.deleteConfirmMessage', { name: targetUser?.displayName })"></p>
+          <i18n-t keypath="adminUsersList.deleteConfirmMessage" tag="p" scope="global">
+            <template #name><strong>{{ targetUser?.displayName }}</strong></template>
+          </i18n-t>
           <p class="text-sm text-gray-500 mt-2">{{ t('adminUsersList.deleteIrreversibleNotice') }}</p>
         </div>
       </div>
@@ -279,7 +281,9 @@
       <div class="flex items-start gap-3 mb-4">
         <i class="pi pi-exclamation-triangle text-3xl text-amber-500"></i>
         <div>
-          <p v-html="t('adminUsersList.archiveConfirmMessage', { name: targetUser?.displayName })"></p>
+          <i18n-t keypath="adminUsersList.archiveConfirmMessage" tag="p" scope="global">
+            <template #name><strong>{{ targetUser?.displayName }}</strong></template>
+          </i18n-t>
           <p class="text-sm text-gray-500 mt-2">{{ t('adminUsersList.archiveExplanation') }}</p>
         </div>
       </div>

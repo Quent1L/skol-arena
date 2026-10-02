@@ -10,7 +10,7 @@
 
     <Card v-else-if="rule">
       <template #content>
-        <article class="prose prose-gray dark:prose-invert max-w-none" v-html="rule.content" />
+        <article class="prose prose-gray dark:prose-invert max-w-none" v-html="sanitizeHtml(rule.content)" />
       </template>
     </Card>
 
@@ -27,6 +27,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import type { ClientGameRule } from '@skol-arena/shared/types/index'
+import { sanitizeHtml } from '@/utils/sanitize-html'
 
 const { t } = useI18n()
 

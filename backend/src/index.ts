@@ -21,6 +21,7 @@ import {
 import { BadRequestError, ErrorCode } from "./types/errors";
 import { addUserContext } from "./middleware/auth";
 import { errorHandler } from "./middleware/error";
+import { spaSecurityHeaders } from "./middleware/security-headers";
 import { i18nMiddleware } from "./middleware/i18n";
 import { createAppHonoOptional } from "./types/hono";
 import { webSocketService } from "./services/websocket.service";
@@ -267,6 +268,8 @@ let _indexHtmlCache: string | null = null;
 const HASHED_ASSET_PATH = /^\/assets\//;
 
 if (frontendBuildPath) {
+  app.use("/*", spaSecurityHeaders);
+
   // Serve static assets (JS, CSS, images…) — serveStatic calls next() when file not found
   app.use(
     "/*",

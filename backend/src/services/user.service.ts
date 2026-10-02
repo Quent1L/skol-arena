@@ -12,6 +12,7 @@ import {
   UnauthorizedError,
 } from "../types/errors";
 import { logger } from "../utils/logger";
+import { toSafeDisplayName } from "../utils/display-name";
 import { withStrictEmailDelivery } from "../utils/email-delivery-context";
 import type {
   AdminArchiveUserInput,
@@ -87,10 +88,11 @@ export class UserService {
     }
 
     // Valid invitation code, create the appUser
+    const safeName = toSafeDisplayName(displayName);
     appUser = await userRepository.createAppUser({
       externalId: betterAuthUserId,
-      displayName: displayName,
-      shortName: displayName.substring(0, 8).toUpperCase(),
+      displayName: safeName,
+      shortName: safeName.substring(0, 8).toUpperCase(),
       role: "player",
       // The session-create hook already fired before this row existed, so the
       // first login would otherwise be reported as "never".

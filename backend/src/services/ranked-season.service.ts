@@ -57,6 +57,7 @@ import {
   ForbiddenError,
   BadRequestError,
 } from "../types/errors";
+import { sanitizeOptionalRichText } from "../utils/sanitize-html";
 
 type ProvisionalOutcome = "win" | "loss" | "draw";
 type MatchResult = 1 | 0 | 0.5;
@@ -457,7 +458,7 @@ export class RankedSeasonService {
     const result = await rankedSeasonRepository.create(
       {
         name: input.name,
-        description: input.description,
+        description: sanitizeOptionalRichText(input.description),
         disciplineId: input.disciplineId,
         startDate: input.startDate,
         endDate: input.endDate,
@@ -773,7 +774,7 @@ export class RankedSeasonService {
 
     await tournamentRepository.update(id, {
       name: input.name,
-      description: input.description,
+      description: sanitizeOptionalRichText(input.description),
       startDate: input.startDate,
       endDate: input.endDate,
       rulesId: input.rulesId,
