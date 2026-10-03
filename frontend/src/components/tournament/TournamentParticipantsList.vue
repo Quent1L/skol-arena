@@ -26,7 +26,12 @@
           :to="{ path: `/players/${participant.userId}`, query: { tournamentId: props.tournamentId } }"
           class="flex items-center gap-3 flex-1 min-w-0 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors no-underline rounded-lg"
         >
-          <Avatar :label="participant.user.displayName.charAt(0).toUpperCase()" class="bg-blue-500" />
+          <PlayerAvatar
+            :name="participant.user.displayName"
+            :player-id="participant.userId"
+            size="md"
+            shape="square"
+          />
           <div class="flex-1 min-w-0">
             <div class="font-medium text-blue-600 dark:text-blue-400 hover:underline truncate">
               {{ participant.user.displayName }}
@@ -102,6 +107,7 @@
 </template>
 
 <script setup lang="ts">
+import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatDate } from '@/utils/DateUtils'

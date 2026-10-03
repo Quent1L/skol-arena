@@ -90,3 +90,40 @@ describe('PlayerAvatarStack', () => {
     expect(wrapper.text()).toContain('+1')
   })
 })
+
+describe('PlayerAvatar with a photo', () => {
+  const id = '00000000-0000-4000-8000-000000000001'
+
+  it('shows the photo once its version is known, with every size in srcset', async () => {
+    const { useAvatarService } = await import('@/composables/avatar/avatar.service')
+    useAvatarService().remember(id, 'cccccccc-cccc-4ccc-8ccc-cccccccccccc')
+
+    const wrapper = mount(PlayerAvatar, { props: { name: 'John Doe', playerId: id, size: 'lg' } })
+    const img = wrapper.find('img')
+
+    expect(img.exists()).toBe(true)
+    expect(img.attributes('src')).toContain(`/api/avatars/${id}/cccccccc-cccc-4ccc-8ccc-cccccccccccc/64.webp`)
+    expect(img.attributes('srcset')).toContain('256.webp 256w')
+    expect(img.attributes('sizes')).toBe('64px')
+    expect(img.attributes('alt')).toBe('John Doe')
+  })
+
+  it('falls back to initials when the image fails to load', async () => {
+    const { useAvatarService } = await import('@/composables/avatar/avatar.service')
+    useAvatarService().remember(id, 'dddddddd-dddd-4ddd-8ddd-dddddddddddd')
+
+    const wrapper = mount(PlayerAvatar, { props: { name: 'John Doe', playerId: id } })
+    await wrapper.find('img').trigger('error')
+
+    expect(wrapper.find('img').exists()).toBe(false)
+    expect(wrapper.text()).toBe('JD')
+  })
+
+  it('keeps initials for a player without a photo', async () => {
+    const { useAvatarService } = await import('@/composables/avatar/avatar.service')
+    useAvatarService().remember(id, null)
+
+    const wrapper = mount(PlayerAvatar, { props: { name: 'John Doe', playerId: id } })
+    expect(wrapper.find('img').exists()).toBe(false)
+  })
+})

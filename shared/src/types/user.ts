@@ -27,6 +27,8 @@ export const appUserSchema = z
     displayName: z.string(),
     shortName: z.string(),
     role: z.enum(userRoleEnum),
+    /** Current avatar version; null when the player has none. */
+    avatarVersion: z.string().nullable(),
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
   })

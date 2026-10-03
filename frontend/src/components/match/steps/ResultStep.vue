@@ -34,12 +34,12 @@
           </div>
           <div class="flex flex-col gap-1">
             <div
-              v-for="name in sidePlayerNames(side)"
-              :key="name"
+              v-for="player in sidePlayers(side)"
+              :key="player.id"
               class="flex items-center gap-2 text-sm"
             >
-              <PlayerAvatar :name="name" size="xs" />
-              {{ name }}
+              <PlayerAvatar :name="player.name" :player-id="player.id" size="xs" />
+              {{ player.name }}
             </div>
           </div>
         </button>
@@ -248,8 +248,8 @@ const sidePercents = computed(() =>
   balance.value ? toPercents(balance.value) : { a: 0, b: 0 },
 )
 
-function sidePlayerNames(side: MatchSideInput): string[] {
-  return (side.playerIds ?? []).map((id) => props.playerNames[id] ?? id)
+function sidePlayers(side: MatchSideInput): { id: string; name: string }[] {
+  return (side.playerIds ?? []).map((id) => ({ id, name: props.playerNames[id] ?? id }))
 }
 
 function setScore(position: number, value: number) {

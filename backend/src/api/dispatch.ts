@@ -31,12 +31,14 @@ export const UNSUPPORTED_VERSION_PATH = `${INTERNAL_PREFIX}/unsupported-version`
  * - /api/ws      the browser WebSocket API cannot send custom headers, so a client
  *                could never negotiate here in the first place.
  * - /api/docs, /api/openapi  describe the versions rather than living inside one.
+ * - /api/avatars  image files loaded by <img>, which cannot send headers either.
  */
 const EXEMPT_PREFIXES = [
   `${PUBLIC_PREFIX}/auth/`,
   `${PUBLIC_PREFIX}/ws`,
   `${PUBLIC_PREFIX}/docs`,
   `${PUBLIC_PREFIX}/openapi`,
+  `${PUBLIC_PREFIX}/avatars/`,
 ];
 
 function isVersioned(pathname: string): boolean {

@@ -126,7 +126,13 @@
     "REWIND_VERSION_FROZEN": "This Rewind was built in an older format and is kept as it was",
     "MATCH_MESSAGE_INVALID_BODY": "The message must be between 1 and 1000 characters",
     "MATCH_THREAD_CLOSED": "The discussion for this match is closed",
-    "NOTIFICATION_ACTION_PENDING": "This notification asks for an action that is still pending and cannot be deleted"
+    "NOTIFICATION_ACTION_PENDING": "This notification asks for an action that is still pending and cannot be deleted",
+    "AVATAR_FILE_MISSING": "No image was sent",
+    "AVATAR_TOO_LARGE": "The image is too large (max {{max}})",
+    "AVATAR_UNSUPPORTED_FORMAT": "Unsupported image. Use a JPEG, PNG or WebP picture",
+    "AVATAR_INVALID_DIMENSIONS": "The image is too small or too large (min {{min}}px per side)",
+    "AVATAR_PROCESSING_FAILED": "The image could not be processed",
+    "AVATAR_NOT_FOUND": "Avatar not found"
   },
   "ranked": {
     "PROVISIONAL": "Match recorded!",

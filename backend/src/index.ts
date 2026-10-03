@@ -42,6 +42,8 @@ import { logger } from "./utils/logger";
 import { run, type Runner } from "graphile-worker";
 import { taskList } from "./workers/mmr-recalculation.worker";
 import { migrateStoredRules } from "./services/rules-migration.service";
+import { initAvatarStorage } from "./storage";
+import avatarFiles from "./routes/avatar-files.route";
 
 await runMigrations();
 // After migrations: 0085 may have been allowed to skip `unaccent`; logs a warning if so.
@@ -50,6 +52,8 @@ await detectAccentFolding();
 // before anything can read or validate them against the current fact catalog.
 await migrateStoredRules();
 await initializeAdminIfNeeded();
+// Fails the boot when a filesystem avatar store is missing its volume or is read-only.
+await initAvatarStorage();
 
 // Non-blocking canary: surfaces a broken SMTP setup at boot instead of at the first
 // password reset. verifyConnection() swallows its own error and returns false.
@@ -143,6 +147,10 @@ app.use(
     exposeHeaders: [API_VERSION_RESPONSE_HEADER, "Retry-After"],
   })
 );
+
+// Avatar images: registered ahead of the session and i18n middleware on purpose, see
+// the route file. Exempt from version negotiation in api/dispatch.ts.
+app.route("/api/avatars", avatarFiles);
 
 // i18n middleware (must be before routes to set language)
 app.use("*", i18nMiddleware);

@@ -68,7 +68,15 @@
     "savedDetail": "Changes have been saved",
     "savedSummary": "User updated",
     "shortNameLabel": "Short name",
-    "title": "User"
+    "title": "User",
+    "avatarSection": "Profile picture",
+    "removeAvatar": "Remove picture",
+    "removeAvatarHint": "For moderation: the player falls back to their initials and can upload another one.",
+    "noAvatar": "This player has no profile picture.",
+    "removeAvatarConfirmHeader": "Remove profile picture",
+    "removeAvatarConfirmMessage": "{name}'s profile picture will be permanently deleted.",
+    "avatarRemoved": "Profile picture removed",
+    "avatarRemoveError": "The picture could not be removed"
   },
   "adminUsersList": {
     "active": "Active",
@@ -1040,7 +1048,9 @@
     "selectUsersLabel": "Select users",
     "selectUsersPlaceholder": "Choose one or more users",
     "subtitle": "Create and manage user groups to restrict tournament access",
-    "title": "Organizations"
+    "title": "Organizations",
+    "removeAvatarTooltip": "Remove profile picture",
+    "avatarRemovedSummary": "Profile picture removed"
   },
   "outcomeSelector": {
     "draw": "Draw",
@@ -1841,6 +1851,10 @@
       "min3": "Minimum 3 characters",
       "nameRegex": "At least 2 letters/digits required, hyphens and underscores allowed, a single space between words",
       "shortNameMax": "Maximum 8 characters"
+    },
+    "avatar": {
+      "title": "Profile picture",
+      "description": "Visible to other players. Every change applies immediately."
     }
   },
   "signupView": {
@@ -2564,5 +2578,25 @@
       "loadFailed": "Could not load the Rewind",
       "loadArchiveFailed": "Could not load your Rewinds"
     }
+  },
+  "avatarEditor": {
+    "upload": "Add a picture",
+    "change": "Change picture",
+    "remove": "Remove",
+    "hint": "JPEG, PNG or WebP, {max} max. Cropped to a square before upload.",
+    "unsupported": "Unsupported format. Pick a JPEG, PNG or WebP image.",
+    "tooLarge": "Image too large ({max} max).",
+    "unreadable": "This image could not be read.",
+    "updated": "Profile picture updated",
+    "uploadError": "The picture could not be uploaded.",
+    "removeError": "The picture could not be removed.",
+    "confirmRemoveHeader": "Remove picture",
+    "confirmRemoveMessage": "Your profile picture will be deleted and replaced by your initials."
+  },
+  "avatarCropDialog": {
+    "title": "Crop picture",
+    "zoom": "Zoom",
+    "confirm": "Save",
+    "hint": "Drag to frame, zoom with the slider."
   }
 }

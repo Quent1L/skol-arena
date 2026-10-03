@@ -1,6 +1,7 @@
 import tournaments from "../routes/tournaments.route";
 import teams from "../routes/teams.route";
 import users from "../routes/user.route";
+import avatars from "../routes/avatar.route";
 import session from "../routes/session.route";
 import matches from "../routes/matches.route";
 import disciplines from "../routes/disciplines.route";
@@ -36,6 +37,8 @@ const BASE_MOUNTS: RouteMount[] = [
   // with /:id/teams.
   { path: "/tournaments", router: teams },
   { path: "/users", router: users },
+  // Shares the /users prefix: its paths are /me/avatar, /:id/avatar, /avatars/lookup.
+  { path: "/users", router: avatars },
   { path: "/user", router: session },
   { path: "/matches", router: matches },
   { path: "/disciplines", router: disciplines },

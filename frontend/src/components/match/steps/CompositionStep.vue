@@ -28,7 +28,7 @@
               @contextmenu.prevent
             >
               <i class="fas fa-grip-vertical text-surface-400 text-xs" />
-              <PlayerAvatar :name="player.displayName" size="xs" />
+              <PlayerAvatar :name="player.displayName" :player-id="player.id" size="xs" />
               {{ player.displayName }}
             </div>
           </VueDraggable>
@@ -58,7 +58,7 @@
               @contextmenu.prevent
             >
               <i class="fas fa-grip-vertical text-surface-400 text-xs" />
-              <PlayerAvatar :name="player.displayName" size="xs" />
+              <PlayerAvatar :name="player.displayName" :player-id="player.id" size="xs" />
               {{ player.displayName }}
             </div>
           </VueDraggable>

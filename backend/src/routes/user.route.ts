@@ -52,6 +52,7 @@ users.get(
       displayName: appUser.displayName,
       shortName: appUser.shortName,
       role: appUser.role,
+      avatarVersion: appUser.avatarVersion ?? null,
       createdAt: appUser.createdAt,
       updatedAt: appUser.updatedAt,
       // Include Better Auth user info as well
@@ -90,6 +91,7 @@ users.patch(
       displayName: updated.displayName,
       shortName: updated.shortName,
       role: updated.role,
+      avatarVersion: updated.avatarVersion ?? null,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
     });
@@ -132,6 +134,7 @@ users.get(
       displayName: user.displayName,
       shortName: user.shortName,
       role: user.role,
+      avatarVersion: user.avatarVersion ?? null,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       betterAuth: {

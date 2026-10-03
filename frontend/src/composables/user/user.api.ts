@@ -8,6 +8,8 @@ export interface UserResponse {
   displayName: string
   shortName: string
   role: 'player' | 'tournament_admin' | 'super_admin' | 'kiosk'
+  /** Current avatar version; null when the user has none. */
+  avatarVersion: string | null
   createdAt: string
   updatedAt: string
   betterAuth: {

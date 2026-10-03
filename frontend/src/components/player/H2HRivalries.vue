@@ -14,6 +14,7 @@
           :to="playerLink(h.opponentId, tournamentId)"
           class="flex items-center gap-2 text-sm font-medium text-indigo-400 hover:text-indigo-300 min-w-0"
         >
+          <PlayerAvatar :name="h.displayName" :player-id="h.opponentId" size="xs" shape="square" class="shrink-0" />
           <span class="truncate">{{ h.displayName }}</span>
         </RouterLink>
         <div class="flex items-center gap-2 text-xs shrink-0">
@@ -38,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import InfoTooltip from '@/components/InfoTooltip.vue'

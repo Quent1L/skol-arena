@@ -26,6 +26,7 @@
               <PlayerAvatar
                 :name="entry.displayName"
                 :color-key="entry.shortName"
+                :player-id="entry.playerId"
                 size="xs"
                 shape="square"
                 class="shrink-0"

@@ -9,6 +9,7 @@ import { useConfigService } from '@/composables/config/config.service'
 import { NETWORK_ERROR, isNetworkError, isTransientStatus } from '@/utils/HttpErrors'
 import { translateAuthError } from '@/utils/AuthErrors'
 import { i18n } from '@/i18n'
+import { useAvatarService } from '@/composables/avatar/avatar.service'
 
 const sessionData = ref()
 const appUserData = ref<UserResponse | null>(null)
@@ -33,6 +34,8 @@ async function fetchUserData() {
   try {
     const userData = await userApi.me()
     appUserData.value = userData
+    // Spares the header its own lookup, and keeps it right after an upload.
+    useAvatarService().remember(userData.id, userData.avatarVersion ?? null)
   } catch (err) {
     console.error('Error fetching user data:', err)
     appUserData.value = null

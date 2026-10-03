@@ -1,4 +1,4 @@
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import { db } from "../config/database";
 import { organizations, organizationMembers } from "../db/schema";
 import type { OrganizationMemberWithUser } from "@skol-arena/shared";
@@ -44,6 +44,26 @@ export class OrganizationRepository {
       ),
     });
     return !!membership;
+  }
+
+  /** True when `ownerId` owns at least one organization `memberId` belongs to. */
+  async isOwnerOfSharedOrganization(ownerId: string, memberId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ found: sql<number>`1` })
+      .from(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.userId, ownerId),
+          eq(organizationMembers.role, "owner"),
+          sql`EXISTS (
+            SELECT 1 FROM ${organizationMembers} AS target
+            WHERE target.organization_id = ${organizationMembers.organizationId}
+              AND target.user_id = ${memberId}
+          )`,
+        ),
+      )
+      .limit(1);
+    return !!row;
   }
 
   async getUserOrganizationIds(userId: string): Promise<string[]> {

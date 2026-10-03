@@ -15,6 +15,7 @@ import {
   real,
   index,
   uniqueIndex,
+  customType,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
@@ -321,6 +322,9 @@ export const appUsers = pgTable(
     // regenerates and re-logs its password on every restart.
     bootstrapPending: boolean("bootstrap_pending").notNull().default(false),
     trustScoreCount: integer("trust_score_count").notNull().default(0),
+    // Random id of the current avatar, part of every avatar URL: a new upload
+    // yields a new URL, which is what lets those URLs be cached for long.
+    avatarVersion: uuid("avatar_version"),
     // Refreshed by the Better Auth session-create hook, so it survives session expiry.
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     // Reversible: the account still exists, it simply cannot sign in.
@@ -345,6 +349,25 @@ export const appUsers = pgTable(
     index("app_users_archived_at_idx").on(t.archivedAt),
   ],
 );
+
+/**
+ * `pg` hands bytea back as a Buffer and PGlite as a Uint8Array; both are Uint8Arrays,
+ * so that is the one type the rest of the code sees.
+ */
+const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({
+  dataType: () => "bytea",
+  toDriver: (value) => Buffer.from(value.buffer, value.byteOffset, value.byteLength),
+  fromDriver: (value) => new Uint8Array(value),
+});
+
+/** Object store of the `postgres` blob storage driver (see src/storage). */
+export const storedBlobs = pgTable("stored_blobs", {
+  key: text("key").primaryKey(),
+  contentType: text("content_type").notNull(),
+  data: bytea("data").notNull(),
+  byteSize: integer("byte_size").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const gameRules = pgTable("game_rules", {
   id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),

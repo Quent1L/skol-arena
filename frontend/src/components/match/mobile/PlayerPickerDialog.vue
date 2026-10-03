@@ -46,6 +46,7 @@
         >
           <PlayerAvatar
             :name="player.displayName"
+            :player-id="player.id"
             shape="square"
             class="mr-3"
             :class="{ 'ring-2 ring-blue-500': !single && isSelected(player.id) }"

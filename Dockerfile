@@ -48,6 +48,10 @@ RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 RUN groupadd --system --gid 1001 skol && \
     useradd --system --uid 1001 --gid skol --create-home --shell /usr/sbin/nologin skol
 
+# Only used with AVATAR_STORAGE=filesystem. Created here so that a named volume
+# mounted on it inherits the app user's ownership.
+RUN mkdir -p /data/avatars && chown skol:skol /data/avatars
+
 COPY --from=build --chown=skol:skol /app/backend/dist ./backend/dist
 COPY --from=build --chown=skol:skol /app/backend/drizzle ./backend/drizzle
 COPY --from=build --chown=skol:skol /app/frontend/dist ./frontend/dist
@@ -56,6 +60,7 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV MIGRATIONS_FOLDER=./backend/drizzle
 ENV FRONTEND_BUILD_PATH=/app/frontend/dist
+ENV AVATAR_STORAGE_DIR=/data/avatars
 
 EXPOSE 3000
 

@@ -14,6 +14,7 @@ export * from "./tournament-ruleset";
 export * from "./tournament-editability";
 export * from "./tournament";
 export * from "./user";
+export * from "./avatar";
 export * from "./admin-user";
 export * from "./match";
 export * from "./mmr";

@@ -37,7 +37,7 @@
             class="flex-1 flex flex-col items-center gap-1 p-3 rounded-xl bg-gray-700/50 active:bg-gray-700 transition-colors border border-gray-700/50 min-w-0"
             @click="pickerSlot = 'a'"
           >
-            <PlayerAvatar :name="selectedA?.displayName ?? '?'" size="md" shape="square" />
+            <PlayerAvatar :name="selectedA?.displayName ?? '?'" :player-id="selectedA?.id" size="md" shape="square" />
             <span class="text-sm font-bold text-white truncate max-w-full">{{
               selectedA?.displayName ?? t('playerComparisonView.playerA')
             }}</span>
@@ -55,7 +55,7 @@
             "
             @click="pickerSlot = 'b'"
           >
-            <PlayerAvatar :name="selectedB?.displayName ?? '?'" size="md" shape="square" />
+            <PlayerAvatar :name="selectedB?.displayName ?? '?'" :player-id="selectedB?.id" size="md" shape="square" />
             <span class="text-sm font-bold text-white truncate max-w-full">{{
               selectedB?.displayName ?? t('playerComparisonView.choosePlaceholder')
             }}</span>
@@ -101,7 +101,7 @@
         </div>
         <div class="flex items-center justify-center gap-4 sm:gap-8">
           <div class="flex flex-col items-center gap-1 min-w-0">
-            <PlayerAvatar :name="playerA.player.displayName" size="lg" shape="square" />
+            <PlayerAvatar :name="playerA.player.displayName" :player-id="playerA.player.id" size="lg" shape="square" />
             <span class="text-sm font-bold text-white truncate max-w-24">{{
               playerA.player.displayName
             }}</span>
@@ -122,7 +122,7 @@
             </div>
           </div>
           <div class="flex flex-col items-center gap-1 min-w-0">
-            <PlayerAvatar :name="playerB.player.displayName" size="lg" shape="square" />
+            <PlayerAvatar :name="playerB.player.displayName" :player-id="playerB.player.id" size="lg" shape="square" />
             <span class="text-sm font-bold text-white truncate max-w-24">{{
               playerB.player.displayName
             }}</span>
@@ -174,9 +174,9 @@
         </div>
         <div class="flex items-center justify-center gap-4">
           <div class="flex items-center gap-1 shrink-0">
-            <PlayerAvatar :name="playerA.player.displayName" size="md" shape="square" />
+            <PlayerAvatar :name="playerA.player.displayName" :player-id="playerA.player.id" size="md" shape="square" />
             <span class="text-gray-500 text-xl font-black">+</span>
-            <PlayerAvatar :name="playerB.player.displayName" size="md" shape="square" />
+            <PlayerAvatar :name="playerB.player.displayName" :player-id="playerB.player.id" size="md" shape="square" />
           </div>
           <div class="text-center">
             <div class="text-2xl font-black tabular-nums">
@@ -226,7 +226,7 @@
             <div class="text-xs text-gray-500">{{ row.a.winRate }}%</div>
           </div>
           <div class="flex flex-col items-center gap-0.5 min-w-0">
-            <PlayerAvatar :name="row.displayName" size="sm" shape="square" />
+            <PlayerAvatar :name="row.displayName" :player-id="row.opponentId" size="sm" shape="square" />
             <span class="text-xs text-gray-300 truncate max-w-full">{{ row.displayName }}</span>
           </div>
           <div class="text-left tabular-nums" :class="row.bBetter ? 'text-green-400' : 'text-white'">

@@ -30,6 +30,7 @@
 
       <PlayerAvatar
         :name="player.player?.displayName ?? '?'"
+        :player-id="player.player?.id"
         shape="square"
         size="sm"
         class="shrink-0"

@@ -61,6 +61,7 @@
               <PlayerAvatar
                 v-if="appUser"
                 :name="appUser.displayName || appUser.betterAuth?.email || '?'"
+                :player-id="appUser.id"
                 size="sm"
               />
               <span class="hidden sm:block text-sm font-medium">

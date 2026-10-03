@@ -92,6 +92,28 @@ only, which yields `connect ECONNREFUSED ::1:<port>`.
 | `VAPID_PUBLIC_KEY`  | VAPID public key for browser push notifications. | No — push is silently disabled unless both keys are set | —       |
 | `VAPID_PRIVATE_KEY` | VAPID private key.                               | No (see above)                                          | —       |
 
+## Avatars
+
+| Variable                  | Purpose                                                                                                                   | Required | Default                                         |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------- |
+| `AVATAR_STORAGE`          | Where player avatars are kept: `postgres` or `filesystem`. An unknown value logs a warning and falls back to the default. | No       | `postgres`                                      |
+| `AVATAR_STORAGE_DIR`      | Directory used by the `filesystem` storage. Must be writable by the app; the server refuses to start otherwise.           | No       | `./data/avatars` (`/data/avatars` in the image) |
+| `AVATAR_MAX_UPLOAD_BYTES` | Largest upload accepted, in bytes. Larger requests are cut off before being read.                                         | No       | `5242880` (5 MB)                                |
+
+Uploaded pictures are never stored as sent: the server decodes them, checks they
+really are JPEG, PNG or WebP images, and keeps only three re-encoded WebP variants
+(64, 128 and 256 px), a few kilobytes each. Every new avatar gets a new random URL,
+so browsers cache each image for 30 days; past that they revalidate it, and an avatar
+that has since been replaced or removed drops out of their cache.
+
+**`postgres`** needs nothing extra and is covered by your `pg_dump` backups, but
+every avatar lives in the database: with many players it grows the database and its
+backups. **`filesystem`** keeps the database lean, at the cost of a volume to mount
+and to back up separately — see [Deployment](/docs/deployment#avatar-storage).
+
+Switching from one to the other does not move existing avatars: players who had one
+fall back to their initials until they upload it again.
+
 ## Real-time (WebSocket)
 
 No dedicated variables. WebSocket connections are mounted on the same server
