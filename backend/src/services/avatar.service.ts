@@ -42,8 +42,7 @@ export const avatarService = {
       await storage.put(variantKey(userId, version, size), data, AVATAR_CONTENT_TYPE);
     }
 
-    const previous = await userRepository.getAvatarVersion(userId);
-    await userRepository.setAvatarVersion(userId, version);
+    const previous = await userRepository.swapAvatarVersion(userId, version);
     if (previous) {
       await deleteQuietly(versionPrefix(userId, previous));
     }
