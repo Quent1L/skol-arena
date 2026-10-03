@@ -43,16 +43,20 @@ export function sniffImageFormat(bytes: Uint8Array): AcceptedFormat | null {
 let running = 0;
 const waiting: Array<() => void> = [];
 
-async function withPipelineSlot<T>(task: () => Promise<T>): Promise<T> {
-  if (running >= MAX_CONCURRENT_PIPELINES) {
-    await new Promise<void>((resolve) => waiting.push(resolve));
-  }
-  running++;
+/**
+ * A finishing pipeline hands its slot straight to the next waiter instead of giving
+ * it back: the waiter only resumes a microtask later, and a newcomer must not be able
+ * to take the slot in between.
+ */
+export async function withPipelineSlot<T>(task: () => Promise<T>): Promise<T> {
+  if (running < MAX_CONCURRENT_PIPELINES) running++;
+  else await new Promise<void>((resolve) => waiting.push(resolve));
   try {
     return await task();
   } finally {
-    running--;
-    waiting.shift()?.();
+    const next = waiting.shift();
+    if (next) next();
+    else running--;
   }
 }
 

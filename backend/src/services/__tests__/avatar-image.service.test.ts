@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "bun:test";
-import { avatarImageService, sniffImageFormat } from "../avatar-image.service";
+import { avatarImageService, sniffImageFormat, withPipelineSlot } from "../avatar-image.service";
 import { AppError } from "../../types/errors";
 import {
   makeJpeg,
@@ -122,5 +122,38 @@ describe("avatarImageService.process", () => {
   it("refuses an upload over the configured size", async () => {
     process.env.AVATAR_MAX_UPLOAD_BYTES = "100";
     expect(await rejection(makePng(200, 200))).toEqual({ status: 413, code: "AVATAR_TOO_LARGE" });
+  });
+});
+
+describe("withPipelineSlot", () => {
+  it("hands a freed slot to the waiter before any newcomer can take it", async () => {
+    let active = 0;
+    let peak = 0;
+    const releases: Array<() => void> = [];
+    const task = () =>
+      new Promise<void>((resolve) => {
+        active++;
+        peak = Math.max(peak, active);
+        releases.push(() => {
+          active--;
+          resolve();
+        });
+      });
+
+    const runs = [withPipelineSlot(task), withPipelineSlot(task), withPipelineSlot(task)];
+    // The first task ends, and a newcomer arrives in the very next microtask, between
+    // the slot being freed and the waiter resuming.
+    releases[0]!();
+    queueMicrotask(() => runs.push(withPipelineSlot(task)));
+    await Bun.sleep(0);
+
+    expect(peak).toBe(2);
+    // Drain: every queued task must still get its turn.
+    for (let i = 1; i < 4; i++) {
+      releases[i]!();
+      await Bun.sleep(0);
+    }
+    await Promise.all(runs);
+    expect(peak).toBe(2);
   });
 });
