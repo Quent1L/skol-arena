@@ -16,7 +16,11 @@
       :breakpoints="{ '640px': { width: 'calc(100vw - 1rem)', right: '0.5rem', left: 'auto' } }"
     />
     <ConfirmDialog />
-    <SkillOrLuckOverlay :visible="easterEggVisible" @close="stopEasterEgg" />
+    <SkillOrLuckOverlay
+      :visible="easterEggVisible"
+      :variant="easterEggVariant"
+      @close="stopEasterEgg"
+    />
     <AppWrapper v-if="isAppReady" />
   </div>
 </template>
@@ -57,7 +61,7 @@ const {
   dismissUpdate,
 } = usePWAUpdate()
 
-const { visible: easterEggVisible, stop: stopEasterEgg } = useEasterEgg()
+const { visible: easterEggVisible, variant: easterEggVariant, stop: stopEasterEgg } = useEasterEgg()
 
 const isAppReady = ref(false)
 

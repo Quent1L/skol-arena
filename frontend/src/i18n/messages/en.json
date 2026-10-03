@@ -349,11 +349,14 @@
     "yes": "Yes"
   },
   "compositionStep": {
+    "balanced": "Balanced",
     "empty": "Empty",
     "emptySideError": "Each team must have at least one player.",
     "instruction": "Drag players to form the teams.",
     "next": "Next",
     "previous": "Previous",
+    "random": "Random",
+    "randomOnly": "Shuffle teams",
     "teamA": "Team A",
     "teamB": "Team B",
     "title": "Composition"

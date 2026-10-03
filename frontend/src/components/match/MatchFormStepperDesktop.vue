@@ -1,7 +1,11 @@
 <template>
   <div class="max-w-2xl mx-auto p-4 sm:p-6">
     <h1 class="text-2xl font-semibold mb-6">
-      {{ isEditMode ? t('matchFormStepperDesktop.completeMatch') : t('matchFormStepperDesktop.createMatch') }}
+      {{
+        isEditMode
+          ? t('matchFormStepperDesktop.completeMatch')
+          : t('matchFormStepperDesktop.createMatch')
+      }}
     </h1>
 
     <Card>
@@ -15,18 +19,25 @@
                 :disabled="idx >= activeStepIndex"
                 @click="idx < activeStepIndex && (activeStep = step.value)"
               >
-                <span :class="['rounded-full border-2 w-10 h-10 inline-flex items-center justify-center transition-colors',
-                  activeStep === step.value
-                    ? 'bg-primary text-primary-contrast border-primary'
-                    : idx < activeStepIndex
-                      ? 'bg-primary/10 border-primary text-primary cursor-pointer'
-                      : 'border-surface-300 dark:border-surface-600 text-surface-400']">
+                <span
+                  :class="[
+                    'rounded-full border-2 w-10 h-10 inline-flex items-center justify-center transition-colors',
+                    activeStep === step.value
+                      ? 'bg-primary text-primary-contrast border-primary'
+                      : idx < activeStepIndex
+                        ? 'bg-primary/10 border-primary text-primary cursor-pointer'
+                        : 'border-surface-300 dark:border-surface-600 text-surface-400',
+                  ]"
+                >
                   <i :class="step.icon" />
                 </span>
               </button>
               <div
                 v-if="idx < visibleSteps.length - 1"
-                :class="['flex-1 h-0.5 transition-colors', idx < activeStepIndex ? 'bg-primary' : 'bg-surface-300 dark:bg-surface-600']"
+                :class="[
+                  'flex-1 h-0.5 transition-colors',
+                  idx < activeStepIndex ? 'bg-primary' : 'bg-surface-300 dark:bg-surface-600',
+                ]"
               />
             </template>
           </div>
@@ -49,7 +60,9 @@
               :played-at="formState.playedAt"
               :match-id="props.matchId"
               :players="participants"
-              :next-label="isFutureDate && isLastStepBeforeResult ? 'Programmer le match' : undefined"
+              :next-label="
+                isFutureDate && isLastStepBeforeResult ? 'Programmer le match' : undefined
+              "
               @previous="activeStep = 'when'"
               @next="goToStepFromParticipants"
             />
@@ -57,7 +70,9 @@
 
           <!-- Step 2b: Teams (static) -->
           <StepPanel v-if="isStaticMode" value="teams">
-            <h3 class="text-base font-semibold mb-4">{{ t('matchFormStepperDesktop.teamsStep') }}</h3>
+            <h3 class="text-base font-semibold mb-4">
+              {{ t('matchFormStepperDesktop.teamsStep') }}
+            </h3>
             <TeamsStep
               v-model:sides="formState.sides"
               :tournament-id="props.tournamentId"
@@ -82,6 +97,7 @@
               :next-label="isFutureDate ? 'Programmer le match' : undefined"
               :standings="standings"
               :allow-draw="tournament?.allowDraw ?? false"
+              :is-ranked="tournament?.mode === 'ranked'"
               @previous="activeStep = 'participants'"
               @next="goToStepAfterComposition"
             />
@@ -172,14 +188,19 @@ const needsComposition = computed(() => formState.value.allPlayerIds.length > 2)
 
 const visibleSteps = computed(() => {
   const steps: { value: string; icon: string }[] = [{ value: 'when', icon: 'fas fa-calendar-alt' }]
-  if (!props.bracketLocked && isFlexMode.value) steps.push({ value: 'participants', icon: 'fas fa-users' })
-  if (!props.bracketLocked && isStaticMode.value) steps.push({ value: 'teams', icon: 'fas fa-layer-group' })
-  if (!props.bracketLocked && isFlexMode.value && needsComposition.value) steps.push({ value: 'composition', icon: 'fas fa-shuffle' })
+  if (!props.bracketLocked && isFlexMode.value)
+    steps.push({ value: 'participants', icon: 'fas fa-users' })
+  if (!props.bracketLocked && isStaticMode.value)
+    steps.push({ value: 'teams', icon: 'fas fa-layer-group' })
+  if (!props.bracketLocked && isFlexMode.value && needsComposition.value)
+    steps.push({ value: 'composition', icon: 'fas fa-shuffle' })
   if (!isFutureDate.value) steps.push({ value: 'result', icon: 'fas fa-trophy' })
   return steps
 })
 
-const activeStepIndex = computed(() => visibleSteps.value.findIndex((s) => s.value === activeStep.value))
+const activeStepIndex = computed(() =>
+  visibleSteps.value.findIndex((s) => s.value === activeStep.value),
+)
 
 const { minDate: tournamentMinDate, maxDate: tournamentMaxDate } = useMatchDateBounds(tournament)
 
@@ -251,7 +272,11 @@ async function submitMatch() {
     status: isScheduled ? 'scheduled' : 'reported',
     scoreA: isScheduled ? 0 : (formState.value.scorePerSide[1] ?? 0),
     scoreB: isScheduled ? 0 : (formState.value.scorePerSide[2] ?? 0),
-    winnerPosition: isScheduled ? null : (formState.value.winnerPosition === 0 ? null : formState.value.winnerPosition),
+    winnerPosition: isScheduled
+      ? null
+      : formState.value.winnerPosition === 0
+        ? null
+        : formState.value.winnerPosition,
     outcomeTypeId: isScheduled ? undefined : (formState.value.outcomeTypeId ?? undefined),
     outcomeReasonId: isScheduled ? undefined : (formState.value.outcomeReasonId ?? undefined),
   }
@@ -266,10 +291,14 @@ async function submitMatch() {
       outcomeTypeId: payload.outcomeTypeId,
       outcomeReasonId: payload.outcomeReasonId,
     }
-    await updateMatchWithNavigation(props.matchId, updatePayload, props.tournamentId, tournament.value?.mode)
+    await updateMatchWithNavigation(
+      props.matchId,
+      updatePayload,
+      props.tournamentId,
+      tournament.value?.mode,
+    )
   } else {
     await createMatchWithNavigation(payload, props.tournamentId, tournament.value?.mode)
   }
 }
-
 </script>

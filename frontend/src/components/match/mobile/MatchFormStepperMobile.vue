@@ -6,7 +6,9 @@
     >
       <Button icon="fas fa-arrow-left" text rounded class="mr-2" @click="goBack" />
       <h1 class="text-lg font-bold">
-        {{ isEditMode ? t('matchFormStepperMobile.titleEdit') : t('matchFormStepperMobile.titleNew') }}
+        {{
+          isEditMode ? t('matchFormStepperMobile.titleEdit') : t('matchFormStepperMobile.titleNew')
+        }}
       </h1>
     </div>
 
@@ -14,17 +16,24 @@
     <div class="px-4 pt-3 pb-2 bg-surface-0 dark:bg-surface-800 border-b dark:border-surface-700">
       <div class="flex items-center">
         <template v-for="(step, idx) in visibleSteps" :key="step.value">
-          <span :class="['rounded-full border-2 w-9 h-9 inline-flex items-center justify-center flex-none transition-colors',
-            activeStep === step.value
-              ? 'bg-primary text-primary-contrast border-primary'
-              : idx < activeStepIndex
-                ? 'bg-primary/10 border-primary text-primary'
-                : 'border-surface-300 dark:border-surface-600 text-surface-400']">
+          <span
+            :class="[
+              'rounded-full border-2 w-9 h-9 inline-flex items-center justify-center flex-none transition-colors',
+              activeStep === step.value
+                ? 'bg-primary text-primary-contrast border-primary'
+                : idx < activeStepIndex
+                  ? 'bg-primary/10 border-primary text-primary'
+                  : 'border-surface-300 dark:border-surface-600 text-surface-400',
+            ]"
+          >
             <i :class="[step.icon, 'text-sm']" />
           </span>
           <div
             v-if="idx < visibleSteps.length - 1"
-            :class="['flex-1 h-0.5 transition-colors', idx < activeStepIndex ? 'bg-primary' : 'bg-surface-300 dark:bg-surface-600']"
+            :class="[
+              'flex-1 h-0.5 transition-colors',
+              idx < activeStepIndex ? 'bg-primary' : 'bg-surface-300 dark:bg-surface-600',
+            ]"
           />
         </template>
       </div>
@@ -83,6 +92,7 @@
           hide-navigation
           :standings="standings"
           :allow-draw="tournament?.allowDraw ?? false"
+          :is-ranked="tournament?.mode === 'ranked'"
           @previous="activeStep = 'participants'"
           @next="goToStepAfterComposition"
         />
@@ -228,14 +238,19 @@ const needsComposition = computed(() => formState.value.allPlayerIds.length > 2)
 
 const visibleSteps = computed(() => {
   const steps: { value: string; icon: string }[] = [{ value: 'when', icon: 'fas fa-calendar-alt' }]
-  if (!props.bracketLocked && isFlexMode.value) steps.push({ value: 'participants', icon: 'fas fa-users' })
-  if (!props.bracketLocked && isStaticMode.value) steps.push({ value: 'teams', icon: 'fas fa-layer-group' })
-  if (!props.bracketLocked && isFlexMode.value && needsComposition.value) steps.push({ value: 'composition', icon: 'fas fa-shuffle' })
+  if (!props.bracketLocked && isFlexMode.value)
+    steps.push({ value: 'participants', icon: 'fas fa-users' })
+  if (!props.bracketLocked && isStaticMode.value)
+    steps.push({ value: 'teams', icon: 'fas fa-layer-group' })
+  if (!props.bracketLocked && isFlexMode.value && needsComposition.value)
+    steps.push({ value: 'composition', icon: 'fas fa-shuffle' })
   if (!isFutureDate.value) steps.push({ value: 'result', icon: 'fas fa-trophy' })
   return steps
 })
 
-const activeStepIndex = computed(() => visibleSteps.value.findIndex((s) => s.value === activeStep.value))
+const activeStepIndex = computed(() =>
+  visibleSteps.value.findIndex((s) => s.value === activeStep.value),
+)
 
 const canSchedule = computed(() => {
   if (isFlexMode.value) {
@@ -264,11 +279,16 @@ const isLastStepBeforeResult = computed(() => {
 
 const canProceedStep = computed(() => {
   switch (activeStep.value) {
-    case 'when': return !!formState.value.playedAt
-    case 'participants': return formState.value.allPlayerIds.length >= 2
-    case 'teams': return formState.value.sides.every((s) => !!s.teamId)
-    case 'composition': return formState.value.sides.every((s) => (s.playerIds?.length ?? 0) > 0)
-    default: return true
+    case 'when':
+      return !!formState.value.playedAt
+    case 'participants':
+      return formState.value.allPlayerIds.length >= 2
+    case 'teams':
+      return formState.value.sides.every((s) => !!s.teamId)
+    case 'composition':
+      return formState.value.sides.every((s) => (s.playerIds?.length ?? 0) > 0)
+    default:
+      return true
   }
 })
 
@@ -334,19 +354,35 @@ function goBackFromResult() {
 
 function currentStepBack() {
   switch (activeStep.value) {
-    case 'participants': activeStep.value = 'when'; break
-    case 'teams': activeStep.value = 'when'; break
-    case 'composition': activeStep.value = 'participants'; break
-    case 'result': goBackFromResult(); break
+    case 'participants':
+      activeStep.value = 'when'
+      break
+    case 'teams':
+      activeStep.value = 'when'
+      break
+    case 'composition':
+      activeStep.value = 'participants'
+      break
+    case 'result':
+      goBackFromResult()
+      break
   }
 }
 
 async function currentStepNext() {
   switch (activeStep.value) {
-    case 'when': await whenStepRef.value?.triggerNext(); break
-    case 'participants': await participantsStepRef.value?.triggerNext(); break
-    case 'teams': await teamsStepRef.value?.triggerNext(); break
-    case 'composition': await compositionStepRef.value?.triggerNext(); break
+    case 'when':
+      await whenStepRef.value?.triggerNext()
+      break
+    case 'participants':
+      await participantsStepRef.value?.triggerNext()
+      break
+    case 'teams':
+      await teamsStepRef.value?.triggerNext()
+      break
+    case 'composition':
+      await compositionStepRef.value?.triggerNext()
+      break
   }
 }
 
@@ -367,7 +403,11 @@ async function submitMatch() {
     status: isScheduled ? 'scheduled' : 'reported',
     scoreA: isScheduled ? 0 : (formState.value.scorePerSide[1] ?? 0),
     scoreB: isScheduled ? 0 : (formState.value.scorePerSide[2] ?? 0),
-    winnerPosition: isScheduled ? null : (formState.value.winnerPosition === 0 ? null : formState.value.winnerPosition),
+    winnerPosition: isScheduled
+      ? null
+      : formState.value.winnerPosition === 0
+        ? null
+        : formState.value.winnerPosition,
     outcomeTypeId: isScheduled ? undefined : (formState.value.outcomeTypeId ?? undefined),
     outcomeReasonId: isScheduled ? undefined : (formState.value.outcomeReasonId ?? undefined),
   }
@@ -382,10 +422,14 @@ async function submitMatch() {
       outcomeTypeId: payload.outcomeTypeId,
       outcomeReasonId: payload.outcomeReasonId,
     }
-    await updateMatchWithNavigation(props.matchId, updatePayload, props.tournamentId, tournament.value?.mode)
+    await updateMatchWithNavigation(
+      props.matchId,
+      updatePayload,
+      props.tournamentId,
+      tournament.value?.mode,
+    )
   } else {
     await createMatchWithNavigation(payload, props.tournamentId, tournament.value?.mode)
   }
 }
-
 </script>

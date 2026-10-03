@@ -2,7 +2,38 @@
   <div class="flex flex-col gap-6 pt-4">
     <h3 class="text-base font-semibold">{{ t('compositionStep.title') }}</h3>
 
-    <p class="text-sm text-surface-500">{{ t('compositionStep.instruction') }}</p>
+    <div class="flex flex-col gap-3">
+      <div v-if="canCompose" class="flex gap-2">
+        <Button
+          :label="randomLabel"
+          severity="secondary"
+          outlined
+          class="flex-1 min-h-11 sm:flex-none sm:min-h-0"
+          data-testid="compose-random"
+          @click="applyComposition('random')"
+        >
+          <template #icon="{ class: iconClass }">
+            <i
+              class="fa fa-dice"
+              :class="iconClass"
+              :style="{ transform: `rotate(${diceAngle}deg)` }"
+            />
+          </template>
+        </Button>
+        <Button
+          v-if="canBalance"
+          :label="t('compositionStep.balanced')"
+          icon="fa fa-scale-balanced"
+          severity="secondary"
+          outlined
+          class="flex-1 min-h-11 sm:flex-none sm:min-h-0"
+          data-testid="compose-balanced"
+          @click="applyComposition('balanced')"
+        />
+      </div>
+
+      <p class="text-sm text-surface-500">{{ t('compositionStep.instruction') }}</p>
+    </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col gap-2">
@@ -110,6 +141,10 @@ import { VueDraggable } from 'vue-draggable-plus'
 import MatchBalanceBar from '@/components/match/MatchBalanceBar.vue'
 import { useMatchService } from '@/composables/match/match.service'
 import { computeMatchBalance } from '@/composables/match/match-balance'
+import { balanceTeams, shuffleTeams } from '@/composables/match/team-composition'
+import type { ComposeKind } from '@/composables/match/useComposeEasterEggs'
+import { useComposeEasterEggs } from '@/composables/match/useComposeEasterEggs'
+import { useDiceSpin } from '@/composables/match/dice-spin'
 import type { PlayerStandings } from '@/composables/match/match-balance'
 import type { MatchSideInput } from '@skol-arena/shared/types/index'
 
@@ -129,6 +164,8 @@ interface Props {
   standings?: PlayerStandings | null
   /** Changes how the balance figure is worded — see `MatchBalanceBar`. */
   allowDraw?: boolean
+  /** Offers the MMR-balanced line-up next to the random one. */
+  isRanked?: boolean
 }
 
 interface Emits {
@@ -150,27 +187,23 @@ const allPlayerIdsModel = defineModel<string[]>('allPlayerIds', { required: true
 const playersA = ref<Player[]>([])
 const playersB = ref<Player[]>([])
 
+function toPlayer(id: string): Player {
+  return { id, displayName: props.playerNames[id] ?? id }
+}
+
 function buildAndInit() {
   const existing = sidesModel.value.filter((s) => s.playerIds && s.playerIds.length > 0)
 
   if (existing.length >= 2) {
-    playersA.value = existing[0].playerIds!.map((id) => ({
-      id,
-      displayName: props.playerNames[id] ?? id,
-    }))
-    playersB.value = existing[1].playerIds!.map((id) => ({
-      id,
-      displayName: props.playerNames[id] ?? id,
-    }))
+    playersA.value = existing[0].playerIds!.map(toPlayer)
+    playersB.value = existing[1].playerIds!.map(toPlayer)
     return
   }
 
   const ids = allPlayerIdsModel.value
   const half = Math.ceil(ids.length / 2)
-  playersA.value = ids
-    .slice(0, half)
-    .map((id) => ({ id, displayName: props.playerNames[id] ?? id }))
-  playersB.value = ids.slice(half).map((id) => ({ id, displayName: props.playerNames[id] ?? id }))
+  playersA.value = ids.slice(0, half).map(toPlayer)
+  playersB.value = ids.slice(half).map(toPlayer)
 }
 
 function syncSidesToModel() {
@@ -185,6 +218,43 @@ const emptySide = computed(() => playersA.value.length === 0 || playersB.value.l
 // `sidesModel` is kept in sync by the watchEffect below, so the balance follows
 // every drag & drop without a watcher or a request of its own.
 const balance = computed(() => computeMatchBalance(sidesModel.value, props.standings))
+
+// --- Auto-composition ------------------------------------------------------
+// With two players there is only one line-up, so the buttons would do nothing.
+const canCompose = computed(() => allPlayerIdsModel.value.length >= 3)
+// Ranked only, and only once every player has a rating at the match date —
+// the same condition as the balance bar, so the button never shows without it.
+const canBalance = computed(() => {
+  const standings = props.standings
+  return !!props.isRanked && !!standings && allPlayerIdsModel.value.every((id) => standings[id])
+})
+
+const { onCompose } = useComposeEasterEggs()
+const { angle: diceAngle, kick: spinDice } = useDiceSpin()
+
+const randomLabel = computed(() =>
+  canBalance.value ? t('compositionStep.random') : t('compositionStep.randomOnly'),
+)
+
+function computeSplit(kind: ComposeKind) {
+  const ids = allPlayerIdsModel.value
+  if (kind === 'random') return shuffleTeams(ids)
+  if (!props.standings) return null
+  const current: [string[], string[]] = [
+    playersA.value.map((p) => p.id),
+    playersB.value.map((p) => p.id),
+  ]
+  return balanceTeams(ids, props.standings, current)
+}
+
+function applyComposition(kind: ComposeKind) {
+  onCompose(kind)
+  if (kind === 'random') spinDice()
+  const split = computeSplit(kind)
+  if (!split) return
+  playersA.value = split[0].map(toPlayer)
+  playersB.value = split[1].map(toPlayer)
+}
 
 defineExpose({ triggerNext: () => onNext() })
 
@@ -226,7 +296,7 @@ watch(allPlayerIdsModel, () => {
   ])
   for (const id of allPlayerIdsModel.value) {
     if (!assignedIds.has(id)) {
-      const player = { id, displayName: props.playerNames[id] ?? id }
+      const player = toPlayer(id)
       if (playersA.value.length <= playersB.value.length) {
         playersA.value = [...playersA.value, player]
       } else {

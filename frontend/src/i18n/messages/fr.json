@@ -349,11 +349,14 @@
     "yes": "Oui"
   },
   "compositionStep": {
+    "balanced": "Équilibré",
     "empty": "Vide",
     "emptySideError": "Chaque équipe doit avoir au moins un joueur.",
     "instruction": "Faites glisser les joueurs pour former les équipes.",
     "next": "Suivant",
     "previous": "Précédent",
+    "random": "Aléatoire",
+    "randomOnly": "Composer au hasard",
     "teamA": "Équipe 1",
     "teamB": "Équipe 2",
     "title": "Composition"
