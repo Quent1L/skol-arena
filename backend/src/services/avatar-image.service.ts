@@ -107,15 +107,24 @@ async function assertDecodable(bytes: Uint8Array, sniffed: AcceptedFormat): Prom
   }
 }
 
+const LARGEST_SIZE = Math.max(...AVATAR_SIZES);
+
 /**
  * Fully decodes then re-encodes to WebP, at every size. The uploaded bytes are never
  * kept: whatever rode along in the file (EXIF and GPS data, a script appended after
  * the image data, …) does not survive a decode/encode round trip.
+ *
+ * The full-size source is decoded once, down to a lossless PNG at the largest size;
+ * every variant is then cut from that small intermediate rather than from the source.
  */
 async function renderVariants(bytes: Uint8Array): Promise<Map<AvatarSize, Uint8Array>> {
+  const base = await new Bun.Image(bytes, { maxPixels: AVATAR_MAX_PIXELS })
+    .resize(LARGEST_SIZE, LARGEST_SIZE, { fit: "inside", withoutEnlargement: true })
+    .png()
+    .bytes();
   const variants = new Map<AvatarSize, Uint8Array>();
   for (const size of AVATAR_SIZES) {
-    const out = await new Bun.Image(bytes, { maxPixels: AVATAR_MAX_PIXELS })
+    const out = await new Bun.Image(base)
       .resize(size, size, { fit: "inside", withoutEnlargement: true })
       .webp({ quality: WEBP_QUALITY })
       .bytes();
