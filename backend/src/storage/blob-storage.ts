@@ -21,7 +21,6 @@ export interface BlobStorage {
   exists(key: string): Promise<boolean>;
   /** True when at least one object key starts with `prefix`, which must end with `/`. */
   hasPrefix(prefix: string): Promise<boolean>;
-  deleteMany(keys: string[]): Promise<void>;
   /** Deletes every object whose key starts with `prefix`, which must end with `/`. */
   deletePrefix(prefix: string): Promise<void>;
 }

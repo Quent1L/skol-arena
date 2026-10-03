@@ -27,11 +27,6 @@ export class PostgresBlobStorage implements BlobStorage {
     return storedBlobRepository.hasPrefix(prefix);
   }
 
-  async deleteMany(keys: string[]): Promise<void> {
-    keys.forEach(assertSafeKey);
-    await storedBlobRepository.deleteByKeys(keys);
-  }
-
   async deletePrefix(prefix: string): Promise<void> {
     assertSafePrefix(prefix);
     await storedBlobRepository.deleteByPrefix(prefix);

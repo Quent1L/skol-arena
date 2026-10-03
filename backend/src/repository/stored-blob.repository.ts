@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "../config/database";
 import { storedBlobs } from "../db/schema";
 
@@ -42,11 +42,6 @@ export const storedBlobRepository = {
       .where(sql`starts_with(${storedBlobs.key}, ${prefix})`)
       .limit(1);
     return row != null;
-  },
-
-  async deleteByKeys(keys: string[]): Promise<void> {
-    if (keys.length === 0) return;
-    await db.delete(storedBlobs).where(inArray(storedBlobs.key, keys));
   },
 
   /** starts_with rather than LIKE: `_` is a LIKE wildcard and keys may contain it. */
