@@ -8,7 +8,7 @@ import {
 import { requireAuth } from "../middleware/auth";
 import { rateLimit } from "../middleware/rate-limit";
 import { avatarService } from "../services/avatar.service";
-import { avatarMaxUploadBytes } from "../config/avatar";
+import { avatarMaxUploadBytes, formatUploadLimit } from "../config/avatar";
 import { createAppHono } from "../types/hono";
 import { validate } from "../api/validator";
 import { describe } from "../api/describe";
@@ -29,9 +29,7 @@ const uploadBodyLimit = (): ReturnType<typeof bodyLimit> => async (c, next) => {
   return bodyLimit({
     maxSize: max + MULTIPART_OVERHEAD_BYTES,
     onError: () => {
-      throw new PayloadTooLargeError(ErrorCode.AVATAR_TOO_LARGE, {
-        max: `${Math.floor(max / (1024 * 1024))} MB`,
-      });
+      throw new PayloadTooLargeError(ErrorCode.AVATAR_TOO_LARGE, { max: formatUploadLimit(max) });
     },
   })(c, next);
 };

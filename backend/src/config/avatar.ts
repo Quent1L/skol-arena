@@ -47,3 +47,16 @@ export function avatarMaxUploadBytes(): number {
   if (!Number.isInteger(parsed) || parsed <= 0) return AVATAR_MAX_UPLOAD_BYTES_DEFAULT;
   return parsed;
 }
+
+const KIB = 1024;
+const MIB = 1024 * KIB;
+
+/**
+ * The upload limit as shown in an error message. Rounded down, never up: the message
+ * must not promise a size the server then refuses.
+ */
+export function formatUploadLimit(bytes: number): string {
+  if (bytes >= MIB) return `${Math.floor((bytes / MIB) * 10) / 10} MB`;
+  if (bytes >= KIB) return `${Math.floor(bytes / KIB)} KB`;
+  return `${bytes} B`;
+}
