@@ -7,6 +7,10 @@ description: Every environment variable Skol Arena reads, grouped by purpose.
 Skol Arena has no central env-validation file — every variable below is read
 directly where it's needed. This page is the canonical reference.
 
+The values in effect on a running instance can be checked from **Admin → Technical
+maintenance** — secrets only report whether they are set. See
+[Technical maintenance](/docs/deployment#technical-maintenance).
+
 ## Database & migrations
 
 | Variable            | Purpose                                                                                                                           | Required | Default                                  |
@@ -111,8 +115,10 @@ every avatar lives in the database: with many players it grows the database and 
 backups. **`filesystem`** keeps the database lean, at the cost of a volume to mount
 and to back up separately — see [Deployment](/docs/deployment#avatar-storage).
 
-Switching from one to the other does not move existing avatars: players who had one
-fall back to their initials until they upload it again.
+Switching from one to the other does not move existing avatars by itself: until they
+are migrated, players who had one fall back to their initials. The migration is one
+click in **Admin → Technical maintenance** — see
+[Deployment](/docs/deployment#switching-avatar-storage).
 
 ## Real-time (WebSocket)
 

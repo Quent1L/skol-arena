@@ -1,4 +1,4 @@
-import { AVATAR_MAX_UPLOAD_BYTES_DEFAULT } from "@skol-arena/shared";
+import { AVATAR_MAX_UPLOAD_BYTES_DEFAULT, avatarStorageDriverEnum } from "@skol-arena/shared";
 import { logger } from "../utils/logger";
 
 /**
@@ -9,7 +9,7 @@ import { logger } from "../utils/logger";
  * - `filesystem`: under AVATAR_STORAGE_DIR, which must be a persistent volume in a
  *   container or every redeploy wipes the avatars.
  */
-export const BLOB_STORAGE_DRIVERS = ["postgres", "filesystem"] as const;
+export const BLOB_STORAGE_DRIVERS = avatarStorageDriverEnum;
 export type BlobStorageDriver = (typeof BLOB_STORAGE_DRIVERS)[number];
 
 const DEFAULT_DRIVER: BlobStorageDriver = "postgres";

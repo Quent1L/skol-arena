@@ -43,6 +43,7 @@ import { run, type Runner } from "graphile-worker";
 import { taskList } from "./workers/mmr-recalculation.worker";
 import { migrateStoredRules } from "./services/rules-migration.service";
 import { initAvatarStorage } from "./storage";
+import { avatarStorageMigrationService } from "./services/avatar-storage-migration.service";
 import avatarFiles from "./routes/avatar-files.route";
 
 await runMigrations();
@@ -54,6 +55,8 @@ await migrateStoredRules();
 await initializeAdminIfNeeded();
 // Fails the boot when a filesystem avatar store is missing its volume or is read-only.
 await initAvatarStorage();
+// Avatars left in another store after AVATAR_STORAGE changed: warns, never blocks.
+await avatarStorageMigrationService.detectMismatch();
 
 // Non-blocking canary: surfaces a broken SMTP setup at boot instead of at the first
 // password reset. verifyConnection() swallows its own error and returns false.

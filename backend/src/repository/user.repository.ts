@@ -59,6 +59,17 @@ export class UserRepository {
     );
   }
 
+  /** Every current avatar, archived users included: purging theirs may have failed. */
+  async listAvatarVersions(): Promise<Array<{ id: string; avatarVersion: string }>> {
+    const rows = await db
+      .select({ id: appUsers.id, avatarVersion: appUsers.avatarVersion })
+      .from(appUsers)
+      .where(isNotNull(appUsers.avatarVersion));
+    return rows.flatMap((r) =>
+      r.avatarVersion ? [{ id: r.id, avatarVersion: r.avatarVersion }] : [],
+    );
+  }
+
   async createAppUser(appUser: typeof appUsers.$inferInsert) {
     const [createdUser] = await db.insert(appUsers).values(appUser).returning();
     return createdUser;

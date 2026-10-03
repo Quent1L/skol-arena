@@ -190,7 +190,10 @@
     "tournamentsDescription": "Create, edit and manage platform tournaments",
     "tournamentsTitle": "Tournament management",
     "usersDescription": "Review member activity and manage their accounts",
-    "usersTitle": "Users"
+    "usersTitle": "Users",
+    "maintenanceTitle": "Technical maintenance",
+    "maintenanceDescription": "Versions, database, avatar storage and environment variables",
+    "maintenanceAvatarWarning": "Some avatars are stored outside the configured storage: a migration is available."
   },
   "app": {
     "errorSummary": "Error",
@@ -1546,6 +1549,8 @@
     "adminGameRulesNew": "New ruleset",
     "adminInvitations": "Invitation code management",
     "adminInvitationsBreadcrumb": "Invitation codes",
+    "adminMaintenance": "Technical maintenance",
+    "adminMaintenanceBreadcrumb": "Maintenance",
     "adminOrganizations": "Organization management",
     "adminOrganizationsBreadcrumb": "Organizations",
     "adminRanked": "Ranked season management",
@@ -2598,5 +2603,65 @@
     "zoom": "Zoom",
     "confirm": "Save",
     "hint": "Drag to frame, zoom with the slider."
+  },
+  "maintenanceService": {
+    "migrationDone": "Avatar migration finished",
+    "migrationDetail": "{migrated} migrated, {failed} failed, {missing} not found",
+    "errors": {
+      "loadFailed": "Could not load the system information",
+      "migrationFailed": "The avatar migration failed"
+    }
+  },
+  "maintenanceView": {
+    "title": "Technical maintenance",
+    "subtitle": "Instance health and maintenance operations",
+    "refresh": "Refresh",
+    "unknown": "Unknown",
+    "avatars": {
+      "title": "Avatar storage",
+      "driver": "Configured storage (AVATAR_STORAGE)",
+      "total": "Current avatars",
+      "inActive": "In the configured storage",
+      "inOther": "In \"{driver}\"",
+      "missing": "Not found",
+      "mismatch": "Avatars are stored in \"{stranded}\" while AVATAR_STORAGE is \"{driver}\". They are not displayed until migrated.",
+      "migrate": "Migrate to \"{driver}\"",
+      "confirmHeader": "Migrate avatars",
+      "confirmMessage": "Avatars will be copied to \"{driver}\", verified, then deleted from \"{stranded}\". Orphaned old versions will be deleted too. Continue?",
+      "confirmAccept": "Migrate"
+    },
+    "app": {
+      "title": "Application",
+      "version": "Version",
+      "staleClient": "this tab: {version}, reload",
+      "startedAt": "Started at",
+      "apiVersions": "API versions",
+      "latest": "latest: {version}"
+    },
+    "db": {
+      "title": "Database",
+      "size": "Total size",
+      "migrations": "Applied migrations",
+      "latestMigration": "Latest migration (authored)",
+      "table": "Table",
+      "rows": "Rows (est.)",
+      "tableSize": "Size"
+    },
+    "env": {
+      "title": "Environment variables",
+      "subtitle": "Only documented variables are listed; secrets only tell whether they are set.",
+      "name": "Variable",
+      "value": "Value",
+      "secretSet": "Set",
+      "unset": "Not set",
+      "groups": {
+        "database": "Database & migrations",
+        "server": "Server & runtime",
+        "auth": "Authentication",
+        "smtp": "Email (SMTP)",
+        "push": "Push notifications (VAPID)",
+        "avatars": "Avatars"
+      }
+    }
   }
 }

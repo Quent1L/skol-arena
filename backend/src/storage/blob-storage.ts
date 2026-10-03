@@ -12,12 +12,15 @@ export interface StoredBlob {
  * A flat key/value object store. Keys are slash-separated paths
  * (`avatars/<user>/<hash>/64.webp`) so that a prefix groups related objects, the
  * way an S3 bucket would. Nothing here knows about avatars: a new driver (S3, …)
- * only has to implement these four operations.
+ * only has to implement these operations.
  */
 export interface BlobStorage {
   readonly driver: BlobStorageDriver;
   put(key: string, data: Uint8Array, contentType: string): Promise<void>;
   get(key: string): Promise<StoredBlob | null>;
+  exists(key: string): Promise<boolean>;
+  /** True when at least one object key starts with `prefix`, which must end with `/`. */
+  hasPrefix(prefix: string): Promise<boolean>;
   deleteMany(keys: string[]): Promise<void>;
   /** Deletes every object whose key starts with `prefix`, which must end with `/`. */
   deletePrefix(prefix: string): Promise<void>;

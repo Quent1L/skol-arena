@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, readdir, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FilesystemBlobStorage } from "../../storage/filesystem-blob-storage";
@@ -79,5 +79,30 @@ describe("FilesystemBlobStorage", () => {
     await expect(storage.put("../escape.webp", bytes("x"), "image/webp")).rejects.toThrow();
     await expect(storage.get("avatars/../../etc/passwd")).rejects.toThrow();
     await expect(storage.deletePrefix("../")).rejects.toThrow();
+  });
+
+  it("tells whether an object exists", async () => {
+    await storage.put("avatars/u1/h1/64.webp", bytes("a"), "image/webp");
+
+    expect(await storage.exists("avatars/u1/h1/64.webp")).toBe(true);
+    expect(await storage.exists("avatars/u1/h1/128.webp")).toBe(false);
+  });
+
+  it("finds objects under a prefix but ignores empty directories", async () => {
+    expect(await storage.hasPrefix("avatars/")).toBe(false);
+    await mkdir(join(root, "avatars/u1/empty"), { recursive: true });
+    expect(await storage.hasPrefix("avatars/")).toBe(false);
+
+    await storage.put("avatars/u2/h/64.webp", bytes("a"), "image/webp");
+    expect(await storage.hasPrefix("avatars/")).toBe(true);
+  });
+
+  it("probes a root that does not exist without creating it", async () => {
+    const missing = join(root, "not-mounted");
+    const inactive = new FilesystemBlobStorage(missing);
+
+    expect(await inactive.hasPrefix("avatars/")).toBe(false);
+    expect(await inactive.exists("avatars/u1/h/64.webp")).toBe(false);
+    await expect(stat(missing)).rejects.toThrow();
   });
 });
