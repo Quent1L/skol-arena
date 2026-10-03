@@ -73,10 +73,11 @@ export const avatarService = {
     return (await userRepository.getAvatarVersion(userId)) === version;
   },
 
+  /**
+   * Reads a stored variant. Does not check that `version` is current: the caller has
+   * to (with {@link isCurrentVersion}), before answering anything, a 304 included.
+   */
   async getVariant(userId: string, version: string, size: AvatarSize): Promise<StoredBlob> {
-    if (!(await this.isCurrentVersion(userId, version))) {
-      throw new NotFoundError(ErrorCode.AVATAR_NOT_FOUND);
-    }
     const blob = await getAvatarStorage().get(variantKey(userId, version, size));
     if (!blob) throw new NotFoundError(ErrorCode.AVATAR_NOT_FOUND);
     return blob;
