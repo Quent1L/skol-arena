@@ -107,6 +107,22 @@ describe("Avatars (integration)", () => {
       expect((await avatarService.getVariant(userId, second, 64)).contentType).toBe("image/webp");
     });
 
+    it("leaves no orphan behind when two uploads race", async () => {
+      const userId = await createUser("Racer");
+      await avatarService.setAvatar(userId, makePng(300, 300));
+      const [a, b] = await Promise.all([
+        avatarService.setAvatar(userId, makePng(310, 300)),
+        avatarService.setAvatar(userId, makePng(320, 300)),
+      ]);
+
+      const current = await testDb
+        .select({ v: appUsers.avatarVersion })
+        .from(appUsers)
+        .where(eq(appUsers.id, userId));
+      expect([a, b]).toContain(current[0]!.v!);
+      expect(await blobCount(userId)).toBe(3);
+    });
+
     it("keeps the previous avatar when the new upload is rejected", async () => {
       const userId = await createUser("Carol");
       const version = await avatarService.setAvatar(userId, makePng(300, 300));

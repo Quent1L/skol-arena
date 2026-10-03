@@ -45,6 +45,23 @@ export class UserRepository {
     await db.update(appUsers).set({ avatarVersion }).where(eq(appUsers.id, id));
   }
 
+  /**
+   * Points the profile at `avatarVersion` and returns the one it replaces. The row is
+   * locked between the read and the write: two concurrent uploads each get back the
+   * version the other one replaced, so neither is left behind unreferenced.
+   */
+  async swapAvatarVersion(id: string, avatarVersion: string): Promise<string | null> {
+    return await db.transaction(async (tx) => {
+      const [row] = await tx
+        .select({ avatarVersion: appUsers.avatarVersion })
+        .from(appUsers)
+        .where(eq(appUsers.id, id))
+        .for("update");
+      await tx.update(appUsers).set({ avatarVersion }).where(eq(appUsers.id, id));
+      return row?.avatarVersion ?? null;
+    });
+  }
+
   /** Avatar versions of the given users, for those who have one. Archived users never do. */
   async getAvatarVersions(ids: string[]): Promise<Array<{ id: string; avatarVersion: string }>> {
     if (ids.length === 0) return [];
