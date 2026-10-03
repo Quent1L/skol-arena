@@ -74,11 +74,6 @@ export class FilesystemBlobStorage implements BlobStorage {
     }
   }
 
-  async deleteMany(keys: string[]): Promise<void> {
-    const paths = keys.map((key) => this.pathOf(key));
-    await Promise.all(paths.map((path) => rm(path, { force: true })));
-  }
-
   async deletePrefix(prefix: string): Promise<void> {
     assertSafePrefix(prefix);
     await rm(this.resolveInside(prefix), { recursive: true, force: true });
