@@ -37,7 +37,7 @@
           :key="playerId"
           class="flex items-center pl-3 py-2 rounded-md bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 min-w-0"
         >
-          <PlayerAvatar :name="getPlayerName(playerId)" size="sm" />
+          <PlayerAvatar :name="getPlayerName(playerId)" :player-id="playerId" size="sm" />
           <span class="text-sm truncate flex-1 ml-2">{{ getPlayerName(playerId) }}</span>
           <Button
             severity="danger"

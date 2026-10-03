@@ -153,6 +153,14 @@ export enum ErrorCode {
 
   // Email delivery errors
   EMAIL_SEND_FAILED = "EMAIL_SEND_FAILED",
+
+  // Avatar errors
+  AVATAR_FILE_MISSING = "AVATAR_FILE_MISSING",
+  AVATAR_TOO_LARGE = "AVATAR_TOO_LARGE",
+  AVATAR_UNSUPPORTED_FORMAT = "AVATAR_UNSUPPORTED_FORMAT",
+  AVATAR_INVALID_DIMENSIONS = "AVATAR_INVALID_DIMENSIONS",
+  AVATAR_PROCESSING_FAILED = "AVATAR_PROCESSING_FAILED",
+  AVATAR_NOT_FOUND = "AVATAR_NOT_FOUND",
 }
 
 // Base error class
@@ -198,6 +206,20 @@ export class NotFoundError extends AppError {
 export class ConflictError extends AppError {
   get statusCode(): number {
     return 409;
+  }
+}
+
+// 413 Payload Too Large
+export class PayloadTooLargeError extends AppError {
+  get statusCode(): number {
+    return 413;
+  }
+}
+
+// 415 Unsupported Media Type
+export class UnsupportedMediaTypeError extends AppError {
+  get statusCode(): number {
+    return 415;
   }
 }
 

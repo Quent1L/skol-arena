@@ -157,6 +157,7 @@ export async function resetTestDatabase(): Promise<void> {
     "tournaments",
     "invitation_usages",
     "invitation_codes",
+    "stored_blobs",
     "app_users",
     "account",
     "session",

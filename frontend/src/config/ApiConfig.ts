@@ -2,7 +2,8 @@ import xior, { XiorError } from 'xior'
 import { convertStringDatesToJS } from '@/utils/DateUtils'
 import { NETWORK_ERROR, isTransientStatus } from '@/utils/HttpErrors'
 import { isRateLimited, rateLimitMessage, retryAfterFrom } from '@/utils/RateLimit'
-export const apiBaseURL = import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin
+import { apiBaseURL } from './api-base'
+export { apiBaseURL }
 
 /**
  * Major version of the backend API this client is built against, sent on every

@@ -15,7 +15,7 @@
   >
     <template #option="{ option }">
       <div class="flex items-center gap-2">
-        <PlayerAvatar :name="option.displayName" size="sm" shape="square" />
+        <PlayerAvatar :name="option.displayName" :player-id="option.id" size="sm" shape="square" />
         <div class="min-w-0">
           <div class="font-medium text-white truncate">{{ option.displayName }}</div>
           <div v-if="option.shortName" class="text-xs text-gray-400">{{ option.shortName }}</div>

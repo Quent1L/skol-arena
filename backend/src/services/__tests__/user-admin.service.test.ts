@@ -40,6 +40,11 @@ const mockPlayerCacheService = {
 };
 mock.module("../player-cache.service", () => ({ playerCacheService: mockPlayerCacheService }));
 
+const mockAvatarService = {
+  purge: mock((_id: string) => Promise.resolve()),
+};
+mock.module("../avatar.service", () => ({ avatarService: mockAvatarService }));
+
 const mockRequestPasswordReset = mock((_o: any) => Promise.resolve({}));
 mock.module("../../config/auth", () => ({
   auth: { api: { requestPasswordReset: mockRequestPasswordReset } },
@@ -327,6 +332,7 @@ describe("UserService archiving", () => {
       "Archive 5",
       "ARCH5",
     );
+    expect(mockAvatarService.purge).toHaveBeenCalledWith(TARGET_ID);
   });
 
   it("archives regardless of the data attached to the user", async () => {

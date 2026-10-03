@@ -5,6 +5,8 @@
 # TypeScript
 **/*.tsbuildinfo
 **/.env
+# Local avatar storage (AVATAR_STORAGE=filesystem)
+backend/data/
 .idea
 .vscode
 # Added by code-review-graph

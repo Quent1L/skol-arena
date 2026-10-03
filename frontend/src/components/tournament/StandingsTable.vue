@@ -155,9 +155,16 @@
                 <RouterLink
                   v-if="teamMode === 'flex'"
                   :to="{ path: `/players/${data.id}`, query: { tournamentId: props.tournamentId } }"
-                  class="font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                  class="inline-flex items-center gap-2 font-medium text-blue-600 dark:text-blue-400 hover:underline"
                   :title="data.name"
                 >
+                  <PlayerAvatar
+                    :name="data.name"
+                    :color-key="data.shortName"
+                    :player-id="data.id"
+                    size="xs"
+                    shape="square"
+                  />
                   <span class="md:hidden">{{ data.shortName }}</span
                   ><span class="hidden md:inline">{{ data.name }}</span>
                 </RouterLink>
@@ -456,6 +463,7 @@
 </template>
 
 <script setup lang="ts">
+import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SelectButton from 'primevue/selectbutton'

@@ -13,6 +13,8 @@ export const ERROR_RESPONSES = {
   403: "Forbidden",
   404: "NotFound",
   409: "Conflict",
+  413: "PayloadTooLarge",
+  415: "UnsupportedMediaType",
   429: "TooManyRequests",
   500: "InternalServerError",
 } as const;
@@ -52,6 +54,8 @@ export type DescribeOptions = {
   conflict?: boolean;
   /** Documents 429. Set on any route behind the rateLimit middleware. */
   rateLimited?: boolean;
+  /** Documents 413 and 415. Set on any route accepting a file upload. */
+  upload?: boolean;
 };
 
 /**
@@ -83,6 +87,7 @@ export function describe(options: DescribeOptions): MiddlewareHandler {
       ...(options.role ? { 403: ref(403) } : {}),
       ...(options.notFound ? { 404: ref(404) } : {}),
       ...(options.conflict ? { 409: ref(409) } : {}),
+      ...(options.upload ? { 413: ref(413), 415: ref(415) } : {}),
       ...(options.rateLimited ? { 429: ref(429) } : {}),
       500: ref(500),
     },

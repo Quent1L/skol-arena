@@ -64,8 +64,10 @@ volumes:
   skol-db-data:
 ```
 
-The app has no other stateful dependency — no upload directory or extra volume is
-needed beyond the Postgres data volume.
+With the default settings the app has no other stateful dependency: avatars are
+stored in Postgres, so no upload directory or extra volume is needed beyond the
+Postgres data volume. To keep them out of the database instead, see
+[Avatar storage](#avatar-storage).
 
 The `healthcheck` and `condition: service_healthy` matter more than they look. A
 plain `depends_on: - db` only waits for the database _container_ to start, not for
@@ -75,6 +77,33 @@ under `restart: unless-stopped`, crash-loop until the database happens to be rea
 Add SMTP, VAPID, or Keycloak variables from the
 [Environment Variables](/docs/environment-variables) reference as needed; none of
 them are required to get a working instance running.
+
+### Avatar storage
+
+Player avatars are stored in Postgres by default. It is the simplest option, but
+every picture then weighs on the database and on its dumps. To store them on disk
+instead, switch `AVATAR_STORAGE` to `filesystem` and mount a volume on
+`/data/avatars` — without one, every redeploy starts from an empty directory and
+all avatars are lost:
+
+```yaml
+services:
+  app:
+    # …as above
+    environment:
+      AVATAR_STORAGE: filesystem
+    volumes:
+      - skol-avatars:/data/avatars
+
+volumes:
+  skol-db-data:
+  skol-avatars:
+```
+
+The image creates `/data/avatars` owned by the app user, so a named volume
+inherits the right permissions. A bind mount must be writable by uid `1001`; the
+app refuses to start when the directory cannot be written to. With several
+replicas, they must all share the same volume.
 
 ## First boot
 
@@ -151,6 +180,9 @@ docker compose exec -T db pg_dump -U skol -Fc skol_arena > skol-$(date +%F).dump
 ```
 
 Do this every time, before pulling a new tag. It is the only way back.
+
+With `AVATAR_STORAGE=filesystem`, the dump does not contain the avatars: back up the
+avatar volume as well.
 
 ### Why it matters
 

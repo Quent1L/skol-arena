@@ -68,7 +68,15 @@
     "savedDetail": "Les modifications ont été enregistrées",
     "savedSummary": "Utilisateur mis à jour",
     "shortNameLabel": "Nom court",
-    "title": "Utilisateur"
+    "title": "Utilisateur",
+    "avatarSection": "Photo de profil",
+    "removeAvatar": "Retirer la photo",
+    "removeAvatarHint": "Pour la modération : le joueur retrouve ses initiales et peut en envoyer une autre.",
+    "noAvatar": "Ce joueur n'a pas de photo de profil.",
+    "removeAvatarConfirmHeader": "Retirer la photo de profil",
+    "removeAvatarConfirmMessage": "La photo de profil de {name} sera supprimée définitivement.",
+    "avatarRemoved": "Photo de profil retirée",
+    "avatarRemoveError": "La photo n'a pas pu être retirée"
   },
   "adminUsersList": {
     "active": "Actif",
@@ -1040,7 +1048,9 @@
     "selectUsersLabel": "Sélectionner des utilisateurs",
     "selectUsersPlaceholder": "Choisir un ou plusieurs utilisateurs",
     "subtitle": "Créez et gérez les groupes d'utilisateurs pour restreindre l'accès aux tournois",
-    "title": "Gestion des organisations"
+    "title": "Gestion des organisations",
+    "removeAvatarTooltip": "Retirer la photo de profil",
+    "avatarRemovedSummary": "Photo de profil retirée"
   },
   "outcomeSelector": {
     "draw": "Match nul",
@@ -1841,6 +1851,10 @@
       "min3": "Minimum 3 caractères",
       "nameRegex": "Au moins 2 lettres/chiffres requis, tirets et underscores autorisés, un seul espace entre les mots",
       "shortNameMax": "Maximum 8 caractères"
+    },
+    "avatar": {
+      "title": "Photo de profil",
+      "description": "Visible par les autres joueurs. Chaque changement est appliqué immédiatement."
     }
   },
   "signupView": {
@@ -2564,5 +2578,25 @@
       "loadFailed": "Impossible de charger le Rewind",
       "loadArchiveFailed": "Impossible de charger les Rewinds"
     }
+  },
+  "avatarEditor": {
+    "upload": "Ajouter une photo",
+    "change": "Changer la photo",
+    "remove": "Retirer",
+    "hint": "JPEG, PNG ou WebP, {max} max. Recadrée en carré avant l'envoi.",
+    "unsupported": "Format non supporté. Choisissez une image JPEG, PNG ou WebP.",
+    "tooLarge": "Image trop lourde ({max} max).",
+    "unreadable": "Cette image n'a pas pu être lue.",
+    "updated": "Photo de profil mise à jour",
+    "uploadError": "L'envoi de la photo a échoué.",
+    "removeError": "La suppression de la photo a échoué.",
+    "confirmRemoveHeader": "Retirer la photo",
+    "confirmRemoveMessage": "Votre photo de profil sera supprimée et remplacée par vos initiales."
+  },
+  "avatarCropDialog": {
+    "title": "Recadrer la photo",
+    "zoom": "Zoom",
+    "confirm": "Enregistrer",
+    "hint": "Faites glisser pour cadrer, zoomez avec le curseur."
   }
 }

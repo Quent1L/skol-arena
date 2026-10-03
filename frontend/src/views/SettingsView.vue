@@ -63,6 +63,24 @@
           </template>
         </Card>
 
+        <!-- Profile picture: saved on its own, separately from the profile form -->
+        <Card v-if="appUser">
+          <template #title>
+            <div class="flex items-center gap-2">
+              <i class="fas fa-camera"></i>
+              <span>{{ t('settings.avatar.title') }}</span>
+            </div>
+          </template>
+          <template #content>
+            <p class="text-sm text-gray-500 mb-4">{{ t('settings.avatar.description') }}</p>
+            <AvatarEditor
+              :user-id="appUser.id"
+              :name="appUser.displayName"
+              :color-key="appUser.shortName"
+            />
+          </template>
+        </Card>
+
         <!-- Profil -->
         <Card>
           <template #title>
@@ -517,6 +535,7 @@ import { displayNameRegex } from '@skol-arena/shared'
 import { userApi } from '@/composables/user/user.api'
 import { useInvitationService } from '@/composables/invitation/invitation.service'
 import { useDebounceFn } from '@vueuse/core'
+import AvatarEditor from '@/components/avatar/AvatarEditor.vue'
 
 const { t } = useI18n()
 const { currentLocale, availableLocales } = useLocale()
@@ -542,6 +561,7 @@ const {
   userRole,
   lockKioskSettings,
   fetchUserData,
+  appUser,
 } = useAuth()
 
 // Kiosk lock

@@ -610,6 +610,13 @@
       "when": 1777526400042,
       "tag": "0086_flush_stats_for_unified_win_rate",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1777526400043,
+      "tag": "0087_avatars",
+      "breakpoints": true
     }
   ]
 }

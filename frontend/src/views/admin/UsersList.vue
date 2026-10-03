@@ -65,9 +65,18 @@
     >
       <Column field="displayName" :header="t('adminUsersList.columnName')" sortable>
         <template #body="{ data }">
-          <div class="flex flex-col">
-            <span class="font-semibold">{{ data.displayName }}</span>
-            <span class="text-xs text-gray-500">{{ data.shortName }}</span>
+          <div class="flex items-center gap-2">
+            <PlayerAvatar
+              :name="data.displayName"
+              :color-key="data.shortName"
+              :player-id="data.id"
+              size="sm"
+              shape="square"
+            />
+            <div class="flex flex-col">
+              <span class="font-semibold">{{ data.displayName }}</span>
+              <span class="text-xs text-gray-500">{{ data.shortName }}</span>
+            </div>
           </div>
         </template>
       </Column>
@@ -324,6 +333,7 @@
 </template>
 
 <script setup lang="ts">
+import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'

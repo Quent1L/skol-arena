@@ -15,6 +15,7 @@ import {
 import { logger } from "../utils/logger";
 import { toSafeDisplayName } from "../utils/display-name";
 import { withStrictEmailDelivery } from "../utils/email-delivery-context";
+import { avatarService } from "./avatar.service";
 import type {
   AdminArchiveUserInput,
   AdminRestoreUserInput,
@@ -369,6 +370,7 @@ export class UserService {
     }
 
     await userRepository.deleteUserPermanently(targetId, target.externalId);
+    await avatarService.purge(targetId);
   }
 
   /**
@@ -393,6 +395,8 @@ export class UserService {
       input.shortName ?? `ARCH${label}`.slice(0, 8),
     );
 
+    // An anonymised profile keeps no picture of the person behind it.
+    await avatarService.purge(targetId);
     // Anonymising is a rename: the real name stays in every cached ranking until flushed.
     await playerCacheService.invalidateDenormalizedNames([targetId]);
 
@@ -426,6 +430,10 @@ export class UserService {
       source.displayName,
       source.shortName,
     );
+
+    // The source profile is emptied by the merge. Its avatar is keyed by its own id,
+    // so it is dropped rather than carried over: the player can upload it again.
+    await avatarService.purge(source.id);
 
     // The archived profile takes the source's name, so its cached history is stale.
     // The source itself has none: the blocker check above rejects any played history.

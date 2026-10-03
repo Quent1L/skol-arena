@@ -49,6 +49,7 @@
                 v-if="entry.showHeader && !entry.isOwn"
                 :name="entry.message.author?.displayName || t('matchMessageThread.unknownAuthor')"
                 :color-key="entry.message.author?.id"
+                :player-id="entry.message.author?.id"
                 size="sm"
               />
             </div>
@@ -94,6 +95,7 @@
             v-if="currentUserName"
             :name="currentUserName"
             :color-key="currentUserId"
+            :player-id="currentUserId"
             size="sm"
           />
           <span class="flex-1 truncate text-sm text-muted-color">

@@ -26,6 +26,7 @@
         />
         <PlayerAvatar
           :name="player?.displayName ?? '?'"
+          :player-id="player?.id"
           :size="avatarSize"
           shape="square"
           class="shrink-0"

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, isNotNull, isNull, lt, or, ilike, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lt, or, ilike, sql } from "drizzle-orm";
 import { db } from "../config/database";
 import { foldedILike } from "../utils/accent-folding";
 import { appUsers, organizationMembers, organizations, session, user } from "../db/schema";
@@ -30,6 +30,33 @@ export class UserRepository {
     return await db.query.appUsers.findFirst({
       where: eq(appUsers.id, id),
     });
+  }
+
+  async getAvatarVersion(id: string): Promise<string | null> {
+    const [row] = await db
+      .select({ avatarVersion: appUsers.avatarVersion })
+      .from(appUsers)
+      .where(eq(appUsers.id, id))
+      .limit(1);
+    return row?.avatarVersion ?? null;
+  }
+
+  async setAvatarVersion(id: string, avatarVersion: string | null): Promise<void> {
+    await db.update(appUsers).set({ avatarVersion }).where(eq(appUsers.id, id));
+  }
+
+  /** Avatar versions of the given users, for those who have one. Archived users never do. */
+  async getAvatarVersions(ids: string[]): Promise<Array<{ id: string; avatarVersion: string }>> {
+    if (ids.length === 0) return [];
+    const rows = await db
+      .select({ id: appUsers.id, avatarVersion: appUsers.avatarVersion })
+      .from(appUsers)
+      .where(
+        and(inArray(appUsers.id, ids), isNotNull(appUsers.avatarVersion), isNull(appUsers.archivedAt)),
+      );
+    return rows.flatMap((r) =>
+      r.avatarVersion ? [{ id: r.id, avatarVersion: r.avatarVersion }] : [],
+    );
   }
 
   async createAppUser(appUser: typeof appUsers.$inferInsert) {

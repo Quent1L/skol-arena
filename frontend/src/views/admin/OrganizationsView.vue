@@ -121,7 +121,13 @@
             :key="member.id"
             class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
           >
-            <Avatar :label="member.user.displayName.charAt(0).toUpperCase()" class="bg-blue-500 shrink-0" />
+            <PlayerAvatar
+              :name="member.user.displayName"
+              :color-key="member.user.shortName"
+              :player-id="member.user.id"
+              size="md"
+              shape="square"
+            />
             <div class="flex-1 min-w-0">
               <div class="font-medium truncate">{{ member.user.displayName }}</div>
               <div class="flex items-center gap-2 mt-0.5">
@@ -131,6 +137,16 @@
                 <span class="text-sm text-gray-500">{{ t('organizationsView.addedAt', { date: formatDate(member.joinedAt) }) }}</span>
               </div>
             </div>
+            <Button
+              v-if="versionFor(member.userId)"
+              icon="fa fa-user-slash"
+              severity="secondary"
+              text
+              rounded
+              size="small"
+              v-tooltip="t('organizationsView.removeAvatarTooltip')"
+              @click="handleRemoveAvatar(member.userId)"
+            />
             <Button
               icon="fa fa-user-minus"
               severity="danger"
@@ -193,15 +209,18 @@
 </template>
 
 <script setup lang="ts">
+import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppToast } from '@/composables/useAppToast'
 import { useOrganizationService } from '@/composables/organization/organization.service'
 import { useUserService } from '@/composables/user/user.service'
+import { useAvatarService } from '@/composables/avatar/avatar.service'
 import type { OrganizationWithMemberCount, OrganizationMemberWithUser } from '@skol-arena/shared'
 
 const { t } = useI18n()
 const toast = useAppToast()
+const { versionFor, removeFor: removeAvatarFor } = useAvatarService()
 const { listOrganizations, createOrganization, getMembers, addMember, removeMember, renameOrganization } = useOrganizationService()
 const { users, loading: isLoadingUsers, listUsers } = useUserService()
 
@@ -300,6 +319,16 @@ async function handleRemoveMember(userId: string) {
     const idx = organizations.value.findIndex((o) => o.id === selectedOrg.value!.id)
     if (idx !== -1) organizations.value[idx].memberCount--
     toast.add({ severity: 'success', summary: t('organizationsView.memberRemovedSummary'), life: 2000 })
+  } catch (error: unknown) {
+    toast.add({ severity: 'error', summary: t('organizationsView.errorSummary'), detail: error instanceof Error ? error.message : t('organizationsView.errorGeneric'), life: 3000 })
+  }
+}
+
+/** Moderation: drops an inappropriate picture, the member stays. */
+async function handleRemoveAvatar(userId: string) {
+  try {
+    await removeAvatarFor(userId)
+    toast.add({ severity: 'success', summary: t('organizationsView.avatarRemovedSummary'), life: 2000 })
   } catch (error: unknown) {
     toast.add({ severity: 'error', summary: t('organizationsView.errorSummary'), detail: error instanceof Error ? error.message : t('organizationsView.errorGeneric'), life: 3000 })
   }

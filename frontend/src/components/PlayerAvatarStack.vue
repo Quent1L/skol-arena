@@ -5,6 +5,7 @@
       :key="player.id"
       :name="player.displayName"
       :color-key="player.shortName"
+      :player-id="player.id"
       :size="size"
       :style="{ zIndex: 30 - idx * 10 }"
     />

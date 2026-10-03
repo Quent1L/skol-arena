@@ -96,6 +96,8 @@ const SERVICE_ENFORCED = new Map<string, string>([
 
   // Checked inline in the handler against the caller's role
   ["GET /users", "inline super_admin / tournament_admin check"],
+  // self, super_admin, or owner of an organization the target belongs to
+  ["DELETE /users/:id/avatar", "avatarService.removeAvatar"],
 ]);
 
 /** OpenAPI writes `{id}` where Hono writes `:id`. */

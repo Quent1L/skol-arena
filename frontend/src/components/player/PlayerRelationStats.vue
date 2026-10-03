@@ -16,7 +16,7 @@
           :to="playerLink(p.playerId, tournamentId)"
           class="flex items-center gap-2 min-w-0 text-sm font-medium text-indigo-400 hover:text-indigo-300"
         >
-          <PlayerAvatar :name="p.displayName" size="xs" shape="square" class="shrink-0" />
+          <PlayerAvatar :name="p.displayName" :player-id="p.playerId" size="xs" shape="square" class="shrink-0" />
           <span class="truncate">{{ p.displayName }}</span>
         </RouterLink>
         <span class="text-xs text-gray-500">{{ t('playerRelationStats.matchCount', { count: p.count }) }}</span>
@@ -37,7 +37,7 @@
           :to="playerLink(p.playerId, tournamentId)"
           class="flex items-center gap-2 min-w-0 text-sm font-medium text-indigo-400 hover:text-indigo-300"
         >
-          <PlayerAvatar :name="p.displayName" size="xs" shape="square" class="shrink-0" />
+          <PlayerAvatar :name="p.displayName" :player-id="p.playerId" size="xs" shape="square" class="shrink-0" />
           <div class="min-w-0">
             <span class="truncate block">{{ p.displayName }}</span>
           </div>
@@ -70,7 +70,7 @@
           :to="playerLink(p.playerId, tournamentId)"
           class="flex items-center gap-2 min-w-0 text-sm font-medium text-indigo-400 hover:text-indigo-300"
         >
-          <PlayerAvatar :name="p.displayName" size="xs" shape="square" class="shrink-0" />
+          <PlayerAvatar :name="p.displayName" :player-id="p.playerId" size="xs" shape="square" class="shrink-0" />
           <span class="truncate">{{ p.displayName }}</span>
         </RouterLink>
         <div class="text-right shrink-0">

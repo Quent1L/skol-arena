@@ -117,6 +117,37 @@
         </Card>
       </form>
 
+      <!-- Moderation: the picture is the player's own, an admin can only take it down -->
+      <Card v-if="currentUser">
+        <template #title>{{ t('adminUserFormView.avatarSection') }}</template>
+        <template #content>
+          <div class="flex items-center gap-4">
+            <PlayerAvatar
+              :name="currentUser.displayName"
+              :color-key="currentUser.shortName"
+              :player-id="userId"
+              size="xl"
+              shape="square"
+            />
+            <div class="flex flex-col gap-2">
+              <Button
+                v-if="hasAvatar"
+                :label="t('adminUserFormView.removeAvatar')"
+                icon="fa fa-trash"
+                severity="danger"
+                outlined
+                size="small"
+                :loading="removingAvatar"
+                @click="confirmRemoveAvatar"
+              />
+              <small class="text-gray-500">
+                {{ hasAvatar ? t('adminUserFormView.removeAvatarHint') : t('adminUserFormView.noAvatar') }}
+              </small>
+            </div>
+          </div>
+        </template>
+      </Card>
+
       <Card>
         <template #title>{{ t('adminUserFormView.organizationsSection') }}</template>
         <template #content>
@@ -376,11 +407,16 @@ import { organizationApi } from '@/composables/organization/organization.api'
 import { adminUsersApi } from '@/composables/admin-users/admin-users.api'
 import { useDebounceFn } from '@vueuse/core'
 import { useAppToast } from '@/composables/useAppToast'
+import { useConfirm } from 'primevue/useconfirm'
+import PlayerAvatar from '@/components/PlayerAvatar.vue'
+import { useAvatarService } from '@/composables/avatar/avatar.service'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const toast = useAppToast()
+const confirm = useConfirm()
+const avatarService = useAvatarService()
 const {
   currentUser,
   stats,
@@ -400,6 +436,38 @@ const {
 } = useAdminUsersService()
 
 const userId = computed(() => route.params.id as string)
+
+const hasAvatar = computed(() => !!avatarService.versionFor(userId.value))
+const removingAvatar = ref(false)
+
+function confirmRemoveAvatar() {
+  confirm.require({
+    message: t('adminUserFormView.removeAvatarConfirmMessage', {
+      name: currentUser.value?.displayName ?? '',
+    }),
+    header: t('adminUserFormView.removeAvatarConfirmHeader'),
+    icon: 'fa fa-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: removeAvatar,
+  })
+}
+
+async function removeAvatar() {
+  removingAvatar.value = true
+  try {
+    await avatarService.removeFor(userId.value)
+    toast.add({ severity: 'success', summary: t('adminUserFormView.avatarRemoved'), life: 3000 })
+  } catch (err: unknown) {
+    toast.add({
+      severity: 'error',
+      summary: t('adminUserFormView.avatarRemoveError'),
+      detail: err instanceof Error ? err.message : undefined,
+      life: 5000,
+    })
+  } finally {
+    removingAvatar.value = false
+  }
+}
 const deleteDialogVisible = ref(false)
 const archiveDialogVisible = ref(false)
 const archiveDisplayName = ref('')
