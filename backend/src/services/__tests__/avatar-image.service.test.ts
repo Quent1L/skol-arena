@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach } from "bun:test";
 import { avatarImageService, sniffImageFormat, withPipelineSlot } from "../avatar-image.service";
+import { formatUploadLimit } from "../../config/avatar";
 import { AppError } from "../../types/errors";
 import {
   makeJpeg,
@@ -122,6 +123,15 @@ describe("avatarImageService.process", () => {
   it("refuses an upload over the configured size", async () => {
     process.env.AVATAR_MAX_UPLOAD_BYTES = "100";
     expect(await rejection(makePng(200, 200))).toEqual({ status: 413, code: "AVATAR_TOO_LARGE" });
+  });
+});
+
+describe("formatUploadLimit", () => {
+  it("never rounds a limit up, nor down to zero", () => {
+    expect(formatUploadLimit(5 * 1024 * 1024)).toBe("5 MB");
+    expect(formatUploadLimit(1.5 * 1024 * 1024 + 1)).toBe("1.5 MB");
+    expect(formatUploadLimit(500_000)).toBe("488 KB");
+    expect(formatUploadLimit(100)).toBe("100 B");
   });
 });
 

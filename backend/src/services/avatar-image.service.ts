@@ -1,5 +1,5 @@
 import { AVATAR_SIZES, type AvatarSize } from "@skol-arena/shared";
-import { avatarMaxUploadBytes } from "../config/avatar";
+import { avatarMaxUploadBytes, formatUploadLimit } from "../config/avatar";
 import {
   AppError,
   BadRequestError,
@@ -82,14 +82,10 @@ function toAppError(err: unknown): Error {
   }
 }
 
-function formatSize(bytes: number): string {
-  return `${Math.floor(bytes / (1024 * 1024))} MB`;
-}
-
 function assertAcceptableInput(bytes: Uint8Array): AcceptedFormat {
   const max = avatarMaxUploadBytes();
   if (bytes.byteLength > max) {
-    throw new PayloadTooLargeError(ErrorCode.AVATAR_TOO_LARGE, { max: formatSize(max) });
+    throw new PayloadTooLargeError(ErrorCode.AVATAR_TOO_LARGE, { max: formatUploadLimit(max) });
   }
   const format = sniffImageFormat(bytes);
   if (!format) throw new UnsupportedMediaTypeError(ErrorCode.AVATAR_UNSUPPORTED_FORMAT);
