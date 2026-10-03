@@ -5,20 +5,7 @@ import { getAvatarStorage, type StoredBlob } from "../storage";
 import { ErrorCode, ForbiddenError, NotFoundError } from "../types/errors";
 import { logger } from "../utils/logger";
 import { avatarImageService } from "./avatar-image.service";
-
-const AVATAR_CONTENT_TYPE = "image/webp";
-
-function variantKey(userId: string, version: string, size: AvatarSize): string {
-  return `avatars/${userId}/${version}/${size}.webp`;
-}
-
-function versionPrefix(userId: string, version: string): string {
-  return `avatars/${userId}/${version}/`;
-}
-
-function userPrefix(userId: string): string {
-  return `avatars/${userId}/`;
-}
+import { AVATAR_CONTENT_TYPE, userPrefix, variantKey, versionPrefix } from "./avatar-keys";
 
 /**
  * Losing an old version only leaves an orphan, never a broken avatar: its URL

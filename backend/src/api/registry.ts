@@ -13,6 +13,7 @@ import invitations from "../routes/invitations.route";
 import gameRules from "../routes/game-rules.route";
 import ranked from "../routes/ranked.route";
 import adminInvitations from "../routes/admin/invitations.route";
+import adminMaintenance from "../routes/admin/maintenance.route";
 import adminOrganizations from "../routes/admin/organizations.route";
 import adminRules from "../routes/admin/rules.route";
 import adminUsers from "../routes/admin/users.route";
@@ -51,6 +52,7 @@ const BASE_MOUNTS: RouteMount[] = [
   { path: "/game-rules", router: gameRules },
   { path: "/ranked", router: ranked },
   { path: "/admin/invitations", router: adminInvitations },
+  { path: "/admin/maintenance", router: adminMaintenance },
   { path: "/admin/organizations", router: adminOrganizations },
   { path: "/admin/rules", router: adminRules },
   { path: "/admin/users", router: adminUsers },

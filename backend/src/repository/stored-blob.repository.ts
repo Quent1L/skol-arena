@@ -26,6 +26,24 @@ export const storedBlobRepository = {
     return row ?? null;
   },
 
+  async exists(key: string): Promise<boolean> {
+    const [row] = await db
+      .select({ key: storedBlobs.key })
+      .from(storedBlobs)
+      .where(eq(storedBlobs.key, key))
+      .limit(1);
+    return row != null;
+  },
+
+  async hasPrefix(prefix: string): Promise<boolean> {
+    const [row] = await db
+      .select({ key: storedBlobs.key })
+      .from(storedBlobs)
+      .where(sql`starts_with(${storedBlobs.key}, ${prefix})`)
+      .limit(1);
+    return row != null;
+  },
+
   async deleteByKeys(keys: string[]): Promise<void> {
     if (keys.length === 0) return;
     await db.delete(storedBlobs).where(inArray(storedBlobs.key, keys));

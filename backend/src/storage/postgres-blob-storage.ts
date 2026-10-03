@@ -17,6 +17,16 @@ export class PostgresBlobStorage implements BlobStorage {
     return { data: row.data, contentType: row.contentType, size: row.byteSize };
   }
 
+  async exists(key: string): Promise<boolean> {
+    assertSafeKey(key);
+    return storedBlobRepository.exists(key);
+  }
+
+  async hasPrefix(prefix: string): Promise<boolean> {
+    assertSafePrefix(prefix);
+    return storedBlobRepository.hasPrefix(prefix);
+  }
+
   async deleteMany(keys: string[]): Promise<void> {
     keys.forEach(assertSafeKey);
     await storedBlobRepository.deleteByKeys(keys);

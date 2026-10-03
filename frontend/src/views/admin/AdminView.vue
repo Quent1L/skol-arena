@@ -193,16 +193,56 @@
           </div>
         </template>
       </Card>
+      <!-- Technical maintenance Card -->
+      <Card
+        class="cursor-pointer hover:shadow-lg transition-shadow"
+        data-testid="maintenance-card"
+        @click="navigateToMaintenance"
+      >
+        <template #content>
+          <div class="text-center py-8">
+            <div class="mb-4">
+              <i class="fa fa-screwdriver-wrench text-5xl text-gray-600 dark:text-gray-300"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+              {{ t('adminView.maintenanceTitle') }}
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              {{ t('adminView.maintenanceDescription') }}
+            </p>
+            <Message
+              v-if="hasStrandedAvatars"
+              severity="warn"
+              class="mb-4 text-left"
+              data-testid="maintenance-avatar-warning"
+            >
+              {{ t('adminView.maintenanceAvatarWarning') }}
+            </Message>
+            <Button
+              :label="t('adminView.access')"
+              icon="fa fa-arrow-right"
+              :severity="hasStrandedAvatars ? 'warn' : 'secondary'"
+              @click.stop="navigateToMaintenance"
+            />
+          </div>
+        </template>
+      </Card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useMaintenanceService } from '@/composables/maintenance/maintenance.service'
 
 const { t } = useI18n()
 const router = useRouter()
+// Answered from a flag the backend computes at startup: free to ask on every visit.
+const { hasStrandedAvatars, loadStatus } = useMaintenanceService()
+
+onMounted(loadStatus)
 
 function navigateToTournaments() {
   router.push('/admin/tournaments')
@@ -234,6 +274,10 @@ function navigateToRanked() {
 
 function navigateToRulesEngine() {
   router.push('/admin/rules-engine')
+}
+
+function navigateToMaintenance() {
+  router.push('/admin/maintenance')
 }
 </script>
 

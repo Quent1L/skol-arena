@@ -132,7 +132,8 @@
     "AVATAR_UNSUPPORTED_FORMAT": "Image non supportée. Utilisez une image JPEG, PNG ou WebP",
     "AVATAR_INVALID_DIMENSIONS": "L'image est trop petite ou trop grande (min {{min}}px de côté)",
     "AVATAR_PROCESSING_FAILED": "L'image n'a pas pu être traitée",
-    "AVATAR_NOT_FOUND": "Avatar introuvable"
+    "AVATAR_NOT_FOUND": "Avatar introuvable",
+    "AVATAR_MIGRATION_IN_PROGRESS": "Une migration des avatars est déjà en cours"
   },
   "ranked": {
     "PROVISIONAL": "Partie comptabilisée !",

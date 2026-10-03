@@ -190,7 +190,10 @@
     "tournamentsDescription": "Créez, modifiez et gérez les tournois de la plateforme",
     "tournamentsTitle": "Gestion des tournois",
     "usersDescription": "Consultez l'activité des membres et gérez leurs comptes",
-    "usersTitle": "Utilisateurs"
+    "usersTitle": "Utilisateurs",
+    "maintenanceTitle": "Maintenance technique",
+    "maintenanceDescription": "Versions, base de données, stockage des avatars et variables d'environnement",
+    "maintenanceAvatarWarning": "Des avatars sont stockés ailleurs que dans le stockage configuré : une migration est proposée."
   },
   "app": {
     "errorSummary": "Erreur",
@@ -1546,6 +1549,8 @@
     "adminGameRulesNew": "Nouveau règlement",
     "adminInvitations": "Gestion des codes d'invitation",
     "adminInvitationsBreadcrumb": "Codes d'invitation",
+    "adminMaintenance": "Maintenance technique",
+    "adminMaintenanceBreadcrumb": "Maintenance",
     "adminOrganizations": "Gestion des organisations",
     "adminOrganizationsBreadcrumb": "Organisations",
     "adminRanked": "Gestion des saisons ranked",
@@ -2598,5 +2603,65 @@
     "zoom": "Zoom",
     "confirm": "Enregistrer",
     "hint": "Faites glisser pour cadrer, zoomez avec le curseur."
+  },
+  "maintenanceService": {
+    "migrationDone": "Migration des avatars terminée",
+    "migrationDetail": "{migrated} migré(s), {failed} en échec, {missing} introuvable(s)",
+    "errors": {
+      "loadFailed": "Impossible de charger les informations système",
+      "migrationFailed": "La migration des avatars a échoué"
+    }
+  },
+  "maintenanceView": {
+    "title": "Maintenance technique",
+    "subtitle": "État de l'instance et opérations de maintenance",
+    "refresh": "Actualiser",
+    "unknown": "Inconnue",
+    "avatars": {
+      "title": "Stockage des avatars",
+      "driver": "Stockage configuré (AVATAR_STORAGE)",
+      "total": "Avatars actifs",
+      "inActive": "Dans le stockage configuré",
+      "inOther": "Dans « {driver} »",
+      "missing": "Introuvables",
+      "mismatch": "Des avatars sont présents dans « {stranded} » alors que AVATAR_STORAGE vaut « {driver} ». Ils ne sont plus affichés tant qu'ils ne sont pas migrés.",
+      "migrate": "Migrer vers « {driver} »",
+      "confirmHeader": "Migrer les avatars",
+      "confirmMessage": "Les avatars vont être copiés vers « {driver} », vérifiés, puis supprimés de « {stranded} ». Les anciennes versions orphelines seront aussi supprimées. Continuer ?",
+      "confirmAccept": "Migrer"
+    },
+    "app": {
+      "title": "Application",
+      "version": "Version",
+      "staleClient": "cet onglet : {version}, rechargez",
+      "startedAt": "Démarré le",
+      "apiVersions": "Versions d'API",
+      "latest": "dernière : {version}"
+    },
+    "db": {
+      "title": "Base de données",
+      "size": "Taille totale",
+      "migrations": "Migrations appliquées",
+      "latestMigration": "Dernière migration (date de création)",
+      "table": "Table",
+      "rows": "Lignes (estim.)",
+      "tableSize": "Taille"
+    },
+    "env": {
+      "title": "Variables d'environnement",
+      "subtitle": "Seules les variables documentées sont listées ; les secrets indiquent uniquement s'ils sont définis.",
+      "name": "Variable",
+      "value": "Valeur",
+      "secretSet": "Définie",
+      "unset": "Non définie",
+      "groups": {
+        "database": "Base de données & migrations",
+        "server": "Serveur & exécution",
+        "auth": "Authentification",
+        "smtp": "E-mail (SMTP)",
+        "push": "Notifications push (VAPID)",
+        "avatars": "Avatars"
+      }
+    }
   }
 }

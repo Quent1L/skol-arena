@@ -105,6 +105,26 @@ inherits the right permissions. A bind mount must be writable by uid `1001`; the
 app refuses to start when the directory cannot be written to. With several
 replicas, they must all share the same volume.
 
+On an instance that already has avatars, changing `AVATAR_STORAGE` does not move
+them by itself — follow [Switching avatar storage](#switching-avatar-storage).
+
+### Switching avatar storage
+
+Avatars can be moved from one storage to the other at any time:
+
+1. Change `AVATAR_STORAGE` and restart. When going from `filesystem` to `postgres`,
+   **keep the avatar volume mounted** at `AVATAR_STORAGE_DIR`: that is where the
+   avatars are read back from.
+2. On startup the server checks the other storage and logs a warning if it still
+   holds avatars. The **Technical maintenance** card of the admin page shows the
+   same warning.
+3. Open **Admin → Technical maintenance** and click **Migrate**. Every current
+   avatar is copied into the configured storage, verified, then deleted from the
+   old one; orphaned old versions are purged once everything made it across.
+
+The migration can be run again safely: an avatar that failed to copy keeps its
+original and is retried. Once the warning is gone, the old volume can be removed.
+
 ## First boot
 
 Two things happen automatically the first time the container starts against an
@@ -223,6 +243,29 @@ succeeded: a completed migration is not reversible either.
 Only one container migrates. The others block on a Postgres advisory lock until
 it is done, then find nothing pending and carry on booting. Scaling the app
 service during an upgrade is safe; two instances cannot interleave migrations.
+
+## Technical maintenance
+
+Super admins get a **Technical maintenance** card on the admin page. The screen
+behind it gathers what you would otherwise dig out of the container and the
+database:
+
+- **Application**: the deployed version (flagged when the open tab still runs an
+  older bundle, until it reloads), Bun version, `NODE_ENV`, when the process
+  started, and the API versions served.
+- **Database**: PostgreSQL version, total size, the ten largest tables (size and
+  estimated row count), and how many migrations are applied.
+- **Avatar storage**: the configured driver, where each current avatar actually
+  is, how many are missing, and the migration button when some are left in the
+  other storage — see [Switching avatar storage](#switching-avatar-storage).
+- **Environment variables**: every variable listed in
+  [Environment Variables](/docs/environment-variables), grouped the same way.
+  Secrets (`DATABASE_URL`, `BETTER_AUTH_SECRET`, `KEYCLOAK_CLIENT_SECRET`,
+  `SMTP_USER`, `SMTP_PASSWORD`, `VAPID_PRIVATE_KEY`) only show whether they are
+  set, never their value, and a variable not on that page is never shown.
+
+The avatar storage check runs at startup, so the warning on the admin card costs
+nothing; the detailed report is only computed when the screen is opened.
 
 ## Recovering a lost admin password
 

@@ -251,6 +251,18 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/admin/maintenance',
+    name: 'admin-maintenance',
+    component: () => import('@/views/admin/MaintenanceView.vue'),
+    beforeEnter: requireAdmin,
+    meta: {
+      breadcrumb: t('routes.adminMaintenanceBreadcrumb'),
+      title: t('routes.adminMaintenance'),
+      requiresAuth: true,
+      parent: 'admin',
+    },
+  },
+  {
     path: '/admin/users',
     name: 'admin-users',
     component: () => import('@/views/admin/UsersList.vue'),

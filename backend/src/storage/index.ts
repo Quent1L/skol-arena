@@ -1,15 +1,16 @@
-import { avatarStorageDir, avatarStorageDriver } from "../config/avatar";
+import { avatarStorageDir, avatarStorageDriver, BLOB_STORAGE_DRIVERS } from "../config/avatar";
 import { logger } from "../utils/logger";
-import type { BlobStorage } from "./blob-storage";
+import type { BlobStorage, BlobStorageDriver } from "./blob-storage";
 import { FilesystemBlobStorage } from "./filesystem-blob-storage";
 import { PostgresBlobStorage } from "./postgres-blob-storage";
 
 export type { BlobStorage, StoredBlob } from "./blob-storage";
 
 let avatarStorage: BlobStorage | null = null;
+let inactiveAvatarStorages: BlobStorage[] | null = null;
 
-function createAvatarStorage(): BlobStorage {
-  const driver = avatarStorageDriver();
+/** Builds a store for `driver` without initialising it: nothing is created on disk. */
+export function createBlobStorage(driver: BlobStorageDriver): BlobStorage {
   switch (driver) {
     case "filesystem":
       return new FilesystemBlobStorage(avatarStorageDir());
@@ -20,13 +21,29 @@ function createAvatarStorage(): BlobStorage {
 
 /** The store avatars are kept in, chosen once per process from AVATAR_STORAGE. */
 export function getAvatarStorage(): BlobStorage {
-  avatarStorage ??= createAvatarStorage();
+  avatarStorage ??= createBlobStorage(avatarStorageDriver());
   return avatarStorage;
 }
 
 /** Tests swap the store for one they control; null goes back to the configured one. */
 export function setAvatarStorage(storage: BlobStorage | null): void {
   avatarStorage = storage;
+}
+
+/**
+ * Every store AVATAR_STORAGE does not point at: where avatars are left behind when
+ * the driver is switched. The filesystem one reads AVATAR_STORAGE_DIR, which must
+ * therefore stay mounted until they have been migrated.
+ */
+export function getInactiveAvatarStorages(): BlobStorage[] {
+  if (inactiveAvatarStorages) return inactiveAvatarStorages;
+  const active = getAvatarStorage().driver;
+  return BLOB_STORAGE_DRIVERS.filter((driver) => driver !== active).map(createBlobStorage);
+}
+
+/** Tests swap the inactive stores too; null goes back to the derived ones. */
+export function setInactiveAvatarStorages(storages: BlobStorage[] | null): void {
+  inactiveAvatarStorages = storages;
 }
 
 /**

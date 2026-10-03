@@ -1,4 +1,4 @@
-import { mkdir, rename, rm, access, constants } from "node:fs/promises";
+import { mkdir, rename, rm, access, constants, readdir } from "node:fs/promises";
 import { dirname, extname, resolve, sep } from "node:path";
 import { assertSafeKey, assertSafePrefix, type BlobStorage, type StoredBlob } from "./blob-storage";
 
@@ -54,6 +54,26 @@ export class FilesystemBlobStorage implements BlobStorage {
     return { data, contentType, size: data.byteLength };
   }
 
+  async exists(key: string): Promise<boolean> {
+    return Bun.file(this.pathOf(key)).exists();
+  }
+
+  /**
+   * Never creates anything: an inactive store is probed for leftovers, and a root
+   * that does not exist simply holds nothing.
+   */
+  async hasPrefix(prefix: string): Promise<boolean> {
+    assertSafePrefix(prefix);
+    try {
+      // Recursive and files only: deleting a version can leave empty directories behind.
+      const entries = await readdir(this.resolveInside(prefix), { recursive: true, withFileTypes: true });
+      return entries.some((entry) => entry.isFile());
+    } catch (err) {
+      if (isMissing(err)) return false;
+      throw err;
+    }
+  }
+
   async deleteMany(keys: string[]): Promise<void> {
     const paths = keys.map((key) => this.pathOf(key));
     await Promise.all(paths.map((path) => rm(path, { force: true })));
@@ -77,4 +97,9 @@ export class FilesystemBlobStorage implements BlobStorage {
     }
     return path;
   }
+}
+
+function isMissing(err: unknown): boolean {
+  const code = (err as NodeJS.ErrnoException | null)?.code;
+  return code === "ENOENT" || code === "ENOTDIR";
 }
