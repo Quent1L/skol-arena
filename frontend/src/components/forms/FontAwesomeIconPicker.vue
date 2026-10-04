@@ -107,10 +107,16 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import iconsData from '@/config/fa-icons.json'
 import categoriesData from '@/config/fa-categories.json'
+import iconifyData from '@/config/iconify-icons.json'
 
 type SlimIcon = { name: string; label: string; terms: string[] }
 type CategoriesData = Record<string, { label: string; icons: string[] }>
+type PickerIcon = SlimIcon & { class: string }
+// Iconify icons are compiled to CSS classes by scripts/generate-iconify-icons.mjs, so a
+// selected one is stored and rendered exactly like a Font Awesome class string.
+type IconifyCategory = { key: string; label: string; icons: PickerIcon[] }
 const faCategories = categoriesData as CategoriesData
+const iconifyCategories = iconifyData as IconifyCategory[]
 
 const props = defineProps<{ modelValue: string }>()
 const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
@@ -119,16 +125,23 @@ const { t } = useI18n()
 
 const MAX_RESULTS = 200
 
-const ALL_ICONS = (iconsData as SlimIcon[]).map((ic) => ({
+const FA_ICONS: PickerIcon[] = (iconsData as SlimIcon[]).map((ic) => ({
   name: ic.name,
   class: `fas fa-${ic.name}`,
   label: ic.label,
   terms: ic.terms,
 }))
 
+const ALL_ICONS: PickerIcon[] = [...iconifyCategories.flatMap((cat) => cat.icons), ...FA_ICONS]
+
 const iconByName = new Map(ALL_ICONS.map((ic) => [ic.name, ic]))
 
 const POPULAR_NAMES = [
+  'mdi:billiards',
+  'game-icons:babyfoot-players',
+  'game-icons:dart',
+  'mdi:table-tennis',
+  'ph:boules',
   'trophy',
   'medal',
   'star',
@@ -191,6 +204,7 @@ const POPULAR_NAMES = [
 
 const TABS = computed(() => [
   { key: 'popular', label: t('fontAwesomeIconPicker.tabPopular') },
+  ...iconifyCategories.map(({ key, label }) => ({ key, label })),
   ...Object.entries(faCategories).map(([key, cat]) => ({ key, label: cat.label })),
 ])
 
@@ -206,15 +220,20 @@ const filteredIcons = computed(() => {
       (ic) =>
         ic.name.includes(q) ||
         ic.label.toLowerCase().includes(q) ||
-        ic.terms.some((t) => t.includes(q)),
+        ic.terms.some((term) => term.toLowerCase().includes(q)),
     )
   }
   if (activeTab.value === 'popular') {
-    return POPULAR_NAMES.map((n) => iconByName.get(n)).filter(Boolean) as typeof ALL_ICONS
+    return namesToIcons(POPULAR_NAMES)
   }
-  const catIcons = faCategories[activeTab.value]?.icons ?? []
-  return catIcons.map((n) => iconByName.get(n)).filter(Boolean) as typeof ALL_ICONS
+  const iconifyCategory = iconifyCategories.find((cat) => cat.key === activeTab.value)
+  if (iconifyCategory) return iconifyCategory.icons
+  return namesToIcons(faCategories[activeTab.value]?.icons ?? [])
 })
+
+function namesToIcons(names: string[]): PickerIcon[] {
+  return names.map((n) => iconByName.get(n)).filter((ic): ic is PickerIcon => !!ic)
+}
 
 const displayedIcons = computed(() => filteredIcons.value.slice(0, MAX_RESULTS))
 

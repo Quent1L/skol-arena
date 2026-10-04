@@ -1,6 +1,8 @@
 import '@/assets/css/tailwind-related.css'
 import '@/assets/css/main.css'
 import '@fortawesome/fontawesome-free/css/all.min.css'
+// Curated Iconify icons compiled to `icf icf-<set>--<name>` classes (scripts/generate-iconify-icons.mjs).
+import '@/assets/css/iconify-icons.css'
 import '@fontsource/exo-2/900.css'
 import '@fontsource/rajdhani/700.css'
 // Backs the --font-headline / --font-body tokens declared in tailwind-related.css.

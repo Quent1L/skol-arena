@@ -1,0 +1,130 @@
+// Compiles the curated Iconify icons into plain CSS classes for FontAwesomeIconPicker.vue.
+//
+// Icons are stored in the database as CSS class strings and rendered everywhere with
+// `<i :class="icon">`. Turning each Iconify icon into a class (`icf icf-mdi--billiards`)
+// keeps that contract: no render site changes, no runtime fetch to the Iconify API
+// (the SVG is inlined as a data URI, which the CSP allows under `img-src data:`).
+//
+// Iconify sets draw inside a padded grid (2–3px out of 24 for mdi, material-symbols and
+// tabler), whereas a Font Awesome glyph fills its 1em height in a 1.25em-wide box. Each
+// icon's viewBox is therefore cropped to the actual bounds of its paths, in that same
+// 1.25:1 frame, so an Iconify icon and a Font Awesome one look the same size side by side.
+//
+// Edit src/config/iconify-curated.json, then re-run:
+//   bun run generate:iconify-icons
+// Commit the regenerated src/assets/css/iconify-icons.css and src/config/iconify-icons.json.
+
+import { readFileSync, writeFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { getIconData } from '@iconify/utils'
+import { getIconsCSSData } from '@iconify/utils/lib/css/icons'
+import { formatCSS } from '@iconify/utils/lib/css/format'
+import { svgPathBbox } from 'svg-path-bbox'
+
+const require = createRequire(import.meta.url)
+const curatedUrl = new URL('../src/config/iconify-curated.json', import.meta.url)
+const curated = JSON.parse(readFileSync(curatedUrl, 'utf8'))
+
+const COMMON_SELECTOR = '.icf'
+// Font Awesome's box: `width: var(--fa-width, 1.25em)`, line-height 1, glyph on the baseline.
+const FA_RATIO = 1.25
+const COMMON_RULES = {
+  width: 'var(--fa-width, 1.25em)',
+  'vertical-align': '-0.125em',
+  'flex-shrink': '0',
+}
+
+const iconClass = (prefix, name) => `icf icf-${prefix}--${name}`
+
+function groupByPrefix(categories) {
+  const byPrefix = new Map()
+  for (const { icons } of Object.values(categories)) {
+    for (const { id } of icons) {
+      const [prefix, name] = id.split(':')
+      if (!prefix || !name) throw new Error(`Invalid icon id "${id}", expected "prefix:name"`)
+      byPrefix.set(prefix, new Set([...(byPrefix.get(prefix) ?? []), name]))
+    }
+  }
+  return byPrefix
+}
+
+// Bounds of every path, grown by half the stroke width for outlined sets (tabler).
+function contentBounds(body) {
+  const paths = [...body.matchAll(/\sd="([^"]+)"/g)].map((m) => svgPathBbox(m[1]))
+  if (!paths.length || /<(?!path|g|\/)/.test(body) || /transform=/.test(body)) return null
+  const stroke = /stroke="(?!none)/.test(body) ? Number(body.match(/stroke-width="([\d.]+)"/)?.[1] ?? 1) : 0
+  const pad = stroke / 2
+  return [
+    Math.min(...paths.map((b) => b[0])) - pad,
+    Math.min(...paths.map((b) => b[1])) - pad,
+    Math.max(...paths.map((b) => b[2])) + pad,
+    Math.max(...paths.map((b) => b[3])) + pad,
+  ]
+}
+
+function cropToContent(id, data) {
+  const bounds = contentBounds(data.body)
+  if (!bounds) throw new Error(`Cannot measure ${id}: only plain <path> elements are supported`)
+  const [x1, y1, x2, y2] = bounds
+  const height = Math.max(y2 - y1, (x2 - x1) / FA_RATIO)
+  const width = height * FA_RATIO
+  const round = (n) => Math.round(n * 1000) / 1000
+  return {
+    body: data.body,
+    left: round((x1 + x2 - width) / 2),
+    top: round((y1 + y2 - height) / 2),
+    width: round(width),
+    height: round(height),
+  }
+}
+
+function croppedSet(prefix, names) {
+  const source = require(`@iconify-json/${prefix}/icons.json`)
+  const icons = {}
+  for (const name of names) {
+    const data = getIconData(source, name)
+    if (!data) throw new Error(`Unknown Iconify icon: ${prefix}:${name}`)
+    icons[name] = cropToContent(`${prefix}:${name}`, data)
+  }
+  return { prefix, icons }
+}
+
+function buildCss(byPrefix) {
+  const items = []
+  for (const [prefix, names] of byPrefix) {
+    const { css } = getIconsCSSData(croppedSet(prefix, names), [...names], {
+      commonSelector: COMMON_SELECTOR,
+      iconSelector: '.icf-{prefix}--{name}',
+      mode: 'mask',
+    })
+    const [common, ...icons] = css
+    if (!items.length) items.push({ ...common, rules: { ...common.rules, ...COMMON_RULES } })
+    // Every icon shares the 1.25:1 frame: drop the per-icon width so `--fa-width` still applies.
+    items.push(...icons.map(({ selector, rules: { width: _width, ...rules } }) => ({ selector, rules })))
+  }
+  return formatCSS(items, 'compact')
+}
+
+function buildCatalog(categories) {
+  return Object.entries(categories).map(([key, { label, icons }]) => ({
+    key,
+    label,
+    icons: icons.map(({ id, label: iconLabel, terms }) => ({
+      name: id,
+      class: iconClass(...id.split(':')),
+      label: iconLabel,
+      terms: terms ?? [],
+    })),
+  }))
+}
+
+const css = buildCss(groupByPrefix(curated))
+const catalog = buildCatalog(curated)
+
+writeFileSync(
+  new URL('../src/assets/css/iconify-icons.css', import.meta.url),
+  `/* Generated by scripts/generate-iconify-icons.mjs — do not edit by hand. */\n${css}\n`,
+)
+writeFileSync(new URL('../src/config/iconify-icons.json', import.meta.url), JSON.stringify(catalog))
+const count = catalog.reduce((n, c) => n + c.icons.length, 0)
+console.log(`Wrote ${count} Iconify icons in ${catalog.length} categories`)

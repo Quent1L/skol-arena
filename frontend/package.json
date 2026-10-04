@@ -18,6 +18,7 @@
     "e2e:prepare": "run-s e2e:db:up e2e:seed",
     "build-only": "bun x --bun vite build --mode prod",
     "generate:fa-icons": "bun run scripts/generate-fa-icons.mjs",
+    "generate:iconify-icons": "bun run scripts/generate-iconify-icons.mjs",
     "type-check": "vue-tsc --noEmit",
     "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix --cache",
@@ -56,6 +57,12 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@iconify-json/game-icons": "^1.2.4",
+    "@iconify-json/material-symbols": "^1.2.94",
+    "@iconify-json/mdi": "^1.2.3",
+    "@iconify-json/ph": "^1.2.2",
+    "@iconify-json/tabler": "^1.2.41",
+    "@iconify/utils": "^3.1.7",
     "@playwright/test": "^1.62.1",
     "@prettier/plugin-oxc": "^0.2.2",
     "@primevue/auto-import-resolver": "^4.5.5",
@@ -78,6 +85,7 @@
     "npm-run-all2": "^9.0.3",
     "oxlint": "~1.79.0",
     "prettier": "3.9.6",
+    "svg-path-bbox": "^2.1.0",
     "tailwindcss": "^4.3.3",
     "typescript": "catalog:",
     "unplugin-vue-components": "^32.1.0",
