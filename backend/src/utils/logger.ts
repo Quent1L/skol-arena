@@ -1,6 +1,7 @@
 import pino from "pino";
+import pretty from "pino-pretty";
 
-const logFormat = process.env.LOG_FORMAT?.toLowerCase() || "json";
+const logFormat = process.env.LOG_FORMAT?.toLowerCase() || "pretty";
 
 function toLogfmt(obj: Record<string, unknown>): string {
   const parts: string[] = [];
@@ -33,7 +34,14 @@ function buildDestination(): pino.DestinationStream | undefined {
   };
 }
 
+// A synchronous stream, not a transport: transports run in a worker thread that
+// broke in Docker. bun build inlines pino-pretty, so the image needs no node_modules.
+function buildPrettyDestination(): pino.DestinationStream | undefined {
+  if (logFormat !== "pretty") return undefined;
+  return pretty({ sync: true, colorize: false, translateTime: "SYS:HH:MM:ss.l", ignore: "pid,hostname" });
+}
+
 export const logger = pino(
   { level: process.env.LOG_LEVEL?.toLowerCase() || "info" },
-  buildDestination() ?? pino.destination(1),
+  buildPrettyDestination() ?? buildDestination() ?? pino.destination(1),
 );
