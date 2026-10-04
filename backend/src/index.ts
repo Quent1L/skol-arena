@@ -75,6 +75,9 @@ try {
   workerRunner = await run({
     connectionString: process.env.DATABASE_URL!,
     taskList,
+    // No cron jobs: an explicit empty list stops the worker probing for a
+    // `./crontab` file and logging "cron is disabled" on every boot.
+    parsedCronItems: [],
     concurrency: 1,
   });
   logger.info("Graphile Worker started");
