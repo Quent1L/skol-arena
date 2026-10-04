@@ -21,7 +21,9 @@
     </div>
 
     <div v-if="selectedQuick === 'custom'" class="flex flex-col gap-2">
-      <label for="when-custom-date" class="text-sm font-medium">{{ t('whenStep.dateTimeLabel') }}</label>
+      <label for="when-custom-date" class="text-sm font-medium">{{
+        t('whenStep.dateTimeLabel')
+      }}</label>
       <DatePicker
         v-model="customDate"
         input-id="when-custom-date"

@@ -48,10 +48,7 @@ describe('computeMatchBalance', () => {
   })
 
   it('flags a line-up holding a player still in placement', () => {
-    const balance = computeMatchBalance(
-      sides(['a'], ['b']),
-      standings({ a: 1000, b: 1000 }, ['b']),
-    )
+    const balance = computeMatchBalance(sides(['a'], ['b']), standings({ a: 1000, b: 1000 }, ['b']))
 
     expect(balance!.hasProvisional).toBe(true)
   })

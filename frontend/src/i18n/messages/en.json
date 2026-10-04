@@ -349,7 +349,9 @@
     "yes": "Yes"
   },
   "compositionStep": {
-    "balanced": "Balanced",
+    "balanced": "Optimal",
+    "balancedOnly": "Already the most balanced line-up, no other one matches it.",
+    "duelHint": "One more tap and something will happen…",
     "empty": "Empty",
     "emptySideError": "Each team must have at least one player.",
     "instruction": "Drag players to form the teams.",

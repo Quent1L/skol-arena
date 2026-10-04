@@ -14,7 +14,6 @@ declare module 'vue' {
     AppHeader: typeof import('./src/components/AppHeader.vue')['default']
     AutoComplete: typeof import('primevue/autocomplete')['default']
     AvailableBadgesCard: typeof import('./src/components/rules/AvailableBadgesCard.vue')['default']
-    Avatar: typeof import('primevue/avatar')['default']
     AvatarCropDialog: typeof import('./src/components/avatar/AvatarCropDialog.vue')['default']
     AvatarEditor: typeof import('./src/components/avatar/AvatarEditor.vue')['default']
     AwardHero: typeof import('./src/components/rewind/AwardHero.vue')['default']

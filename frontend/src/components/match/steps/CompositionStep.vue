@@ -9,6 +9,7 @@
           severity="secondary"
           outlined
           class="flex-1 min-h-11 sm:flex-none sm:min-h-0"
+          :class="{ [ARMED_CLASS]: armedKind === 'random' }"
           data-testid="compose-random"
           @click="applyComposition('random')"
         >
@@ -27,12 +28,31 @@
           severity="secondary"
           outlined
           class="flex-1 min-h-11 sm:flex-none sm:min-h-0"
+          :class="{ [ARMED_CLASS]: armedKind === 'balanced' }"
           data-testid="compose-balanced"
           @click="applyComposition('balanced')"
         />
       </div>
 
-      <p class="text-sm text-surface-500">{{ t('compositionStep.instruction') }}</p>
+      <p
+        v-if="armedKind"
+        class="flex items-center gap-2 text-sm text-primary"
+        role="status"
+        data-testid="compose-duel-hint"
+      >
+        <i class="fa fa-wand-magic-sparkles" />
+        {{ t('compositionStep.duelHint') }}
+      </p>
+      <p
+        v-else-if="balanceSettled"
+        class="flex items-center gap-2 text-sm text-surface-500"
+        role="status"
+        data-testid="compose-balance-settled"
+      >
+        <i class="fa fa-circle-check text-green-600" />
+        {{ t('compositionStep.balancedOnly') }}
+      </p>
+      <p v-else class="text-sm text-surface-500">{{ t('compositionStep.instruction') }}</p>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
@@ -141,7 +161,8 @@ import { VueDraggable } from 'vue-draggable-plus'
 import MatchBalanceBar from '@/components/match/MatchBalanceBar.vue'
 import { useMatchService } from '@/composables/match/match.service'
 import { computeMatchBalance } from '@/composables/match/match-balance'
-import { balanceTeams, shuffleTeams } from '@/composables/match/team-composition'
+import { balanceTeams, isOnlyFairSplit, shuffleTeams } from '@/composables/match/team-composition'
+import type { TeamSplit } from '@/composables/match/team-composition'
 import type { ComposeKind } from '@/composables/match/useComposeEasterEggs'
 import { useComposeEasterEggs } from '@/composables/match/useComposeEasterEggs'
 import { useDiceSpin } from '@/composables/match/dice-spin'
@@ -229,22 +250,35 @@ const canBalance = computed(() => {
   return !!props.isRanked && !!standings && allPlayerIdsModel.value.every((id) => standings[id])
 })
 
-const { onCompose } = useComposeEasterEggs()
+const { onCompose, armedKind } = useComposeEasterEggs()
+/** Marks the button whose next tap plays the overlay. */
+const ARMED_CLASS = 'ring-2 ring-primary animate-pulse'
+
 const { angle: diceAngle, kick: spinDice } = useDiceSpin()
 
 const randomLabel = computed(() =>
   canBalance.value ? t('compositionStep.random') : t('compositionStep.randomOnly'),
 )
 
+const currentSplit = computed<TeamSplit>(() => [
+  playersA.value.map((p) => p.id),
+  playersB.value.map((p) => p.id),
+])
+
+// The line-up already is the single fairest one: another tap leaves it as is.
+// The button stays enabled on purpose — disabling it would break the
+// random ↔ balanced duel whenever a shuffle happens to land on that line-up.
+const balanceSettled = computed(() => {
+  const standings = props.standings
+  if (!canBalance.value || !standings) return false
+  return isOnlyFairSplit(allPlayerIdsModel.value, standings, currentSplit.value)
+})
+
 function computeSplit(kind: ComposeKind) {
   const ids = allPlayerIdsModel.value
   if (kind === 'random') return shuffleTeams(ids)
   if (!props.standings) return null
-  const current: [string[], string[]] = [
-    playersA.value.map((p) => p.id),
-    playersB.value.map((p) => p.id),
-  ]
-  return balanceTeams(ids, props.standings, current)
+  return balanceTeams(ids, props.standings, currentSplit.value)
 }
 
 function applyComposition(kind: ComposeKind) {

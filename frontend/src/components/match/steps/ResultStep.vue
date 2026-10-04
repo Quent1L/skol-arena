@@ -21,7 +21,9 @@
           @click="winnerModel = side.position"
         >
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-surface-500">{{ t('resultStep.team', { number: idx + 1 }) }}</span>
+            <span class="text-xs font-semibold text-surface-500">{{
+              t('resultStep.team', { number: idx + 1 })
+            }}</span>
             <span class="flex items-center gap-2">
               <span
                 v-if="balance"
@@ -65,7 +67,9 @@
 
     <!-- Outcome type -->
     <div v-if="outcomeTypes.length > 0" class="flex flex-col gap-2">
-      <label for="result-outcome-type" class="text-sm font-medium">{{ t('resultStep.outcomeType') }}</label>
+      <label for="result-outcome-type" class="text-sm font-medium">{{
+        t('resultStep.outcomeType')
+      }}</label>
       <Select
         v-model="outcomeTypeIdModel"
         input-id="result-outcome-type"
@@ -103,7 +107,9 @@
 
     <!-- Outcome reason -->
     <div v-if="showReasonSelect" class="flex flex-col gap-2">
-      <label for="result-outcome-reason" class="text-sm font-medium">{{ t('resultStep.reason') }}</label>
+      <label for="result-outcome-reason" class="text-sm font-medium">{{
+        t('resultStep.reason')
+      }}</label>
       <Select
         v-model="outcomeReasonIdModel"
         input-id="result-outcome-reason"
@@ -118,13 +124,17 @@
 
     <!-- Score -->
     <div v-if="scoreEnabled !== false" class="flex flex-col gap-2">
-      <span class="text-sm font-medium">{{ t('resultStep.score') }} <span class="text-red-500">*</span></span>
+      <span class="text-sm font-medium"
+        >{{ t('resultStep.score') }} <span class="text-red-500">*</span></span
+      >
       <Message v-if="scoreInstructions" severity="info" :closable="false">{{
         scoreInstructions
       }}</Message>
       <div class="flex items-center justify-center gap-8">
         <div v-for="(side, idx) in sidesModel" :key="side.position" class="text-center">
-          <div class="text-xs text-surface-500 mb-2">{{ t('resultStep.team', { number: idx + 1 }) }}</div>
+          <div class="text-xs text-surface-500 mb-2">
+            {{ t('resultStep.team', { number: idx + 1 }) }}
+          </div>
           <InputNumber
             :model-value="scorePerSideModel[side.position] ?? 0"
             :min="minScore ?? 0"
@@ -244,9 +254,7 @@ const showReasonSelect = computed(
 )
 
 const balance = computed(() => computeMatchBalance(sidesModel.value, props.standings))
-const sidePercents = computed(() =>
-  balance.value ? toPercents(balance.value) : { a: 0, b: 0 },
-)
+const sidePercents = computed(() => (balance.value ? toPercents(balance.value) : { a: 0, b: 0 }))
 
 function sidePlayers(side: MatchSideInput): { id: string; name: string }[] {
   return (side.playerIds ?? []).map((id) => ({ id, name: props.playerNames[id] ?? id }))
@@ -318,15 +326,24 @@ function onOutcomeTypeChange() {
 }
 
 // Sync reactively when parent finishes async loading
-watch(() => props.initialOutcomeTypes, (types) => {
-  if (types !== undefined) outcomeTypes.value = types
-})
-watch(() => props.initialOutcomeReasons, (reasons) => {
-  if (reasons !== undefined) outcomeReasons.value = reasons
-})
-watch(() => props.initialScoreInstructions, (si) => {
-  if (si !== undefined) scoreInstructions.value = si ?? null
-})
+watch(
+  () => props.initialOutcomeTypes,
+  (types) => {
+    if (types !== undefined) outcomeTypes.value = types
+  },
+)
+watch(
+  () => props.initialOutcomeReasons,
+  (reasons) => {
+    if (reasons !== undefined) outcomeReasons.value = reasons
+  },
+)
+watch(
+  () => props.initialScoreInstructions,
+  (si) => {
+    if (si !== undefined) scoreInstructions.value = si ?? null
+  },
+)
 
 // User changes outcome type → load reasons for new type if not cached
 // In parent-managed mode (props provided), onOutcomeTypeChange handles user picks; skip here
@@ -342,7 +359,9 @@ onMounted(async () => {
     await loadOutcomeTypes()
   }
   if (outcomeTypeIdModel.value) {
-    const alreadyLoaded = outcomeReasons.value.some((r) => r.outcomeTypeId === outcomeTypeIdModel.value)
+    const alreadyLoaded = outcomeReasons.value.some(
+      (r) => r.outcomeTypeId === outcomeTypeIdModel.value,
+    )
     if (!alreadyLoaded) void loadOutcomeReasons(outcomeTypeIdModel.value)
   }
 })

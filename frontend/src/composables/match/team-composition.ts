@@ -11,11 +11,11 @@ import type { PlayerStandings } from '@/composables/match/match-balance'
 export type TeamSplit = [string[], string[]]
 
 /**
- * Splits within this distance of the best expected score count as equally
- * fair. Picking at random among them lets a second tap offer an alternative
- * instead of the same line-up again.
+ * Splits whose score matches the best one, up to float noise, are ties.
+ * Picking at random among them lets a second tap offer an alternative
+ * instead of the same line-up again — never a less even one.
  */
-export const BALANCE_TOLERANCE = 0.02
+export const TIE_EPSILON = 1e-9
 
 type Rng = () => number
 
@@ -61,17 +61,48 @@ function splitScore([a, b]: TeamSplit, standings: PlayerStandings): number {
   return Math.abs(calculateExpectedScore(avgA, avgB) - 0.5)
 }
 
-function sameSplit([a]: TeamSplit, [currentA, currentB]: TeamSplit): boolean {
+function sameSet(a: string[], b: string[]): boolean {
   const ids = new Set(a)
-  const matches = (side: string[]) => side.length === ids.size && side.every((id) => ids.has(id))
-  return matches(currentA) || matches(currentB)
+  return a.length === b.length && b.every((id) => ids.has(id))
+}
+
+/** Same line-up whichever side is Team 1: swapping sides changes nobody's teammates. */
+function sameSplit([a, b]: TeamSplit, [currentA, currentB]: TeamSplit): boolean {
+  return (
+    (sameSet(a, currentA) && sameSet(b, currentB)) || (sameSet(a, currentB) && sameSet(b, currentA))
+  )
 }
 
 /**
- * The fairest split by MMR, using the same Elo formulas as the balance bar.
- * `null` when a player has no standing — balancing on a missing rating would
- * be a guess. `current` is skipped when another fair split exists, so a
- * repeated tap always changes something.
+ * Every split tied for the best balance, by the same Elo formulas as the
+ * balance bar. `null` when a player has no standing — balancing on a missing
+ * rating would be a guess.
+ */
+function fairSplits(ids: string[], standings: PlayerStandings): TeamSplit[] | null {
+  if (ids.length < 2 || ids.some((id) => !standings[id])) return null
+
+  const scored = allSplits(ids).map((split) => ({ split, score: splitScore(split, standings) }))
+  const best = Math.min(...scored.map((s) => s.score))
+  return scored.filter((s) => s.score <= best + TIE_EPSILON).map((s) => s.split)
+}
+
+/**
+ * `current` is the one and only fairest line-up: balancing again could only
+ * swap the sides, so the button has nothing left to offer.
+ */
+export function isOnlyFairSplit(
+  ids: string[],
+  standings: PlayerStandings,
+  current: TeamSplit,
+): boolean {
+  const fair = fairSplits(ids, standings)
+  return fair !== null && fair.length === 1 && sameSplit(fair[0], current)
+}
+
+/**
+ * The fairest split by MMR. `null` when a player has no standing. `current`
+ * is skipped when another equally fair split exists; when it is the only one
+ * it comes back untouched, sides included.
  */
 export function balanceTeams(
   ids: string[],
@@ -79,13 +110,11 @@ export function balanceTeams(
   current?: TeamSplit,
   rng: Rng = Math.random,
 ): TeamSplit | null {
-  if (ids.length < 2 || ids.some((id) => !standings[id])) return null
+  const fair = fairSplits(ids, standings)
+  if (!fair) return null
 
-  const scored = allSplits(ids).map((split) => ({ split, score: splitScore(split, standings) }))
-  const best = Math.min(...scored.map((s) => s.score))
-  const fair = scored.filter((s) => s.score <= best + BALANCE_TOLERANCE).map((s) => s.split)
-  const fresh = current ? fair.filter((split) => !sameSplit(split, current)) : fair
-  const pool = fresh.length > 0 ? fresh : fair
+  const pool = current ? fair.filter((split) => !sameSplit(split, current)) : fair
+  if (pool.length === 0 && current) return current
 
   const [a, b] = pool[Math.floor(rng() * pool.length)]
   // `allSplits` always seats the first player on side A; flip half the time

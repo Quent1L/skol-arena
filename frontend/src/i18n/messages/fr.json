@@ -349,7 +349,9 @@
     "yes": "Oui"
   },
   "compositionStep": {
-    "balanced": "Équilibré",
+    "balanced": "Optimal",
+    "balancedOnly": "C'est déjà la composition la plus équilibrée, aucune autre ne l'égale.",
+    "duelHint": "Encore un clic et il va se passer quelque chose…",
     "empty": "Vide",
     "emptySideError": "Chaque équipe doit avoir au moins un joueur.",
     "instruction": "Faites glisser les joueurs pour former les équipes.",

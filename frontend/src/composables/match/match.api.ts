@@ -34,7 +34,11 @@ export const matchApi = {
    * List matches with optional filters (paginated)
    * @returns Paginated match cards with Date objects (converted by interceptor)
    */
-  async list(filters?: Omit<Partial<ListMatchCardsQuery>, 'bracketMode'> & { bracketMode?: 'true' | 'false' }): Promise<PaginatedMatchCards> {
+  async list(
+    filters?: Omit<Partial<ListMatchCardsQuery>, 'bracketMode'> & {
+      bracketMode?: 'true' | 'false'
+    },
+  ): Promise<PaginatedMatchCards> {
     const response = await http.get<PaginatedMatchCards>(BASE_URL, {
       params: filters,
     })
@@ -81,7 +85,10 @@ export const matchApi = {
    * Confirm match result
    * @returns Match with Date objects (converted by interceptor)
    */
-  async confirmResult(id: string, payload: ConfirmMatchRequestData = {}): Promise<ClientMatchModel> {
+  async confirmResult(
+    id: string,
+    payload: ConfirmMatchRequestData = {},
+  ): Promise<ClientMatchModel> {
     const response = await http.post<ClientMatchModel>(`${BASE_URL}/${id}/confirm`, payload)
     return response.data
   },

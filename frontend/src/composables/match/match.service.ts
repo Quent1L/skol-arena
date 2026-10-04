@@ -268,7 +268,11 @@ export function useMatchService() {
     return await matchApi.getById(id)
   }
 
-  const listMatches = async (filters?: Omit<Partial<ListMatchCardsQuery>, 'bracketMode'> & { bracketMode?: 'true' | 'false' }): Promise<PaginatedMatchCards> => {
+  const listMatches = async (
+    filters?: Omit<Partial<ListMatchCardsQuery>, 'bracketMode'> & {
+      bracketMode?: 'true' | 'false'
+    },
+  ): Promise<PaginatedMatchCards> => {
     return await matchApi.list(filters)
   }
 
@@ -304,7 +308,8 @@ export function useMatchService() {
       })
       return match
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t('matchService.errors.confirmFailed')
+      const errorMessage =
+        err instanceof Error ? err.message : t('matchService.errors.confirmFailed')
       toast.add({
         severity: 'error',
         summary: t('common.error'),
@@ -329,7 +334,8 @@ export function useMatchService() {
       })
       return match
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t('matchService.errors.contestFailed')
+      const errorMessage =
+        err instanceof Error ? err.message : t('matchService.errors.contestFailed')
       toast.add({
         severity: 'error',
         summary: t('common.error'),
@@ -375,7 +381,8 @@ export function useMatchService() {
       }
       return match
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t('matchService.errors.respondFailed')
+      const errorMessage =
+        err instanceof Error ? err.message : t('matchService.errors.respondFailed')
       toast.add({
         severity: 'error',
         summary: t('common.error'),
@@ -397,7 +404,8 @@ export function useMatchService() {
       })
       return match
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t('matchService.errors.cancelFailed')
+      const errorMessage =
+        err instanceof Error ? err.message : t('matchService.errors.cancelFailed')
       toast.add({
         severity: 'error',
         summary: t('common.error'),
@@ -422,7 +430,8 @@ export function useMatchService() {
       })
       return match
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t('matchService.errors.finalizeFailed')
+      const errorMessage =
+        err instanceof Error ? err.message : t('matchService.errors.finalizeFailed')
       toast.add({
         severity: 'error',
         summary: t('common.error'),

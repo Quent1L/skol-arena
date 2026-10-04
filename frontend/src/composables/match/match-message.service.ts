@@ -38,8 +38,7 @@ export function useMatchMessageService() {
       const message = await matchMessageApi.post(matchId, trimmed)
       appendUnlessKnown(message)
     } catch (err) {
-      const detail =
-        err instanceof Error ? err.message : t('matchMessageThread.errors.postFailed')
+      const detail = err instanceof Error ? err.message : t('matchMessageThread.errors.postFailed')
       toast.add({
         severity: 'error',
         summary: t('common.error'),

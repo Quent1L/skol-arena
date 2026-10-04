@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import type { MatchSideInput } from '@skol-arena/shared/types/index'
 import { mountWithPrime } from '@/test-support/mount'
 import CompositionStep from '../CompositionStep.vue'
+import { DUEL_TAPS } from '@/composables/match/useComposeEasterEggs'
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: (key: string) => key }),
@@ -63,5 +64,63 @@ describe('CompositionStep auto-composition', () => {
     const composed = lastSides(wrapper)
     expect(composed.flatMap((s) => s.playerIds ?? []).sort()).toEqual(ids)
     expect(composed[0].playerIds).toHaveLength(2)
+  })
+})
+
+describe('CompositionStep duel hint', () => {
+  it('warns on the button whose next tap plays the overlay', async () => {
+    const wrapper = mountStep({ isRanked: true, standings })
+    const random = wrapper.find('[data-testid="compose-random"]')
+    const balanced = wrapper.find('[data-testid="compose-balanced"]')
+
+    for (let i = 0; i < DUEL_TAPS - 1; i += 1) {
+      expect(wrapper.find('[data-testid="compose-duel-hint"]').exists()).toBe(false)
+      await (i % 2 === 0 ? random : balanced).trigger('click')
+    }
+
+    expect(wrapper.find('[data-testid="compose-duel-hint"]').exists()).toBe(true)
+    // An odd number of taps starting on random ends on random: balanced fires next.
+    expect(balanced.classes()).toContain('animate-pulse')
+    expect(random.classes()).not.toContain('animate-pulse')
+  })
+})
+
+describe('CompositionStep settled balance', () => {
+  // {p1,p2} vs {p3,p4} is the one fairest line-up.
+  const uneven = {
+    p1: { mmr: 1600, isPlacement: false },
+    p2: { mmr: 1400, isPlacement: false },
+    p3: { mmr: 1550, isPlacement: false },
+    p4: { mmr: 1450, isPlacement: false },
+  }
+  const settled = '[data-testid="compose-balance-settled"]'
+
+  it('says so once the only fair line-up is in place, and keeps it on a new tap', async () => {
+    const wrapper = mountStep({
+      isRanked: true,
+      standings: uneven,
+      sides: [
+        { position: 1, playerIds: ['p1', 'p3'] },
+        { position: 2, playerIds: ['p2', 'p4'] },
+      ],
+    })
+    const balanced = wrapper.find('[data-testid="compose-balanced"]')
+    expect(wrapper.find(settled).exists()).toBe(false)
+
+    await balanced.trigger('click')
+    const first = lastSides(wrapper)
+    expect(wrapper.find(settled).exists()).toBe(true)
+
+    await balanced.trigger('click')
+    expect(lastSides(wrapper)).toEqual(first)
+    expect(balanced.attributes('disabled')).toBeUndefined()
+  })
+
+  it('stays silent while several line-ups are as fair', async () => {
+    const wrapper = mountStep({ isRanked: true, standings })
+
+    await wrapper.find('[data-testid="compose-balanced"]').trigger('click')
+
+    expect(wrapper.find(settled).exists()).toBe(false)
   })
 })

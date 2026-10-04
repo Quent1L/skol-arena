@@ -1,3 +1,4 @@
+import { computed, ref } from 'vue'
 import { useEasterEgg } from '@/composables/useEasterEgg'
 import { useSecretTap } from '@/composables/useSecretTap'
 
@@ -14,14 +15,23 @@ export const DUEL_TAPS = 6
 export function useComposeEasterEggs() {
   const { play } = useEasterEgg()
   const duel = useSecretTap(DUEL_TAPS, () => play('both'))
-  let lastKind: ComposeKind | null = null
+  const lastKind = ref<ComposeKind | null>(null)
 
   function onCompose(kind: ComposeKind): void {
     // Only a switch counts towards the duel: the same button twice starts over.
-    if (kind === lastKind) duel.reset()
-    lastKind = kind
+    if (kind === lastKind.value) duel.reset()
+    lastKind.value = kind
     duel.tap()
   }
 
-  return { onCompose }
+  /**
+   * The button whose next tap plays the overlay, so the step can warn before
+   * the screen is taken over. Clears with the tap window like the count does.
+   */
+  const armedKind = computed<ComposeKind | null>(() => {
+    if (duel.count.value !== DUEL_TAPS - 1) return null
+    return lastKind.value === 'random' ? 'balanced' : 'random'
+  })
+
+  return { onCompose, armedKind }
 }

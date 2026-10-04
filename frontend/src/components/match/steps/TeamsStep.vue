@@ -25,11 +25,18 @@
     </div>
 
     <div v-if="errors.length > 0" class="flex flex-col gap-2">
-      <Message v-for="err in errors" :key="err" severity="error" :closable="false">{{ err }}</Message>
+      <Message v-for="err in errors" :key="err" severity="error" :closable="false">{{
+        err
+      }}</Message>
     </div>
 
     <div v-if="!hideNavigation" class="flex justify-between pt-2">
-      <Button :label="t('teamsStep.previous')" severity="secondary" icon="fas fa-arrow-left" @click="emit('previous')" />
+      <Button
+        :label="t('teamsStep.previous')"
+        severity="secondary"
+        icon="fas fa-arrow-left"
+        @click="emit('previous')"
+      />
       <Button
         :label="props.nextLabel ?? t('teamsStep.next')"
         :icon="props.nextLabel ? 'fas fa-calendar-check' : 'fas fa-arrow-right'"
@@ -89,9 +96,7 @@ function teamMembers(teamId: string) {
 }
 
 function setTeam(position: number, teamId: string) {
-  sidesModel.value = sidesModel.value.map((s) =>
-    s.position === position ? { ...s, teamId } : s,
-  )
+  sidesModel.value = sidesModel.value.map((s) => (s.position === position ? { ...s, teamId } : s))
 }
 
 const canProceed = computed(() => {
