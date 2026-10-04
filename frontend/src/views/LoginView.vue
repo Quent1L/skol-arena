@@ -200,7 +200,7 @@ async function loginWithKeycloak() {
   isKeycloakLoading.value = true
 
   try {
-    const callbackURL = import.meta.env.DEV ? 'http://localhost:5173/' : '/'
+    const callbackURL = import.meta.env.MODE === 'dev' ? 'http://localhost:5173/' : '/'
 
     await authClient.signIn.oauth2({
       providerId: 'keycloak',

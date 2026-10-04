@@ -41,7 +41,7 @@ function disconnect() {
   }
 }
 
-const WS_BASE = import.meta.env.DEV
+const WS_BASE = import.meta.env.MODE === 'dev'
   ? 'ws://localhost:3000'
   : window.location.origin.replace('http', 'ws')
 

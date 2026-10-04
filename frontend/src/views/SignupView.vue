@@ -211,7 +211,7 @@ async function proceedToKeycloakRegistration() {
     // In prod (dockerized), the frontend is served by the backend, so '/' is enough
     // Redirects to the home page. If there's no invitation code, the guard will detect
     // the INVITATION_CODE_REQUIRED error and automatically redirect to /submit-invitation
-    const callbackURL = import.meta.env.DEV ? 'http://localhost:5173/' : '/'
+    const callbackURL = import.meta.env.MODE === 'dev' ? 'http://localhost:5173/' : '/'
 
     // IMPORTANT: requestSignUp: true to force account creation
     await authClient.signIn.oauth2({
