@@ -24,12 +24,34 @@
           @click="router.back()"
           class="shrink-0"
         />
+        <button
+          v-if="player && hasPhoto"
+          type="button"
+          class="shrink-0 cursor-zoom-in rounded-md"
+          :aria-label="t('playerDetailView.viewAvatar')"
+          data-testid="player-avatar-zoom"
+          @click="showAvatarLightbox = true"
+        >
+          <PlayerAvatar
+            :name="player.displayName"
+            :player-id="player.id"
+            :size="avatarSize"
+            shape="square"
+          />
+        </button>
         <PlayerAvatar
+          v-else
           :name="player?.displayName ?? '?'"
           :player-id="player?.id"
           :size="avatarSize"
           shape="square"
           class="shrink-0"
+        />
+        <AvatarLightbox
+          v-if="player && hasPhoto"
+          v-model:visible="showAvatarLightbox"
+          :player-id="player.id"
+          :name="player.displayName"
         />
         <div class="min-w-0">
           <div class="text-xl md:text-2xl font-black text-white truncate">
@@ -335,6 +357,7 @@ import { useI18n } from 'vue-i18n'
 import { useMediaQuery } from '@vueuse/core'
 import { usePlayerService } from '@/composables/player/player.service'
 import { useAuth } from '@/composables/useAuth'
+import { useAvatarService } from '@/composables/avatar/avatar.service'
 import { rankedApi } from '@/composables/ranked/ranked.api'
 import { CAREER_ANCHOR, careerPeak } from '@/composables/ranked/career'
 import type {
@@ -347,6 +370,7 @@ import type {
 } from '@skol-arena/shared/types/index'
 import MatchList from '@/components/MatchList.vue'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
+import AvatarLightbox from '@/components/avatar/AvatarLightbox.vue'
 import PlayerMmrProfile from '@/components/ranked/PlayerMmrProfile.vue'
 import PlayerRankedCareer from '@/components/ranked/PlayerRankedCareer.vue'
 import RankedCareerLink from '@/components/ranked/RankedCareerLink.vue'
@@ -366,6 +390,11 @@ const router = useRouter()
 const isMobile = useMediaQuery('(max-width: 767px)')
 const avatarSize = computed(() => (isMobile.value ? 'md' : 'lg'))
 const { appUser } = useAuth()
+const { versionFor } = useAvatarService()
+
+// Only a real photo is worth enlarging: the initials stay a plain tile.
+const hasPhoto = computed(() => !!player.value && !!versionFor(player.value.id))
+const showAvatarLightbox = ref(false)
 const {
   player,
   stats,

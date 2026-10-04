@@ -13,6 +13,7 @@ vi.mock('@/composables/avatar/avatar.service', () => ({
   useAvatarService: () => ({
     versionFor: () => currentVersion,
     avatarUrl: () => 'http://api.test/x.webp',
+    avatarSrcset: () => 'http://api.test/x.webp 64w',
     upload,
     remove,
   }),

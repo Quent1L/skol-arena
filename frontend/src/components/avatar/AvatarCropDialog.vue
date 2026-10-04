@@ -61,8 +61,8 @@ import { useI18n } from 'vue-i18n'
 
 /** Viewport side, in CSS pixels. */
 const VIEW = 280
-/** Side of the exported square. The server re-encodes it down to 256 at most. */
-const OUTPUT = 512
+/** Side of the exported square: the largest variant the server keeps, for the full-screen view. */
+const OUTPUT = 1024
 const MAX_ZOOM = 4
 
 const props = defineProps<{ file: File | null; busy?: boolean }>()

@@ -1166,6 +1166,7 @@
     "reset": "Réinitialiser",
     "tournament": "Tournoi",
     "tournamentCount": "{count} tournoi | {count} tournois",
+    "viewAvatar": "Voir la photo en plein écran",
     "wdLabel": "V / D",
     "winrate": "Winrate",
     "winsShort": "V",
@@ -2608,6 +2609,12 @@
     "zoom": "Zoom",
     "confirm": "Enregistrer",
     "hint": "Faites glisser pour cadrer, zoomez avec le curseur."
+  },
+  "avatarLightbox": {
+    "loading": "Chargement de la photo…",
+    "loadFailed": "Impossible d'afficher la photo",
+    "loadFailedHint": "Vérifiez votre connexion, ou la photo a peut-être été modifiée entre-temps.",
+    "retry": "Réessayer"
   },
   "maintenanceService": {
     "migrationDone": "Migration des avatars terminée",

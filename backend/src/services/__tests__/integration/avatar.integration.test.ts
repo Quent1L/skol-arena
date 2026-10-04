@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from "@skol-arena/shared";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "bun:test";
 import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
@@ -86,13 +87,13 @@ describe("Avatars (integration)", () => {
   });
 
   describe("postgres storage", () => {
-    it("stores three variants and points the profile at them", async () => {
+    it("stores every variant and points the profile at them", async () => {
       const userId = await createUser("Alice");
       const version = await avatarService.setAvatar(userId, makePng(300, 300));
 
       const [row] = await testDb.select().from(appUsers).where(eq(appUsers.id, userId));
       expect(row!.avatarVersion).toBe(version);
-      expect(await blobCount(userId)).toBe(3);
+      expect(await blobCount(userId)).toBe(AVATAR_SIZES.length);
       expect(await avatarService.lookup([userId])).toEqual({ [userId]: version });
     });
 
@@ -102,7 +103,7 @@ describe("Avatars (integration)", () => {
       const second = await avatarService.setAvatar(userId, makePng(310, 300));
 
       expect(second).not.toBe(first);
-      expect(await blobCount(userId)).toBe(3);
+      expect(await blobCount(userId)).toBe(AVATAR_SIZES.length);
       expect(await errorStatus(avatarService.getVariant(userId, first, 64))).toBe(404);
       expect((await avatarService.getVariant(userId, second, 64)).contentType).toBe("image/webp");
     });
@@ -120,7 +121,7 @@ describe("Avatars (integration)", () => {
         .from(appUsers)
         .where(eq(appUsers.id, userId));
       expect([a, b]).toContain(current[0]!.v!);
-      expect(await blobCount(userId)).toBe(3);
+      expect(await blobCount(userId)).toBe(AVATAR_SIZES.length);
     });
 
     it("keeps the previous avatar when the new upload is rejected", async () => {
@@ -229,7 +230,7 @@ describe("Avatars (integration)", () => {
 
       for (const path of [
         `/api/avatars/${userId}/${old}/64.webp`,
-        `/api/avatars/${userId}/${current}/512.webp`,
+        `/api/avatars/${userId}/${current}/300.webp`,
         `/api/avatars/${userId}/${current}/64.png`,
         `/api/avatars/not-a-uuid/${current}/64.webp`,
         `/api/avatars/${userId}/..%2F..%2Fetc/64.webp`,

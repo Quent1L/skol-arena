@@ -16,6 +16,7 @@ declare module 'vue' {
     AvailableBadgesCard: typeof import('./src/components/rules/AvailableBadgesCard.vue')['default']
     AvatarCropDialog: typeof import('./src/components/avatar/AvatarCropDialog.vue')['default']
     AvatarEditor: typeof import('./src/components/avatar/AvatarEditor.vue')['default']
+    AvatarLightbox: typeof import('./src/components/avatar/AvatarLightbox.vue')['default']
     AwardHero: typeof import('./src/components/rewind/AwardHero.vue')['default']
     AwardRow: typeof import('./src/components/rewind/AwardRow.vue')['default']
     AwardsCombatCard: typeof import('./src/components/rewind/cards/AwardsCombatCard.vue')['default']

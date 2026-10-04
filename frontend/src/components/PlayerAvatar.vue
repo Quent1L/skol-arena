@@ -38,7 +38,7 @@ const props = defineProps<{
   playerId?: string | null
 }>()
 
-const { versionFor, avatarUrl } = useAvatarService()
+const { versionFor, avatarUrl, avatarSrcset } = useAvatarService()
 
 /** A version whose image failed to load: fall back to initials until it changes. */
 const failedVersion = ref<string | null>(null)
@@ -58,7 +58,7 @@ const photo = computed(() => {
   return {
     version,
     src: avatarUrl(id, version, AVATAR_SIZES[0]),
-    srcset: AVATAR_SIZES.map((s) => `${avatarUrl(id, version, s)} ${s}w`).join(', '),
+    srcset: avatarSrcset(id, version),
     sizes: `${avatarSizePx(props.size)}px`,
   }
 })

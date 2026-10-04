@@ -58,10 +58,10 @@ describe("avatarImageService.process", () => {
     delete process.env.AVATAR_MAX_UPLOAD_BYTES;
   });
 
-  it("renders 64/128/256 WebP variants bounded by their size", async () => {
-    const variants = await avatarImageService.process(makePng(600, 400));
+  it("renders a WebP variant per size, bounded by that size", async () => {
+    const variants = await avatarImageService.process(makePng(1500, 1000));
 
-    expect([...variants.keys()]).toEqual([64, 128, 256]);
+    expect([...variants.keys()]).toEqual([64, 128, 256, 512, 1024]);
     for (const [size, bytes] of variants) {
       const meta = await new Bun.Image(bytes).metadata();
       expect(meta.format).toBe("webp");
@@ -79,6 +79,7 @@ describe("avatarImageService.process", () => {
   it("never upscales a small picture", async () => {
     const variants = await avatarImageService.process(makePng(100, 100));
     expect((await new Bun.Image(variants.get(256)!).metadata()).width).toBe(100);
+    expect((await new Bun.Image(variants.get(1024)!).metadata()).width).toBe(100);
   });
 
   it("drops metadata and anything appended to the image", async () => {

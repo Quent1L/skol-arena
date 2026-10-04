@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { AVATAR_LOOKUP_MAX_IDS, avatarPath, type AvatarSize } from '@skol-arena/shared'
+import { AVATAR_LOOKUP_MAX_IDS, AVATAR_SIZES, avatarPath, type AvatarSize } from '@skol-arena/shared'
 import { apiBaseURL } from '@/config/api-base'
 
 /**
@@ -59,6 +59,11 @@ function avatarUrl(userId: string, version: string, size: AvatarSize): string {
   return `${apiBaseURL}${avatarPath(userId, version, size)}`
 }
 
+/** Every stored variant as a `srcset`: the browser picks the one its `sizes` calls for. */
+function avatarSrcset(userId: string, version: string): string {
+  return AVATAR_SIZES.map((s) => `${avatarUrl(userId, version, s)} ${s}w`).join(', ')
+}
+
 /**
  * Avatar state shared across the app.
  */
@@ -90,7 +95,7 @@ export function useAvatarService() {
     remember(userId, null)
   }
 
-  return { versionFor, remember, avatarUrl, upload, remove, removeFor }
+  return { versionFor, remember, avatarUrl, avatarSrcset, upload, remove, removeFor }
 }
 
 /** Test hook: waits for every lookup queued so far. */

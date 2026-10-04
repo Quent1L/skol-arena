@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from "@skol-arena/shared";
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
 import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
@@ -123,7 +124,7 @@ describe("Avatar storage migration (integration)", () => {
     const result = await avatarStorageMigrationService.migrate();
 
     expect(result).toMatchObject({ migrated: 1, failed: 0 });
-    expect(await blobCount()).toBe(3);
+    expect(await blobCount()).toBe(AVATAR_SIZES.length);
     expect(await filesystem.hasPrefix("avatars/")).toBe(false);
   });
 

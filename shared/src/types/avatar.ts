@@ -5,7 +5,7 @@ import { z } from "zod";
 // ============================================
 
 /** Square variants generated for every avatar, in pixels. */
-export const AVATAR_SIZES = [64, 128, 256] as const;
+export const AVATAR_SIZES = [64, 128, 256, 512, 1024] as const;
 
 export type AvatarSize = (typeof AVATAR_SIZES)[number];
 

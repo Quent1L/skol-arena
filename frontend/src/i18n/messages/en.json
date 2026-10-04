@@ -1166,6 +1166,7 @@
     "reset": "Reset",
     "tournament": "Tournament",
     "tournamentCount": "{count} tournament | {count} tournaments",
+    "viewAvatar": "View photo full screen",
     "wdLabel": "W / L",
     "winrate": "Win rate",
     "winsShort": "W",
@@ -2608,6 +2609,12 @@
     "zoom": "Zoom",
     "confirm": "Save",
     "hint": "Drag to frame, zoom with the slider."
+  },
+  "avatarLightbox": {
+    "loading": "Loading photo…",
+    "loadFailed": "Could not display the photo",
+    "loadFailedHint": "Check your connection, or the photo may have changed in the meantime.",
+    "retry": "Try again"
   },
   "maintenanceService": {
     "migrationDone": "Avatar migration finished",

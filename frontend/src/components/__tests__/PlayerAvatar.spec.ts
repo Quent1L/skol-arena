@@ -104,6 +104,7 @@ describe('PlayerAvatar with a photo', () => {
     expect(img.exists()).toBe(true)
     expect(img.attributes('src')).toContain(`/api/avatars/${id}/cccccccc-cccc-4ccc-8ccc-cccccccccccc/64.webp`)
     expect(img.attributes('srcset')).toContain('256.webp 256w')
+    expect(img.attributes('srcset')).toContain('1024.webp 1024w')
     expect(img.attributes('sizes')).toBe('64px')
     expect(img.attributes('alt')).toBe('John Doe')
   })
