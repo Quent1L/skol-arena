@@ -2226,9 +2226,6 @@
     "noMmr": "You don't have any MMR for this season yet.",
     "noMmrHint": "Enter your first match to join the leaderboard!"
   },
-  "tournamentRulesView": {
-    "defaultTitle": "Rules"
-  },
   "tournamentService": {
     "errors": {
       "createFailed": "Error creating",

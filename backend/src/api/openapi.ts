@@ -1,10 +1,12 @@
 import { generateSpecs, resolver, type GenerateSpecOptions } from "hono-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
 import { apiErrorResponseSchema } from "@skol-arena/shared/types/index";
+import { auth } from "../config/auth";
 import type { AppHonoOptional } from "../types/hono";
 import { buildVersionApp } from "./build";
 import { ERROR_RESPONSES } from "./describe";
 import { PUBLIC_PREFIX } from "./dispatch";
+import { isPublicRoute } from "./public-routes";
 import { API_VERSIONS, API_VERSION_REQUEST_HEADER, normalizeVersion } from "./versions";
 import type { ApiVersion } from "./versions";
 
@@ -69,7 +71,11 @@ function specOptions(version: ApiVersion): Partial<GenerateSpecOptions> {
 
 const OPERATION_KEYS = ["get", "put", "post", "delete", "options", "head", "patch", "trace"];
 
-type Operation = { parameters?: { name?: string }[] };
+type Operation = {
+  parameters?: { name?: string }[];
+  responses?: Record<string, unknown>;
+  security?: Record<string, string[]>[];
+};
 type Paths = Record<string, Record<string, Operation>>;
 
 /**
@@ -96,6 +102,53 @@ function documentVersionHeader(paths: Paths, version: ApiVersion): void {
       const existing = operation.parameters ?? [];
       if (existing.some((p) => p?.name === API_VERSION_REQUEST_HEADER)) continue;
       operation.parameters = [parameter, ...existing];
+    }
+  }
+}
+
+const SESSION_SCHEME = "sessionCookie";
+
+/**
+ * Declares how to authenticate, so the reference shows which operations need a
+ * session and "Try it" can send one.
+ *
+ * The cookie is the one Better Auth sets at sign-in; its name is read back from
+ * Better Auth rather than hardcoded, because it gains a `__Secure-` prefix on HTTPS.
+ */
+async function sessionCookieScheme(): Promise<Node> {
+  const { authCookies } = await auth.$context;
+  return {
+    type: "apiKey",
+    in: "cookie",
+    name: authCookies.sessionToken.name,
+    description: "Better Auth session cookie, set when signing in to the app.",
+  };
+}
+
+/**
+ * Marks each operation as protected or public from the PUBLIC_ROUTES allowlist.
+ *
+ * Derived rather than declared per route: the version-wide guard (./build) is what
+ * enforces it, so the allowlist is the one place that knows. A protected operation
+ * gets the 401 and the session requirement; a public one opts out of the global
+ * requirement — optionally, when it still reads the session itself (it then
+ * documents its own 401).
+ */
+function documentAuthentication(paths: Paths): void {
+  for (const [path, pathItem] of Object.entries(paths)) {
+    const honoPath = path.replace(/\{([^}]+)\}/g, ":$1");
+
+    for (const [key, operation] of Object.entries(pathItem)) {
+      if (!OPERATION_KEYS.includes(key)) continue;
+      const responses = operation.responses ?? {};
+      operation.responses = responses;
+
+      if (!isPublicRoute(key.toUpperCase(), honoPath)) {
+        responses["401"] ??= { $ref: `#/components/responses/${ERROR_RESPONSES[401]}` };
+        continue;
+      }
+
+      operation.security = responses["401"] ? [{}, { [SESSION_SCHEME]: [] }] : [];
     }
   }
 }
@@ -223,6 +276,7 @@ async function getSpec(version: ApiVersion): Promise<unknown> {
 
   const spec = await generateSpecs(buildVersionApp(version), specOptions(version));
   documentVersionHeader(spec.paths as Paths, version);
+  documentAuthentication(spec.paths as Paths);
 
   const components = (spec.components ?? {}) as Node;
   const schemas = (components.schemas ?? {}) as Node;
@@ -234,7 +288,10 @@ async function getSpec(version: ApiVersion): Promise<unknown> {
   dedupeAgainstComponents(responses, schemas);
 
   components.schemas = schemas;
+  components.securitySchemes = { [SESSION_SCHEME]: await sessionCookieScheme() };
   (spec as Node).components = components;
+  // Required by default; public operations opt out in documentAuthentication.
+  (spec as Node).security = [{ [SESSION_SCHEME]: [] }];
 
   specCache.set(version, spec);
   return spec;

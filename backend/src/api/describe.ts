@@ -44,7 +44,10 @@ export type DescribeOptions = {
   summary: string;
   description?: string;
   success?: Success;
-  /** Documents 401. Set on any route behind requireAuth. */
+  /**
+   * Documents 401. Routes outside PUBLIC_ROUTES get it from the OpenAPI post-pass;
+   * set it only on a public route that still checks the session itself.
+   */
   auth?: boolean;
   /** Documents 403. Set on any route behind a role guard. */
   role?: boolean;

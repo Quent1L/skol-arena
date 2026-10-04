@@ -2226,9 +2226,6 @@
     "noMmr": "Vous n'avez pas encore de MMR pour cette saison.",
     "noMmrHint": "Déclarez votre premier match pour rejoindre le classement !"
   },
-  "tournamentRulesView": {
-    "defaultTitle": "Règlement"
-  },
   "tournamentService": {
     "errors": {
       "createFailed": "Erreur lors de la création",

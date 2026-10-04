@@ -20,6 +20,10 @@ type ViewerContext = {
 };
 
 export async function requireAuth(c: AppContext, next: () => Promise<void>) {
+  // Already resolved by the version-wide guard (api/build.ts): the routes that also
+  // name requireAuth themselves must not pay for a second lookup.
+  if (c.get("appUserId")) return next();
+
   const betterAuthUser = c.get("user");
 
   if (!betterAuthUser) {

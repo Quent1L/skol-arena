@@ -466,15 +466,6 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/tournaments/:id/rules',
-    name: 'tournament-rules',
-    component: () => import('@/views/TournamentRulesView.vue'),
-    meta: {
-      title: t('routes.rules'),
-      hideBreadcrumb: true,
-    },
-  },
-  {
     path: '/rules/:id',
     name: 'rules-detail',
     component: () => import('@/views/RulesView.vue'),
