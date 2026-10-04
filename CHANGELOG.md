@@ -1,5 +1,55 @@
 # Changelog
 
+## [2.1.0](https://github.com/Quent1L/skol-arena/compare/2.0.4...2.1.0) (2026-10-04)
+
+### ✨ New Features
+
+* **admin:** add maintenance screen and avatar migration ([1ab68d6](https://github.com/Quent1L/skol-arena/commit/1ab68d682dfa4dacfb1ffd9a53188c742a368f87))
+* **avatar:** add player avatars ([17035fa](https://github.com/Quent1L/skol-arena/commit/17035fa0ac51cfd9e450f6f9180b4d9bceaa7ec0))
+* **avatar:** open player photo full screen ([655a3f9](https://github.com/Quent1L/skol-arena/commit/655a3f9411cfeee65ee14951cff906bbfa60f8d5))
+* **icons:** add Iconify sport icons to icon picker ([5a38857](https://github.com/Quent1L/skol-arena/commit/5a38857ae66535e3b6965a5d976b95744e47e1f0))
+* **logger:** default to plain readable log output ([9c65fb8](https://github.com/Quent1L/skol-arena/commit/9c65fb82281c397b3f300bce3c378f1a81596ce5))
+* **match:** add auto team composition to match wizard ([b5f6d7e](https://github.com/Quent1L/skol-arena/commit/b5f6d7e4d4830d97efc56764a91c85651a91877c))
+* **ranked:** chain ranked seasons automatically ([57d0ba6](https://github.com/Quent1L/skol-arena/commit/57d0ba67e6dbdd3064de9c3ca428a5e4a408eb68))
+* **ranked:** close a season automatically without chaining ([e8c5f10](https://github.com/Quent1L/skol-arena/commit/e8c5f10a729cfd259159d89617580fc098984313))
+* **release-notes:** publish functional changelog and what's new ([6e880d6](https://github.com/Quent1L/skol-arena/commit/6e880d6be7c9d5c75cd145740e6719c6ca0b9e15))
+* **search:** fold accents in player and user search ([5f3e289](https://github.com/Quent1L/skol-arena/commit/5f3e28988d9b4978475eb9d70a21138bb0c2bd45))
+
+### 🐛 Bug Fixes
+
+* **api:** require auth on all versioned routes by default ([17669b5](https://github.com/Quent1L/skol-arena/commit/17669b5a858b3e7ff3543f6fb745489341b70ca1))
+* **authz:** align backend roles with the admin screens ([5c490b6](https://github.com/Quent1L/skol-arena/commit/5c490b631b41f7f680f87c8988c54eabc3042863))
+* **avatar:** keep image pipelines under their concurrency limit ([1869232](https://github.com/Quent1L/skol-arena/commit/18692321975712f1b9bdc77391bd282933bb460b))
+* **avatar:** leave no orphan when two uploads race ([7d511f3](https://github.com/Quent1L/skol-arena/commit/7d511f322f4d8921960e63350465ba55f82f2ed5))
+* **avatar:** show upload limits under 1 MiB ([dfa3186](https://github.com/Quent1L/skol-arena/commit/dfa3186abe0f62846b2aa5d68daab0030a2eb2b0))
+* **invitation:** make code redemption atomic and rate limited ([b6689fc](https://github.com/Quent1L/skol-arena/commit/b6689fc0d76418f0dd006ba2e20abb46c68b7d54))
+* **match:** close lifecycle shortcuts that skipped validation ([4e94ee4](https://github.com/Quent1L/skol-arena/commit/4e94ee4355e7c260349bdb9190bbd9ee24fde36e))
+* **match:** make optimal composition deterministic ([229e9c0](https://github.com/Quent1L/skol-arena/commit/229e9c042000cf332a76bb536b47ef7d75c4a6c8))
+* **privacy:** scope public reads by organization ([056d0f8](https://github.com/Quent1L/skol-arena/commit/056d0f85b6c8b2b83ec4286b183f1be3d6bcc798))
+* **push:** restrict push endpoints to browser push services ([259504f](https://github.com/Quent1L/skol-arena/commit/259504f40185cc9065c77ab6e11c3a5e7fdaa9e5))
+* **security:** sanitize stored rich text and add a CSP ([2bfa1b3](https://github.com/Quent1L/skol-arena/commit/2bfa1b3a1513200d2196c0f9b66c59f28b59e0e5))
+* **stats:** compute every win rate on matches played ([1fa8e95](https://github.com/Quent1L/skol-arena/commit/1fa8e958f74de1a641bb8e2c6276b1b24ae6dacf))
+* **team:** keep team actions inside the tournament in the URL ([74fe731](https://github.com/Quent1L/skol-arena/commit/74fe731615572e937b7c0f78c813ca9ae1cae8ee))
+* **trust:** take back trust earned by withdrawn or disputed results ([8cf1b11](https://github.com/Quent1L/skol-arena/commit/8cf1b11cf2709a387a33bfe9d893bd20eff5045d))
+
+### ⚡ Performance
+
+* **avatar:** check the avatar version once per image request ([176522e](https://github.com/Quent1L/skol-arena/commit/176522e3f9a1d7fcc130245f0302eb619ecfcf25))
+* **avatar:** decode the uploaded image once ([d65f253](https://github.com/Quent1L/skol-arena/commit/d65f253285223e13427832feb0bfa9bd37d77506))
+
+### ♻️ Refactoring
+
+* **storage:** drop unused deleteMany ([f9a7209](https://github.com/Quent1L/skol-arena/commit/f9a720919ae40be2b0aad057906337a219b034bb))
+
+### 🔧 Maintenance
+
+* **frontend:** derive dev URLs from vite mode, not NODE_ENV ([29efd6e](https://github.com/Quent1L/skol-arena/commit/29efd6e0a5f7ee5f87d53b9d78611371c5bf6570))
+* **worker:** skip graphile-worker crontab file lookup ([eaecaae](https://github.com/Quent1L/skol-arena/commit/eaecaaea11fd03bd48339d69455d2739ed40662a))
+
+### 🎨 Style
+
+* **match:** use compact date format on mobile ([fe62601](https://github.com/Quent1L/skol-arena/commit/fe626014a4be0882f959442657bd8df3f0192f35))
+
 ## [2.0.4](https://github.com/Quent1L/skol-arena/compare/2.0.3...2.0.4) (2026-09-13)
 
 ### 🐛 Bug Fixes
