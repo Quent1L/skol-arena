@@ -205,12 +205,14 @@
       "logout": "Log out",
       "myStats": "My stats",
       "settings": "Settings",
-      "rewinds": "My Rewinds"
+      "rewinds": "My Rewinds",
+      "whatsNew": "What's new"
     },
     "signIn": "Sign in",
     "signUp": "Sign up",
     "userMenuAriaLabel": "User menu",
-    "version": "Version {version}"
+    "version": "Version {version}",
+    "whatsNewAvailable": "new features available"
   },
   "appWrapper": {
     "appTitle": "Skol Arena",

@@ -1,0 +1,85 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import Icon from '../components/Icon.astro'
+
+// Served by the host for any route the build does not know (Vercel picks up 404.html).
+// noindex keeps it out of search engines, and data-pagefind-ignore keeps it out of the
+// site search: <main> in BaseLayout opts every page into the index.
+const destinations = [
+  { href: '/features', icon: 'layers', label: 'Features', note: 'Everything Skol Arena does' },
+  { href: '/docs', icon: 'book', label: 'Docs', note: 'Install and run your instance' },
+  { href: '/changelog', icon: 'bolt', label: "What's new", note: 'The latest changes' },
+  { href: '/blog', icon: 'chat', label: 'Blog', note: 'News and announcements' },
+]
+---
+
+<BaseLayout title="Page not found" description="This page does not exist." noindex>
+  <section class="relative overflow-hidden" data-pagefind-ignore="all">
+    <div class="bg-grid pointer-events-none absolute inset-0"></div>
+    <div
+      class="relative mx-auto flex max-w-3xl flex-col items-center px-6 py-20 text-center sm:py-28"
+    >
+      <p
+        class="animate-fade-up text-gradient text-8xl font-extrabold tracking-tight select-none sm:text-9xl"
+        aria-hidden="true"
+      >
+        404
+      </p>
+      <h1
+        class="animate-fade-up mt-4 text-3xl font-extrabold text-white sm:text-4xl"
+        style="animation-delay: 0.05s"
+      >
+        Out of bounds
+      </h1>
+      <p
+        class="animate-fade-up mt-4 max-w-xl text-lg leading-relaxed text-slate-400"
+        style="animation-delay: 0.1s"
+      >
+        Skill or luck, this page was never on the bracket. The link may be outdated, or the address
+        mistyped.
+      </p>
+
+      <div
+        class="animate-fade-up mt-8 flex flex-wrap items-center justify-center gap-3"
+        style="animation-delay: 0.15s"
+      >
+        <a
+          href="/"
+          class="flex items-center gap-2 rounded-full bg-gradient-to-r from-brand-start to-brand-end px-6 py-3 font-semibold text-white shadow-lg shadow-brand-start/30 transition-transform hover:scale-105"
+        >
+          <Icon name="home" class="h-4 w-4" />
+          Back to home
+        </a>
+        <button
+          type="button"
+          data-search-open
+          class="flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 font-semibold text-slate-100 transition-colors hover:border-brand-mid/60 hover:text-brand-mid"
+        >
+          <Icon name="search" class="h-4 w-4" />
+          Search the site
+        </button>
+      </div>
+
+      <nav aria-label="Popular pages" class="mt-14 grid w-full gap-3 text-left sm:grid-cols-2">
+        {
+          destinations.map((destination) => (
+            <a
+              href={destination.href}
+              class="card-glow group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.05]"
+            >
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-start/15 text-brand-mid">
+                <Icon name={destination.icon} class="h-5 w-5" />
+              </span>
+              <span>
+                <span class="block font-semibold text-white transition-colors group-hover:text-brand-mid">
+                  {destination.label}
+                </span>
+                <span class="block text-sm text-slate-400">{destination.note}</span>
+              </span>
+            </a>
+          ))
+        }
+      </nav>
+    </div>
+  </section>
+</BaseLayout>

@@ -61,6 +61,12 @@ describe('touchesSoftware', () => {
     expect(touchesSoftware([])).toBe(false)
   })
 
+  // Une note fonctionnelle seule ne publie pas : elle partira avec la prochaine release.
+  it('ignore les notes fonctionnelles et NOTES_VERSION', () => {
+    expect(touchesSoftware(['docs/release-notes/unreleased/photo-viewer.md'])).toBe(false)
+    expect(touchesSoftware(['docs/src/content/changelog/2.1.0.md', 'NOTES_VERSION'])).toBe(false)
+  })
+
   // `docs/` ne doit pas neutraliser un vrai changement présent dans le même commit.
   it('publie dès qu’un seul fichier échappe à la denylist', () => {
     expect(touchesSoftware(['docs/index.md', 'backend/src/index.ts'])).toBe(true)

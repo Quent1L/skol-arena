@@ -38,7 +38,14 @@
                 </div>
               </template>
               <template #itemicon="{ item }">
-                <i :class="item.icon"></i>
+                <span class="relative inline-flex">
+                  <i :class="item.icon"></i>
+                  <span
+                    v-if="item.key === 'whats-new' && whatsNew.hasUnseen.value"
+                    class="unseen-dot -top-1 -right-1.5"
+                    data-testid="whats-new-dot"
+                  ></span>
+                </span>
               </template>
               <template #end>
                 <div
@@ -56,14 +63,21 @@
               rounded
               @click="toggleMenu"
               class="flex items-center gap-2"
-              :aria-label="t('appHeader.userMenuAriaLabel')"
+              :aria-label="userMenuLabel"
             >
-              <PlayerAvatar
-                v-if="appUser"
-                :name="appUser.displayName || appUser.betterAuth?.email || '?'"
-                :player-id="appUser.id"
-                size="sm"
-              />
+              <span class="relative inline-flex">
+                <PlayerAvatar
+                  v-if="appUser"
+                  :name="appUser.displayName || appUser.betterAuth?.email || '?'"
+                  :player-id="appUser.id"
+                  size="sm"
+                />
+                <span
+                  v-if="showWhatsNew && whatsNew.hasUnseen.value"
+                  class="unseen-dot top-0 right-0 ring-2 ring-white dark:ring-gray-900"
+                  data-testid="avatar-whats-new-dot"
+                ></span>
+              </span>
               <span class="hidden sm:block text-sm font-medium">
                 {{ appUser?.displayName }}
               </span>
@@ -88,6 +102,7 @@ import NotificationBell from './NotificationBell.vue'
 import NotificationDropdown from './NotificationDropdown.vue'
 import SkolLogo from '@/components/brand/SkolLogo.vue'
 import PlayerAvatar from './PlayerAvatar.vue'
+import { useWhatsNew } from '@/composables/whats-new/useWhatsNew'
 
 const { t } = useI18n()
 
@@ -114,6 +129,16 @@ const showBackButton = computed(
 const menu = ref()
 const notifDropdown = useTemplateRef('notifDropdown')
 
+const whatsNew = useWhatsNew()
+// A kiosk is a shared screen, not a person catching up on the news.
+const showWhatsNew = computed(() => appUser.value?.role !== 'kiosk')
+// The badge alone says nothing to a screen reader.
+const userMenuLabel = computed(() =>
+  showWhatsNew.value && whatsNew.hasUnseen.value
+    ? `${t('appHeader.userMenuAriaLabel')} — ${t('appHeader.whatsNewAvailable')}`
+    : t('appHeader.userMenuAriaLabel'),
+)
+
 const menuItems = computed<MenuItem[]>(() => [
   {
     label: t('appHeader.menu.myStats'),
@@ -138,6 +163,15 @@ const menuItems = computed<MenuItem[]>(() => [
       router.push({ name: 'rewinds' })
     },
     visible: appUser.value?.role !== 'kiosk',
+  },
+  {
+    key: 'whats-new',
+    label: t('appHeader.menu.whatsNew'),
+    icon: 'fas fa-gift',
+    command: () => {
+      whatsNew.open()
+    },
+    visible: showWhatsNew.value,
   },
   {
     label: t('appHeader.menu.settings'),
@@ -198,6 +232,14 @@ function toggleNotifications(event: Event) {
 </script>
 
 <style scoped>
+.unseen-dot {
+  position: absolute;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--p-red-500);
+}
+
 /* The version line doubles as a hidden trigger. It stays inert-looking until a
    few taps in, then leans in — enough to reward someone who is poking at it,
    invisible to everyone else. */

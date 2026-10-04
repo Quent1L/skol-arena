@@ -106,6 +106,18 @@ Content lives in two places:
   `layout:` frontmatter), and `pages/blog/index.astro` lists them. `src/lib/posts.ts` owns
   the sort and the draft filter — a `draft: true` post renders in dev and is dropped from
   the build.
+- **`docs/src/content/changelog/`** — the functional release notes, one entry per version,
+  all rendered on the single `/changelog` page (`pages/changelog.astro`), each version in
+  an `<article id="v<version>">`. Written by the release pipeline, never by hand — see
+  "Functional release notes" below. `src/lib/changelog.ts` sorts by version, not by date,
+  and builds each version's "Technical notes" link to its GitHub release.
+- **Changelog heading ids** are prefixed with the version (`v2.0.4-fixed`) by
+  `src/lib/changelog-heading-ids.mjs`, or every version would repeat `new`/`fixed` on the
+  one page. It is a **Sätteri hast plugin** registered through `markdown.processor` in
+  `astro.config.mjs`: Astro 7's default Markdown processor ignores
+  `markdown.rehypePlugins`/`remarkPlugins` (they need `@astrojs/markdown-remark`)
+- **`src/pages/404.astro`** is the page the host serves for unknown routes (`noindex`,
+  `data-pagefind-ignore`, left out of the sitemap by `@astrojs/sitemap`)
 
 Search is **Pagefind** (`astro-pagefind` integration), indexing the built HTML:
 
@@ -290,6 +302,44 @@ floor is what tells it whether one of the versions it skipped was breaking. **Ne
 `MIN_VERSION` by hand.** The frontend build reads it and ships it in `version.json`
 alongside `version` (`frontend/vite.config.ts`); the client compares it against its own
 `__APP_VERSION__` in `frontend/src/composables/pwa/pwa.update.ts`.
+
+### Functional release notes
+
+`CHANGELOG.md` is the technical changelog, generated from commits. The one players and
+organisers read is published on the docs site at `/changelog`, linked from the app's
+"What's new" menu entry and from every GitHub release that has notes.
+
+**Every `feat`/`fix` a player or an organiser can notice adds a note to
+`docs/release-notes/unreleased/` in the same PR** — one file per change. The folder's
+`README.md` holds the format and the tone rules; in short: English, no technical
+vocabulary, say what the person can now do or see. Internal changes get no note.
+
+- **`new` / `improved` / `fixed` follow one test: "was it broken?"** A `fix` commit is always
+  `fixed`, security included; `improved` is only for something that worked and was made
+  better on purpose (`feat` reworking an existing capability, `perf`, `style`); `new` is a
+  capability that did not exist
+- **`audience`** (optional): `players`, `tournament-admins`, `super-admins`,
+  `self-hosters` — the role names the app uses. Rendered as "**For super admins** ·" in
+  front of the text; no audience means everyone
+
+At release, the `after:bump` hook runs `scripts/apply-release-notes.ts`, which gathers the
+notes into `docs/src/content/changelog/<version>.md` under `✨ New`, `⚡ Improved` and
+`🐛 Fixed` (the emoji of the technical changelog's feat, perf and fix sections), deletes them, and writes
+`NOTES_VERSION`, all inside the `chore(release)` commit. A release without notes leaves
+both untouched. Then `github.releaseNotes` runs `scripts/github-release-notes.ts`, which
+prefixes the GitHub release body with the `/changelog#v<version>` link when the version
+has notes.
+
+- **Images** go in `docs/src/assets/changelog/` (never moved) and are referenced by a
+  relative path from the note. The script rewrites every relative path when it moves the
+  note, and refuses to release if an image is missing.
+- **`NOTES_VERSION`** is the last version with notes, read by `frontend/vite.config.ts`
+  into `__NOTES_VERSION__` — from the repo root because the Docker context excludes
+  `docs/` and `*.md`. The menu badge (`composables/whats-new/useWhatsNew.ts`) lights up
+  while the browser has not opened those notes. Never edit it by hand, like `MIN_VERSION`.
+- **The site origin** is written in three places that cannot import each other —
+  `docs/astro.config.mjs`, `scripts/site.ts`, `frontend/src/config/links.ts`;
+  `scripts/__tests__/site.test.ts` keeps them equal.
 
 <!-- code-review-graph MCP tools -->
 ## MCP Tools: code-review-graph

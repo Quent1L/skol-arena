@@ -17,9 +17,18 @@ const minVersion = existsSync(minVersionPath)
   ? readFileSync(minVersionPath, 'utf-8').trim() || null
   : null
 
+// Latest version that shipped functional release notes. Written by the release
+// pipeline (scripts/apply-release-notes.ts), never by hand. Read from the repo root
+// rather than from docs/: the Docker build context excludes docs/ and every *.md.
+const notesVersionPath = new URL('../NOTES_VERSION', import.meta.url)
+const notesVersion = existsSync(notesVersionPath)
+  ? readFileSync(notesVersionPath, 'utf-8').trim()
+  : ''
+
 export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(version),
+    __NOTES_VERSION__: JSON.stringify(notesVersion),
   },
   plugins: [
     {

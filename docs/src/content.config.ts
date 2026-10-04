@@ -31,4 +31,16 @@ const blog = defineCollection({
   }),
 })
 
-export const collections = { showcase, blog }
+// Functional release notes, one entry per version. Written by
+// scripts/apply-release-notes.ts at release time from docs/release-notes/unreleased/ —
+// never by hand, except the backfill of versions published before that existed.
+const changelog = defineCollection({
+  loader: glob({ pattern: '*.md', base: './src/content/changelog' }),
+  schema: z.object({
+    version: z.string(),
+    date: z.coerce.date(),
+    summary: z.string().optional(),
+  }),
+})
+
+export const collections = { showcase, blog, changelog }

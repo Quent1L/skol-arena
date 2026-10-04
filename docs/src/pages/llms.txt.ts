@@ -71,6 +71,7 @@ ${posts.map((post) => line(post.data.title, url(`/blog/${post.id}`), post.data.d
 ${line('Home', url('/'), 'The competition lifecycle, the three modes, screenshots, and FAQ')}
 ${line('Features', url('/features'), 'Every feature, grouped by the mode it belongs to')}
 ${line('About', url('/about'), 'Why Skol Arena exists, who it is for, and what it is built with')}
+${line("What's new", url('/changelog'), 'Every new feature, improvement and fix, version by version')}
 `
 
   return new Response(body, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })

@@ -37,6 +37,7 @@ export const NON_RELEASE_PATHS = [
   'CLAUDE.md',
   'VERSION',
   'MIN_VERSION',
+  'NOTES_VERSION',
   // Lockfile unique du workspace Bun : il bouge pour une dépendance de n'importe quel
   // workspace, docs/ compris, donc il ne discrimine rien. Il n'est jamais non plus le seul
   // signal utile — un ajout de dépendance applicative touche aussi le package.json de son
