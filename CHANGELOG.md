@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.2.0](https://github.com/Quent1L/skol-arena/compare/2.1.0...2.2.0) (2026-10-07)
+
+### ✨ New Features
+
+* **match:** allow correcting a finalized result ([f3e1d34](https://github.com/Quent1L/skol-arena/commit/f3e1d34bde2f6f8a8f099f84d755b722ffbfdc51))
+
+### 🐛 Bug Fixes
+
+* **badges:** date awards from the match played_at ([54aef83](https://github.com/Quent1L/skol-arena/commit/54aef8383179225fa28a0b23b1a82ac7beb03e30))
+* **ranked:** drop unseen cancelled match from MMR recap ([dcd1f75](https://github.com/Quent1L/skol-arena/commit/dcd1f75ff82f7aeca9310343ee070cda0693d7ec))
+
+### 📝 Documentation
+
+* **changelog:** rework v2.1.0 release notes ([b231996](https://github.com/Quent1L/skol-arena/commit/b231996efe7a70ff6d251c52a19b34c26850668f))
+
 ## [2.1.0](https://github.com/Quent1L/skol-arena/compare/2.0.4...2.1.0) (2026-10-04)
 
 ### ✨ New Features
