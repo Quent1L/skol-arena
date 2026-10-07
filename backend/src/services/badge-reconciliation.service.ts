@@ -17,11 +17,16 @@ interface BadgeRule {
   recurrence: BadgeRecurrence;
 }
 
+/** The match that earned an award: the badge is dated from when it was played. */
+interface EarningMatch {
+  matchId: string;
+  playedAt?: Date;
+}
+
 /** The award a replay says should exist, and the match that earned it. */
-interface DesiredAward {
+interface DesiredAward extends EarningMatch {
   playerId: string;
   seasonId: string;
-  matchId: string;
 }
 
 /**
@@ -107,13 +112,13 @@ export class BadgeReconciliationService {
     const ruleById = new Map(badgeRules.map((r) => [r.id, r]));
     // Desired set: ruleId -> earliest matching match (chronological).
     const ordered = await playerMmrRepository.getMmrHistoryOrdered(seasonId, playerId);
-    const desired = new Map<string, string>();
+    const desired = new Map<string, EarningMatch>();
     for (const row of ordered) {
-      const { contexts } = await rulesContextService.buildMatchSubmittedContexts(row.matchId, true);
+      const { contexts, playedAt } = await rulesContextService.buildMatchSubmittedContexts(row.matchId, true);
       const ctx = contexts.find((c) => c.playerId === playerId);
       if (!ctx) continue;
       for (const ruleId of await this.matchedRuleIds(engine, ctx.context)) {
-        if (!desired.has(ruleId)) desired.set(ruleId, row.matchId);
+        if (!desired.has(ruleId)) desired.set(ruleId, { matchId: row.matchId, playedAt });
       }
     }
 
@@ -131,13 +136,13 @@ export class BadgeReconciliationService {
       await this.notifyRevoked(playerId, (badge.rule.action as BadgeAction).label);
     }
 
-    for (const [ruleId, matchId] of desired) {
+    for (const [ruleId, earning] of desired) {
       if (heldRuleIds.has(ruleId)) continue;
       const rule = ruleById.get(ruleId);
       if (!rule) continue;
       // A lifetime badge already won in an earlier season is silently declined by
       // awardBadge, so no branch is needed here.
-      await this.award(playerId, ruleId, matchId, seasonId, rule);
+      await this.award(playerId, ruleId, earning, seasonId, rule);
     }
   }
 
@@ -160,12 +165,12 @@ export class BadgeReconciliationService {
     for (const season of seasons) {
       const matchIds = await playerMmrRepository.getSeasonMatchIdsOrdered(season.id);
       for (const matchId of matchIds) {
-        const { contexts } = await rulesContextService.buildMatchSubmittedContexts(matchId, true);
+        const { contexts, playedAt } = await rulesContextService.buildMatchSubmittedContexts(matchId, true);
         for (const ctx of contexts) {
           const key = awardKey(badgeRule.recurrence, ctx.playerId, season.id);
           if (desired.has(key)) continue;
           if ((await this.matchedRuleIds(engine, ctx.context)).has(rule.id)) {
-            desired.set(key, { playerId: ctx.playerId, seasonId: season.id, matchId });
+            desired.set(key, { playerId: ctx.playerId, seasonId: season.id, matchId, playedAt });
           }
         }
       }
@@ -180,7 +185,7 @@ export class BadgeReconciliationService {
 
     for (const [key, award] of desired) {
       if (existing.has(key)) continue;
-      await this.award(award.playerId, rule.id, award.matchId, award.seasonId, badgeRule, silent);
+      await this.award(award.playerId, rule.id, award, award.seasonId, badgeRule, silent);
     }
     for (const [key, award] of existing) {
       if (desired.has(key)) continue;
@@ -242,12 +247,19 @@ export class BadgeReconciliationService {
   private async award(
     playerId: string,
     ruleId: string,
-    matchId: string,
+    earning: EarningMatch,
     seasonId: string,
     rule: BadgeRule,
     silent = false,
   ): Promise<void> {
-    const awarded = await rulesRepository.awardBadge(playerId, ruleId, matchId, seasonId, rule.recurrence);
+    const awarded = await rulesRepository.awardBadge(
+      playerId,
+      ruleId,
+      earning.matchId,
+      seasonId,
+      rule.recurrence,
+      earning.playedAt,
+    );
     if (!awarded) return;
     // Retroactive awards do not trigger the reveal animation — mark as viewed.
     await rulesRepository.markBadgesViewed([awarded.id], playerId);

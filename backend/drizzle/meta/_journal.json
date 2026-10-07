@@ -624,6 +624,13 @@
       "when": 1777526400044,
       "tag": "0088_match_result_corrected",
       "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1777526400045,
+      "tag": "0089_badge_awarded_at_from_match",
+      "breakpoints": true
     }
   ]
 }

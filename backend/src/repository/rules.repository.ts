@@ -115,11 +115,15 @@ export class RulesRepository {
     matchId: string | null,
     seasonId: string | null,
     recurrence: BadgeRecurrence,
+    // Omitted for a live award (now). A retroactive one passes the match's playedAt,
+    // or every badge replayed by the nightly pass would be dated from that night.
+    awardedAt?: Date,
   ): Promise<{ id: string } | null> {
     if (recurrence === "once") {
       const result = await db.execute<{ id: string }>(sql`
-        INSERT INTO player_badges (id, player_id, rule_id, match_id, season_id)
-        SELECT ${newId()}::uuid, ${playerId}::uuid, ${ruleId}::uuid, ${matchId}::uuid, ${seasonId}::uuid
+        INSERT INTO player_badges (id, player_id, rule_id, match_id, season_id, awarded_at)
+        SELECT ${newId()}::uuid, ${playerId}::uuid, ${ruleId}::uuid, ${matchId}::uuid, ${seasonId}::uuid,
+          COALESCE(${awardedAt?.toISOString() ?? null}::timestamptz, now())
         WHERE NOT EXISTS (
           SELECT 1 FROM player_badges
           WHERE player_id = ${playerId}::uuid AND rule_id = ${ruleId}::uuid
@@ -131,7 +135,7 @@ export class RulesRepository {
 
     const [badge] = await db
       .insert(playerBadges)
-      .values({ playerId, ruleId, matchId, seasonId })
+      .values({ playerId, ruleId, matchId, seasonId, ...(awardedAt && { awardedAt }) })
       // `where` is the partial index's predicate, not a row filter: it is what tells
       // Postgres which of the two unique indexes this conflict target refers to.
       .onConflictDoNothing({

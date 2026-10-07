@@ -25,6 +25,7 @@ import {
   outcomeReasons,
 } from "../../../db/schema";
 import { ruleFiringRepository } from "../../../repository/rule-firing.repository";
+import { rulesRepository } from "../../../repository/rules.repository";
 import { rulesService } from "../../rules.service";
 import type { RuleConditions } from "@skol-arena/shared";
 import { and, eq } from "drizzle-orm";
@@ -801,6 +802,59 @@ describe("Rules engine — line-up facts & random gating (integration)", () => {
       expect(totals.deliveredCount).toBe(4);
       expect(totals.recapCount).toBe(4);
       expect(totals.seenCount).toBe(0);
+    });
+  });
+
+  describe("awardBadge dating", () => {
+    const playedAt = new Date("2025-03-01T20:00:00Z");
+
+    async function addBadgeRule(recurrence: "per_season" | "once") {
+      const [rule] = await testDb
+        .insert(rules)
+        .values({
+          triggerEvent: "match_submitted",
+          type: "badge",
+          scope: "global",
+          priority: 0,
+          name: `Daté ${recurrence}`,
+          conditions: { all: [{ fact: "scoreWinner", operator: "greaterThanInclusive", value: 0 }] },
+          action: { type: "badge", icon: "fa fa-clock", label: "Daté", description: "Daté", recurrence },
+          isActive: true,
+          createdBy: adminId,
+        })
+        .returning();
+      return rule.id;
+    }
+
+    for (const recurrence of ["per_season", "once"] as const) {
+      it(`dates a retroactive ${recurrence} award from the match, not from the pass`, async () => {
+        const ruleId = await addBadgeRule(recurrence);
+
+        await rulesRepository.awardBadge(playerIds[0], ruleId, matchId, tournamentId, recurrence, playedAt);
+
+        const [award] = await badgesFor(ruleId, playerIds[0]);
+        expect(award.awardedAt.toISOString()).toBe(playedAt.toISOString());
+      });
+
+      it(`dates a live ${recurrence} award from now`, async () => {
+        const ruleId = await addBadgeRule(recurrence);
+        const before = Date.now();
+
+        await rulesRepository.awardBadge(playerIds[0], ruleId, matchId, tournamentId, recurrence);
+
+        const [award] = await badgesFor(ruleId, playerIds[0]);
+        expect(award.awardedAt.getTime()).toBeGreaterThanOrEqual(before - 1000);
+      });
+    }
+
+    it("dates a badge won at finalization from when the match was played", async () => {
+      const ruleId = await addBadgeRule("per_season");
+      const [match] = await testDb.select().from(matches).where(eq(matches.id, matchId));
+
+      await rulesEvaluationService.evaluateMatchSubmitted(matchId, tournamentId);
+
+      const [award] = await badgesFor(ruleId, playerIds[0]);
+      expect(award.awardedAt.toISOString()).toBe(match.playedAt.toISOString());
     });
   });
 });

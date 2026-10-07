@@ -27,6 +27,13 @@ interface EvaluableRule {
   engineVersion: number;
 }
 
+/** The match being evaluated, as every player's evaluation needs it. */
+interface EvaluatedMatch {
+  matchId: string;
+  seasonId: string | null;
+  playedAt?: Date;
+}
+
 /** A player's outcome plus the firings it produced, before they are persisted. */
 interface PlayerEvaluation {
   output: PlayerRulesOutput;
@@ -90,7 +97,7 @@ export class RulesEvaluationService {
    */
   async evaluateMatchSubmitted(matchId: string, seasonId?: string): Promise<Map<string, PlayerRulesOutput>> {
     const result = new Map<string, PlayerRulesOutput>();
-    const { contexts, displayNames } = await rulesContextService.buildMatchSubmittedContexts(matchId);
+    const { contexts, displayNames, playedAt } = await rulesContextService.buildMatchSubmittedContexts(matchId);
     if (contexts.length === 0) return result;
 
     const disciplineId = contexts[0].context.discipline || null;
@@ -119,8 +126,7 @@ export class RulesEvaluationService {
 
     for (const { playerId, context } of contexts) {
       const evaluation = await this.evaluateForPlayer(
-        matchId,
-        seasonId ?? null,
+        { matchId, seasonId: seasonId ?? null, playedAt },
         playerId,
         context,
         engineBundle,
@@ -168,8 +174,7 @@ export class RulesEvaluationService {
   }
 
   private async evaluateForPlayer(
-    matchId: string,
-    seasonId: string | null,
+    { matchId, seasonId, playedAt }: EvaluatedMatch,
     playerId: string,
     context: MatchSubmittedContext,
     engineBundle: { engine: Engine; byId: Map<string, EvaluableRule> },
@@ -228,6 +233,9 @@ export class RulesEvaluationService {
         matchId,
         seasonId,
         badge.recurrence ?? "per_season",
+        // Dated from the match, like a replayed award: a result entered days later
+        // must not make the badge look won on the day it was approved.
+        playedAt,
       );
       firings.push({ ...draft(badgeRule), result: awarded ? "awarded" : "already_held" });
       if (!awarded) continue;

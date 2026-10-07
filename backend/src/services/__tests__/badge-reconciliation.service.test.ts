@@ -10,7 +10,7 @@ const mockRulesRepo = {
   listBadgesByPlayerAndSeason: mock((_p: any, _s: any) => Promise.resolve([] as any[])),
   listBadgeHolderPlayerIds: mock((_r: any) => Promise.resolve([] as string[])),
   listBadgeAwards: mock((_r: any) => Promise.resolve([] as any[])),
-  awardBadge: mock((_p: any, _r: any, _m: any, _s: any, _rec: any) => Promise.resolve({ id: "badge-1" } as any)),
+  awardBadge: mock((_p: any, _r: any, _m: any, _s: any, _rec: any, _at?: any) => Promise.resolve({ id: "badge-1" } as any)),
   revokeBadge: mock((_p: any, _r: any, _s?: any) => Promise.resolve()),
   markBadgesViewed: mock((_ids: any, _p: any) => Promise.resolve()),
   getReconciliationState: mock(() =>
@@ -60,8 +60,11 @@ const STREAK_RULE = {
 /** Same rule, but a lifetime trophy: one award per player whatever the season. */
 const LIFETIME_RULE = { ...STREAK_RULE, action: { ...STREAK_RULE.action, recurrence: "once" } };
 
-function ctx(playerId: string, winStreak: number) {
-  return { contexts: [{ playerId, context: { winStreak } as any }], displayNames: new Map() };
+const PLAYED_AT = new Date("2025-03-01T20:00:00Z");
+const M2_PLAYED_AT = new Date("2025-03-08T20:00:00Z");
+
+function ctx(playerId: string, winStreak: number, playedAt = PLAYED_AT) {
+  return { contexts: [{ playerId, context: { winStreak } as any }], displayNames: new Map(), playedAt };
 }
 
 function resetAll() {
@@ -98,13 +101,13 @@ describe("BadgeReconciliationService.reconcilePlayers", () => {
     mockPlayerMmrRepo.getMmrHistoryOrdered.mockResolvedValue([{ matchId: "m1" }, { matchId: "m2" }] as any);
     mockContextService.buildMatchSubmittedContexts
       .mockResolvedValueOnce(ctx("p1", 1) as any) // m1: no
-      .mockResolvedValueOnce(ctx("p1", 3) as any); // m2: yes
+      .mockResolvedValueOnce(ctx("p1", 3, M2_PLAYED_AT) as any); // m2: yes
     mockRulesRepo.listBadgesByPlayerAndSeason.mockResolvedValue([] as any);
 
     await service.reconcilePlayers("season-1", ["p1"]);
 
     expect(mockRulesRepo.awardBadge).toHaveBeenCalledTimes(1);
-    expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r1", "m2", "season-1", "per_season");
+    expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r1", "m2", "season-1", "per_season", M2_PLAYED_AT);
     expect(mockRulesRepo.revokeBadge).not.toHaveBeenCalled();
     // Retroactive award must not trigger the reveal animation.
     expect(mockRulesRepo.markBadgesViewed).toHaveBeenCalledWith(["badge-1"], "p1");
@@ -149,14 +152,17 @@ describe("BadgeReconciliationService.reconcileRule", () => {
         { playerId: "p2", context: { winStreak: 0 } },
       ],
       displayNames: new Map(),
+      playedAt: PLAYED_AT,
     } as any);
     // p3 currently holds it but no longer qualifies anywhere.
     mockRulesRepo.listBadgeAwards.mockResolvedValue([{ playerId: "p3", seasonId: "season-1" }] as any);
 
     await service.reconcileRule("r1");
 
-    expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r1", "m1", "season-1", "per_season");
-    expect(mockRulesRepo.awardBadge).not.toHaveBeenCalledWith("p2", "r1", expect.anything(), expect.anything(), expect.anything());
+    expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r1", "m1", "season-1", "per_season", PLAYED_AT);
+    expect(mockRulesRepo.awardBadge).not.toHaveBeenCalledWith(
+      "p2", "r1", expect.anything(), expect.anything(), expect.anything(), expect.anything(),
+    );
     expect(mockRulesRepo.revokeBadge).toHaveBeenCalledWith("p3", "r1", "season-1");
   });
 
@@ -170,8 +176,8 @@ describe("BadgeReconciliationService.reconcileRule", () => {
 
     // Two seasons, two awards — but only the first qualifying match of each.
     expect(mockRulesRepo.awardBadge).toHaveBeenCalledTimes(2);
-    expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r1", "m1", "season-1", "per_season");
-    expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r1", "m1", "season-2", "per_season");
+    expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r1", "m1", "season-1", "per_season", PLAYED_AT);
+    expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r1", "m1", "season-2", "per_season", PLAYED_AT);
   });
 
   it("awards a lifetime badge only once across every season", async () => {
@@ -183,7 +189,7 @@ describe("BadgeReconciliationService.reconcileRule", () => {
     await service.reconcileRule("r1");
 
     expect(mockRulesRepo.awardBadge).toHaveBeenCalledTimes(1);
-    expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r1", "m1", "season-1", "once");
+    expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r1", "m1", "season-1", "once", PLAYED_AT);
   });
 
   it("leaves the seasons that still qualify alone when revoking one that no longer does", async () => {

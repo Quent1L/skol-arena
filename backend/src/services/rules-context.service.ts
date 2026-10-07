@@ -37,6 +37,8 @@ export interface MatchSubmittedContexts {
   contexts: PlayerContext[];
   /** playerId -> displayName, for message interpolation of player-ref facts. */
   displayNames: Map<string, string>;
+  /** When the match was played: a badge is dated from it, live or replayed. Absent when there is no context. */
+  playedAt?: Date;
 }
 
 export class RulesContextService {
@@ -127,7 +129,7 @@ export class RulesContextService {
       });
     });
     const contexts = await Promise.all(allPlayerTasks);
-    return { contexts, displayNames };
+    return { contexts, displayNames, playedAt: match.playedAt };
   }
 
   private extractSides(rawSides: Array<{ position: number; score: number | null; entry: { players: { playerId: string }[] } }>): SideInfo[] {
