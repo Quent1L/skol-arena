@@ -343,6 +343,10 @@ export class MmrAnimationEventService {
   // removal + all posterior recalcs, already carried by the posterior rows and
   // the headline net — showing the full-net tier swing on this partial row would
   // be misleading and double-counted. mmrBefore/mmrAfter keep the net snapshot.
+  //
+  // A direct player who never saw the match (seenDelta 0) has nothing to lose,
+  // but its finalization event is still pending: left alone, the recap would
+  // count the cancelled match as played. It is retired instead.
   // Returns player ids that got an event.
   async persistCancellationEvents(
     matchId: string,
@@ -358,11 +362,15 @@ export class MmrAnimationEventService {
       directPlayerIds,
     );
     const rows: UpsertMmrAnimationEventData[] = [];
+    const neverSeen: string[] = [];
 
     for (const [playerId, { mmrBefore, mmrAfter, reason }] of directEntries) {
       const seenDelta = seenDeltas.get(playerId)?.get(matchId)?.seenDelta ?? 0;
       const displayDelta = -seenDelta;
-      if (displayDelta === 0) continue;
+      if (displayDelta === 0) {
+        neverSeen.push(playerId);
+        continue;
+      }
 
       rows.push({
         playerId,
@@ -382,6 +390,7 @@ export class MmrAnimationEventService {
       });
     }
 
+    await mmrAnimationEventRepository.retireUnseenForMatch(tournamentId, matchId, neverSeen);
     await mmrAnimationEventRepository.bulkUpsert(rows);
     return [...new Set(rows.map((r) => r.playerId))];
   }

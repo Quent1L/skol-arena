@@ -39,6 +39,7 @@ const mockAnimRepo = {
   getOfficialEventDeltasForPlayers: mock(() => Promise.resolve(new Map<string, Map<string, { id: string; mmrDelta: number; seenDelta: number }>>())),
   getPendingForPlayer: mock(() => Promise.resolve([] as any[])),
   markViewed: mock(() => Promise.resolve()),
+  retireUnseenForMatch: mock((_seasonId: string, _matchId: string, _playerIds: string[]) => Promise.resolve()),
 };
 mock.module("../../repository/mmr-animation-event.repository", () => ({
   mmrAnimationEventRepository: mockAnimRepo,
@@ -235,9 +236,10 @@ describe("persistCancellationEvents", () => {
     expect(rows[0].tierAfterName).toBeNull();
     expect(affected).toEqual(["p1"]);
     expect(mockWs.send.mock.calls.length).toBe(0); // persist-only
+    expect(mockAnimRepo.retireUnseenForMatch.mock.calls).toEqual([["season-1", "m-cancelled", []]]);
   });
 
-  it("ignores a direct player with no previously seen delta (displayDelta 0)", async () => {
+  it("retires the pending event of a direct player who never saw the match, instead of leaving it in the recap", async () => {
     mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() => Promise.resolve(new Map()));
     const changes = new Map<string, any>([
       ["p1", { mmrBefore: 1000, mmrAfter: 990, reason: "match_cancelled" }],
@@ -247,6 +249,26 @@ describe("persistCancellationEvents", () => {
 
     expect(bulkRows().length).toBe(0);
     expect(affected).toEqual([]);
+    expect(mockAnimRepo.retireUnseenForMatch.mock.calls).toEqual([["season-1", "m-cancelled", ["p1"]]]);
+  });
+
+  it("mixed: a seen player gets the removal row, an unseen one is retired", async () => {
+    mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() =>
+      Promise.resolve(new Map([
+        ["p1", new Map([["m-cancelled", { id: "evt-1", mmrDelta: 12, seenDelta: 12 }]])],
+        ["p3", new Map([["m-cancelled", { id: "evt-3", mmrDelta: -15, seenDelta: 0 }]])],
+      ])),
+    );
+    const changes = new Map<string, any>([
+      ["p1", { mmrBefore: 1012, mmrAfter: 1000, reason: "match_cancelled" }],
+      ["p3", { mmrBefore: 985, mmrAfter: 1000, reason: "match_cancelled" }],
+    ]);
+
+    const affected = await mmrAnimationEventService.persistCancellationEvents("m-cancelled", "season-1", changes);
+
+    expect(bulkRows().map((r: any) => [r.playerId, r.displayDelta])).toEqual([["p1", -12]]);
+    expect(affected).toEqual(["p1"]);
+    expect(mockAnimRepo.retireUnseenForMatch.mock.calls).toEqual([["season-1", "m-cancelled", ["p3"]]]);
   });
 });
 

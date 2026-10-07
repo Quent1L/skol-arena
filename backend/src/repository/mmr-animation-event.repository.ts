@@ -221,6 +221,26 @@ export class MmrAnimationEventRepository {
     return result;
   }
 
+  // A cancelled match the player never saw: its finalization event is still
+  // pending and would surface in the recap as a match actually played. Retire
+  // it — viewed, nothing to display — rather than delete it, so a rule firing
+  // pointing at it keeps its link.
+  async retireUnseenForMatch(seasonId: string, matchId: string, playerIds: string[]) {
+    if (playerIds.length === 0) return;
+    await db
+      .update(mmrAnimationEvents)
+      .set({ viewedAt: new Date(), reason: "match_cancelled", displayDelta: 0 })
+      .where(
+        and(
+          eq(mmrAnimationEvents.seasonId, seasonId),
+          eq(mmrAnimationEvents.matchId, matchId),
+          inArray(mmrAnimationEvents.playerId, playerIds),
+          isNull(mmrAnimationEvents.viewedAt),
+          eq(mmrAnimationEvents.seenDelta, 0),
+        ),
+      );
+  }
+
   // Mark events viewed and advance their seenDelta baseline to the current full
   // delta — so a later recalc of the same match shows only the change since now.
   async markViewed(ids: string[]) {
