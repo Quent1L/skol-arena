@@ -247,6 +247,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "MATCH_MESSAGE",
   "BADGE_AWARDED",
   "BADGE_REVOKED",
+  "MATCH_RESULT_CORRECTED",
 ]);
 
 export const matchMessageKindEnum = pgEnum("match_message_kind", [

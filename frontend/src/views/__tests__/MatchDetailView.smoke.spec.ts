@@ -269,3 +269,50 @@ describe('MatchDetailView (render smoke)', () => {
     expect(wrapper.text()).toContain('Toto')
   })
 })
+
+describe('MatchDetailView (finalized result correction)', () => {
+  const HOUR = 60 * 60 * 1000
+  const selfValidated = (hoursAgo: number, reportedBy = 'p1') =>
+    makeMatch('finalized', {
+      result: {
+        reportedBy,
+        reportedAt: new Date(Date.now() - hoursAgo * HOUR),
+        finalizedAt: new Date(Date.now() - hoursAgo * HOUR),
+        finalizationReason: 'trust_score',
+      },
+    } as Partial<ClientMatchDetail>)
+
+  const actionLabels = (wrapper: Awaited<ReturnType<typeof mountView>>) =>
+    ((wrapper.vm as unknown as { actionItems: { label: string }[] }).actionItems ?? []).map(
+      (i) => i.label,
+    )
+
+  it('offers the author to correct and cancel a result they just self-validated', async () => {
+    const labels = actionLabels(await mountView(selfValidated(1)))
+    expect(labels).toContain(fr.matchDetailView.correctResult)
+    expect(labels).toContain(fr.matchDetailView.cancelMatch)
+  })
+
+  it('withdraws both once the author window has closed', async () => {
+    const labels = actionLabels(await mountView(selfValidated(49)))
+    expect(labels).not.toContain(fr.matchDetailView.correctResult)
+    expect(labels).not.toContain(fr.matchDetailView.cancelMatch)
+  })
+
+  it("stays open past 48h while the opponent contests, not when the author contests themselves", async () => {
+    const contested = (playerId: string) => {
+      const m = selfValidated(60)
+      m.confirmations = [{ playerId, isContested: true, isPostFinalization: true } as never]
+      return m
+    }
+    expect(actionLabels(await mountView(contested('p2')))).toContain(fr.matchDetailView.correctResult)
+    expect(actionLabels(await mountView(contested('p1')))).not.toContain(
+      fr.matchDetailView.correctResult,
+    )
+  })
+
+  it('never offers it to the opponent', async () => {
+    const labels = actionLabels(await mountView(selfValidated(1, 'p2')))
+    expect(labels).not.toContain(fr.matchDetailView.correctResult)
+  })
+})

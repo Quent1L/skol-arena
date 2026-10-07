@@ -51,7 +51,6 @@ export const matchStatusEnum = [
   "disputed",
   "cancelled",
   "finalized",
-  "cancelled"
 ] as const;
 export type MatchStatus = (typeof matchStatusEnum)[number];
 

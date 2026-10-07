@@ -9,6 +9,8 @@ export interface EventDelta {
   id: string;
   mmrDelta: number;
   seenDelta: number;
+  /** The player opened this event at least once. Set by the multi-player read only. */
+  viewed?: boolean;
 }
 
 export interface UpsertMmrAnimationEventData {
@@ -204,6 +206,7 @@ export class MmrAnimationEventRepository {
         matchId: mmrAnimationEvents.matchId,
         mmrDelta: mmrAnimationEvents.mmrDelta,
         seenDelta: mmrAnimationEvents.seenDelta,
+        viewedAt: mmrAnimationEvents.viewedAt,
       })
       .from(mmrAnimationEvents)
       .where(
@@ -215,10 +218,26 @@ export class MmrAnimationEventRepository {
       );
     for (const r of rows) {
       const byMatch = result.get(r.playerId) ?? new Map();
-      byMatch.set(r.matchId, { id: r.id, mmrDelta: r.mmrDelta, seenDelta: r.seenDelta ?? 0 });
+      const seenDelta = r.seenDelta ?? 0;
+      byMatch.set(r.matchId, { id: r.id, mmrDelta: r.mmrDelta, seenDelta, viewed: r.viewedAt !== null || seenDelta !== 0 });
       result.set(r.playerId, byMatch);
     }
     return result;
+  }
+
+  // A corrected match's message was written for the result it no longer has.
+  async clearMessageForMatch(seasonId: string, matchId: string, playerIds: string[]) {
+    if (playerIds.length === 0) return;
+    await db
+      .update(mmrAnimationEvents)
+      .set({ message: null })
+      .where(
+        and(
+          eq(mmrAnimationEvents.seasonId, seasonId),
+          eq(mmrAnimationEvents.matchId, matchId),
+          inArray(mmrAnimationEvents.playerId, playerIds),
+        ),
+      );
   }
 
   // A cancelled match the player never saw: its finalization event is still

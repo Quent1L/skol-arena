@@ -355,6 +355,14 @@ export class MmrCalculationService {
     return this.cascadeRecalculateFromMatch(matchId, seasonId, cancelledMatchPlayedAt, "match_cancelled");
   }
 
+  async cascadeRecalculateAfterCorrection(
+    matchId: string,
+    seasonId: string,
+    playedAt: Date,
+  ): Promise<Map<string, { mmrBefore: number; mmrAfter: number; reason: MmrAnimationEventReason }>> {
+    return this.cascadeRecalculateFromMatch(matchId, seasonId, playedAt, "match_corrected");
+  }
+
   /**
    * Generic wave-propagation recalc: recomputes the match's direct participants
    * from fromPlayedAt forward, then repeatedly finds third parties who share

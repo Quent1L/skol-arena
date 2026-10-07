@@ -45,6 +45,10 @@ export class WebSocketService {
     this.tournamentSubscriptions.get(tournamentId)!.add(userId);
   }
 
+  public isSubscribedToTournament(tournamentId: string, userId: string): boolean {
+    return this.tournamentSubscriptions.get(tournamentId)?.has(userId) ?? false;
+  }
+
   public unsubscribeFromTournament(tournamentId: string, userId: string): void {
     const subs = this.tournamentSubscriptions.get(tournamentId);
     if (subs) {

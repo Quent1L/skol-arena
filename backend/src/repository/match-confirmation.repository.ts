@@ -148,6 +148,21 @@ export class MatchConfirmationRepository {
   }
 
   /**
+   * Drops every post-finalization contestation of a match, once a correction or a
+   * cancellation has answered them.
+   */
+  async deletePostFinalizationByMatchId(matchId: string) {
+    await db
+      .delete(matchConfirmations)
+      .where(
+        and(
+          eq(matchConfirmations.matchId, matchId),
+          eq(matchConfirmations.isPostFinalization, true),
+        ),
+      );
+  }
+
+  /**
    * Check if a player already submitted a post-finalization dispute.
    */
   async hasPlayerDisputedPostFinalization(matchId: string, playerId: string): Promise<boolean> {

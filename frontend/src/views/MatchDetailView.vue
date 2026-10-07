@@ -276,7 +276,11 @@ import type {
   MmrRecapReadyPayload,
   BadgeAnimationWsPayload,
 } from '@skol-arena/shared/types/index'
-import { POST_FINALIZATION_DISPUTE_DAYS } from '@skol-arena/shared/types/index'
+import {
+  POST_FINALIZATION_DISPUTE_DAYS,
+  getFinalizedAmendRights,
+  hasOpposingPostDispute,
+} from '@skol-arena/shared/types/index'
 import MatchConfirmation from '@/components/match/MatchConfirmation.vue'
 import MatchMessageThread from '@/components/match/MatchMessageThread.vue'
 import MatchSidePanel from '@/components/match/MatchSidePanel.vue'
@@ -536,19 +540,28 @@ const postDisputerNames = computed(() =>
     .join(', '),
 )
 
-const canCancelFinalizedMatch = computed(() => {
-  if (!match.value || !appUser.value) return false
-  if (match.value.status !== 'finalized') return false
-  const mode = match.value.tournament?.mode
-  if (!['championship', 'ranked'].includes(mode ?? '')) return false
-  const reason = match.value.result?.finalizationReason
-  if (!['auto_validation', 'trust_score'].includes(reason ?? '')) return false
-  if (match.value.result?.reportedBy !== appUser.value.id) return false
-  const finalizedAt = match.value.result?.finalizedAt
-  if (!finalizedAt) return false
-  const hoursSince = (Date.now() - new Date(finalizedAt as Date).getTime()) / (1000 * 60 * 60)
-  return hoursSince <= 48
+/** Same rule as the server: organizers always, the author within their window. */
+const finalizedAmendRights = computed(() => {
+  if (!match.value || !appUser.value) return null
+  return getFinalizedAmendRights(
+    {
+      status: match.value.status,
+      mode: match.value.tournament?.mode,
+      finalizationReason: match.value.result?.finalizationReason,
+      finalizedAt: match.value.result?.finalizedAt,
+      reportedBy: match.value.result?.reportedBy,
+      hasOpenPostDispute: hasOpposingPostDispute(
+        match.value.confirmations,
+        match.value.sides,
+        match.value.result?.reportedBy,
+      ),
+    },
+    { userId: appUser.value.id, canManage: canManageMatch.value },
+  )
 })
+
+const canCancelFinalizedMatch = computed(() => finalizedAmendRights.value?.canCancel ?? false)
+const canCorrectFinalizedMatch = computed(() => finalizedAmendRights.value?.canCorrect ?? false)
 
 const canCancelMatch = computed(() => {
   if (!match.value) return false
@@ -563,11 +576,13 @@ const canCancelMatch = computed(() => {
 
 /**
  * The author keeps the pen until the match is finalized: correcting the entry is how a
- * disagreement is resolved, so it stays available on a contested match too.
+ * disagreement is resolved, so it stays available on a contested match too. Once
+ * finalized, only its result can still be corrected, under the amend rights.
  */
 const canEditMatch = computed(() => {
   if (!match.value) return false
-  if (match.value.status === 'finalized' || match.value.status === 'cancelled') return false
+  if (match.value.status === 'finalized') return canCorrectFinalizedMatch.value
+  if (match.value.status === 'cancelled') return false
   if (match.value.status === 'scheduled') {
     return isParticipant.value || canManageMatch.value
   }
@@ -615,7 +630,11 @@ const actionItems = computed<MenuItem[]>(() => {
   const items: MenuItem[] = []
   if (canEditMatch.value) {
     items.push({
-      label: t('matchDetailView.completeMatch'),
+      label: t(
+        match.value?.status === 'finalized'
+          ? 'matchDetailView.correctResult'
+          : 'matchDetailView.completeMatch',
+      ),
       icon: 'fa fa-pen',
       command: completeMatch,
     })

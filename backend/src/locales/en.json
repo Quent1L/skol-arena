@@ -21,7 +21,9 @@
     "MATCH_DISPUTE_ESCALATED_TITLE": "Dispute to arbitrate: {{disputerName}} contests a result",
     "MATCH_DISPUTE_ESCALATED_MESSAGE": "⚖️ {{tournamentName}}\n📅 {{matchDate}}\nThis match will not validate on its own: correct the entry or settle the result.",
     "MATCH_MESSAGE_TITLE": "{{authorName}} wrote on a match",
-    "MATCH_MESSAGE_MESSAGE": "💬 New message in the match discussion."
+    "MATCH_MESSAGE_MESSAGE": "💬 New message in the match discussion.",
+    "MATCH_RESULT_CORRECTED_TITLE": "{{authorName}} corrected a match result",
+    "MATCH_RESULT_CORRECTED_MESSAGE": "✏️ {{tournamentName}}\n📅 {{matchDate}}\nThe result of this match changed: see the match thread for details."
   },
   "emails": {
     "password_reset_subject": "Password Reset",
@@ -93,6 +95,11 @@
     "OUTCOME_REASON_IN_USE": "This outcome reason is used by existing matches and cannot be deleted",
     "RESOURCE_IN_USE": "This item is referenced by other data and cannot be deleted",
     "MATCH_ALREADY_FINALIZED": "Cannot modify a finalized match",
+    "MATCH_CANNOT_BE_CANCELLED": "This match cannot be cancelled",
+    "CANCEL_WINDOW_EXPIRED": "The time to cancel this match has passed",
+    "CORRECTION_WINDOW_EXPIRED": "The time to correct this result has passed",
+    "MATCH_CORRECTION_FIELDS_ONLY": "Only the result of a finalized match can be corrected",
+    "MATCH_RESULT_UNCHANGED": "The result has not changed",
     "INVALID_TOURNAMENT_MODE": "Invalid tournament mode",
     "BRACKET_CANNOT_REGENERATE": "Cannot regenerate bracket for a tournament in this state",
     "SOURCE_TOURNAMENT_NOT_FOUND": "Source tournament not found",
@@ -179,6 +186,9 @@
     "DISPUTE_WITHDRAWN": "{{authorName}} withdrew their dispute and accepted the result.",
     "RESULT_DISPUTED_POST": "{{authorName}} contests the finalized result. An organizer has been notified.",
     "POST_DISPUTE_WITHDRAWN": "{{authorName}} withdrew their contestation.",
-    "MATCH_FINALIZED": "Result finalized."
+    "MATCH_FINALIZED": "Result finalized.",
+    "RESULT_CORRECTED": "{{authorName}} corrected the result: {{previousScore}} → {{newScore}}.",
+    "RESULT_CORRECTED_BY_ADMIN": "{{authorName}} (organizer) corrected the result: {{previousScore}} → {{newScore}}.",
+    "MATCH_CANCELLED": "{{authorName}} cancelled the match."
   }
 }

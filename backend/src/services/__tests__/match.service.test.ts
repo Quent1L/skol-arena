@@ -66,7 +66,7 @@ const matchUpdatesBroadcast: string[] = [];
 // MMR recalculation is offloaded to an async job queue (graphile-worker).
 // finalizeMatch only enqueues the job; mock the queue so tests neither hit a
 // real DB nor expect synchronous MMR work, and can assert the enqueue happened.
-const mmrQueueCalls = { finalization: 0, cascade: 0 };
+const mmrQueueCalls = { finalization: 0, cascade: 0, correction: 0 };
 mock.module("../mmr-job-queue.service", () => ({
   enqueueMmrFinalization: async () => {
     mmrQueueCalls.finalization += 1;
@@ -74,11 +74,15 @@ mock.module("../mmr-job-queue.service", () => ({
   enqueueMmrCascade: async () => {
     mmrQueueCalls.cascade += 1;
   },
+  enqueueMmrCorrection: async () => {
+    mmrQueueCalls.correction += 1;
+  },
 }));
 
 beforeEach(() => {
   mmrQueueCalls.finalization = 0;
   mmrQueueCalls.cascade = 0;
+  mmrQueueCalls.correction = 0;
 
   // Default implementations (can be overridden per-test)
   repo = matchRepository as unknown as Partial<MatchRepository>;
@@ -129,6 +133,7 @@ beforeEach(() => {
   confRepo.upsert = async (_data: any) => ({ id: "conf-1", ..._data }) as any;
   confRepo.getByMatchId = async () => [];
   confRepo.hasAnyContestation = async () => false;
+  confRepo.deletePostFinalizationByMatchId = async () => undefined;
 
   // Mock notification service
   notifService =
@@ -2882,5 +2887,225 @@ describe("MatchService - trust score", () => {
   it("an opponent disputing a settled result resets the author's trust score", async () => {
     await matchService.respondToMatch("m-fin", { type: "dispute", reason: "wrong" } as any, "p1");
     expect(reset).toEqual(["p2"]);
+  });
+});
+
+describe("MatchService - Finalized result correction", () => {
+  const HOUR = 60 * 60 * 1000;
+  const playedAt = new Date("2026-10-01T18:00:00.000Z");
+  const opposingDispute = { playerId: "p-opponent", isContested: true, isPostFinalization: true };
+  const finalized = (overrides: Record<string, unknown> = {}, confirmations: unknown[] = []) =>
+    ({
+      id: "m-fin",
+      tournamentId: "t-1",
+      status: "finalized",
+      playedAt,
+      outcomeTypeId: "ot-1",
+      outcomeReasonId: null,
+      confirmations,
+      sides: [
+        { position: 1, score: 3, isWinner: true, players: [{ id: "p-author", displayName: "Ann" }] },
+        { position: 2, score: 1, isWinner: false, players: [{ id: "p-opponent", displayName: "Bob" }] },
+      ],
+      result: {
+        reportedBy: "p-author",
+        finalizedAt: new Date(Date.now() - HOUR),
+        finalizationReason: "trust_score",
+        ...overrides,
+      },
+    }) as any;
+  const correction = { scoreA: 1, scoreB: 3, winnerPosition: 2, playedAt: playedAt.toISOString() } as any;
+
+  let updates: UpdateMatchData[];
+  let decremented: string[];
+  let systemKeys: string[];
+  let correctedNotified: string[];
+  let postDisputesLifted: string[];
+  let correctionEffects: string[];
+
+  beforeEach(async () => {
+    updates = [];
+    decremented = [];
+    systemKeys = [];
+    correctedNotified = [];
+    postDisputesLifted = [];
+    correctionEffects = [];
+    repo.getById = async () => finalized();
+    repo.getTournament = async () =>
+      ({ id: "t-1", mode: "ranked", scoreEnabled: true, validationMode: "auto", name: "S" }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => {
+      updates.push(data);
+      return { id: _id } as any;
+    };
+    repo.isUserInMatch = async () => true;
+    usrRepo.decrementTrustScore = async (id: string) => {
+      decremented.push(id);
+    };
+    (matchMessageService as any).postSystem = async (_id: string, key: string) => {
+      systemKeys.push(key);
+    };
+    confRepo.deletePostFinalizationByMatchId = async (id: string) => {
+      postDisputesLifted.push(id);
+    };
+    (matchFinalizationOrchestrator as any).runPostCorrectionEffects = async (id: string) => {
+      correctionEffects.push(id);
+    };
+    (matchFinalizationOrchestrator as any).runPostCancellationEffects = async () => undefined;
+    const { matchNotificationBuilder } = await import("../match-notification.builder");
+    (matchNotificationBuilder as any).notifyResultCorrected = async (
+      _match: unknown,
+      _tournamentName: string,
+      corrector: { id: string },
+    ) => {
+      correctedNotified.push(corrector.id);
+    };
+  });
+
+  it("lets the author correct a self-validated result within the window, keeping it finalized", async () => {
+    await matchService.updateMatch("m-fin", correction, "p-author");
+
+    expect(updates).toHaveLength(1);
+    expect(updates[0]).toEqual({ scoreA: 1, scoreB: 3, winnerPosition: 2 });
+    expect(updates[0].status).toBeUndefined();
+    expect(updates[0].finalizedAt).toBeUndefined();
+    expect(systemKeys).toEqual(["matchMessages.RESULT_CORRECTED"]);
+    expect(correctedNotified).toEqual(["p-author"]);
+    expect(correctionEffects).toEqual(["m-fin"]);
+    expect(decremented).toEqual([]);
+    expect(matchUpdatesBroadcast).toContain("m-fin");
+  });
+
+  it("refuses a correction that changes nothing, before any side effect", async () => {
+    repo.getById = async () => finalized({}, [opposingDispute]);
+    const unchanged = { scoreA: 3, scoreB: 1, winnerPosition: 1, outcomeTypeId: "ot-1", playedAt: playedAt.toISOString() } as any;
+
+    const err = await matchService.updateMatch("m-fin", unchanged, "p-author").catch((e) => e);
+
+    expect((err as AppError).code).toBe(ErrorCode.MATCH_RESULT_UNCHANGED);
+    expect(updates).toHaveLength(0);
+    expect(postDisputesLifted).toEqual([]);
+    expect(correctedNotified).toEqual([]);
+  });
+
+  it("accepts a correction of the outcome type alone", async () => {
+    const outcomeOnly = { scoreA: 3, scoreB: 1, winnerPosition: 1, outcomeTypeId: "ot-2", playedAt: playedAt.toISOString() } as any;
+    await matchService.updateMatch("m-fin", outcomeOnly, "p-author");
+    expect(updates).toHaveLength(1);
+  });
+
+  it("refuses the author once the window has closed", async () => {
+    repo.getById = async () => finalized({ finalizedAt: new Date(Date.now() - 49 * HOUR) });
+    const err = await matchService.updateMatch("m-fin", correction, "p-author").catch((e) => e);
+    expect(err).toBeInstanceOf(BadRequestError);
+    expect((err as AppError).code).toBe(ErrorCode.CORRECTION_WINDOW_EXPIRED);
+  });
+
+  it("keeps the author's window open for the dispute window while the other side contests", async () => {
+    repo.getById = async () =>
+      finalized({ finalizedAt: new Date(Date.now() - 5 * 24 * HOUR) }, [opposingDispute]);
+
+    await matchService.updateMatch("m-fin", correction, "p-author");
+
+    expect(updates).toHaveLength(1);
+    expect(postDisputesLifted).toEqual(["m-fin"]);
+  });
+
+  it("does not let the author stretch their window by contesting their own result", async () => {
+    const ownDispute = { playerId: "p-author", isContested: true, isPostFinalization: true };
+    repo.getById = async () =>
+      finalized({ finalizedAt: new Date(Date.now() - 60 * HOUR) }, [ownDispute]);
+
+    const err = await matchService.updateMatch("m-fin", correction, "p-author").catch((e) => e);
+
+    expect((err as AppError).code).toBe(ErrorCode.CORRECTION_WINDOW_EXPIRED);
+  });
+
+  it("refuses an opponent", async () => {
+    await expect(matchService.updateMatch("m-fin", correction, "p-opponent")).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
+  });
+
+  it("refuses a kiosk, even the one that entered the result", async () => {
+    repo.getById = async () => finalized({ reportedBy: "u-kiosk" });
+    usrRepo.getById = async (id: string) => ({ id, role: "kiosk", displayName: "Kiosk" }) as any;
+
+    await expect(matchService.updateMatch("m-fin", correction, "u-kiosk")).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
+    expect(updates).toHaveLength(0);
+  });
+
+  it("refuses the author on a result the opponents signed", async () => {
+    repo.getById = async () => finalized({ finalizationReason: "consensus" });
+    const err = await matchService.updateMatch("m-fin", correction, "p-author").catch((e) => e);
+    expect((err as AppError).code).toBe(ErrorCode.MATCH_ALREADY_FINALIZED);
+  });
+
+  it("refuses to move the date of a finalized match", async () => {
+    const moved = { ...correction, playedAt: new Date(playedAt.getTime() + HOUR).toISOString() };
+    const err = await matchService.updateMatch("m-fin", moved, "p-author").catch((e) => e);
+    expect((err as AppError).code).toBe(ErrorCode.MATCH_CORRECTION_FIELDS_ONLY);
+    expect(updates).toHaveLength(0);
+  });
+
+  it("refuses a bracket match, even to an organizer", async () => {
+    repo.getTournament = async () => ({ id: "t-1", mode: "bracket", scoreEnabled: true }) as any;
+    usrRepo.getById = async (id: string) => ({ id, role: "super_admin", displayName: "" }) as any;
+    await expect(matchService.updateMatch("m-fin", correction, "u-admin")).rejects.toBeInstanceOf(
+      BadRequestError,
+    );
+  });
+
+  it("lets an organizer correct any finalized match, at any time, as an admin override", async () => {
+    repo.getById = async () =>
+      finalized({ finalizationReason: "consensus", finalizedAt: new Date(Date.now() - 90 * 24 * HOUR) });
+    tourRepo.isUserTournamentAdmin = async () => true;
+
+    await matchService.updateMatch("m-fin", correction, "u-admin");
+
+    expect(updates[0].finalizationReason).toBe("admin_override");
+    expect(updates[0].finalizedBy).toBe("u-admin");
+    expect(systemKeys).toEqual(["matchMessages.RESULT_CORRECTED_BY_ADMIN"]);
+    // A result everyone signed was nobody's fault.
+    expect(decremented).toEqual([]);
+  });
+
+  it("charges the author a trust point when an organizer fixes a contested self-validated result", async () => {
+    repo.getById = async () => finalized({}, [opposingDispute]);
+    tourRepo.isUserTournamentAdmin = async () => true;
+
+    await matchService.updateMatch("m-fin", correction, "u-admin");
+
+    expect(decremented).toEqual(["p-author"]);
+    expect(postDisputesLifted).toEqual(["m-fin"]);
+  });
+
+  it("lets an organizer cancel any finalized match, at any time", async () => {
+    repo.getById = async () =>
+      finalized({ finalizationReason: "admin_override", finalizedAt: new Date(Date.now() - 90 * 24 * HOUR) });
+    tourRepo.isUserTournamentAdmin = async () => true;
+
+    await matchService.cancelMatch("m-fin", "u-admin");
+
+    expect(updates[0].status).toBe("cancelled");
+    expect(systemKeys).toEqual(["matchMessages.MATCH_CANCELLED"]);
+    expect(decremented).toEqual([]);
+  });
+
+  it("lets the author cancel past 48h while the other side contests the result", async () => {
+    repo.getById = async () =>
+      finalized({ finalizedAt: new Date(Date.now() - 3 * 24 * HOUR) }, [opposingDispute]);
+
+    await matchService.cancelMatch("m-fin", "p-author");
+
+    expect(updates[0].status).toBe("cancelled");
+    expect(decremented).toEqual(["p-author"]);
+  });
+
+  it("still refuses the author past 48h when nobody contests", async () => {
+    repo.getById = async () => finalized({ finalizedAt: new Date(Date.now() - 3 * 24 * HOUR) });
+    const err = await matchService.cancelMatch("m-fin", "p-author").catch((e) => e);
+    expect((err as AppError).code).toBe(ErrorCode.CANCEL_WINDOW_EXPIRED);
   });
 });

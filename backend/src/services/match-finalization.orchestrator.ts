@@ -38,6 +38,19 @@ export class MatchFinalizationOrchestrator {
     await this.refreshStandingsAndStats(tournamentId, matchId)
   }
 
+  /**
+   * A corrected result is replayed from its own date: MMR is rebuilt in the match's
+   * queue, after any finalization still pending there, and the standings and stats
+   * are recomputed or dropped like after any other change of result.
+   */
+  async runPostCorrectionEffects(matchId: string, tournamentId: string): Promise<void> {
+    const rankedConfig = await rankedSeasonRepository.getConfigByTournamentId(tournamentId)
+    if (rankedConfig) {
+      await mmrJobQueueService.enqueueMmrCorrection(matchId, tournamentId)
+    }
+    await this.refreshStandingsAndStats(tournamentId, matchId)
+  }
+
   private async refreshStandingsAndStats(tournamentId: string, matchId: string): Promise<void> {
     const tournament = await matchRepository.getTournament(tournamentId)
     if (tournament?.mode === 'championship') {

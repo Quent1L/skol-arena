@@ -147,6 +147,19 @@ describe('MmrRecapCard', () => {
     expect(document.body.textContent).toContain('1000 → 1060')
   })
 
+  it('a corrected result gets its own badge and its own count in the summary', () => {
+    mountCard([
+      ev({ reason: 'match_corrected', mmrDelta: -12, displayDelta: -27 }),
+      ev({ reason: 'recalculated', mmrDelta: 8, displayDelta: 2 }),
+    ])
+
+    expect(document.body.textContent).toContain('mmrRecapCard.corrected')
+    expect(summaryEl()).toBe(
+      'mmrRecapCard.recalcMatchesSingular#1, mmrRecapCard.correctedMatchesSingular#1',
+    )
+    expect(netEl()).toBe('-25')
+  })
+
   it('recalculation: the bar follows the announced differential, not the rewritten chain', async () => {
     // A recalculation rewrites mmrBefore/mmrAfter on matches already seen: starting from
     // events[0].mmrBefore would draw a long climb under a negative title.

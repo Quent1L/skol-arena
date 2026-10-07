@@ -309,6 +309,16 @@ export const notificationService = {
     return await notificationRepository.delete(notificationId, userId);
   },
 
+  async getUserIdsWithUnreadOfTypeForMatch(
+    matchId: string,
+    type: CreateNotification["type"],
+  ) {
+    return await notificationRepository.getUserIdsWithUnreadOfTypeForMatch(
+      matchId,
+      type,
+    );
+  },
+
   async hasUnreadOfTypeForMatch(
     userId: string,
     matchId: string,

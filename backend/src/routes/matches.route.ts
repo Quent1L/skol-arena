@@ -104,6 +104,11 @@ matches.patch(
   describe({
     tags: TAGS,
     summary: "Update a match",
+    description:
+      "On a finalized ranked or championship match, only the result (winner, score, outcome) " +
+      "can be corrected: by its author within 48 hours of a timer or trust-score " +
+      "finalization (7 days while a contestation is open), by a tournament organizer at " +
+      "any time. The match stays finalized and its MMR and standings are replayed.",
     auth: true,
     role: true,
     notFound: true,

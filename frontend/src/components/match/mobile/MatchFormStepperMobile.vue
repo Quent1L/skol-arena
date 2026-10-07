@@ -7,7 +7,11 @@
       <Button icon="fas fa-arrow-left" text rounded class="mr-2" @click="goBack" />
       <h1 class="text-lg font-bold">
         {{
-          isEditMode ? t('matchFormStepperMobile.titleEdit') : t('matchFormStepperMobile.titleNew')
+          props.resultOnly
+            ? t('matchFormStepperMobile.titleCorrect')
+            : isEditMode
+              ? t('matchFormStepperMobile.titleEdit')
+              : t('matchFormStepperMobile.titleNew')
         }}
       </h1>
     </div>
@@ -203,6 +207,8 @@ interface Props {
   tournamentId: string
   matchId?: string
   bracketLocked?: boolean
+  /** Correction of a finalized match: only the result step is shown. */
+  resultOnly?: boolean
 }
 
 const props = defineProps<Props>()
@@ -237,6 +243,7 @@ const isFutureDate = computed(
 const needsComposition = computed(() => formState.value.allPlayerIds.length > 2)
 
 const visibleSteps = computed(() => {
+  if (props.resultOnly) return [{ value: 'result', icon: 'fas fa-trophy' }]
   const steps: { value: string; icon: string }[] = [{ value: 'when', icon: 'fas fa-calendar-alt' }]
   if (!props.bracketLocked && isFlexMode.value)
     steps.push({ value: 'participants', icon: 'fas fa-users' })
@@ -341,7 +348,9 @@ function goToStepAfterComposition() {
 }
 
 function goBackFromResult() {
-  if (props.bracketLocked) {
+  if (props.resultOnly) {
+    router.back()
+  } else if (props.bracketLocked) {
     activeStep.value = 'when'
   } else if (isStaticMode.value) {
     activeStep.value = 'teams'

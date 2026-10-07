@@ -40,6 +40,7 @@ const mockAnimRepo = {
   getPendingForPlayer: mock(() => Promise.resolve([] as any[])),
   markViewed: mock(() => Promise.resolve()),
   retireUnseenForMatch: mock((_seasonId: string, _matchId: string, _playerIds: string[]) => Promise.resolve()),
+  clearMessageForMatch: mock((_seasonId: string, _matchId: string, _playerIds: string[]) => Promise.resolve()),
 };
 mock.module("../../repository/mmr-animation-event.repository", () => ({
   mmrAnimationEventRepository: mockAnimRepo,
@@ -477,5 +478,86 @@ describe("getPendingForPlayer", () => {
 
     expect(out.find((e) => e.matchId === "m1")?.displayDelta).toBe(12); // null → fallback mmrDelta
     expect(out.find((e) => e.matchId === "m2")?.displayDelta).toBe(4); // preserved value
+  });
+});
+
+// ─── persistCorrectionEvents (direct players of a corrected match) ───────────────
+
+describe("persistCorrectionEvents", () => {
+  it("re-queues a seen match as match_corrected, showing only the change since the view", async () => {
+    // p1 saw +15 for m1; the corrected result now gives them -12.
+    mockPlayerMmrRepo.getMmrHistoryOrderedForPlayers.mockImplementation(() =>
+      Promise.resolve(new Map([["p1", [historyRow("m0", 5), historyRow("m1", -12)]]])),
+    );
+    mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() =>
+      Promise.resolve(new Map([["p1", new Map([["m1", { id: "e1", mmrDelta: 15, seenDelta: 15, viewed: true }]])]])),
+    );
+
+    const affected = await mmrAnimationEventService.persistCorrectionEvents("m1", "season-1", ["p1"]);
+
+    const rows = bulkRows();
+    expect(rows.length).toBe(1);
+    expect(rows[0].matchId).toBe("m1");
+    expect(rows[0].reason).toBe("match_corrected");
+    expect(rows[0].mmrDelta).toBe(-12);
+    expect(rows[0].displayDelta).toBe(-27);
+    expect(affected).toEqual(["p1"]);
+    expect(mockWs.send.mock.calls.length).toBe(0);
+  });
+
+  it("rewrites a never-seen reveal as a plain finalization with the corrected delta", async () => {
+    mockPlayerMmrRepo.getMmrHistoryOrderedForPlayers.mockImplementation(() =>
+      Promise.resolve(new Map([["p2", [historyRow("m1", 12)]]])),
+    );
+    mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() =>
+      Promise.resolve(new Map([["p2", new Map([["m1", { id: "e2", mmrDelta: -15, seenDelta: 0, viewed: false }]])]])),
+    );
+
+    await mmrAnimationEventService.persistCorrectionEvents("m1", "season-1", ["p2"]);
+
+    const rows = bulkRows();
+    expect(rows[0].reason).toBe("match_finalized");
+    expect(rows[0].displayDelta).toBe(12);
+  });
+
+  it("writes no '+0 corrected' row when the player's delta did not move", async () => {
+    mockPlayerMmrRepo.getMmrHistoryOrderedForPlayers.mockImplementation(() =>
+      Promise.resolve(new Map([["p1", [historyRow("m1", 15)]]])),
+    );
+    mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() =>
+      Promise.resolve(new Map([["p1", new Map([["m1", { id: "e1", mmrDelta: 15, seenDelta: 15, viewed: true }]])]])),
+    );
+
+    const affected = await mmrAnimationEventService.persistCorrectionEvents("m1", "season-1", ["p1"]);
+
+    expect(bulkRows().length).toBe(0);
+    expect(affected).toEqual([]);
+  });
+
+  it("drops the rules message of every direct player, seen or not: it describes the old result", async () => {
+    mockPlayerMmrRepo.getMmrHistoryOrderedForPlayers.mockImplementation(() =>
+      Promise.resolve(new Map([["p1", [historyRow("m1", -12)]], ["p2", [historyRow("m1", 12)]]])),
+    );
+    mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() =>
+      Promise.resolve(new Map([
+        ["p1", new Map([["m1", { id: "e1", mmrDelta: 15, seenDelta: 15, viewed: true }]])],
+        ["p2", new Map([["m1", { id: "e2", mmrDelta: -15, seenDelta: 0, viewed: false }]])],
+      ])),
+    );
+
+    await mmrAnimationEventService.persistCorrectionEvents("m1", "season-1", ["p1", "p2"]);
+
+    expect(mockAnimRepo.clearMessageForMatch.mock.calls).toEqual([["season-1", "m1", ["p1", "p2"]]]);
+  });
+
+  it("skips a player whose history no longer holds the match", async () => {
+    mockPlayerMmrRepo.getMmrHistoryOrderedForPlayers.mockImplementation(() =>
+      Promise.resolve(new Map([["p1", [historyRow("m0", 5)]]])),
+    );
+
+    const affected = await mmrAnimationEventService.persistCorrectionEvents("m1", "season-1", ["p1"]);
+
+    expect(bulkRows().length).toBe(0);
+    expect(affected).toEqual([]);
   });
 });

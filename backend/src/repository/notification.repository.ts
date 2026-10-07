@@ -297,6 +297,29 @@ export const notificationRepository = {
     }
   },
 
+  /** Recipients who still hold an unread notification of this type for the match. */
+  async getUserIdsWithUnreadOfTypeForMatch(
+    matchId: string,
+    type: CreateNotification["type"],
+  ): Promise<Set<string>> {
+    const rows = await db
+      .selectDistinct({ userId: notificationStatus.userId })
+      .from(notifications)
+      .innerJoin(
+        notificationStatus,
+        eq(notifications.id, notificationStatus.notificationId),
+      )
+      .where(
+        and(
+          eq(notifications.matchId, matchId),
+          eq(notifications.type, type),
+          eq(notificationStatus.read, false),
+        ),
+      );
+
+    return new Set(rows.map((r) => r.userId));
+  },
+
   /**
    * Whether a user still has an unread notification of a given type for a match.
    * Used to avoid stacking one notification per message on a busy thread.

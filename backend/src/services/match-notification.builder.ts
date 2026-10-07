@@ -204,6 +204,50 @@ export class MatchNotificationBuilder {
     }
   }
 
+  /**
+   * Tells every other player of a finalized match that its result changed under them.
+   * The message names the match, not the scores — the thread holds the before and
+   * after — so a player who has not opened the previous one yet is not sent another.
+   */
+  async notifyResultCorrected(
+    match: { id: string; playedAt?: Date | string | null },
+    tournamentName: string,
+    corrector: { id: string; displayName: string | null },
+  ): Promise<void> {
+    const participants = await matchRepository.getParticipationsByMatchId(match.id)
+    const alreadyPending = await notificationService.getUserIdsWithUnreadOfTypeForMatch(
+      match.id,
+      'MATCH_RESULT_CORRECTED',
+    )
+    const translationParams = {
+      authorName: corrector.displayName ?? null,
+      tournamentName,
+      matchDate: this.serializeMatchDate(match.playedAt),
+    }
+
+    const recipients = this.recipientsExcept(participants, corrector.id).filter((id) => !alreadyPending.has(id))
+    for (const userId of recipients) {
+      await this.sendResultCorrected(userId, match.id, translationParams)
+    }
+  }
+
+  private async sendResultCorrected(
+    userId: string,
+    matchId: string,
+    translationParams: Record<string, string | null>,
+  ): Promise<void> {
+    await notificationService.send({
+      userId,
+      type: 'MATCH_RESULT_CORRECTED',
+      titleKey: 'notifications.MATCH_RESULT_CORRECTED_TITLE',
+      messageKey: 'notifications.MATCH_RESULT_CORRECTED_MESSAGE',
+      translationParams,
+      actionUrl: `/matches/${matchId}`,
+      requiresAction: false,
+      matchId,
+    })
+  }
+
   private recipientsExcept(participants: Participation[], excludeUserId: string): string[] {
     return [...new Set(participants.map((p) => p.playerId))].filter(
       (id) => id !== excludeUserId,

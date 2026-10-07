@@ -307,6 +307,101 @@ export const listMatchesQuerySchema = z.object({
  */
 export const POST_FINALIZATION_DISPUTE_DAYS = 7;
 
+/**
+ * How long the author of a self-validated result (timer or trust score) may still
+ * correct or cancel it on their own, in hours after its finalization. A contestation
+ * from the other side stretches it to the dispute window: the author may want to
+ * settle it.
+ */
+export const SELF_AMEND_WINDOW_HOURS = 48;
+
+const SELF_VALIDATED_REASONS: (MatchFinalizationReason | null | undefined)[] = [
+  "auto_validation",
+  "trust_score",
+];
+
+/** A result nobody but its author signed: the timer or their trust score settled it. */
+export function isSelfValidatedReason(reason: MatchFinalizationReason | null | undefined): boolean {
+  return SELF_VALIDATED_REASONS.includes(reason);
+}
+
+/**
+ * Whether someone outside the author's side contests the finalized result. The
+ * author and their teammates are left out: their own contestation must not stretch
+ * the window the author is granted to amend it alone.
+ */
+export function hasOpposingPostDispute(
+  confirmations: { playerId: string; isContested: boolean; isPostFinalization?: boolean | null }[] | undefined,
+  sides: { players: { id: string }[] }[] | undefined,
+  reportedBy: string | null | undefined,
+): boolean {
+  const authorSide = (sides ?? []).find((s) => s.players.some((p) => p.id === reportedBy));
+  const ownSide = new Set([reportedBy, ...(authorSide?.players.map((p) => p.id) ?? [])]);
+  return (confirmations ?? []).some(
+    (c) => c.isPostFinalization && c.isContested && !ownSide.has(c.playerId),
+  );
+}
+
+export interface FinalizedAmendContext {
+  status: MatchStatus;
+  mode: string | null | undefined;
+  finalizationReason: MatchFinalizationReason | null | undefined;
+  finalizedAt: Date | string | null | undefined;
+  reportedBy: string | null | undefined;
+  /** Contested by the other side — see hasOpposingPostDispute. */
+  hasOpenPostDispute: boolean;
+}
+
+export interface FinalizedAmendActor {
+  userId: string;
+  canManage: boolean;
+}
+
+/** Why an amendment is refused: nobody may, someone else may, or the time is up. */
+export type FinalizedAmendDenial = "not_amendable" | "not_author" | "window_expired";
+
+export interface FinalizedAmendRights {
+  canCorrect: boolean;
+  canCancel: boolean;
+  /** The amendment is an organizer's decision: the match becomes an admin override. */
+  isArbitration: boolean;
+  denial: FinalizedAmendDenial | null;
+}
+
+const AMENDABLE_MODES = ["championship", "ranked"];
+const denied = (denial: FinalizedAmendDenial): FinalizedAmendRights => ({
+  canCorrect: false,
+  canCancel: false,
+  isArbitration: false,
+  denial,
+});
+
+/**
+ * Who may correct or cancel a finalized result. Organizers always may, whatever
+ * settled it and however long ago. The author only may on a result nobody else
+ * signed, within the self-amend window — or the dispute window while the other side
+ * contests it. Bracket matches are left out: their result already fed the draw.
+ */
+export function getFinalizedAmendRights(
+  match: FinalizedAmendContext,
+  actor: FinalizedAmendActor,
+  now: Date = new Date(),
+): FinalizedAmendRights {
+  if (match.status !== "finalized" || !AMENDABLE_MODES.includes(match.mode ?? "")) {
+    return denied("not_amendable");
+  }
+  if (actor.canManage) return { canCorrect: true, canCancel: true, isArbitration: true, denial: null };
+  if (!isSelfValidatedReason(match.finalizationReason) || !match.finalizedAt) return denied("not_amendable");
+  if (match.reportedBy !== actor.userId) return denied("not_author");
+
+  const hoursSince = (now.getTime() - new Date(match.finalizedAt).getTime()) / (1000 * 60 * 60);
+  const windowHours = match.hasOpenPostDispute
+    ? POST_FINALIZATION_DISPUTE_DAYS * 24
+    : SELF_AMEND_WINDOW_HOURS;
+  if (hoursSince > windowHours) return denied("window_expired");
+  return { canCorrect: true, canCancel: true, isArbitration: false, denial: null };
+}
+
 export const MATCH_MESSAGE_MAX_LENGTH = 1000;
 
 export const postMatchMessageSchema = z.object({

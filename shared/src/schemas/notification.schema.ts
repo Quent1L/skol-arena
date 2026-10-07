@@ -11,6 +11,7 @@ export const NotificationTypeEnum = z.enum([
   "MATCH_MESSAGE",
   "BADGE_AWARDED",
   "BADGE_REVOKED",
+  "MATCH_RESULT_CORRECTED",
 ]);
 
 export const DeviceTypeEnum = z.enum(["WEB", "ANDROID", "IOS"]);

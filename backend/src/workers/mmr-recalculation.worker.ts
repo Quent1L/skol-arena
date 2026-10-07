@@ -10,6 +10,7 @@ import { badgeReconciliationService } from '../services/badge-reconciliation.ser
 import { seasonRewindService } from '../services/season-rewind.service';
 import { enqueueSeasonRewindGeneration } from '../services/mmr-job-queue.service';
 import { tournamentRepository } from '../repository/tournament.repository';
+import { matchRepository } from '../repository/match.repository';
 import { tournamentRulesetRepository } from '../repository/tournament-ruleset.repository';
 import { logger } from '../utils/logger';
 import { NotFoundError } from '../types/errors';
@@ -111,6 +112,76 @@ const cancelMatchMmr: Task = async (rawPayload) => {
 
   logger.info({ matchId, tournamentId }, '[Worker] cancel_match_mmr done');
 };
+
+/**
+ * Replays a corrected result. No rules re-evaluation: the message written for the
+ * old result is dropped, and badges are reconciled against the new history.
+ */
+const correctMatchMmr: Task = async (rawPayload) => {
+  const { matchId, tournamentId } = rawPayload as FinalizeMmrPayload;
+  logger.info({ matchId, tournamentId }, '[Worker] correct_match_mmr start');
+
+  const rankedConfig = await rankedSeasonRepository.getConfigByTournamentId(tournamentId);
+  const match = await matchRepository.getByIdSimple(matchId);
+  // A match cancelled since its correction is replayed by its cancellation job.
+  if (!rankedConfig || match?.status !== 'finalized' || !match.playedAt) return;
+
+  const mmrChanges = await mmrCalculationService.cascadeRecalculateAfterCorrection(
+    matchId,
+    tournamentId,
+    match.playedAt,
+  );
+  const directPlayerIds = [...mmrChanges].filter(([, c]) => c.reason === 'match_corrected').map(([id]) => id);
+  await syncCorrectionAftermath(matchId, tournamentId, [...mmrChanges.keys()], directPlayerIds);
+
+  await refreshRankedCaches(tournamentId);
+  broadcastCorrectionRecap(tournamentId, directPlayerIds);
+  await regenerateRewindIfFinished(tournamentId);
+
+  logger.info({ matchId, tournamentId }, '[Worker] correct_match_mmr done');
+};
+
+/**
+ * The match's own players get their event for it rewritten first. Then every player
+ * the replay reached — the match's own included, whose later matches moved too —
+ * gets the usual per-match differentials, which skip the corrected match since its
+ * row is already in step.
+ */
+async function syncCorrectionAftermath(
+  matchId: string,
+  tournamentId: string,
+  playerIds: string[],
+  directPlayerIds: string[],
+): Promise<void> {
+  await mmrAnimationEventService
+    .persistCorrectionEvents(matchId, tournamentId, directPlayerIds)
+    .catch((err) => logger.error({ err }, '[Worker] correction animation event failed'));
+  await mmrAnimationEventService
+    .persistRecalcEvents(tournamentId, playerIds)
+    .catch((err) => logger.error({ err }, '[Worker] correction recalc animation event failed'));
+  await badgeReconciliationService
+    .reconcilePlayers(tournamentId, playerIds)
+    .catch((err) => logger.error({ err }, '[Worker] correction badge reconciliation failed'));
+}
+
+/**
+ * The recap ping goes to the tournament's subscribers and, directly, to the match's
+ * own players who are not among them: the match page they are likely looking at
+ * does not subscribe, and a subscribed one must not refetch twice.
+ */
+function broadcastCorrectionRecap(tournamentId: string, directPlayerIds: string[]): void {
+  const recap = { event: 'mmr_recap_ready', data: { seasonId: tournamentId, tournamentId } };
+  webSocketService.broadcastToTournament(tournamentId, recap);
+  for (const playerId of directPlayerIds) {
+    if (!webSocketService.isSubscribedToTournament(tournamentId, playerId)) {
+      webSocketService.send(playerId, recap);
+    }
+  }
+  webSocketService.broadcastToTournament(tournamentId, {
+    event: 'leaderboard_updated',
+    data: { seasonId: tournamentId },
+  });
+}
 
 const reconcilePendingBadges: Task = async (rawPayload) => {
   const { force } = (rawPayload ?? {}) as { force?: boolean };
@@ -233,6 +304,7 @@ function dropWhenSubjectIsGone(name: string, task: Task): Task {
 const tasks = {
   finalize_match_mmr: finalizeMatchMmr,
   cancel_match_mmr: cancelMatchMmr,
+  correct_match_mmr: correctMatchMmr,
   recalculate_season_mmr: recalculateSeasonMmr,
   reconcile_pending_badges: reconcilePendingBadges,
   generate_season_rewind: generateSeasonRewind,

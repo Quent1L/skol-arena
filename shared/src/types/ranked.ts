@@ -638,7 +638,12 @@ export type UpdateRankTierInput = z.infer<typeof updateRankTierSchema>;
 // ============================================
 
 export type MmrAnimationEventType = "provisional" | "official";
-export type MmrAnimationEventReason = "match_finalized" | "match_cancelled" | "cascade" | "recalculated";
+export type MmrAnimationEventReason =
+  | "match_finalized"
+  | "match_cancelled"
+  | "match_corrected"
+  | "cascade"
+  | "recalculated";
 
 const animationPlayerRefSchema = z.object({
   id: z.string(),
@@ -652,7 +657,7 @@ export const mmrAnimationEventResponseSchema = z
     matchId: z.string(),
     seasonId: z.string(),
     eventType: z.enum(["provisional", "official"]),
-    reason: z.enum(["match_finalized", "match_cancelled", "cascade", "recalculated"]),
+    reason: z.enum(["match_finalized", "match_cancelled", "match_corrected", "cascade", "recalculated"]),
     mmrBefore: z.number(),
     mmrAfter: z.number(),
     mmrDelta: z.number(),

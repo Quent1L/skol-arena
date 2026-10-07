@@ -14,14 +14,18 @@ export function useMMrAnimationQueue() {
 
   const currentEvent = computed(() => queue.value[0] ?? null)
   // Use the grouped recap (which honours displayDelta) whenever there are
-  // multiple events, or any recalc/cancellation aftermath — a lone recalculated
+  // multiple events, or any recalc/cancellation/correction aftermath — a lone recalculated
   // event must not fall through to the single reveal, which animates the full
   // mmrBefore→mmrAfter instead of the differential.
   const showRecap = computed(
     () =>
       queue.value.length >= 2 ||
       queue.value.some(
-        (e) => e.reason === 'recalculated' || e.reason === 'match_cancelled' || e.reason === 'cascade',
+        (e) =>
+          e.reason === 'recalculated' ||
+          e.reason === 'match_cancelled' ||
+          e.reason === 'match_corrected' ||
+          e.reason === 'cascade',
       ),
   )
   // Badges are revealed only once all MMR animations have been acknowledged.

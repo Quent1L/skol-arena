@@ -225,3 +225,29 @@ describe("MatchNotificationBuilder", () => {
     expect(sentPayloads).toHaveLength(0);
   });
 });
+
+describe("MatchNotificationBuilder - result corrected", () => {
+  const match = { id: "m-1", playedAt: new Date("2026-06-01T15:00:00Z") };
+
+  it("tells every other player, author included when an organizer corrects", async () => {
+    (notificationService as any).getUserIdsWithUnreadOfTypeForMatch = async () => new Set();
+
+    await matchNotificationBuilder.notifyResultCorrected(match, "Tour", { id: "admin-1", displayName: "Org" });
+
+    expect(sentPayloads.map((p) => p.userId).sort()).toEqual(["p1", "p2", "p3", "p4"]);
+    expect(sentPayloads[0]).toMatchObject({
+      type: "MATCH_RESULT_CORRECTED",
+      requiresAction: false,
+      actionUrl: "/matches/m-1",
+      translationParams: { authorName: "Org", tournamentName: "Tour", matchDate: "2026-06-01T15:00:00.000Z" },
+    });
+  });
+
+  it("skips the corrector and anyone who has not read the previous correction notice", async () => {
+    (notificationService as any).getUserIdsWithUnreadOfTypeForMatch = async () => new Set(["p3"]);
+
+    await matchNotificationBuilder.notifyResultCorrected(match, "Tour", { id: "p1", displayName: "Ann" });
+
+    expect(sentPayloads.map((p) => p.userId).sort()).toEqual(["p2", "p4"]);
+  });
+});

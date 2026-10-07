@@ -27,12 +27,14 @@
       :tournament-id="tournamentId"
       :match-id="matchId"
       :bracket-locked="isBracketMatch"
+      :result-only="isCorrection"
     />
     <MatchFormStepperDesktop
       v-else
       :tournament-id="tournamentId"
       :match-id="matchId"
       :bracket-locked="isBracketMatch"
+      :result-only="isCorrection"
     />
   </div>
 </template>
@@ -88,6 +90,8 @@ const { isAdmin, appUser } = useAuth()
 
 const tournament = ref<ClientBaseTournament | null>(null)
 const isBracketMatch = computed(() => tournament.value?.mode === 'bracket')
+// A finalized match can only have its result corrected: date and line-up stay as played.
+const isCorrection = ref(false)
 const participants = ref<TournamentPlayer[]>([])
 const outcomeTypes = ref<OutcomeType[]>([])
 const outcomeReasons = ref<OutcomeReason[]>([])
@@ -183,7 +187,8 @@ function applyExistingMatch(match: ClientMatchDetail) {
   const winner = match.sides.find((s) => s.isWinner)
   formState.value.winnerPosition = winner ? winner.position : null
 
-  if (match.status === 'reported' || match.status === 'pending_confirmation') {
+  isCorrection.value = match.status === 'finalized'
+  if (['reported', 'pending_confirmation', 'finalized'].includes(match.status)) {
     activeStep.value = 'result'
   }
 }

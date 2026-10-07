@@ -395,6 +395,66 @@ export class MmrAnimationEventService {
     return [...new Set(rows.map((r) => r.playerId))];
   }
 
+  // Rewrites the corrected match's own event for its DIRECT players, from the
+  // replayed history. A player who already saw the match gets a "match_corrected"
+  // row showing only the change since that view, which re-queues it into a recap.
+  // One who never saw it simply gets the right numbers on the reveal still waiting
+  // for them, kept as "match_finalized". A player whose delta did not move gets no
+  // row at all. Every direct player loses the rules message, written for the old
+  // result. Returns player ids that got an event.
+  async persistCorrectionEvents(matchId: string, seasonId: string, playerIds: string[]): Promise<string[]> {
+    if (playerIds.length === 0) return [];
+
+    const tiers = await rankedSeasonRepository.getRankTiers(seasonId);
+    const historyByPlayer = await playerMmrRepository.getMmrHistoryOrderedForPlayers(seasonId, playerIds);
+    const existingByPlayer = await mmrAnimationEventRepository.getOfficialEventDeltasForPlayers(seasonId, playerIds);
+    const rows: UpsertMmrAnimationEventData[] = [];
+
+    for (const playerId of playerIds) {
+      const history = (historyByPlayer.get(playerId) ?? []).find((h) => h.matchId === matchId);
+      const prev = existingByPlayer.get(playerId)?.get(matchId);
+      if (!history || prev?.mmrDelta === history.mmrDelta) continue;
+
+      rows.push(
+        this.buildOfficialRow(playerId, seasonId, history, tiers, {
+          reason: prev?.viewed ? "match_corrected" : "match_finalized",
+          displayDelta: history.mmrDelta - (prev?.seenDelta ?? 0),
+        }),
+      );
+    }
+
+    await mmrAnimationEventRepository.bulkUpsert(rows);
+    await mmrAnimationEventRepository.clearMessageForMatch(seasonId, matchId, playerIds);
+    return rows.map((r) => r.playerId);
+  }
+
+  private buildOfficialRow(
+    playerId: string,
+    seasonId: string,
+    history: { matchId: string; mmrBefore: number; mmrAfter: number; mmrDelta: number },
+    tiers: TierData[],
+    display: { reason: MmrAnimationEventReason; displayDelta: number },
+  ): UpsertMmrAnimationEventData {
+    const tierBefore = getTierForMmr(history.mmrBefore, tiers);
+    const tierAfter = getTierForMmr(history.mmrAfter, tiers);
+    return {
+      playerId,
+      seasonId,
+      matchId: history.matchId,
+      eventType: "official",
+      reason: display.reason,
+      mmrBefore: history.mmrBefore,
+      mmrAfter: history.mmrAfter,
+      mmrDelta: history.mmrDelta,
+      displayDelta: display.displayDelta,
+      tierBeforeLevel: tierBefore?.level ?? null,
+      tierAfterLevel: tierAfter?.level ?? null,
+      tierBeforeName: tierBefore?.name ?? null,
+      tierAfterName: tierAfter?.name ?? null,
+      rankChanged: (tierBefore?.level ?? null) !== (tierAfter?.level ?? null),
+    };
+  }
+
   // Re-sync after an MMR history rebuild (forced season recalc or cancellation
   // cascade). Persists a "recalculated" event for each past match whose delta
   // actually changed — keeping mmr_animation_events in sync so the next match

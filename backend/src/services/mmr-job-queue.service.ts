@@ -120,3 +120,22 @@ export async function enqueueMmrCascade(
     logger.error({ err, matchId, tournamentId }, '[MMRQueue] Failed to enqueue cascade');
   }
 }
+
+export async function enqueueMmrCorrection(matchId: string, tournamentId: string): Promise<void> {
+  try {
+    const utils = await getUtils();
+    // Keyed per match: corrections made back to back collapse into one replay, which
+    // reads the result as it stands when it runs.
+    await utils.addJob(
+      'correct_match_mmr',
+      { matchId, tournamentId },
+      { jobKey: `correct:${matchId}`, queueName: `mmr:${tournamentId}` },
+    );
+    webSocketService.broadcastToTournament(tournamentId, {
+      event: 'leaderboard_recalculating',
+      data: { seasonId: tournamentId },
+    });
+  } catch (err) {
+    logger.error({ err, matchId, tournamentId }, '[MMRQueue] Failed to enqueue correction');
+  }
+}

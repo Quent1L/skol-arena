@@ -118,6 +118,7 @@ const TYPE_STYLES: Record<string, { icon: string; accent: string }> = {
   MATCH_POST_DISPUTE: { icon: 'fa-flag', accent: 'var(--p-red-400)' },
   MATCH_DISPUTE_ESCALATED: { icon: 'fa-gavel', accent: 'var(--p-red-400)' },
   MATCH_MESSAGE: { icon: 'fa-comment-dots', accent: 'var(--p-sky-400)' },
+  MATCH_RESULT_CORRECTED: { icon: 'fa-pen-to-square', accent: 'var(--p-sky-400)' },
   BADGE_AWARDED: { icon: 'fa-medal', accent: 'var(--p-yellow-400)' },
   BADGE_REVOKED: { icon: 'fa-medal', accent: 'var(--p-surface-400)' },
 }

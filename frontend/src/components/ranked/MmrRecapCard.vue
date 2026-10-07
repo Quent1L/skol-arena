@@ -99,6 +99,9 @@
               <div v-if="event.reason === 'recalculated'" class="text-sky-400 text-xs shrink-0">
                 <i class="fa-solid fa-rotate"></i> {{ t('mmrRecapCard.recalculated') }}
               </div>
+              <div v-if="event.reason === 'match_corrected'" class="text-sky-400 text-xs shrink-0">
+                <i class="fa-solid fa-pen-to-square"></i> {{ t('mmrRecapCard.corrected') }}
+              </div>
               <div
                 v-if="event.reason === 'match_cancelled' || event.reason === 'cascade'"
                 class="text-red-400 text-xs shrink-0"
@@ -222,9 +225,14 @@ const countByReason = (reasons: MmrAnimationEventResponse['reason'][]) =>
   props.events.filter((e) => reasons.includes(e.reason)).length
 
 // Build "{count} <kind> match(es)" using the kind's singular/plural keys.
-const matchesText = (count: number, kind: 'new' | 'recalc' | 'cancelled') => {
+const matchesText = (count: number, kind: 'new' | 'recalc' | 'corrected' | 'cancelled') => {
   const suffix = count > 1 ? 'Plural' : 'Singular'
-  const key = { new: 'newMatches', recalc: 'recalcMatches', cancelled: 'cancelledMatches' }[kind]
+  const key = {
+    new: 'newMatches',
+    recalc: 'recalcMatches',
+    corrected: 'correctedMatches',
+    cancelled: 'cancelledMatches',
+  }[kind]
   return t(`mmrRecapCard.${key}${suffix}`, { count })
 }
 
@@ -234,9 +242,11 @@ const summaryText = computed(() => {
   const parts: string[] = []
   const newCount = countByReason(['match_finalized'])
   const recalcCount = countByReason(['recalculated'])
+  const correctedCount = countByReason(['match_corrected'])
   const cancelledCount = countByReason(['match_cancelled', 'cascade'])
   if (newCount > 0) parts.push(matchesText(newCount, 'new'))
   if (recalcCount > 0) parts.push(matchesText(recalcCount, 'recalc'))
+  if (correctedCount > 0) parts.push(matchesText(correctedCount, 'corrected'))
   if (cancelledCount > 0) parts.push(matchesText(cancelledCount, 'cancelled'))
   return parts.join(', ')
 })

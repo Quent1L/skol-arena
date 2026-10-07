@@ -21,7 +21,9 @@
     "MATCH_DISPUTE_ESCALATED_TITLE": "Litige à arbitrer : {{disputerName}} conteste un résultat",
     "MATCH_DISPUTE_ESCALATED_MESSAGE": "⚖️ {{tournamentName}}\n📅 {{matchDate}}\nCe match ne se validera pas tout seul : corrigez la saisie ou tranchez le résultat.",
     "MATCH_MESSAGE_TITLE": "{{authorName}} a écrit sur un match",
-    "MATCH_MESSAGE_MESSAGE": "💬 Nouveau message dans la discussion du match."
+    "MATCH_MESSAGE_MESSAGE": "💬 Nouveau message dans la discussion du match.",
+    "MATCH_RESULT_CORRECTED_TITLE": "{{authorName}} a corrigé le résultat d'un match",
+    "MATCH_RESULT_CORRECTED_MESSAGE": "✏️ {{tournamentName}}\n📅 {{matchDate}}\nLe résultat de ce match a changé : consultez la discussion du match pour le détail."
   },
   "emails": {
     "password_reset_subject": "Réinitialisation de votre mot de passe",
@@ -93,6 +95,11 @@
     "OUTCOME_REASON_IN_USE": "Cette raison de résultat est utilisée par des matchs existants et ne peut pas être supprimée",
     "RESOURCE_IN_USE": "Cet élément est référencé par d'autres données et ne peut pas être supprimé",
     "MATCH_ALREADY_FINALIZED": "Impossible de modifier un match finalisé",
+    "MATCH_CANNOT_BE_CANCELLED": "Ce match ne peut pas être annulé",
+    "CANCEL_WINDOW_EXPIRED": "Le délai pour annuler ce match est dépassé",
+    "CORRECTION_WINDOW_EXPIRED": "Le délai pour corriger ce résultat est dépassé",
+    "MATCH_CORRECTION_FIELDS_ONLY": "Seul le résultat d'un match finalisé peut être corrigé",
+    "MATCH_RESULT_UNCHANGED": "Le résultat n'a pas changé",
     "INVALID_TOURNAMENT_MODE": "Mode de tournoi invalide",
     "BRACKET_CANNOT_REGENERATE": "Impossible de régénérer le bracket pour un tournoi dans cet état",
     "SOURCE_TOURNAMENT_NOT_FOUND": "Tournoi source non trouvé",
@@ -179,6 +186,9 @@
     "DISPUTE_WITHDRAWN": "{{authorName}} a retiré sa contestation et accepté le résultat.",
     "RESULT_DISPUTED_POST": "{{authorName}} conteste le résultat finalisé. Un organisateur a été prévenu.",
     "POST_DISPUTE_WITHDRAWN": "{{authorName}} a retiré sa contestation.",
-    "MATCH_FINALIZED": "Résultat finalisé."
+    "MATCH_FINALIZED": "Résultat finalisé.",
+    "RESULT_CORRECTED": "{{authorName}} a corrigé le résultat : {{previousScore}} → {{newScore}}.",
+    "RESULT_CORRECTED_BY_ADMIN": "{{authorName}} (organisateur) a corrigé le résultat : {{previousScore}} → {{newScore}}.",
+    "MATCH_CANCELLED": "{{authorName}} a annulé le match."
   }
 }

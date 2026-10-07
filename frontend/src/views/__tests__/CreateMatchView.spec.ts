@@ -116,7 +116,7 @@ function makeMatchDetail(over: Partial<ClientMatchDetail> = {}): ClientMatchDeta
 function makeProbe(name: string) {
   return defineComponent({
     name,
-    props: { tournamentId: String, matchId: String, bracketLocked: Boolean },
+    props: { tournamentId: String, matchId: String, bracketLocked: Boolean, resultOnly: Boolean },
     setup() {
       return { ...(inject(MATCH_FORM_KEY) as MatchFormContext) }
     },
@@ -365,6 +365,19 @@ describe('CreateMatchView', () => {
       expect(getProbe(wrapper).vm.activeStep).toBe('result')
     },
   )
+
+  it('status finalized: only the result step, as a correction', async () => {
+    getMatchMock.mockResolvedValue(makeMatchDetail({ status: 'finalized' }))
+    const wrapper = await mountView({ matchId: 'm1' })
+    expect(getProbe(wrapper).vm.activeStep).toBe('result')
+    expect(getProbe(wrapper).props('resultOnly')).toBe(true)
+  })
+
+  it('status reported: the earlier steps stay reachable', async () => {
+    getMatchMock.mockResolvedValue(makeMatchDetail({ status: 'reported' }))
+    const wrapper = await mountView({ matchId: 'm1' })
+    expect(getProbe(wrapper).props('resultOnly')).toBe(false)
+  })
 
   it('status scheduled: activeStep stays "when"', async () => {
     getMatchMock.mockResolvedValue(makeMatchDetail({ status: 'scheduled' }))

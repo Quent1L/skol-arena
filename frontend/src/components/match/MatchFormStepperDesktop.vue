@@ -2,9 +2,11 @@
   <div class="max-w-2xl mx-auto p-4 sm:p-6">
     <h1 class="text-2xl font-semibold mb-6">
       {{
-        isEditMode
-          ? t('matchFormStepperDesktop.completeMatch')
-          : t('matchFormStepperDesktop.createMatch')
+        props.resultOnly
+          ? t('matchFormStepperDesktop.correctResult')
+          : isEditMode
+            ? t('matchFormStepperDesktop.completeMatch')
+            : t('matchFormStepperDesktop.createMatch')
       }}
     </h1>
 
@@ -123,6 +125,7 @@
               :allow-draw="tournament?.allowDraw ?? false"
               :standings="standings"
               :is-ranked="tournament?.mode === 'ranked'"
+              :submit-label="isEditMode ? t('common.update') : undefined"
               @previous="goBackFromResult"
               @create="submitMatch"
             />
@@ -135,6 +138,7 @@
 
 <script setup lang="ts">
 import { computed, inject } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { MATCH_FORM_KEY } from '@/composables/match/match-form.context'
 import { useMatchService } from '@/composables/match/match.service'
@@ -153,11 +157,14 @@ interface Props {
   tournamentId: string
   matchId?: string
   bracketLocked?: boolean
+  /** Correction of a finalized match: only the result step is shown. */
+  resultOnly?: boolean
 }
 
 const props = defineProps<Props>()
 
 const { t } = useI18n()
+const router = useRouter()
 
 const {
   loading: matchLoading,
@@ -187,6 +194,7 @@ const isFutureDate = computed(
 const needsComposition = computed(() => formState.value.allPlayerIds.length > 2)
 
 const visibleSteps = computed(() => {
+  if (props.resultOnly) return [{ value: 'result', icon: 'fas fa-trophy' }]
   const steps: { value: string; icon: string }[] = [{ value: 'when', icon: 'fas fa-calendar-alt' }]
   if (!props.bracketLocked && isFlexMode.value)
     steps.push({ value: 'participants', icon: 'fas fa-users' })
@@ -251,7 +259,9 @@ function goToStepAfterComposition() {
 }
 
 function goBackFromResult() {
-  if (props.bracketLocked) {
+  if (props.resultOnly) {
+    router.back()
+  } else if (props.bracketLocked) {
     activeStep.value = 'when'
   } else if (isStaticMode.value) {
     activeStep.value = 'teams'

@@ -19,7 +19,12 @@ import {
   type ListMatchCardsQuery,
   type ClientMatchCard,
   type PaginatedMatchCards,
+  type FinalizedAmendRights,
+  type FinalizedAmendDenial,
   POST_FINALIZATION_DISPUTE_DAYS,
+  getFinalizedAmendRights,
+  hasOpposingPostDispute,
+  isSelfValidatedReason,
 } from '@skol-arena/shared/types/index'
 import {
   ErrorCode,
@@ -49,6 +54,13 @@ import { matchMessageService } from './match-message.service'
 import { matchRealtimeService } from './match-realtime.service'
 
 type TournamentFromRepository = Awaited<ReturnType<typeof matchRepository.getTournament>>
+type MatchDetail = NonNullable<Awaited<ReturnType<typeof matchRepository.getById>>>
+
+interface FinalizedAmendment {
+  rights: FinalizedAmendRights
+  /** The other side was contesting the result when it was amended. */
+  hadOpenPostDispute: boolean
+}
 
 const DEFAULT_AUTO_VALIDATION_HOURS = 24
 const TRUST_SCORE_THRESHOLD = 10
@@ -335,6 +347,9 @@ export class MatchService {
 
   async updateMatch(id: string, input: UpdateMatchInput, updatedBy: string) {
     const match = await this.getMatchById(id)
+    if (match.status === 'finalized') {
+      return await this.correctFinalizedMatch(id, match, input, updatedBy)
+    }
     const tournament = await matchRepository.getTournament(match.tournamentId)
 
     await this.runUpdateValidations(id, match, updatedBy, tournament)
@@ -534,6 +549,21 @@ export class MatchService {
     const sideA = match?.sides?.find((s) => s.position === 1)
     const sideB = match?.sides?.find((s) => s.position === 2)
     return `${sideA?.score ?? 0} - ${sideB?.score ?? 0}`
+  }
+
+  /**
+   * The score, or the winning side's names when the tournament keeps no score: a
+   * correction can then only change who won, and "0 - 0" twice would say nothing.
+   */
+  private formatResult(
+    match: Awaited<ReturnType<typeof matchRepository.getById>>,
+    tournament: TournamentFromRepository,
+  ): string {
+    if (tournament?.scoreEnabled !== false) return this.formatScore(match)
+
+    const winner = match?.sides?.find((s) => s.isWinner)
+    if (!winner) return '='
+    return winner.players.map((p) => p.displayName).join(' / ')
   }
 
   private async handleReportedUpdate(matchId: string, updatedBy: string): Promise<void> {
@@ -1194,34 +1224,168 @@ export class MatchService {
 
   private async cancelFinalizedMatch(
     id: string,
-    match: NonNullable<Awaited<ReturnType<typeof matchRepository.getById>>>,
+    match: MatchDetail,
     cancelledBy: string,
   ): Promise<void> {
     const tournament = await matchRepository.getTournament(match.tournamentId)
-    if (!['championship', 'ranked'].includes(tournament?.mode ?? '')) {
-      throw new BadRequestError(ErrorCode.MATCH_CANNOT_BE_CANCELLED)
-    }
-
-    const reason = match.result?.finalizationReason
-    if (!['auto_validation', 'trust_score'].includes(reason ?? '')) {
-      throw new BadRequestError(ErrorCode.MATCH_CANNOT_BE_CANCELLED)
-    }
-
-    if (match.result?.reportedBy !== cancelledBy) {
-      throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS)
-    }
-
-    const finalizedAt = match.result?.finalizedAt
-    if (!finalizedAt) throw new BadRequestError(ErrorCode.MATCH_CANNOT_BE_CANCELLED)
-    const hoursSince = (Date.now() - new Date(finalizedAt).getTime()) / (1000 * 60 * 60)
-    if (hoursSince > 48) throw new BadRequestError(ErrorCode.CANCEL_WINDOW_EXPIRED)
+    const amend = await this.assertFinalizedAmendAllowed(match, tournament, cancelledBy, 'cancel')
 
     await matchRepository.update(id, { status: 'cancelled' })
-    // The finalization credited the author's trust score; a result they withdraw
-    // must not keep counting towards skipping the opponents' confirmation.
-    await userRepository.decrementTrustScore(cancelledBy)
+    await this.settleFinalizedAmendment(match, amend, 'cancel')
     await notificationService.deleteActionsByMatchId(id)
+
+    const canceller = await userRepository.getById(cancelledBy)
+    await matchMessageService.postSystem(id, 'matchMessages.MATCH_CANCELLED', {
+      authorName: canceller?.displayName ?? null,
+    })
     await matchFinalizationOrchestrator.runPostCancellationEffects(id, match.tournamentId, match.playedAt ?? new Date())
+    await matchRealtimeService.notifyMatchUpdated(id)
+  }
+
+  /**
+   * Fixes the result of a finalized match. It stays finalized: an organizer's fix
+   * becomes their decision (admin override), the author's own keeps its reason and
+   * its finalization date, so the window it was granted does not restart. A kiosk
+   * never corrects one: whoever stands at the shared device is not the author.
+   */
+  private async correctFinalizedMatch(
+    id: string,
+    match: MatchDetail,
+    input: UpdateMatchInput,
+    correctedBy: string,
+  ) {
+    const corrector = await userRepository.getById(correctedBy)
+    if (!corrector || corrector.role === 'kiosk') throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS)
+
+    const tournament = await matchRepository.getTournament(match.tournamentId)
+    const amend = await this.assertFinalizedAmendAllowed(match, tournament, correctedBy, 'correct')
+    this.assertCorrectionFields(input, match)
+    this.assertResultChanged(input, match)
+    await this.validateUpdatedResult(input, match, tournament)
+
+    const updateData = this.pickResultFields(input)
+    if (amend.rights.isArbitration) {
+      updateData.finalizationReason = 'admin_override'
+      updateData.finalizedBy = correctedBy
+    }
+    const result = await matchRepository.update(id, updateData)
+    await this.settleFinalizedAmendment(match, amend, 'correct')
+    await this.announceCorrection(match, tournament, corrector, amend.rights.isArbitration)
+
+    await matchFinalizationOrchestrator.runPostCorrectionEffects(id, match.tournamentId)
+    await matchRealtimeService.notifyMatchUpdated(id)
+    return result
+  }
+
+  /**
+   * Only the result screen can be corrected. The date and the round shaped what came
+   * after the match (MMR replay order, schedule): moving them is a cancellation.
+   * The edit form always sends the date back, so an unchanged one is accepted.
+   */
+  private assertCorrectionFields(input: UpdateMatchInput, match: MatchDetail): void {
+    const movesDate =
+      input.playedAt !== undefined &&
+      (!match.playedAt || new Date(input.playedAt).getTime() !== new Date(match.playedAt).getTime())
+    const changesStatus = input.status !== undefined && input.status !== 'reported'
+    if (movesDate || changesStatus || input.round !== undefined) {
+      throw new BadRequestError(ErrorCode.MATCH_CORRECTION_FIELDS_ONLY)
+    }
+  }
+
+  /**
+   * A correction that changes nothing would still lift the contestations, notify
+   * every player and, from an organizer, settle the match as theirs: refused.
+   */
+  private assertResultChanged(input: UpdateMatchInput, match: MatchDetail): void {
+    const score = (position: number) => match.sides.find((s) => s.position === position)?.score ?? null
+    const winner = match.sides.find((s) => s.isWinner)?.position ?? null
+    const differs = <T>(sent: T | undefined, stored: T | null) =>
+      sent !== undefined && (sent ?? null) !== stored
+
+    const changed =
+      differs(input.scoreA, score(1)) ||
+      differs(input.scoreB, score(2)) ||
+      differs(input.winnerPosition, winner) ||
+      differs(input.outcomeTypeId, match.outcomeTypeId ?? null) ||
+      differs(input.outcomeReasonId, match.outcomeReasonId ?? null)
+    if (!changed) throw new BadRequestError(ErrorCode.MATCH_RESULT_UNCHANGED)
+  }
+
+  /** Resolves who may amend a finalized match, through the rule the client shows too. */
+  private async assertFinalizedAmendAllowed(
+    match: MatchDetail,
+    tournament: TournamentFromRepository,
+    userId: string,
+    kind: 'correct' | 'cancel',
+  ): Promise<FinalizedAmendment> {
+    const reportedBy = match.result?.reportedBy
+    const hadOpenPostDispute = hasOpposingPostDispute(match.confirmations, match.sides, reportedBy)
+    const canManage = await this.canManageMatches(match.tournamentId, userId)
+    const rights = getFinalizedAmendRights(
+      {
+        status: match.status,
+        mode: tournament?.mode,
+        finalizationReason: match.result?.finalizationReason,
+        finalizedAt: match.result?.finalizedAt,
+        reportedBy,
+        hasOpenPostDispute: hadOpenPostDispute,
+      },
+      { userId, canManage },
+    )
+    if (rights.denial) throw this.amendDeniedError(rights.denial, kind)
+    return { rights, hadOpenPostDispute }
+  }
+
+  private amendDeniedError(denial: FinalizedAmendDenial, kind: 'correct' | 'cancel'): AppError {
+    if (denial === 'not_author') return new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS)
+    if (denial === 'window_expired') {
+      return new BadRequestError(
+        kind === 'cancel' ? ErrorCode.CANCEL_WINDOW_EXPIRED : ErrorCode.CORRECTION_WINDOW_EXPIRED,
+      )
+    }
+    return new BadRequestError(
+      kind === 'cancel' ? ErrorCode.MATCH_CANNOT_BE_CANCELLED : ErrorCode.MATCH_ALREADY_FINALIZED,
+    )
+  }
+
+  /**
+   * What any amendment of a finalized match settles. The contestations are answered
+   * by it, so they are lifted with the arbitration requests they raised. The author
+   * pays a trust point when their result is withdrawn, or when an organizer has to fix
+   * a result they validated alone or one the other side contested — never for fixing
+   * their own.
+   */
+  private async settleFinalizedAmendment(
+    match: MatchDetail,
+    amend: FinalizedAmendment,
+    kind: 'correct' | 'cancel',
+  ): Promise<void> {
+    if ((match.confirmations ?? []).some((c) => c.isPostFinalization)) {
+      await matchConfirmationRepository.deletePostFinalizationByMatchId(match.id)
+      await notificationService.deleteActionsByMatchIdAndType(match.id, 'MATCH_POST_DISPUTE')
+    }
+
+    const reportedBy = match.result?.reportedBy
+    const penalize = amend.rights.isArbitration
+      ? amend.hadOpenPostDispute || isSelfValidatedReason(match.result?.finalizationReason)
+      : kind === 'cancel'
+    if (penalize && reportedBy) await userRepository.decrementTrustScore(reportedBy)
+  }
+
+  private async announceCorrection(
+    previous: MatchDetail,
+    tournament: TournamentFromRepository,
+    corrector: { id: string; displayName: string | null },
+    byOrganizer: boolean,
+  ): Promise<void> {
+    const refreshed = await matchRepository.getById(previous.id)
+    const key = byOrganizer ? 'matchMessages.RESULT_CORRECTED_BY_ADMIN' : 'matchMessages.RESULT_CORRECTED'
+    await matchMessageService.postSystem(previous.id, key, {
+      authorName: corrector.displayName ?? null,
+      previousScore: this.formatResult(previous, tournament),
+      newScore: this.formatResult(refreshed, tournament),
+    })
+    await matchNotificationBuilder.notifyResultCorrected(previous, tournament?.name ?? '', corrector)
   }
 
   async finalizeMatch(

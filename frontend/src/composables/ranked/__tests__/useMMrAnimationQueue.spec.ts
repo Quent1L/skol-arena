@@ -36,7 +36,7 @@ describe('useMMrAnimationQueue.showRecap', () => {
     expect(q.showRecap.value).toBe(true)
   })
 
-  it.each(['recalculated', 'match_cancelled', 'cascade'] as const)(
+  it.each(['recalculated', 'match_cancelled', 'match_corrected', 'cascade'] as const)(
     "true pour un seul event '%s' (la carte recap honore displayDelta, pas l'anim plein delta)",
     (reason) => {
       const q = useMMrAnimationQueue()
