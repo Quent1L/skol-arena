@@ -1,140 +1,178 @@
 <template>
-  <div class="rules-engine-stats p-4">
-    <div class="flex justify-between items-center mb-4">
-      <div class="flex items-center gap-3">
-        <Button icon="fa fa-arrow-left" text rounded @click="router.push('/admin/rules-engine')" />
-        <h1 class="text-2xl font-bold">{{ currentRule?.name ?? t('rulesEngineStats.title') }}</h1>
-        <Tag v-if="currentRule" :severity="currentRule.type === 'badge' ? 'warn' : 'info'" :value="typeLabel" />
+  <div>
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex min-w-0 flex-wrap items-center gap-3">
+        <h1 class="text-2xl font-bold text-highlighted">
+          {{ currentRule?.name ?? t('rulesEngineStats.title') }}
+        </h1>
+        <UBadge
+          v-if="currentRule"
+          :color="currentRule.type === 'badge' ? 'warning' : 'info'"
+          variant="subtle"
+          :label="typeLabel"
+        />
       </div>
-      <Select
+      <USelect
         v-model="days"
-        :options="rangeOptions"
-        option-label="label"
-        option-value="value"
-        class="w-44"
-        @change="reload"
+        :items="rangeOptions"
+        class="w-full sm:w-44"
+        @update:model-value="reload"
       />
     </div>
 
-    <Message v-if="error" severity="error" :closable="true">{{ error }}</Message>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      icon="i-fa7-solid:circle-xmark"
+      :description="error"
+      class="mb-4"
+    />
 
-    <div v-if="totals" class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-      <div v-for="kpi in kpis" :key="kpi.label" class="kpi">
-        <p class="text-xs uppercase tracking-wide text-surface-500">{{ kpi.label }}</p>
+    <div v-if="totals" class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <UCard v-for="kpi in kpis" :key="kpi.label" :ui="{ body: 'p-3 sm:p-4' }">
+        <p class="text-xs tracking-wide text-muted uppercase">{{ kpi.label }}</p>
         <p class="text-2xl font-bold" :class="kpi.tone">{{ kpi.value }}</p>
-        <p v-if="kpi.hint" class="text-xs text-surface-500 mt-1">{{ kpi.hint }}</p>
-      </div>
+        <p v-if="kpi.hint" class="mt-1 text-xs text-muted">{{ kpi.hint }}</p>
+      </UCard>
     </div>
 
-    <Message v-if="totals && totals.fired === 0" severity="info" :closable="false" class="mb-4">
-      {{ t('rulesEngineStats.neverFired') }}
-    </Message>
-
-    <Message v-else-if="dropRate >= 50" severity="warn" :closable="false" class="mb-4">
-      {{ t('rulesEngineStats.mostlyUnreadWarning', { percent: dropRate }) }}
-    </Message>
+    <UAlert
+      v-if="totals && totals.fired === 0"
+      color="info"
+      variant="subtle"
+      icon="i-fa7-solid:circle-info"
+      :description="t('rulesEngineStats.neverFired')"
+      class="mb-4"
+    />
+    <UAlert
+      v-else-if="dropRate >= 50"
+      color="warning"
+      variant="subtle"
+      icon="i-fa7-solid:triangle-exclamation"
+      :description="t('rulesEngineStats.mostlyUnreadWarning', { percent: dropRate })"
+      class="mb-4"
+    />
 
     <!-- Timeline: bars normalised against the busiest day in the window, so a rule
          that fires twice a week is still readable next to one that fires hourly. -->
-    <div v-if="detail?.timeline.length" class="panel mb-6">
-      <h2 class="text-lg font-semibold mb-3">{{ t('rulesEngineStats.timelineTitle') }}</h2>
-      <div class="flex items-end gap-1 h-32 overflow-x-auto">
-        <div
-          v-for="day in detail.timeline"
-          :key="day.day"
-          class="flex-1 min-w-2 flex flex-col justify-end"
-          v-tooltip.top="dayTooltip(day)"
-        >
-          <div
-            class="bg-primary-500 rounded-t"
-            :style="{ height: `${barHeight(day.fired)}%` }"
-          />
-        </div>
+    <UCard v-if="detail?.timeline.length" class="mb-6">
+      <template #header>
+        <h2 class="font-semibold text-highlighted">{{ t('rulesEngineStats.timelineTitle') }}</h2>
+      </template>
+      <div class="flex h-32 items-end gap-1 overflow-x-auto">
+        <UTooltip v-for="day in detail.timeline" :key="day.day" :text="dayTooltip(day)">
+          <div class="flex h-full min-w-2 flex-1 flex-col justify-end">
+            <div class="rounded-t bg-primary" :style="{ height: `${barHeight(day.fired)}%` }" />
+          </div>
+        </UTooltip>
       </div>
-      <p class="text-xs text-surface-500 mt-2">
-        {{ t('rulesEngineStats.timelineFootnote', { days }) }}
-      </p>
-    </div>
+      <p class="mt-2 text-xs text-muted">{{ t('rulesEngineStats.timelineFootnote', { days }) }}</p>
+    </UCard>
 
-    <div v-if="detail?.variants.length" class="panel mb-6">
-      <h2 class="text-lg font-semibold mb-3">{{ t('rulesEngineStats.variantsTitle') }}</h2>
-      <DataTable :value="detail.variants" class="p-datatable-sm" striped-rows>
-        <Column :header="t('rulesEngineStats.colVariant')" style="width: 6rem">
-          <template #body="{ data }">
-            <span v-if="data.current">#{{ data.position + 1 }}</span>
-            <Tag v-else severity="secondary" :value="t('rulesEngineStats.variantRetired')" />
-          </template>
-        </Column>
-        <Column field="text" :header="t('rulesEngineStats.colText')">
-          <template #body="{ data }">
-            <span v-if="data.text" :class="{ 'text-surface-500': !data.current }">{{ data.text }}</span>
-            <span v-else class="text-surface-500 italic">{{ t('rulesEngineStats.variantUnrecorded') }}</span>
-          </template>
-        </Column>
-        <Column field="fired" :header="t('rulesEngineStats.colSent')" style="width: 8rem" sortable />
-        <Column field="seen" :header="t('rulesEngineStats.colRead')" style="width: 8rem" sortable />
-      </DataTable>
+    <UCard v-if="detail?.variants.length" class="mb-6">
+      <template #header>
+        <h2 class="font-semibold text-highlighted">{{ t('rulesEngineStats.variantsTitle') }}</h2>
+      </template>
+      <AdminTable :data="detail.variants" :columns="variantColumns" :page-size="0">
+        <template #position-cell="{ row }">
+          <span v-if="row.original.current">#{{ row.original.position + 1 }}</span>
+          <UBadge
+            v-else
+            color="neutral"
+            variant="subtle"
+            :label="t('rulesEngineStats.variantRetired')"
+          />
+        </template>
+        <template #text-cell="{ row }">
+          <span v-if="row.original.text" :class="{ 'text-muted': !row.original.current }">
+            {{ row.original.text }}
+          </span>
+          <span v-else class="text-muted italic">{{
+            t('rulesEngineStats.variantUnrecorded')
+          }}</span>
+        </template>
+      </AdminTable>
       <!-- An edited variant leaves its history behind under the old wording rather
            than folding it into the new one, so the two counts stay honest. -->
-      <p v-if="hasRetiredVariants" class="text-xs text-surface-500 mt-2">
+      <p v-if="hasRetiredVariants" class="mt-2 text-xs text-muted">
         {{ t('rulesEngineStats.variantsFootnote') }}
       </p>
-    </div>
+    </UCard>
 
-    <div class="panel">
-      <h2 class="text-lg font-semibold mb-3">{{ t('rulesEngineStats.recipientsTitle') }}</h2>
-      <DataTable :value="detail?.recipients ?? []" :loading="loading" class="p-datatable-sm" striped-rows>
-        <Column field="playerName" :header="t('rulesEngineStats.colPlayer')" />
-        <Column field="createdAt" :header="t('rulesEngineStats.colDate')">
-          <template #body="{ data }">{{ formatDate(data.createdAt) }}</template>
-        </Column>
-        <Column field="result" :header="t('rulesEngineStats.colResult')">
-          <template #body="{ data }">
-            <Tag :severity="resultSeverity(data.result)" :value="t(`rulesEngineStats.result.${data.result}`)" />
-          </template>
-        </Column>
-        <Column :header="t('rulesEngineStats.colFate')">
-          <template #body="{ data }">
-            <Tag :severity="fateSeverity(data)" :value="fateLabel(data)" />
-          </template>
-        </Column>
-        <Column field="message" :header="t('rulesEngineStats.colMessage')">
-          <template #body="{ data }">
-            <span class="text-sm">{{ data.message ?? '—' }}</span>
-          </template>
-        </Column>
-        <Column :header="t('common.actions')" style="width: 5rem">
-          <template #body="{ data }">
-            <Button
-              v-if="data.matchId"
-              icon="fa fa-arrow-up-right-from-square"
-              size="small"
-              text
-              rounded
-              @click="router.push(`/matches/${data.matchId}`)"
-              v-tooltip.top="t('rulesEngineStats.openMatch')"
+    <UCard>
+      <template #header>
+        <h2 class="font-semibold text-highlighted">{{ t('rulesEngineStats.recipientsTitle') }}</h2>
+      </template>
+      <AdminTable
+        :data="detail?.recipients ?? []"
+        :columns="recipientColumns"
+        :loading="loading"
+        :empty="t('rulesEngineStats.noRecipients')"
+      >
+        <template #playerName-cell="{ row }">
+          <span class="font-medium">{{ row.original.playerName }}</span>
+          <!-- Date and fate columns are hidden on phones. -->
+          <div class="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted md:hidden">
+            {{ formatDate(row.original.createdAt) }}
+            <UBadge
+              :color="fateColor(row.original)"
+              variant="subtle"
+              size="sm"
+              :label="fateLabel(row.original)"
             />
-          </template>
-        </Column>
-        <template #empty>
-          <p class="text-center text-surface-500 py-6">{{ t('rulesEngineStats.noRecipients') }}</p>
+          </div>
         </template>
-      </DataTable>
-    </div>
+        <template #createdAt-cell="{ row }">{{ formatDate(row.original.createdAt) }}</template>
+        <template #result-cell="{ row }">
+          <UBadge
+            :color="resultColor(row.original.result)"
+            variant="subtle"
+            :label="t(`rulesEngineStats.result.${row.original.result}`)"
+          />
+        </template>
+        <template #fate-cell="{ row }">
+          <UBadge
+            :color="fateColor(row.original)"
+            variant="subtle"
+            :label="fateLabel(row.original)"
+          />
+        </template>
+        <template #message-cell="{ row }">
+          <span class="text-sm">{{ row.original.message ?? '—' }}</span>
+        </template>
+        <template #actions-cell="{ row }">
+          <RowActions
+            :actions="[
+              {
+                label: t('rulesEngineStats.openMatch'),
+                icon: 'i-fa7-solid:arrow-up-right-from-square',
+                to: `/matches/${row.original.matchId}`,
+                hidden: !row.original.matchId,
+              },
+            ]"
+          />
+        </template>
+      </AdminTable>
+    </UCard>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import type { TableColumn } from '@nuxt/ui'
+import AdminTable from '@/components/admin/AdminTable.vue'
+import RowActions from '@/components/ui/RowActions.vue'
+import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/admin/table-columns'
 import { useRulesService } from '@/composables/rules/rules.service'
 import type { ClientRuleFiringRecipient, RuleFiringDayStat } from '@skol-arena/shared/types/index'
 
 const route = useRoute()
-const router = useRouter()
 const { t } = useI18n()
-const { currentRule, loadRuleById, firingDetail, loadFiringDetail, loading, error } = useRulesService()
+const { currentRule, loadRuleById, firingDetail, loadFiringDetail, loading, error } =
+  useRulesService()
 
 const ruleId = route.params.id as string
 const days = ref(30)
@@ -148,7 +186,9 @@ const rangeOptions = [
 const detail = computed(() => firingDetail.value)
 const totals = computed(() => firingDetail.value?.totals ?? null)
 const typeLabel = computed(() =>
-  currentRule.value?.type === 'badge' ? t('rulesEngineList.typeBadge') : t('rulesEngineList.typeMessage'),
+  currentRule.value?.type === 'badge'
+    ? t('rulesEngineList.typeBadge')
+    : t('rulesEngineList.typeMessage'),
 )
 
 /** Share of delivered messages that were consumed by the recap, which shows none. */
@@ -178,17 +218,39 @@ const kpis = computed(() => {
     {
       label: t('rulesEngineStats.kpiSeen'),
       value: stats.seen,
-      tone: 'text-green-500',
+      tone: 'text-success',
       hint: '',
     },
     {
       label: t('rulesEngineStats.kpiRecap'),
       value: stats.recap,
-      tone: stats.recap > 0 ? 'text-orange-500' : '',
+      tone: stats.recap > 0 ? 'text-warning' : '',
       hint: t('rulesEngineStats.kpiRecapHint'),
     },
   ]
 })
+
+type VariantRow = NonNullable<typeof firingDetail.value>['variants'][number]
+
+const variantColumns: TableColumn<VariantRow>[] = [
+  { accessorKey: 'position', header: t('rulesEngineStats.colVariant') },
+  { accessorKey: 'text', header: t('rulesEngineStats.colText') },
+  { accessorKey: 'fired', header: sortableHeader(t('rulesEngineStats.colSent')) },
+  {
+    accessorKey: 'seen',
+    header: sortableHeader(t('rulesEngineStats.colRead')),
+    meta: hiddenBelow('sm'),
+  },
+]
+
+const recipientColumns: TableColumn<ClientRuleFiringRecipient>[] = [
+  { accessorKey: 'playerName', header: t('rulesEngineStats.colPlayer') },
+  { accessorKey: 'createdAt', header: t('rulesEngineStats.colDate'), meta: hiddenBelow('md') },
+  { accessorKey: 'result', header: t('rulesEngineStats.colResult'), meta: hiddenBelow('lg') },
+  { id: 'fate', header: t('rulesEngineStats.colFate'), meta: hiddenBelow('md') },
+  { accessorKey: 'message', header: t('rulesEngineStats.colMessage'), meta: hiddenBelow('xl') },
+  { id: 'actions', meta: ACTIONS_COLUMN_META },
+]
 
 const hasRetiredVariants = computed(() => (detail.value?.variants ?? []).some((v) => !v.current))
 
@@ -199,16 +261,20 @@ function barHeight(fired: number) {
 }
 
 function dayTooltip(day: RuleFiringDayStat) {
-  return t('rulesEngineStats.dayTooltip', { day: day.day, fired: day.fired, seen: day.seen, recap: day.recap })
+  return t('rulesEngineStats.dayTooltip', {
+    day: day.day,
+    fired: day.fired,
+    seen: day.seen,
+    recap: day.recap,
+  })
 }
 
 function formatDate(date: Date) {
   return new Date(date).toLocaleString('fr-FR')
 }
 
-function resultSeverity(result: string) {
-  if (result === 'selected' || result === 'awarded') return 'success'
-  return 'secondary'
+function resultColor(result: string) {
+  return result === 'selected' || result === 'awarded' ? 'success' : 'neutral'
 }
 
 /**
@@ -224,11 +290,11 @@ function fateLabel(row: ClientRuleFiringRecipient) {
   return t('rulesEngineStats.fate.pending')
 }
 
-function fateSeverity(row: ClientRuleFiringRecipient) {
-  if (row.seenSurface === 'recap') return 'warn'
+function fateColor(row: ClientRuleFiringRecipient) {
+  if (row.seenSurface === 'recap') return 'warning'
   if (row.seenSurface) return 'success'
-  if (!row.deliveredAt) return 'danger'
-  return 'secondary'
+  if (!row.deliveredAt) return 'error'
+  return 'neutral'
 }
 
 function reload() {
@@ -240,18 +306,3 @@ onMounted(() => {
   reload()
 })
 </script>
-
-<style scoped>
-.rules-engine-stats {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.kpi,
-.panel {
-  background: var(--p-content-background);
-  border: 1px solid var(--p-content-border-color);
-  border-radius: 0.75rem;
-  padding: 1rem;
-}
-</style>

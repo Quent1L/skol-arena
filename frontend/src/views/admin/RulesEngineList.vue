@@ -1,238 +1,190 @@
 <template>
-  <div class="rules-engine-list p-4">
-    <div class="flex justify-between items-center mb-4">
-      <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-bold">{{ t('rulesEngineList.title') }}</h1>
-        <Tag :value="t('rulesEngineList.betaTag')" severity="warn" />
-      </div>
-      <div class="flex items-center gap-2">
-        <Button
-          :label="t('rulesEngineList.recalculateBadges')"
-          icon="fa fa-rotate"
-          severity="secondary"
-          outlined
-          :loading="reconciling"
-          @click="handleReconcile"
-          v-tooltip.bottom="t('rulesEngineList.recalculateBadgesTooltip')"
+  <div>
+    <AdminPageHeader :title="t('rulesEngineList.title')">
+      <template #actions>
+        <UTooltip :text="t('rulesEngineList.recalculateBadgesTooltip')">
+          <UButton
+            :label="t('rulesEngineList.recalculateBadges')"
+            icon="i-fa7-solid:rotate"
+            color="neutral"
+            variant="outline"
+            class="w-full justify-center sm:w-auto"
+            :loading="reconciling"
+            @click="handleReconcile"
+          />
+        </UTooltip>
+        <UButton
+          :label="t('rulesEngineList.newRule')"
+          icon="i-fa7-solid:plus"
+          to="/admin/rules-engine/new"
         />
-        <Button :label="t('rulesEngineList.newRule')" icon="fa fa-plus" @click="router.push('/admin/rules-engine/new')" />
-      </div>
-    </div>
+      </template>
+    </AdminPageHeader>
 
-    <Message severity="warn" :closable="false" class="mb-3">
-      <i class="fa fa-triangle-exclamation mr-2" />{{ t('rulesEngineList.betaWarning') }}
-    </Message>
+    <div class="mb-4 space-y-3">
+      <UAlert
+        color="warning"
+        variant="subtle"
+        icon="i-fa7-solid:triangle-exclamation"
+        :title="t('rulesEngineList.betaTag')"
+        :description="t('rulesEngineList.betaWarning')"
+      />
 
-    <!-- Rules the startup patch chain could not rewrite. They stay deactivated until
-         someone edits them, so they need to be visible without opening each one. -->
-    <Message v-if="migrationDisabled.length" severity="error" :closable="false" class="mb-3">
-      <p class="font-semibold">
-        {{ t('rulesEngineList.migrationDisabledTitle', { count: migrationDisabled.length }) }}
+      <!-- Rules the startup patch chain could not rewrite. They stay deactivated until
+           someone edits them, so they need to be visible without opening each one. -->
+      <UAlert
+        v-if="migrationDisabled.length"
+        color="error"
+        variant="subtle"
+        :title="t('rulesEngineList.migrationDisabledTitle', { count: migrationDisabled.length })"
+      >
+        <template #description>
+          <p>{{ t('rulesEngineList.migrationDisabledHelp') }}</p>
+          <ul class="mt-2 list-inside list-disc">
+            <li v-for="rule in migrationDisabled" :key="rule.id">
+              <RouterLink :to="`/admin/rules-engine/${rule.id}/edit`" class="underline">
+                {{ rule.name }}
+              </RouterLink>
+              <span class="text-muted"> — {{ rule.disabledReason }}</span>
+            </li>
+          </ul>
+        </template>
+      </UAlert>
+
+      <UAlert
+        v-if="reconciliationStatus?.dirty"
+        color="info"
+        variant="subtle"
+        icon="i-fa7-solid:circle-info"
+        :description="t('rulesEngineList.dirtyWarning')"
+      />
+      <p v-if="reconciliationStatus?.lastRunAt" class="text-xs text-muted">
+        {{ t('rulesEngineList.lastRun', { date: formatRunDate(reconciliationStatus.lastRunAt) }) }}
       </p>
-      <p class="text-sm mt-1">{{ t('rulesEngineList.migrationDisabledHelp') }}</p>
-      <ul class="text-sm mt-2 list-disc list-inside">
-        <li v-for="rule in migrationDisabled" :key="rule.id">
-          <button class="underline" @click="router.push(`/admin/rules-engine/${rule.id}/edit`)">{{ rule.name }}</button>
-          <span class="text-surface-500"> — {{ rule.disabledReason }}</span>
-        </li>
-      </ul>
-    </Message>
 
-    <Message v-if="reconciliationStatus?.dirty" severity="info" :closable="false" class="mb-3">
-      {{ t('rulesEngineList.dirtyWarning') }}
-    </Message>
-    <p v-if="reconciliationStatus?.lastRunAt" class="text-xs text-surface-500 mb-3">
-      {{ t('rulesEngineList.lastRun', { date: formatRunDate(reconciliationStatus.lastRunAt) }) }}
-    </p>
-
-    <Message v-if="error" severity="error" :closable="true">{{ error }}</Message>
-
-    <div class="flex flex-wrap gap-3 mb-4">
-      <Select
-        v-model="filters.type"
-        :options="typeOptions"
-        option-label="label"
-        option-value="value"
-        :placeholder="t('rulesEngineList.filterType')"
-        show-clear
-        class="w-48"
-        @change="reload"
-      />
-      <Select
-        v-model="filters.scope"
-        :options="scopeOptions"
-        option-label="label"
-        option-value="value"
-        :placeholder="t('rulesEngineList.filterScope')"
-        show-clear
-        class="w-48"
-        @change="reload"
-      />
-      <Select
-        v-model="filters.isActive"
-        :options="statusOptions"
-        option-label="label"
-        option-value="value"
-        :placeholder="t('common.status')"
-        show-clear
-        class="w-48"
-        @change="reload"
+      <UAlert
+        v-if="error"
+        color="error"
+        variant="subtle"
+        icon="i-fa7-solid:circle-xmark"
+        :description="error"
       />
     </div>
 
-    <DataTable
-      :value="rows"
-      :loading="loading"
-      striped-rows
-      paginator
-      :rows="10"
-      :rows-per-page-options="[5, 10, 20, 50]"
-      responsive-layout="scroll"
-      class="p-datatable-sm"
-    >
-      <Column field="name" :header="t('common.name')" sortable>
-        <template #body="{ data }">
-          <span class="font-semibold">{{ data.name }}</span>
-        </template>
-      </Column>
+    <div class="mb-4 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
+      <USelectMenu
+        v-model="filters.type"
+        :items="typeOptions"
+        value-key="value"
+        :search-input="false"
+        clear
+        :placeholder="t('rulesEngineList.filterType')"
+        class="sm:w-48"
+        @update:model-value="reload"
+      />
+      <USelectMenu
+        v-model="filters.scope"
+        :items="scopeOptions"
+        value-key="value"
+        :search-input="false"
+        clear
+        :placeholder="t('rulesEngineList.filterScope')"
+        class="sm:w-48"
+        @update:model-value="reload"
+      />
+      <USelectMenu
+        v-model="filters.isActive"
+        :items="statusOptions"
+        value-key="value"
+        :search-input="false"
+        clear
+        :placeholder="t('common.status')"
+        class="sm:w-48"
+        @update:model-value="reload"
+      />
+    </div>
 
-      <Column field="type" :header="t('rulesEngineList.colType')" sortable>
-        <template #body="{ data }">
-          <Tag :severity="data.type === 'badge' ? 'warn' : 'info'" :value="typeLabel(data.type)" />
-        </template>
-      </Column>
-
-      <Column field="triggerEvent" :header="t('rulesEngineList.colEvent')" sortable />
-
-      <Column field="scope" :header="t('rulesEngineList.colScope')" sortable>
-        <template #body="{ data }">{{ scopeLabel(data.scope) }}</template>
-      </Column>
-
-      <Column field="priority" :header="t('rulesEngineList.colPriority')" sortable />
-
-      <!-- How often the conditions evaluated true. Zero is the signal: a rule that
-           never fires, as opposed to one that fires and goes unread. -->
-      <Column field="stats.fired" :header="t('rulesEngineList.colFired')" sortable>
-        <template #body="{ data }">
-          <span :class="data.stats.fired === 0 ? 'text-surface-500' : 'font-semibold'">
-            {{ data.stats.fired }}
-          </span>
-          <span v-if="data.stats.superseded > 0" class="text-xs text-surface-500 ml-1">
-            {{ t('rulesEngineList.supersededSuffix', { count: data.stats.superseded }) }}
-          </span>
-        </template>
-      </Column>
-
-      <!-- Message rules only: badges have their own reveal and no recap to drown in. -->
-      <Column field="stats.seen" :header="t('rulesEngineList.colSeen')" sortable>
-        <template #body="{ data }">
-          <span v-if="data.type === 'badge' || data.stats.delivered === 0" class="text-surface-500">—</span>
-          <span v-else>
-            {{ seenRate(data.stats) }}%
-            <span
-              v-if="data.stats.recap > 0"
-              class="text-xs text-orange-500 ml-1"
-              v-tooltip.top="t('rulesEngineList.recapTooltip')"
-            >
-              {{ t('rulesEngineList.recapSuffix', { count: data.stats.recap }) }}
-            </span>
-          </span>
-        </template>
-      </Column>
-
-      <Column field="isActive" :header="t('rulesEngineList.colActive')" sortable>
-        <template #body="{ data }">
-          <div class="flex items-center gap-2">
-            <Tag :severity="data.isActive ? 'success' : 'secondary'" :value="data.isActive ? t('rulesEngineList.yes') : t('rulesEngineList.no')" />
-            <i
-              v-if="data.disabledReason"
-              class="fa fa-triangle-exclamation text-red-500"
-              v-tooltip.top="data.disabledReason"
-            />
-          </div>
-        </template>
-      </Column>
-
-      <Column :header="t('common.actions')" style="width: 13rem">
-        <template #body="{ data }">
-          <div class="flex gap-2">
-            <Button
-              icon="fa fa-chart-line"
-              size="small"
-              text
-              rounded
-              @click="router.push(`/admin/rules-engine/${data.id}/stats`)"
-              v-tooltip.top="t('rulesEngineList.tooltipStats')"
-            />
-            <Button
-              icon="fa fa-edit"
-              size="small"
-              text
-              rounded
-              @click="router.push(`/admin/rules-engine/${data.id}/edit`)"
-              v-tooltip.top="t('common.edit')"
-            />
-            <Button
-              icon="fa fa-copy"
-              size="small"
-              text
-              rounded
-              :disabled="loading"
-              @click="handleDuplicate(data)"
-              v-tooltip.top="t('rulesEngineList.tooltipDuplicate')"
-            />
-            <Button
-              icon="fa fa-trash"
-              size="small"
-              text
-              rounded
-              severity="danger"
-              @click="confirmDelete(data)"
-              v-tooltip.top="t('common.delete')"
-            />
-          </div>
-        </template>
-      </Column>
-
-      <template #empty>
-        <div class="text-center py-8">
-          <p class="text-gray-500 mb-4">{{ t('rulesEngineList.empty') }}</p>
-          <Button :label="t('rulesEngineList.createRule')" icon="fa fa-plus" @click="router.push('/admin/rules-engine/new')" />
+    <AdminTable :data="rows" :columns="columns" :loading="loading">
+      <template #name-cell="{ row }">
+        <span class="font-semibold text-highlighted">{{ row.original.name }}</span>
+        <!-- Type and activity columns are hidden on phones. -->
+        <div class="mt-1 flex flex-wrap items-center gap-1 md:hidden">
+          <UBadge v-bind="typeBadge(row.original.type)" variant="subtle" size="sm" />
+          <UBadge v-bind="activeBadge(row.original.isActive)" variant="subtle" size="sm" />
         </div>
       </template>
-    </DataTable>
-
-    <Dialog v-model:visible="deleteDialogVisible" :header="t('rulesEngineList.deleteDialogTitle')" :modal="true" :style="{ width: '450px' }">
-      <div class="flex items-center gap-3 mb-4">
-        <i class="pi pi-exclamation-triangle text-3xl text-orange-500"></i>
-        <span>{{ t('rulesEngineList.deleteConfirm', { name: ruleToDelete?.name }) }}</span>
-      </div>
-      <Message
-        v-if="ruleToDelete?.type === 'badge' && badgeHolderCount > 0"
-        severity="warn"
-        :closable="false"
-        class="mb-2"
-      >
-        {{ t('rulesEngineList.badgeHolderWarning', { count: badgeHolderCount }) }}
-      </Message>
-      <template #footer>
-        <Button :label="t('common.cancel')" icon="pi pi-times" @click="deleteDialogVisible = false" text />
-        <Button :label="t('common.delete')" icon="pi pi-check" severity="danger" :loading="loading" @click="handleDelete" />
+      <template #type-cell="{ row }">
+        <UBadge v-bind="typeBadge(row.original.type)" variant="subtle" />
       </template>
-    </Dialog>
+      <template #scope-cell="{ row }">{{ scopeLabel(row.original.scope) }}</template>
+      <!-- How often the conditions evaluated true. Zero is the signal: a rule that
+           never fires, as opposed to one that fires and goes unread. -->
+      <template #fired-cell="{ row }">
+        <span :class="row.original.stats.fired === 0 ? 'text-muted' : 'font-semibold'">
+          {{ row.original.stats.fired }}
+        </span>
+        <span v-if="row.original.stats.superseded > 0" class="ms-1 text-xs text-muted">
+          {{ t('rulesEngineList.supersededSuffix', { count: row.original.stats.superseded }) }}
+        </span>
+      </template>
+      <!-- Message rules only: badges have their own reveal and no recap to drown in. -->
+      <template #seen-cell="{ row }">
+        <span
+          v-if="row.original.type === 'badge' || row.original.stats.delivered === 0"
+          class="text-muted"
+        >
+          —
+        </span>
+        <span v-else>
+          {{ seenRate(row.original.stats) }}%
+          <UTooltip v-if="row.original.stats.recap > 0" :text="t('rulesEngineList.recapTooltip')">
+            <span class="ms-1 text-xs text-warning">
+              {{ t('rulesEngineList.recapSuffix', { count: row.original.stats.recap }) }}
+            </span>
+          </UTooltip>
+        </span>
+      </template>
+      <template #isActive-cell="{ row }">
+        <div class="flex items-center gap-2">
+          <UBadge v-bind="activeBadge(row.original.isActive)" variant="subtle" />
+          <UTooltip v-if="row.original.disabledReason" :text="row.original.disabledReason">
+            <UIcon name="i-fa7-solid:triangle-exclamation" class="text-error" />
+          </UTooltip>
+        </div>
+      </template>
+      <template #actions-cell="{ row }">
+        <RowActions :actions="rowActions(row.original)" />
+      </template>
+      <template #empty>
+        <div class="flex flex-col items-center gap-4 py-8">
+          <p class="text-muted">{{ t('rulesEngineList.empty') }}</p>
+          <UButton
+            :label="t('rulesEngineList.createRule')"
+            icon="i-fa7-solid:plus"
+            to="/admin/rules-engine/new"
+          />
+        </div>
+      </template>
+    </AdminTable>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
+import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import type { TableColumn } from '@nuxt/ui'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
+import AdminTable from '@/components/admin/AdminTable.vue'
+import RowActions, { type RowAction } from '@/components/ui/RowActions.vue'
+import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/admin/table-columns'
+import { useAppToast } from '@/composables/useAppToast'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useRulesService } from '@/composables/rules/rules.service'
 import type { ClientRule, CreateRuleData } from '@skol-arena/shared/types/index'
 
-const router = useRouter()
 const { t } = useI18n()
+const confirm = useConfirmDialog()
 const {
   rules,
   loading,
@@ -277,7 +229,7 @@ function seenRate(stats: { seen: number; delivered: number }) {
 }
 
 const reconciling = ref(false)
-const toast = useToast()
+const toast = useAppToast()
 
 /**
  * Rules the engine migration deactivated. Derived from the loaded list, so an active
@@ -286,7 +238,11 @@ const toast = useToast()
  */
 const migrationDisabled = computed(() => rules.value.filter((rule) => rule.disabledReason))
 
-const filters = reactive<{ type?: 'message' | 'badge'; scope?: 'global' | 'discipline'; isActive?: boolean }>({})
+const filters = reactive<{
+  type?: 'message' | 'badge'
+  scope?: 'global' | 'discipline'
+  isActive?: boolean
+}>({})
 
 const typeOptions = [
   { label: t('rulesEngineList.typeMessage'), value: 'message' },
@@ -301,9 +257,85 @@ const statusOptions = [
   { label: t('rulesEngineList.statusInactive'), value: false },
 ]
 
-const deleteDialogVisible = ref(false)
-const ruleToDelete = ref<ClientRule | null>(null)
-const badgeHolderCount = ref(0)
+type RuleRow = (typeof rows.value)[number]
+
+const columns: TableColumn<RuleRow>[] = [
+  { accessorKey: 'name', header: sortableHeader(t('common.name')) },
+  {
+    accessorKey: 'type',
+    header: sortableHeader(t('rulesEngineList.colType')),
+    meta: hiddenBelow('md'),
+  },
+  {
+    accessorKey: 'triggerEvent',
+    header: sortableHeader(t('rulesEngineList.colEvent')),
+    meta: hiddenBelow('2xl'),
+  },
+  {
+    accessorKey: 'scope',
+    header: sortableHeader(t('rulesEngineList.colScope')),
+    meta: hiddenBelow('xl'),
+  },
+  {
+    accessorKey: 'priority',
+    header: sortableHeader(t('rulesEngineList.colPriority')),
+    meta: hiddenBelow('2xl'),
+  },
+  {
+    id: 'fired',
+    accessorFn: (rule) => rule.stats.fired,
+    header: sortableHeader(t('rulesEngineList.colFired')),
+    meta: hiddenBelow('lg'),
+  },
+  {
+    id: 'seen',
+    accessorFn: (rule) => rule.stats.seen,
+    header: sortableHeader(t('rulesEngineList.colSeen')),
+    meta: hiddenBelow('xl'),
+  },
+  {
+    accessorKey: 'isActive',
+    header: sortableHeader(t('rulesEngineList.colActive')),
+    meta: hiddenBelow('md'),
+  },
+  { id: 'actions', meta: ACTIONS_COLUMN_META },
+]
+
+function typeBadge(type: string) {
+  return {
+    label: typeLabel(type),
+    color: type === 'badge' ? ('warning' as const) : ('info' as const),
+  }
+}
+
+function activeBadge(active: boolean) {
+  return active
+    ? { label: t('rulesEngineList.yes'), color: 'success' as const }
+    : { label: t('rulesEngineList.no'), color: 'neutral' as const }
+}
+
+function rowActions(rule: ClientRule): RowAction[] {
+  return [
+    {
+      label: t('rulesEngineList.tooltipStats'),
+      icon: 'i-fa7-solid:chart-line',
+      to: `/admin/rules-engine/${rule.id}/stats`,
+    },
+    { label: t('common.edit'), icon: 'i-fa7-solid:pen', to: `/admin/rules-engine/${rule.id}/edit` },
+    {
+      label: t('rulesEngineList.tooltipDuplicate'),
+      icon: 'i-fa7-solid:copy',
+      disabled: loading.value,
+      onSelect: () => handleDuplicate(rule),
+    },
+    {
+      label: t('common.delete'),
+      icon: 'i-fa7-solid:trash',
+      color: 'error',
+      onSelect: () => confirmDelete(rule),
+    },
+  ]
+}
 
 function typeLabel(type: string) {
   return type === 'badge' ? t('rulesEngineList.typeBadge') : t('rulesEngineList.typeMessage')
@@ -327,9 +359,7 @@ async function handleReconcile() {
   toast.add({
     severity: ok ? 'success' : 'error',
     summary: ok ? t('rulesEngineList.recalcLaunchedSummary') : t('rulesEngineList.errorSummary'),
-    detail: ok
-      ? t('rulesEngineList.recalcDetail')
-      : t('rulesEngineList.recalcErrorDetail'),
+    detail: ok ? t('rulesEngineList.recalcDetail') : t('rulesEngineList.recalcErrorDetail'),
     life: 4000,
   })
 }
@@ -350,22 +380,20 @@ async function handleDuplicate(rule: ClientRule) {
   await createRule(copy)
 }
 
+/** A badge rule warns how many players would lose the badge it awarded. */
 async function confirmDelete(rule: ClientRule) {
-  ruleToDelete.value = rule
-  badgeHolderCount.value = 0
-  deleteDialogVisible.value = true
-  if (rule.type === 'badge') {
-    badgeHolderCount.value = await getBadgeCount(rule.id)
-  }
-}
-
-async function handleDelete() {
-  if (!ruleToDelete.value) return
-  const success = await deleteRule(ruleToDelete.value.id)
-  if (success) {
-    deleteDialogVisible.value = false
-    ruleToDelete.value = null
-  }
+  const holders = rule.type === 'badge' ? await getBadgeCount(rule.id) : 0
+  const message = t('rulesEngineList.deleteConfirm', { name: rule.name })
+  const confirmed = await confirm({
+    title: t('rulesEngineList.deleteDialogTitle'),
+    message:
+      holders > 0
+        ? `${message}\n\n${t('rulesEngineList.badgeHolderWarning', { count: holders })}`
+        : message,
+    confirmLabel: t('common.delete'),
+    color: 'error',
+  })
+  if (confirmed) await deleteRule(rule.id)
 }
 
 onMounted(() => {
@@ -374,10 +402,3 @@ onMounted(() => {
   loadReconciliationStatus()
 })
 </script>
-
-<style scoped>
-.rules-engine-list {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-</style>
