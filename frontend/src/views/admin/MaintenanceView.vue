@@ -1,155 +1,204 @@
 <template>
-  <div class="maintenance-view">
-    <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          {{ t('maintenanceView.title') }}
-        </h1>
-        <p class="text-gray-600 dark:text-gray-400">{{ t('maintenanceView.subtitle') }}</p>
-      </div>
-      <Button
-        :label="t('maintenanceView.refresh')"
-        icon="fa fa-rotate"
-        severity="secondary"
-        :loading="loading"
-        @click="loadSystemInfo"
-      />
-    </div>
+  <div>
+    <AdminPageHeader
+      :title="t('maintenanceView.title')"
+      :description="t('maintenanceView.subtitle')"
+    >
+      <template #actions>
+        <UButton
+          :label="t('maintenanceView.refresh')"
+          icon="i-fa7-solid:rotate"
+          color="neutral"
+          variant="soft"
+          :loading="loading"
+          @click="loadSystemInfo"
+        />
+      </template>
+    </AdminPageHeader>
 
-    <Message v-if="error" severity="error" class="mb-4">{{ error }}</Message>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      icon="i-fa7-solid:circle-xmark"
+      :description="error"
+      class="mb-4"
+    />
 
-    <div v-if="info" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div v-if="info" class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <!-- Avatar storage -->
-      <Card class="lg:col-span-2" data-testid="avatar-storage-card">
-        <template #title>
-          <i class="fa fa-image mr-2"></i>{{ t('maintenanceView.avatars.title') }}
+      <UCard class="lg:col-span-2" data-testid="avatar-storage-card">
+        <template #header>
+          <h2 class="flex items-center gap-2 font-semibold text-highlighted">
+            <UIcon name="i-fa7-solid:image" />{{ t('maintenanceView.avatars.title') }}
+          </h2>
         </template>
-        <template #content>
-          <Message v-if="hasStrandedAvatars" severity="warn" class="mb-4">
-            {{
-              t('maintenanceView.avatars.mismatch', {
-                stranded: info.avatarStorage.strandedDrivers.join(', '),
-                driver: info.avatarStorage.driver,
-              })
-            }}
-          </Message>
-          <dl class="info-grid">
-            <dt>{{ t('maintenanceView.avatars.driver') }}</dt>
-            <dd><Tag :value="info.avatarStorage.driver" /></dd>
-            <dt>{{ t('maintenanceView.avatars.total') }}</dt>
-            <dd>{{ info.avatarStorage.total }}</dd>
-            <dt>{{ t('maintenanceView.avatars.inActive') }}</dt>
-            <dd>{{ info.avatarStorage.inActive }}</dd>
-            <template v-for="entry in info.avatarStorage.stranded" :key="entry.driver">
-              <dt>{{ t('maintenanceView.avatars.inOther', { driver: entry.driver }) }}</dt>
-              <dd>{{ entry.count }}</dd>
-            </template>
-            <dt>{{ t('maintenanceView.avatars.missing') }}</dt>
-            <dd>{{ info.avatarStorage.missing }}</dd>
-          </dl>
-          <Message v-if="lastMigration" :severity="lastMigration.failed > 0 ? 'warn' : 'success'" class="mt-4">
-            {{ t('maintenanceService.migrationDetail', lastMigration) }}
-          </Message>
-          <Button
-            v-if="hasStrandedAvatars"
-            class="mt-4"
-            icon="fa fa-right-left"
-            severity="warn"
-            data-testid="migrate-avatars"
-            :label="t('maintenanceView.avatars.migrate', { driver: info.avatarStorage.driver })"
-            :loading="migrating"
-            @click="confirmMigration"
-          />
-        </template>
-      </Card>
+        <UAlert
+          v-if="hasStrandedAvatars"
+          color="warning"
+          variant="subtle"
+          icon="i-fa7-solid:triangle-exclamation"
+          class="mb-4"
+          :description="
+            t('maintenanceView.avatars.mismatch', {
+              stranded: info.avatarStorage.strandedDrivers.join(', '),
+              driver: info.avatarStorage.driver,
+            })
+          "
+        />
+        <dl
+          class="grid grid-cols-2 gap-x-4 sm:grid-cols-[max-content_1fr] sm:gap-x-6 gap-y-2 text-sm [&>dt]:text-muted [&>dd]:break-words [&>dd]:min-w-0"
+        >
+          <dt>{{ t('maintenanceView.avatars.driver') }}</dt>
+          <dd><UBadge :label="info.avatarStorage.driver" variant="subtle" /></dd>
+          <dt>{{ t('maintenanceView.avatars.total') }}</dt>
+          <dd>{{ info.avatarStorage.total }}</dd>
+          <dt>{{ t('maintenanceView.avatars.inActive') }}</dt>
+          <dd>{{ info.avatarStorage.inActive }}</dd>
+          <template v-for="entry in info.avatarStorage.stranded" :key="entry.driver">
+            <dt>{{ t('maintenanceView.avatars.inOther', { driver: entry.driver }) }}</dt>
+            <dd>{{ entry.count }}</dd>
+          </template>
+          <dt>{{ t('maintenanceView.avatars.missing') }}</dt>
+          <dd>{{ info.avatarStorage.missing }}</dd>
+        </dl>
+        <UAlert
+          v-if="lastMigration"
+          :color="lastMigration.failed > 0 ? 'warning' : 'success'"
+          variant="subtle"
+          class="mt-4"
+          :description="t('maintenanceService.migrationDetail', lastMigration)"
+        />
+        <UButton
+          v-if="hasStrandedAvatars"
+          class="mt-4 w-full justify-center sm:w-auto"
+          icon="i-fa7-solid:right-left"
+          color="warning"
+          data-testid="migrate-avatars"
+          :label="t('maintenanceView.avatars.migrate', { driver: info.avatarStorage.driver })"
+          :loading="migrating"
+          @click="confirmMigration"
+        />
+      </UCard>
 
       <!-- Application -->
-      <Card>
-        <template #title><i class="fa fa-cube mr-2"></i>{{ t('maintenanceView.app.title') }}</template>
-        <template #content>
-          <dl class="info-grid">
-            <dt>{{ t('maintenanceView.app.version') }}</dt>
-            <dd data-testid="app-version">
-              {{ deployedVersion }}
-              <Tag
-                v-if="staleClient"
-                severity="warn"
-                class="ml-2"
-                :value="t('maintenanceView.app.staleClient', { version: clientVersion })"
-              />
-            </dd>
-            <dt>Bun</dt>
-            <dd>{{ info.application.bunVersion }}</dd>
-            <dt>NODE_ENV</dt>
-            <dd>{{ info.application.nodeEnv ?? t('maintenanceView.unknown') }}</dd>
-            <dt>{{ t('maintenanceView.app.startedAt') }}</dt>
-            <dd>{{ dateToStringDDMMYYYYHHMM(info.application.startedAt) }}</dd>
-            <dt>{{ t('maintenanceView.app.apiVersions') }}</dt>
-            <dd>
-              {{ info.application.apiVersions.join(', ') }}
-              ({{ t('maintenanceView.app.latest', { version: info.application.latestApiVersion }) }})
-            </dd>
-          </dl>
+      <UCard>
+        <template #header>
+          <h2 class="flex items-center gap-2 font-semibold text-highlighted">
+            <UIcon name="i-fa7-solid:cube" />{{ t('maintenanceView.app.title') }}
+          </h2>
         </template>
-      </Card>
+        <dl
+          class="grid grid-cols-2 gap-x-4 sm:grid-cols-[max-content_1fr] sm:gap-x-6 gap-y-2 text-sm [&>dt]:text-muted [&>dd]:break-words [&>dd]:min-w-0"
+        >
+          <dt>{{ t('maintenanceView.app.version') }}</dt>
+          <dd data-testid="app-version">
+            {{ deployedVersion }}
+            <UBadge
+              v-if="staleClient"
+              color="warning"
+              variant="subtle"
+              class="ms-2"
+              :label="t('maintenanceView.app.staleClient', { version: clientVersion })"
+            />
+          </dd>
+          <dt>Bun</dt>
+          <dd>{{ info.application.bunVersion }}</dd>
+          <dt>NODE_ENV</dt>
+          <dd>{{ info.application.nodeEnv ?? t('maintenanceView.unknown') }}</dd>
+          <dt>{{ t('maintenanceView.app.startedAt') }}</dt>
+          <dd>{{ dateToStringDDMMYYYYHHMM(info.application.startedAt) }}</dd>
+          <dt>{{ t('maintenanceView.app.apiVersions') }}</dt>
+          <dd>
+            {{ info.application.apiVersions.join(', ') }}
+            ({{ t('maintenanceView.app.latest', { version: info.application.latestApiVersion }) }})
+          </dd>
+        </dl>
+      </UCard>
 
       <!-- Database -->
-      <Card>
-        <template #title><i class="fa fa-database mr-2"></i>{{ t('maintenanceView.db.title') }}</template>
-        <template #content>
-          <dl class="info-grid mb-4">
-            <dt>PostgreSQL</dt>
-            <dd>{{ info.database.serverVersion }}</dd>
-            <dt>{{ t('maintenanceView.db.size') }}</dt>
-            <dd>{{ formatBytes(info.database.sizeBytes, locale) }}</dd>
-            <dt>{{ t('maintenanceView.db.migrations') }}</dt>
-            <dd>{{ info.database.migrations.applied }}</dd>
-            <dt>{{ t('maintenanceView.db.latestMigration') }}</dt>
-            <dd>{{ dateToStringDDMMYYYYHHMM(info.database.migrations.latestMigrationAt ?? undefined) || '—' }}</dd>
-          </dl>
-          <DataTable :value="info.database.tables" size="small" striped-rows>
-            <Column field="name" :header="t('maintenanceView.db.table')" />
-            <Column field="rows" :header="t('maintenanceView.db.rows')" />
-            <Column :header="t('maintenanceView.db.tableSize')">
-              <template #body="{ data }">{{ formatBytes(data.sizeBytes, locale) }}</template>
-            </Column>
-          </DataTable>
+      <UCard>
+        <template #header>
+          <h2 class="flex items-center gap-2 font-semibold text-highlighted">
+            <UIcon name="i-fa7-solid:database" />{{ t('maintenanceView.db.title') }}
+          </h2>
         </template>
-      </Card>
+        <dl
+          class="mb-4 grid grid-cols-2 gap-x-4 sm:grid-cols-[max-content_1fr] sm:gap-x-6 gap-y-2 text-sm [&>dt]:text-muted [&>dd]:break-words [&>dd]:min-w-0"
+        >
+          <dt>PostgreSQL</dt>
+          <dd>{{ info.database.serverVersion }}</dd>
+          <dt>{{ t('maintenanceView.db.size') }}</dt>
+          <dd>{{ formatBytes(info.database.sizeBytes, locale) }}</dd>
+          <dt>{{ t('maintenanceView.db.migrations') }}</dt>
+          <dd>{{ info.database.migrations.applied }}</dd>
+          <dt>{{ t('maintenanceView.db.latestMigration') }}</dt>
+          <dd>
+            {{
+              dateToStringDDMMYYYYHHMM(info.database.migrations.latestMigrationAt ?? undefined) ||
+              '—'
+            }}
+          </dd>
+        </dl>
+        <UTable
+          :data="info.database.tables"
+          :columns="tableColumns"
+          :ui="{ td: 'py-2', th: 'py-2' }"
+        >
+          <template #sizeBytes-cell="{ row }">{{
+            formatBytes(row.original.sizeBytes, locale)
+          }}</template>
+        </UTable>
+      </UCard>
 
       <!-- Environment -->
-      <Card class="lg:col-span-2">
-        <template #title><i class="fa fa-sliders mr-2"></i>{{ t('maintenanceView.env.title') }}</template>
-        <template #subtitle>{{ t('maintenanceView.env.subtitle') }}</template>
-        <template #content>
-          <DataTable
-            :value="info.environment"
-            size="small"
-            row-group-mode="subheader"
-            group-rows-by="group"
-          >
-            <template #groupheader="{ data }">
-              <span class="font-semibold">{{ t(`maintenanceView.env.groups.${data.group}`) }}</span>
-            </template>
-            <Column field="name" :header="t('maintenanceView.env.name')">
-              <template #body="{ data }"><code>{{ data.name }}</code></template>
-            </Column>
-            <Column :header="t('maintenanceView.env.value')">
-              <template #body="{ data }">
-                <Tag v-if="data.secret" :severity="data.configured ? 'success' : 'secondary'"
-                  :value="t(data.configured ? 'maintenanceView.env.secretSet' : 'maintenanceView.env.unset')"
-                  icon="fa fa-lock" />
-                <code v-else-if="data.configured" class="break-all">{{ data.value }}</code>
-                <span v-else class="text-gray-500 italic">{{ t('maintenanceView.env.unset') }}</span>
-              </template>
-            </Column>
-          </DataTable>
+      <UCard class="lg:col-span-2">
+        <template #header>
+          <h2 class="flex items-center gap-2 font-semibold text-highlighted">
+            <UIcon name="i-fa7-solid:sliders" />{{ t('maintenanceView.env.title') }}
+          </h2>
+          <p class="mt-1 text-sm text-muted">{{ t('maintenanceView.env.subtitle') }}</p>
         </template>
-      </Card>
+        <!-- One block per group; name and value stack on phones, where long values need the room. -->
+        <section v-for="group in envGroups" :key="group.name" class="mb-4 last:mb-0">
+          <h3 class="mb-2 text-sm font-semibold">
+            {{ t(`maintenanceView.env.groups.${group.name}`) }}
+          </h3>
+          <ul class="divide-y divide-default rounded-md border border-default">
+            <li
+              v-for="variable in group.variables"
+              :key="variable.name"
+              class="flex flex-col gap-1 px-3 py-2 sm:flex-row sm:items-center sm:gap-4"
+            >
+              <code class="text-sm sm:w-72 sm:shrink-0">{{ variable.name }}</code>
+              <UBadge
+                v-if="variable.secret"
+                :color="variable.configured ? 'success' : 'neutral'"
+                variant="subtle"
+                icon="i-fa7-solid:lock"
+                class="self-start"
+                :label="
+                  t(
+                    variable.configured
+                      ? 'maintenanceView.env.secretSet'
+                      : 'maintenanceView.env.unset',
+                  )
+                "
+              />
+              <code v-else-if="variable.configured" class="text-sm break-all text-muted">{{
+                variable.value
+              }}</code>
+              <span v-else class="text-sm text-dimmed italic">{{
+                t('maintenanceView.env.unset')
+              }}</span>
+            </li>
+          </ul>
+        </section>
+      </UCard>
     </div>
 
     <div v-else-if="loading" class="flex justify-center py-12">
-      <ProgressSpinner />
+      <UIcon name="i-fa7-solid:spinner" class="size-8 animate-spin text-muted" />
     </div>
   </div>
 </template>
@@ -157,13 +206,17 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useConfirm } from 'primevue/useconfirm'
+import type { TableColumn } from '@nuxt/ui'
+import type { SystemInfo } from '@skol-arena/shared/types/index'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
+import { hiddenBelow } from '@/components/admin/table-columns'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useMaintenanceService } from '@/composables/maintenance/maintenance.service'
 import { dateToStringDDMMYYYYHHMM } from '@/utils/DateUtils'
 import { formatBytes } from '@/utils/bytes'
 
 const { t, locale } = useI18n()
-const confirm = useConfirm()
+const confirm = useConfirmDialog()
 const clientVersion = __APP_VERSION__
 const {
   info,
@@ -176,20 +229,36 @@ const {
   migrateAvatars,
 } = useMaintenanceService()
 
-function confirmMigration() {
+type DatabaseTable = SystemInfo['database']['tables'][number]
+type EnvironmentVariable = SystemInfo['environment'][number]
+
+const tableColumns: TableColumn<DatabaseTable>[] = [
+  { accessorKey: 'name', header: t('maintenanceView.db.table') },
+  { accessorKey: 'rows', header: t('maintenanceView.db.rows'), meta: hiddenBelow('sm') },
+  { accessorKey: 'sizeBytes', header: t('maintenanceView.db.tableSize') },
+]
+
+/** Variables in their declaration order, grouped under the group they first appear in. */
+const envGroups = computed(() => {
+  const groups = new Map<string, EnvironmentVariable[]>()
+  for (const variable of info.value?.environment ?? []) {
+    groups.set(variable.group, [...(groups.get(variable.group) ?? []), variable])
+  }
+  return [...groups].map(([name, variables]) => ({ name, variables }))
+})
+
+async function confirmMigration() {
   if (!info.value) return
-  confirm.require({
-    header: t('maintenanceView.avatars.confirmHeader'),
+  const confirmed = await confirm({
+    title: t('maintenanceView.avatars.confirmHeader'),
     message: t('maintenanceView.avatars.confirmMessage', {
       driver: info.value.avatarStorage.driver,
       stranded: info.value.avatarStorage.strandedDrivers.join(', '),
     }),
-    icon: 'fa fa-exclamation-triangle',
-    acceptLabel: t('maintenanceView.avatars.confirmAccept'),
-    rejectLabel: t('common.cancel'),
-    acceptClass: 'p-button-warn',
-    accept: migrateAvatars,
+    confirmLabel: t('maintenanceView.avatars.confirmAccept'),
+    color: 'warning',
   })
+  if (confirmed) await migrateAvatars()
 }
 
 // Front and back ship in the same image, so they share one version. The server only
@@ -200,32 +269,3 @@ const staleClient = computed(() => deployedVersion.value !== clientVersion)
 
 onMounted(loadSystemInfo)
 </script>
-
-<style scoped>
-.maintenance-view {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1.5rem;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.5rem 1.5rem;
-}
-
-.info-grid dt {
-  color: var(--p-text-muted-color);
-}
-
-.info-grid dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-@media (max-width: 640px) {
-  .maintenance-view {
-    padding: 1rem;
-  }
-}
-</style>

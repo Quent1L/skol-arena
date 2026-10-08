@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { computed, ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
-import { mountWithPrime, mountWithUi } from '@/test-support/mount'
+import { mountWithUi } from '@/test-support/mount'
 import MaintenanceView from '@/views/admin/MaintenanceView.vue'
 import AdminView from '@/views/admin/AdminView.vue'
 import { useMaintenanceService } from '@/composables/maintenance/maintenance.service'
@@ -68,19 +68,19 @@ function mockService(strandedDrivers: AvatarStorageDriver[]) {
 describe('MaintenanceView', () => {
   it('offers the migration only when avatars are stranded', async () => {
     mockService(['postgres'])
-    const stranded = mountWithPrime(MaintenanceView)
+    const stranded = mountWithUi(MaintenanceView)
     await flushPromises()
     expect(stranded.find('[data-testid="migrate-avatars"]').exists()).toBe(true)
 
     mockService([])
-    const clean = mountWithPrime(MaintenanceView)
+    const clean = mountWithUi(MaintenanceView)
     await flushPromises()
     expect(clean.find('[data-testid="migrate-avatars"]').exists()).toBe(false)
   })
 
   it('shows public values but never a secret', async () => {
     mockService([])
-    const wrapper = mountWithPrime(MaintenanceView)
+    const wrapper = mountWithUi(MaintenanceView)
     await flushPromises()
 
     expect(wrapper.text()).toContain('3000')
@@ -91,13 +91,13 @@ describe('MaintenanceView', () => {
   it('shows a single version, flagged only when this tab runs an older bundle', async () => {
     const service = mockService([])
     service.info.value!.application.version = __APP_VERSION__
-    const current = mountWithPrime(MaintenanceView)
+    const current = mountWithUi(MaintenanceView)
     await flushPromises()
     expect(current.find('[data-testid="app-version"]').text()).toBe(__APP_VERSION__)
 
     const stale = mockService([])
     stale.info.value!.application.version = '99.0.0'
-    const wrapper = mountWithPrime(MaintenanceView)
+    const wrapper = mountWithUi(MaintenanceView)
     await flushPromises()
     expect(wrapper.find('[data-testid="app-version"]').text()).toContain('99.0.0')
     expect(wrapper.find('[data-testid="app-version"]').text()).toContain('maintenanceView.app.staleClient')
@@ -106,7 +106,7 @@ describe('MaintenanceView', () => {
   it('falls back to the bundle version when the server does not know it', async () => {
     const service = mockService([])
     service.info.value!.application.version = null
-    const wrapper = mountWithPrime(MaintenanceView)
+    const wrapper = mountWithUi(MaintenanceView)
     await flushPromises()
 
     expect(wrapper.find('[data-testid="app-version"]').text()).toBe(__APP_VERSION__)
@@ -114,7 +114,7 @@ describe('MaintenanceView', () => {
 
   it('loads the system information on mount', async () => {
     const service = mockService([])
-    mountWithPrime(MaintenanceView)
+    mountWithUi(MaintenanceView)
     await flushPromises()
 
     expect(service.loadSystemInfo).toHaveBeenCalled()
