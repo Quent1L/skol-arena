@@ -1,6 +1,5 @@
 <template>
   <div>
-    <Toast />
     <div class="ranked-season-form-view p-4">
       <div class="flex items-center gap-3 mb-6">
         <Button icon="fa fa-arrow-left" text rounded @click="router.push('/admin/ranked')" />

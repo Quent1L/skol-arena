@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { ToastServiceMethods } from 'primevue/toastservice'
+import type { AppToast } from '@/composables/useAppToast'
 import { NETWORK_ERROR } from '@/utils/HttpErrors'
 
 vi.mock('@/i18n', () => ({
@@ -7,7 +7,7 @@ vi.mock('@/i18n', () => ({
 }))
 
 const add = vi.fn()
-const toast = { add } as unknown as ToastServiceMethods
+const toast = { add } as unknown as AppToast
 
 async function loadErrorService() {
   vi.resetModules()

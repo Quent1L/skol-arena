@@ -2,13 +2,13 @@
  * Global service for handling uncaught errors
  */
 
-import type { ToastServiceMethods } from 'primevue/toastservice'
+import type { AppToast } from '@/composables/useAppToast'
 import { isLeaving } from '@/utils/app-lifecycle'
 import { isNetworkError } from '@/utils/HttpErrors'
 import { i18n } from '@/i18n'
 
-// Singleton to access the ToastService
-let toastInstance: ToastServiceMethods | null = null
+// Singleton to access the app toast
+let toastInstance: AppToast | null = null
 
 const TOAST_LIFE_MS = 8000
 
@@ -23,7 +23,7 @@ let networkToastVisible = false
  * Initialize the service with the Toast instance
  * To be called in App.vue after mounting
  */
-export function initErrorService(toast: ToastServiceMethods) {
+export function initErrorService(toast: AppToast) {
   toastInstance = toast
   console.log('[Error Service] Toast instance registered')
 }
