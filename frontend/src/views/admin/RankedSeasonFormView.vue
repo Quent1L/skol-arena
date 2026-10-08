@@ -263,7 +263,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { FormErrorEvent, FormSubmitEvent } from '@nuxt/ui'
 import { useI18n } from 'vue-i18n'
@@ -320,7 +320,9 @@ const schema = computed(() =>
 )
 
 type RankedSeasonFormState = Partial<CreateRankedSeasonFormData>
-const state = reactive<RankedSeasonFormState>({})
+// A ref, not a reactive: the sections bind it with `v-model:state`, which needs
+// a binding it can reassign.
+const state = ref<RankedSeasonFormState>({})
 
 /**
  * The chain settings are not part of the season payload — they live behind their own endpoint
@@ -535,7 +537,7 @@ onMounted(async () => {
         validationMode: (s.validationMode ?? 'strict') as 'none' | 'auto' | 'strict' | 'admin',
         validationTimerHours: s.validationTimerHours ?? null,
       }
-      Object.assign(state, loaded)
+      Object.assign(state.value, loaded)
       initialValues.value = { ...loaded }
       if (s.automation) {
         automationEnabled.value = s.automation.enabled
@@ -554,7 +556,7 @@ onMounted(async () => {
       }
     }
   } else {
-    Object.assign(state, {
+    Object.assign(state.value, {
       minTeamSize: 1,
       maxTeamSize: 2,
       baseMmr: 1000,

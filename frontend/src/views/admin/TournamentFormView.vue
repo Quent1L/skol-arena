@@ -152,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useI18n } from 'vue-i18n'
@@ -237,7 +237,9 @@ const schema = computed(() =>
 )
 
 type TournamentFormState = Partial<CreateTournamentFormData & UpdateTournamentFormData>
-const state = reactive<TournamentFormState>({})
+// A ref, not a reactive: the sections bind it with `v-model:state`, which needs
+// a binding it can reassign.
+const state = ref<TournamentFormState>({})
 
 function isFieldEditable(fieldName: string): boolean {
   if (!isEditMode.value) return true
@@ -281,7 +283,7 @@ async function onSubmit({ data: values }: FormSubmitEvent<TournamentFormState>) 
     } else {
       await createTournament({
         ...(values as CreateTournamentFormData),
-        organizationId: state.organizationId ?? undefined,
+        organizationId: state.value.organizationId ?? undefined,
       })
     }
     router.push('/admin/tournaments')
@@ -297,7 +299,7 @@ onMounted(async () => {
     await getTournament(route.params.id as string)
     if (currentTournament.value) {
       editability.value = await getEditability(route.params.id as string)
-      Object.assign(state, {
+      Object.assign(state.value, {
         name: currentTournament.value.name,
         description: currentTournament.value.description ?? '',
         mode: currentTournament.value.mode,
@@ -321,7 +323,7 @@ onMounted(async () => {
       })
     }
   } else {
-    Object.assign(state, {
+    Object.assign(state.value, {
       mode: 'championship',
       teamMode: 'flex',
       status: 'draft',
