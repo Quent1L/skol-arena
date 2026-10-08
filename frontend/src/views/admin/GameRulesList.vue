@@ -1,115 +1,78 @@
 <template>
-  <div class="game-rules-list-view p-4">
-    <div class="flex justify-between items-center mb-4">
-      <h1 class="text-2xl font-bold">{{ t('gameRulesList.title') }}</h1>
-      <Button
-        :label="t('gameRulesList.newRule')"
-        icon="fa fa-plus"
-        @click="router.push('/admin/rules/new')"
-      />
-    </div>
+  <div>
+    <AdminPageHeader :title="t('gameRulesList.title')">
+      <template #actions>
+        <UButton
+          :label="t('gameRulesList.newRule')"
+          icon="i-fa7-solid:plus"
+          to="/admin/rules/new"
+        />
+      </template>
+    </AdminPageHeader>
 
-    <Message v-if="error" severity="error" :closable="true">
-      {{ error }}
-    </Message>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      icon="i-fa7-solid:circle-xmark"
+      :description="error"
+      class="mb-4"
+    />
 
-    <DataTable
-      :value="rules"
+    <AdminTable
+      :data="rules"
+      :columns="columns"
       :loading="loading"
-      striped-rows
-      paginator
-      :rows="10"
-      :rows-per-page-options="[5, 10, 20, 50]"
-      responsive-layout="scroll"
-      class="p-datatable-sm"
+      :initial-sorting="[{ id: 'title', desc: false }]"
     >
-      <Column field="title" :header="t('gameRulesList.columnTitle')" sortable>
-        <template #body="{ data }">
-          <span class="font-semibold">{{ data.title }}</span>
-        </template>
-      </Column>
-
-      <Column field="createdAt" :header="t('gameRulesList.columnCreatedAt')" sortable>
-        <template #body="{ data }">
-          {{ formatDate(data.createdAt) }}
-        </template>
-      </Column>
-
-      <Column :header="t('common.actions')" style="width: 10rem">
-        <template #body="{ data }">
-          <div class="flex gap-2">
-            <Button
-              icon="fa fa-edit"
-              size="small"
-              text
-              rounded
-              @click="router.push(`/admin/rules/${data.id}/edit`)"
-              v-tooltip.top="t('common.edit')"
-            />
-            <Button
-              icon="fa fa-trash"
-              size="small"
-              severity="danger"
-              text
-              rounded
-              @click="confirmDelete(data)"
-              v-tooltip.top="t('common.delete')"
-            />
-          </div>
-        </template>
-      </Column>
-
+      <template #title-cell="{ row }">
+        <span class="font-semibold text-highlighted">{{ row.original.title }}</span>
+      </template>
+      <template #createdAt-cell="{ row }">
+        {{ formatDate(row.original.createdAt) }}
+      </template>
+      <template #actions-cell="{ row }">
+        <RowActions :actions="rowActions(row.original)" />
+      </template>
       <template #empty>
-        <div class="text-center py-8">
-          <p class="text-gray-500 mb-4">{{ t('gameRulesList.emptyState') }}</p>
-          <Button
+        <div class="flex flex-col items-center gap-4 py-8">
+          <p class="text-muted">{{ t('gameRulesList.emptyState') }}</p>
+          <UButton
             :label="t('gameRulesList.createFirst')"
-            icon="fa fa-plus"
-            @click="router.push('/admin/rules/new')"
+            icon="i-fa7-solid:plus"
+            to="/admin/rules/new"
           />
         </div>
       </template>
-    </DataTable>
-
-    <Dialog
-      v-model:visible="deleteDialogVisible"
-      :header="t('gameRulesList.deleteDialogHeader')"
-      :modal="true"
-      :style="{ width: '450px' }"
-    >
-      <div class="flex items-center gap-3 mb-4">
-        <i class="pi pi-exclamation-triangle text-3xl text-red-500"></i>
-        <span>
-          {{ t('gameRulesList.deleteConfirmMessage', { title: ruleToDelete?.title }) }}
-        </span>
-      </div>
-      <template #footer>
-        <Button :label="t('common.cancel')" icon="pi pi-times" @click="deleteDialogVisible = false" text />
-        <Button
-          :label="t('common.delete')"
-          icon="pi pi-check"
-          @click="handleDelete"
-          severity="danger"
-          :loading="loading"
-        />
-      </template>
-    </Dialog>
+    </AdminTable>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { TableColumn } from '@nuxt/ui'
 import { useGameRulesService } from '@/composables/game-rules/game-rules.service'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
+import AdminTable from '@/components/admin/AdminTable.vue'
+import RowActions, { type RowAction } from '@/components/ui/RowActions.vue'
+import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/admin/table-columns'
 import type { ClientGameRule } from '@skol-arena/shared/types/index'
 
 const { t } = useI18n()
-const router = useRouter()
+const confirm = useConfirmDialog()
 const { rules, loading, error, loadRules, deleteRule } = useGameRulesService()
 
-const deleteDialogVisible = ref(false)
-const ruleToDelete = ref<ClientGameRule | null>(null)
+const columns: TableColumn<ClientGameRule>[] = [
+  { accessorKey: 'title', header: sortableHeader(t('gameRulesList.columnTitle')) },
+  {
+    accessorKey: 'createdAt',
+    header: sortableHeader(t('gameRulesList.columnCreatedAt')),
+    meta: hiddenBelow('sm'),
+  },
+  { id: 'actions', meta: ACTIONS_COLUMN_META },
+]
 
 function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString('fr-FR', {
@@ -119,28 +82,27 @@ function formatDate(date: Date | string) {
   })
 }
 
-function confirmDelete(rule: ClientGameRule) {
-  ruleToDelete.value = rule
-  deleteDialogVisible.value = true
+function rowActions(rule: ClientGameRule): RowAction[] {
+  return [
+    { label: t('common.edit'), icon: 'i-fa7-solid:pen', to: `/admin/rules/${rule.id}/edit` },
+    {
+      label: t('common.delete'),
+      icon: 'i-fa7-solid:trash',
+      color: 'error',
+      onSelect: () => confirmDelete(rule),
+    },
+  ]
 }
 
-async function handleDelete() {
-  if (!ruleToDelete.value) return
-  const success = await deleteRule(ruleToDelete.value.id)
-  if (success) {
-    deleteDialogVisible.value = false
-    ruleToDelete.value = null
-  }
+async function confirmDelete(rule: ClientGameRule) {
+  const confirmed = await confirm({
+    title: t('gameRulesList.deleteDialogHeader'),
+    message: t('gameRulesList.deleteConfirmMessage', { title: rule.title }),
+    confirmLabel: t('common.delete'),
+    color: 'error',
+  })
+  if (confirmed) await deleteRule(rule.id)
 }
 
-onMounted(() => {
-  loadRules()
-})
+onMounted(loadRules)
 </script>
-
-<style scoped>
-.game-rules-list-view {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-</style>

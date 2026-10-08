@@ -92,6 +92,7 @@
         "@primeuix/themes": "^2.0.3",
         "@primevue/core": "^4.5.5",
         "@skol-arena/shared": "workspace:*",
+        "@tanstack/vue-table": "^8.21.3",
         "@tiptap/extension-image": "^3.30.2",
         "@tiptap/extension-text-align": "^3.30.2",
         "@tiptap/starter-kit": "^3.30.2",
