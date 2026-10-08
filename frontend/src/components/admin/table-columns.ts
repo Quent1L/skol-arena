@@ -28,6 +28,8 @@ const HIDDEN_BELOW = {
   sm: 'hidden sm:table-cell',
   md: 'hidden md:table-cell',
   lg: 'hidden lg:table-cell',
+  xl: 'hidden xl:table-cell',
+  '2xl': 'hidden 2xl:table-cell',
 } as const
 
 /** Column `meta` hiding a secondary column on narrow screens. */

@@ -1,13 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithUi } from '@/test-support/mount'
 import UsersList from '@/views/admin/UsersList.vue'
 import { useAdminUsersService } from '@/composables/admin-users/admin-users.service'
 import type { AdminUserListItem } from '@skol-arena/shared/types/index'
 
 vi.mock('vue-i18n', async () => (await import('@/test-support/mock-modules')).i18nEchoMock())
-vi.mock('vue-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+vi.mock('vue-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('vue-router')>()),
+  useRouter: () => ({ push: vi.fn() }),
+}))
 vi.mock('@/composables/admin-users/admin-users.service', () => ({
   useAdminUsersService: vi.fn(),
 }))
@@ -72,7 +75,7 @@ describe('UsersList', () => {
 
   it('loads the first page and the KPIs on mount', async () => {
     const service = makeServiceMock([makeUser()])
-    mountWithPrime(UsersList)
+    mountWithUi(UsersList)
     await flushPromises()
 
     expect(service.loadStats).toHaveBeenCalledTimes(1)
@@ -89,7 +92,7 @@ describe('UsersList', () => {
 
   it('renders a row per user with its activity', async () => {
     makeServiceMock([makeUser(), makeUser({ id: 'user-2', displayName: 'Bob', shortName: 'BOB' })])
-    const wrapper = mountWithPrime(UsersList)
+    const wrapper = mountWithUi(UsersList)
     await flushPromises()
 
     const text = wrapper.text()
@@ -100,7 +103,7 @@ describe('UsersList', () => {
 
   it('shows "never" when a user has never logged in', async () => {
     makeServiceMock([makeUser({ lastLoginAt: null })])
-    const wrapper = mountWithPrime(UsersList)
+    const wrapper = mountWithUi(UsersList)
     await flushPromises()
 
     expect(wrapper.text()).toContain('adminUsersList.never')
@@ -108,7 +111,7 @@ describe('UsersList', () => {
 
   it('renders a tag per authentication provider', async () => {
     makeServiceMock([makeUser({ authProviders: ['credential', 'keycloak'] })])
-    const wrapper = mountWithPrime(UsersList)
+    const wrapper = mountWithUi(UsersList)
     await flushPromises()
 
     const text = wrapper.text()
@@ -118,7 +121,7 @@ describe('UsersList', () => {
 
   it('falls back to "none" for accounts created outside Better Auth', async () => {
     makeServiceMock([makeUser({ authProviders: [] })])
-    const wrapper = mountWithPrime(UsersList)
+    const wrapper = mountWithUi(UsersList)
     await flushPromises()
 
     expect(wrapper.text()).toContain('adminUsersList.authProviders.none')
@@ -126,19 +129,20 @@ describe('UsersList', () => {
 
   it('marks an archived user and hides the actions that need an identity', async () => {
     makeServiceMock([makeUser({ archivedAt: new Date('2026-07-01T10:00:00Z') })])
-    const wrapper = mountWithPrime(UsersList)
+    const wrapper = mountWithUi(UsersList)
     await flushPromises()
 
     expect(wrapper.text()).toContain('adminUsersList.archived')
-    const icons = wrapper.findAll('button i').map((i) => i.classes().join(' '))
-    expect(icons.some((c) => c.includes('fa-key'))).toBe(false)
-    expect(icons.some((c) => c.includes('fa-trash'))).toBe(false)
+    const actions = wrapper.findAll('[aria-label]').map((b) => b.attributes('aria-label'))
+    expect(actions).toContain('common.edit')
+    expect(actions).not.toContain('adminUsersList.resetPassword')
+    expect(actions).not.toContain('adminUsersList.deletePermanently')
   })
 
   it('debounces the search before querying the backend', async () => {
     vi.useFakeTimers()
     const service = makeServiceMock([makeUser()])
-    const wrapper = mountWithPrime(UsersList)
+    const wrapper = mountWithUi(UsersList)
     await flushPromises()
     service.loadUsers.mockClear()
 
@@ -155,7 +159,7 @@ describe('UsersList', () => {
   it('surfaces the service error', async () => {
     const service = makeServiceMock([])
     service.error.value = 'boom'
-    const wrapper = mountWithPrime(UsersList)
+    const wrapper = mountWithUi(UsersList)
     await flushPromises()
 
     expect(wrapper.text()).toContain('boom')
