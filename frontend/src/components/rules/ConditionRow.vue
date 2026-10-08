@@ -1,195 +1,79 @@
 <template>
-  <div class="flex flex-wrap items-center gap-2 bg-surface-100 dark:bg-surface-800 px-2 py-2 rounded">
-    <i class="fa fa-grip-vertical text-surface-400 cursor-grab"></i>
-
-    <Select
-      v-model="node.fact"
-      :options="facts"
-      option-label="label"
-      option-value="key"
-      :placeholder="t('conditionRow.placeholderVariable')"
-      filter
-      class="w-52"
-      @change="onFactChange"
+  <div class="flex items-start gap-2 rounded-md bg-elevated p-2">
+    <UIcon
+      name="i-fa7-solid:grip-vertical"
+      class="drag-handle mt-2 size-4 shrink-0 cursor-grab text-dimmed"
     />
 
-    <Select
-      v-model="node.operator"
-      :options="operatorOptions"
-      option-label="label"
-      option-value="value"
-      :placeholder="t('conditionRow.placeholderOperator')"
-      class="w-44"
+    <!-- Variable, operator and value stack on phones, sit side by side from `sm`. -->
+    <div class="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[13rem_11rem_minmax(0,1fr)] [&>*]:w-full">
+      <USelectMenu
+        v-model="node.fact"
+        :items="facts"
+        value-key="key"
+        label-key="label"
+        :placeholder="t('conditionRow.placeholderVariable')"
+        @update:model-value="onFactChange"
+      />
+
+      <USelectMenu
+        v-model="node.operator"
+        :items="operatorOptions"
+        value-key="value"
+        :search-input="false"
+        :placeholder="t('conditionRow.placeholderOperator')"
+      />
+
+      <template v-if="selectedFact">
+        <USelectMenu
+          v-if="valueSelect"
+          v-model="selectValue"
+          :items="valueSelect.items"
+          :value-key="valueSelect.valueKey"
+          :label-key="valueSelect.labelKey"
+          :multiple="valueSelect.multiple"
+          :search-input="valueSelect.searchable"
+          :placeholder="valueSelect.placeholder"
+        />
+        <UInputTime
+          v-else-if="isTimeFact && !isListOperator"
+          v-model="timeValue"
+          :hour-cycle="24"
+        />
+        <UInputDate v-else-if="isDateFact && !isListOperator" v-model="dateValue" />
+        <UInputNumber
+          v-else-if="selectedFact.type === 'number' && !isListOperator"
+          :model-value="node.value as number"
+          @update:model-value="node.value = $event ?? ''"
+        />
+        <UInput
+          v-else
+          :model-value="stringValue"
+          :placeholder="
+            isListOperator
+              ? t('conditionRow.placeholderListValues')
+              : t('conditionRow.placeholderValue')
+          "
+          @update:model-value="onTextValue(String($event ?? ''))"
+        />
+      </template>
+    </div>
+
+    <UButton
+      icon="i-fa7-solid:trash"
+      color="error"
+      variant="ghost"
+      size="sm"
+      :aria-label="t('common.delete')"
+      @click="$emit('remove')"
     />
-
-    <template v-if="selectedFact">
-      <Select
-        v-if="selectedFact.type === 'boolean'"
-        v-model="node.value"
-        :options="booleanOptions"
-        option-label="label"
-        option-value="value"
-        class="w-32"
-      />
-      <Select
-        v-else-if="isPlayerFact && !isListOperator"
-        v-model="node.value"
-        :options="players"
-        option-label="displayName"
-        option-value="id"
-        :placeholder="t('conditionRow.placeholderPlayer')"
-        filter
-        filter-match-mode="accentInsensitive"
-        class="w-56"
-      />
-      <MultiSelect
-        v-else-if="isPlayerFact && isListOperator"
-        v-model="playerListValue"
-        :options="players"
-        option-label="displayName"
-        option-value="id"
-        :placeholder="t('conditionRow.placeholderPlayers')"
-        filter
-        filter-match-mode="accentInsensitive"
-        display="chip"
-        class="w-72"
-      />
-      <DatePicker
-        v-else-if="isTimeFact && !isListOperator"
-        v-model="timeValue"
-        time-only
-        hour-format="24"
-        class="w-32"
-      />
-      <DatePicker
-        v-else-if="isDateFact && !isListOperator"
-        v-model="dateValue"
-        date-format="yy-mm-dd"
-        class="w-40"
-      />
-      <Select
-        v-else-if="isDisciplineFact && !isListOperator"
-        v-model="node.value"
-        :options="disciplines"
-        option-label="name"
-        option-value="id"
-        :placeholder="t('common.discipline')"
-        filter
-        class="w-52"
-      />
-      <MultiSelect
-        v-else-if="isDisciplineFact && isListOperator"
-        v-model="playerListValue"
-        :options="disciplines"
-        option-label="name"
-        option-value="id"
-        :placeholder="t('conditionRow.placeholderDisciplines')"
-        display="chip"
-        class="w-72"
-      />
-      <Select
-        v-else-if="isSiteFact && !isListOperator"
-        v-model="node.value"
-        :options="organisations"
-        option-label="name"
-        option-value="id"
-        :placeholder="t('conditionRow.placeholderOrganisation')"
-        filter
-        class="w-52"
-      />
-      <MultiSelect
-        v-else-if="isSiteFact && isListOperator"
-        v-model="playerListValue"
-        :options="organisations"
-        option-label="name"
-        option-value="id"
-        :placeholder="t('conditionRow.placeholderOrganisations')"
-        display="chip"
-        class="w-72"
-      />
-      <Select
-        v-else-if="isOutcomeTypeFact && !isListOperator"
-        v-model="node.value"
-        :options="outcomeTypeOptions"
-        option-label="label"
-        option-value="id"
-        :placeholder="t('conditionRow.placeholderOutcomeType')"
-        filter
-        class="w-56"
-      />
-      <MultiSelect
-        v-else-if="isOutcomeTypeFact && isListOperator"
-        v-model="playerListValue"
-        :options="outcomeTypeOptions"
-        option-label="label"
-        option-value="id"
-        :placeholder="t('conditionRow.placeholderOutcomeTypes')"
-        filter
-        display="chip"
-        class="w-72"
-      />
-      <Select
-        v-else-if="isOutcomeReasonFact && !isListOperator"
-        v-model="node.value"
-        :options="outcomeReasonOptions"
-        option-label="label"
-        option-value="id"
-        :placeholder="t('conditionRow.placeholderOutcomeReason')"
-        filter
-        class="w-56"
-      />
-      <MultiSelect
-        v-else-if="isOutcomeReasonFact && isListOperator"
-        v-model="playerListValue"
-        :options="outcomeReasonOptions"
-        option-label="label"
-        option-value="id"
-        :placeholder="t('conditionRow.placeholderOutcomeReasons')"
-        filter
-        display="chip"
-        class="w-72"
-      />
-      <Select
-        v-else-if="isWeekdayFact && !isListOperator"
-        v-model="node.value"
-        :options="weekdayOptions"
-        option-label="label"
-        option-value="value"
-        :placeholder="t('conditionRow.placeholderDay')"
-        class="w-40"
-      />
-      <MultiSelect
-        v-else-if="isWeekdayFact && isListOperator"
-        v-model="weekdayListValue"
-        :options="weekdayOptions"
-        option-label="label"
-        option-value="value"
-        :placeholder="t('conditionRow.placeholderDays')"
-        display="chip"
-        class="w-64"
-      />
-      <InputNumber
-        v-else-if="selectedFact.type === 'number' && !isListOperator"
-        :model-value="node.value as number"
-        class="w-32"
-        @update:model-value="node.value = $event"
-      />
-      <InputText
-        v-else
-        :model-value="stringValue"
-        :placeholder="isListOperator ? t('conditionRow.placeholderListValues') : t('conditionRow.placeholderValue')"
-        class="w-52"
-        @update:model-value="onTextValue"
-      />
-    </template>
-
-    <Button icon="fa fa-trash" size="small" text rounded severity="danger" @click="$emit('remove')" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, inject, ref, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Time, parseDate, type DateValue } from '@internationalized/date'
 import type { BuilderNode, PlayerOption } from './condition-tree'
 import type { CatalogFact } from '@/composables/rules/rules.api'
 import { LIST_VALUE_OPERATORS } from '@skol-arena/shared/types/index'
@@ -241,17 +125,9 @@ const isListOperator = computed(() =>
   (LIST_VALUE_OPERATORS as readonly string[]).includes(node.value.operator),
 )
 
-const isPlayerFact = computed(() => selectedFact.value?.ref === 'player')
-
 const isTimeFact = computed(() => selectedFact.value?.ref === 'time')
 
 const isDateFact = computed(() => selectedFact.value?.type === 'date')
-
-const isDisciplineFact = computed(() => selectedFact.value?.ref === 'discipline')
-const isSiteFact = computed(() => selectedFact.value?.ref === 'site')
-const isWeekdayFact = computed(() => selectedFact.value?.ref === 'weekday')
-const isOutcomeTypeFact = computed(() => selectedFact.value?.ref === 'outcomeType')
-const isOutcomeReasonFact = computed(() => selectedFact.value?.ref === 'outcomeReason')
 
 // Outcome names repeat across disciplines, so each option carries its parent to
 // stay distinguishable when the rule is global.
@@ -279,46 +155,26 @@ const weekdayOptions = computed(() => [
   { label: t('conditionRow.weekdaySunday'), value: 7 },
 ])
 
-const weekdayListValue = computed<number[]>({
-  get: () => (Array.isArray(node.value.value) ? (node.value.value as number[]) : []),
-  set: (val) => { node.value.value = val },
-})
-
-const dateValue = computed<Date | null>({
+/** `YYYY-MM-DD` string, the stored form, <-> calendar day for the date input. */
+const dateValue = computed<DateValue | undefined>({
   get: () => {
     const v = node.value.value
-    if (v instanceof Date) return v
-    if (typeof v !== 'string' || !v) return null
-    const [y, mo, d] = v.split('-').map(Number)
-    return new Date(y, mo - 1, d)
+    if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return undefined
+    return parseDate(v)
   },
   set: (d) => {
-    if (!d) { node.value.value = ''; return }
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    node.value.value = `${y}-${m}-${day}`
+    node.value.value = d ? d.toString() : ''
   },
 })
 
-/** Minute-of-day number <-> Date for the time picker. */
-const timeValue = computed<Date | null>({
+/** Minute-of-day number, the stored form, <-> time for the time input. */
+const timeValue = computed<Time | undefined>({
   get: () => {
     const min = node.value.value
-    if (typeof min !== 'number') return null
-    const d = new Date()
-    d.setHours(Math.floor(min / 60), min % 60, 0, 0)
-    return d
+    return typeof min === 'number' ? new Time(Math.floor(min / 60), min % 60) : undefined
   },
-  set: (d) => {
-    node.value.value = d ? d.getHours() * 60 + d.getMinutes() : ''
-  },
-})
-
-const playerListValue = computed<string[]>({
-  get: () => (Array.isArray(node.value.value) ? (node.value.value as string[]) : []),
-  set: (val) => {
-    node.value.value = val
+  set: (time) => {
+    node.value.value = time ? time.hour * 60 + time.minute : ''
   },
 })
 
@@ -327,8 +183,99 @@ const booleanOptions = computed(() => [
   { label: t('conditionRow.booleanFalse'), value: false },
 ])
 
+interface ValueSelect {
+  items: object[]
+  valueKey: string
+  labelKey: string
+  multiple: boolean
+  searchable: boolean
+  placeholder: string
+}
+
+/**
+ * Facts that reference an entity pick their value from a list — one entity for a
+ * comparison operator, several for a list operator. Null for free-form values.
+ */
+const valueSelect = computed<ValueSelect | null>(() => {
+  const fact = selectedFact.value
+  if (!fact) return null
+  const multiple = isListOperator.value
+  const pick = (
+    items: object[],
+    labelKey: string,
+    valueKey: string,
+    placeholders: [string, string],
+    searchable = true,
+  ): ValueSelect => ({
+    items,
+    labelKey,
+    valueKey,
+    multiple,
+    searchable,
+    placeholder: t(multiple ? placeholders[1] : placeholders[0]),
+  })
+  if (fact.type === 'boolean') {
+    return {
+      ...pick(booleanOptions.value, 'label', 'value', ['', ''], false),
+      multiple: false,
+      placeholder: '',
+    }
+  }
+  switch (fact.ref) {
+    case 'player':
+      return pick(props.players, 'displayName', 'id', [
+        'conditionRow.placeholderPlayer',
+        'conditionRow.placeholderPlayers',
+      ])
+    case 'discipline':
+      return pick(disciplines.value, 'name', 'id', [
+        'common.discipline',
+        'conditionRow.placeholderDisciplines',
+      ])
+    case 'site':
+      return pick(organisations.value, 'name', 'id', [
+        'conditionRow.placeholderOrganisation',
+        'conditionRow.placeholderOrganisations',
+      ])
+    case 'outcomeType':
+      return pick(outcomeTypeOptions.value, 'label', 'id', [
+        'conditionRow.placeholderOutcomeType',
+        'conditionRow.placeholderOutcomeTypes',
+      ])
+    case 'outcomeReason':
+      return pick(outcomeReasonOptions.value, 'label', 'id', [
+        'conditionRow.placeholderOutcomeReason',
+        'conditionRow.placeholderOutcomeReasons',
+      ])
+    case 'weekday':
+      return pick(
+        weekdayOptions.value,
+        'label',
+        'value',
+        ['conditionRow.placeholderDay', 'conditionRow.placeholderDays'],
+        false,
+      )
+    default:
+      return null
+  }
+})
+
+/** One value, or an array of them under a list operator. */
+const selectValue = computed({
+  get: () => {
+    const v = node.value.value
+    if (valueSelect.value?.multiple) return Array.isArray(v) ? v : []
+    return v === '' ? undefined : v
+  },
+  set: (val: unknown) => {
+    node.value.value = (val ?? '') as typeof node.value.value
+  },
+})
+
 const stringValue = computed(() =>
-  Array.isArray(node.value.value) ? (node.value.value as unknown[]).join(', ') : String(node.value.value ?? ''),
+  Array.isArray(node.value.value)
+    ? (node.value.value as unknown[]).join(', ')
+    : String(node.value.value ?? ''),
 )
 
 function onFactChange() {
@@ -338,6 +285,11 @@ function onFactChange() {
 
 function onTextValue(val: string | undefined) {
   const value = val ?? ''
-  node.value.value = isListOperator.value ? value.split(',').map((v) => v.trim()).filter(Boolean) : value
+  node.value.value = isListOperator.value
+    ? value
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean)
+    : value
 }
 </script>

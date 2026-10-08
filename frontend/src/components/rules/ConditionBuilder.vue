@@ -1,5 +1,5 @@
 <template>
-  <div class="condition-builder grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-4">
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-[200px_minmax(0,1fr)]">
     <ConditionPalette />
     <ConditionGroup v-model="tree" :facts="facts" :players="players" :depth="0" />
   </div>

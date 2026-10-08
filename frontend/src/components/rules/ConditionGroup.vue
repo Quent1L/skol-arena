@@ -1,28 +1,51 @@
 <template>
-  <div class="border rounded p-3" :class="depth % 2 === 0 ? 'border-purple-300 dark:border-purple-700' : 'border-blue-300 dark:border-blue-700'">
-    <div class="flex items-center gap-2 mb-3">
-      <SelectButton
+  <div
+    class="rounded-md border p-2 sm:p-3"
+    :class="depth % 2 === 0 ? 'border-primary/50' : 'border-info/50'"
+  >
+    <div class="mb-3 flex flex-wrap items-center gap-2">
+      <UTabs
         v-model="node.operator"
-        :options="operatorButtons"
-        option-label="label"
-        option-value="value"
-        :allow-empty="false"
-        size="small"
+        :items="operatorButtons"
+        :content="false"
+        size="xs"
       />
-      <span class="text-xs text-surface-500">
+      <span class="text-xs text-muted">
         {{ node.operator === 'all' ? t('conditionGroup.allTrue') : t('conditionGroup.anyTrue') }}
       </span>
-      <div class="flex-1"></div>
-      <Button :label="t('conditionGroup.addCondition')" icon="fa fa-plus" size="small" text @click="addLeaf" />
-      <Button :label="t('conditionGroup.addGroup')" icon="fa fa-plus" size="small" text @click="addGroup" />
-      <Button v-if="removable" icon="fa fa-trash" size="small" text rounded severity="danger" @click="$emit('remove')" />
+      <div class="flex basis-full gap-1 sm:ms-auto sm:basis-auto">
+        <UButton
+          :label="t('conditionGroup.addCondition')"
+          icon="i-fa7-solid:plus"
+          size="xs"
+          variant="ghost"
+          @click="addLeaf"
+        />
+        <UButton
+          :label="t('conditionGroup.addGroup')"
+          icon="i-fa7-solid:plus"
+          size="xs"
+          variant="ghost"
+          @click="addGroup"
+        />
+        <UButton
+          v-if="removable"
+          icon="i-fa7-solid:trash"
+          size="xs"
+          color="error"
+          variant="ghost"
+          class="ms-auto sm:ms-0"
+          :aria-label="t('common.delete')"
+          @click="$emit('remove')"
+        />
+      </div>
     </div>
 
     <VueDraggable
       v-model="node.children"
       :group="{ name: 'cond', pull: true, put: true }"
-      handle=".fa-grip-vertical, .group-handle"
-      class="flex flex-col gap-2 min-h-12 rounded p-1 bg-surface-50 dark:bg-surface-900/40"
+      handle=".drag-handle"
+      class="flex min-h-12 flex-col gap-2 rounded-md bg-muted/40 p-1"
     >
       <div v-for="(child, idx) in node.children" :key="idx">
         <ConditionGroup
@@ -45,7 +68,7 @@
         />
       </div>
 
-      <p v-if="node.children.length === 0" class="text-center text-xs text-surface-400 py-3">
+      <p v-if="node.children.length === 0" class="py-3 text-center text-xs text-dimmed">
         {{ t('conditionGroup.emptyHint') }}
       </p>
     </VueDraggable>
