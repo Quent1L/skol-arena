@@ -1,83 +1,90 @@
 <template>
-  <Dialog
-    :visible="visible"
-    :header="t('propagateRuleset.header')"
-    :modal="true"
-    :style="{ width: '640px' }"
-    @update:visible="(val) => emit('update:visible', val)"
+  <UModal
+    :open="visible"
+    :title="t('propagateRuleset.header')"
+    :ui="{ content: 'sm:max-w-2xl', footer: 'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end' }"
+    @update:open="(open) => emit('update:visible', open)"
   >
-    <div v-if="loading" class="py-6 text-center">
-      <i class="fa fa-spinner fa-spin text-2xl" />
-    </div>
+    <template #body>
+      <div v-if="loading" class="flex justify-center py-6">
+        <UIcon name="i-fa7-solid:spinner" class="size-6 animate-spin text-muted" />
+      </div>
 
-    <div v-else-if="competitions.length === 0" class="py-4">
-      <p class="text-gray-500">{{ t('propagateRuleset.emptyState') }}</p>
-    </div>
+      <p v-else-if="competitions.length === 0" class="py-4 text-muted">
+        {{ t('propagateRuleset.emptyState') }}
+      </p>
 
-    <div v-else>
-      <Message severity="warn" :closable="false" class="mb-4">
-        {{ t('propagateRuleset.warning') }}
-      </Message>
+      <div v-else class="space-y-4">
+        <UAlert
+          color="warning"
+          variant="subtle"
+          icon="i-fa7-solid:triangle-exclamation"
+          :description="t('propagateRuleset.warning')"
+        />
 
-      <DataTable
-        v-model:selection="selected"
-        :value="competitions"
-        data-key="id"
-        striped-rows
-        class="p-datatable-sm"
-      >
-        <Column selection-mode="multiple" header-style="width: 3rem" />
-
-        <Column field="name" :header="t('common.name')">
-          <template #body="{ data }">
-            <div class="flex items-center gap-2">
-              <span class="font-medium">{{ data.name }}</span>
-              <Tag
-                v-if="!data.hasDrift"
-                severity="secondary"
-                :value="t('propagateRuleset.upToDateTag')"
-              />
-            </div>
-          </template>
-        </Column>
-
-        <Column field="status" :header="t('propagateRuleset.statusColumn')" style="width: 8rem" />
-
-        <Column :header="t('propagateRuleset.matchesColumn')" style="width: 10rem">
-          <template #body="{ data }">
-            <span v-if="data.matchCount === 0" class="text-gray-500">
-              {{ t('propagateRuleset.noMatches') }}
-            </span>
-            <span v-else>
-              {{ t('propagateRuleset.matchesEntered', { count: data.matchCount }) }}
-            </span>
-          </template>
-        </Column>
-      </DataTable>
-    </div>
+        <!-- A checklist rather than a table: it reads the same at every width. -->
+        <ul class="divide-y divide-default rounded-md border border-default">
+          <li
+            v-for="competition in competitions"
+            :key="competition.id"
+            class="px-3 py-2"
+            data-testid="propagate-row"
+          >
+            <UCheckbox
+              :model-value="isSelected(competition)"
+              :ui="{ wrapper: 'min-w-0' }"
+              @update:model-value="(checked) => toggle(competition, checked === true)"
+            >
+              <template #label>
+                <span class="flex flex-wrap items-center gap-2">
+                  <span class="font-medium">{{ competition.name }}</span>
+                  <UBadge
+                    v-if="!competition.hasDrift"
+                    color="neutral"
+                    variant="subtle"
+                    :label="t('propagateRuleset.upToDateTag')"
+                  />
+                </span>
+              </template>
+              <template #description>
+                {{ competition.status }} ·
+                <template v-if="competition.matchCount === 0">
+                  {{ t('propagateRuleset.noMatches') }}
+                </template>
+                <template v-else>
+                  {{ t('propagateRuleset.matchesEntered', { count: competition.matchCount }) }}
+                </template>
+              </template>
+            </UCheckbox>
+          </li>
+        </ul>
+      </div>
+    </template>
 
     <template #footer>
-      <Button :label="t('common.cancel')" icon="pi pi-times" text @click="close" />
-      <Button
+      <UButton
+        :label="t('common.cancel')"
+        color="neutral"
+        variant="ghost"
+        class="justify-center"
+        @click="close"
+      />
+      <UButton
         :label="t('propagateRuleset.apply')"
-        icon="fa fa-arrows-rotate"
+        icon="i-fa7-solid:arrows-rotate"
+        class="justify-center"
         :disabled="selected.length === 0 || submitting"
         :loading="submitting"
+        data-testid="propagate-apply"
         @click="submit"
       />
     </template>
-  </Dialog>
+  </UModal>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import Dialog from 'primevue/dialog'
-import Button from 'primevue/button'
-import Message from 'primevue/message'
-import Tag from 'primevue/tag'
 import type { ImpactedCompetition } from '@skol-arena/shared/types/index'
 
 interface Props {
@@ -109,6 +116,16 @@ function setCompetitions(rows: ImpactedCompetition[]) {
   competitions.value = rows
   selected.value = rows.filter((row) => row.hasDrift)
   loading.value = false
+}
+
+function isSelected(competition: ImpactedCompetition) {
+  return selected.value.some((row) => row.id === competition.id)
+}
+
+function toggle(competition: ImpactedCompetition, checked: boolean) {
+  selected.value = checked
+    ? [...selected.value, competition]
+    : selected.value.filter((row) => row.id !== competition.id)
 }
 
 function setLoading() {

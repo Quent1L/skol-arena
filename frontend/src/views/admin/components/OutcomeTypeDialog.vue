@@ -1,88 +1,56 @@
 <template>
-  <Dialog
-    :visible="visible"
-    :header="editing ? 'Modifier le type de résultat' : 'Ajouter un type de résultat'"
-    :modal="true"
-    :style="{ width: '500px' }"
-    @update:visible="(val) => $emit('update:visible', val)"
+  <UModal
+    :open="visible"
+    :title="editing ? 'Modifier le type de résultat' : 'Ajouter un type de résultat'"
+    @update:open="(open) => emit('update:visible', open)"
   >
-    <form @submit="onSubmit">
-      <div class="mb-4">
-        <label for="outcomeTypeName" class="block text-sm font-medium mb-2">
-          Nom <span class="text-red-500">*</span>
-        </label>
-        <InputText
-          id="outcomeTypeName"
-          v-model="name"
-          class="w-full"
-          :class="{ 'p-invalid': errors.name }"
-        />
-        <small class="p-error">{{ errors.name }}</small>
-      </div>
-      <div class="mb-4">
-        <label for="outcomeTypePoints" class="block text-sm font-medium mb-2">
-          Points par résultat <span class="text-red-500">*</span>
-        </label>
-        <InputNumber
-          id="outcomeTypePoints"
-          v-model="points"
-          class="w-full"
-          :min="0"
-          :class="{ 'p-invalid': errors.points }"
-        />
-        <small class="p-error">{{ errors.points }}</small>
-      </div>
-      <div class="mb-4">
-        <label for="outcomeTypeMmrMultiplier" class="block text-sm font-medium mb-2">
-          Multiplicateur MMR <span class="text-red-500">*</span>
-        </label>
-        <InputNumber
-          id="outcomeTypeMmrMultiplier"
-          v-model="mmrMultiplier"
-          class="w-full"
-          :min="0"
-          :step="0.1"
-          :minFractionDigits="1"
-          :maxFractionDigits="2"
-          :class="{ 'p-invalid': errors.mmrMultiplier }"
-        />
-        <small class="p-error">{{ errors.mmrMultiplier }}</small>
-      </div>
-      <div class="flex items-center gap-3 mb-4">
-        <ToggleSwitch v-model="scoreCountsForMmr" input-id="scoreCountsForMmr" />
-        <label for="scoreCountsForMmr" class="text-sm font-medium cursor-pointer">
-          Compte pour le MMR
-        </label>
-      </div>
-      <div class="flex items-center gap-3">
-        <ToggleSwitch v-model="isDefault" input-id="isDefault" />
-        <label for="isDefault" class="text-sm font-medium cursor-pointer">Type par défaut</label>
-      </div>
-    </form>
-    <template #footer>
-      <Button
-        label="Annuler"
-        icon="fa fa-times"
-        @click="$emit('update:visible', false)"
-        text
-      />
-      <Button
-        label="Enregistrer"
-        icon="fa fa-check"
-        @click="onSubmit"
-        :loading="loading"
-      />
+    <template #body>
+      <UForm :schema="formSchema" :state="state" class="space-y-4" @submit="onSubmit">
+        <UFormField name="name" label="Nom" required>
+          <UInput v-model="state.name" autofocus class="w-full" />
+        </UFormField>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <UFormField name="points" label="Points par résultat" required>
+            <UInputNumber v-model="state.points" :min="0" class="w-full" />
+          </UFormField>
+          <UFormField name="mmrMultiplier" label="Multiplicateur MMR" required>
+            <UInputNumber
+              v-model="state.mmrMultiplier"
+              :min="0"
+              :step="0.1"
+              :format-options="{ minimumFractionDigits: 1, maximumFractionDigits: 2 }"
+              class="w-full"
+            />
+          </UFormField>
+        </div>
+        <USwitch v-model="state.scoreCountsForMmr" label="Compte pour le MMR" />
+        <USwitch v-model="state.isDefault" label="Type par défaut" />
+
+        <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+          <UButton
+            label="Annuler"
+            color="neutral"
+            variant="ghost"
+            class="justify-center"
+            @click="emit('update:visible', false)"
+          />
+          <UButton
+            type="submit"
+            label="Enregistrer"
+            icon="i-fa7-solid:check"
+            class="justify-center"
+            :loading="loading"
+          />
+        </div>
+      </UForm>
     </template>
-  </Dialog>
+  </UModal>
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
+import { reactive, watch } from 'vue'
 import { z } from 'zod'
-import ToggleSwitch from 'primevue/toggleswitch'
-import InputNumber from 'primevue/inputnumber'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import type { OutcomeType } from '@skol-arena/shared/types/outcome-type'
 
 interface Props {
@@ -93,66 +61,54 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const emit = defineEmits<{
-  'update:visible': [value: boolean]
-  submit: [
-    values: {
-      name: string
-      isDefault: boolean
-      points: number
-      mmrMultiplier: number
-      scoreCountsForMmr: boolean
-    },
-  ]
-}>()
-
 const formSchema = z.object({
   name: z
-    .string({ message: "Le nom est requis" })
-    .min(1, "Le nom ne peut pas être vide")
-    .max(100, "Le nom ne peut pas dépasser 100 caractères"),
+    .string({ message: 'Le nom est requis' })
+    .min(1, 'Le nom ne peut pas être vide')
+    .max(100, 'Le nom ne peut pas dépasser 100 caractères'),
   isDefault: z.boolean(),
   points: z.number().int().min(0),
   mmrMultiplier: z.number().positive(),
   scoreCountsForMmr: z.boolean(),
 })
+type FormValues = z.infer<typeof formSchema>
 
-const DEFAULTS = { isDefault: false, points: 3, mmrMultiplier: 1, scoreCountsForMmr: true }
+const emit = defineEmits<{
+  'update:visible': [value: boolean]
+  submit: [values: FormValues]
+}>()
 
-const { defineField, handleSubmit, errors, resetForm, setValues } = useForm({
-  validationSchema: toTypedSchema(formSchema),
-  initialValues: DEFAULTS,
-})
+const DEFAULTS: FormValues = {
+  name: '',
+  isDefault: false,
+  points: 3,
+  mmrMultiplier: 1,
+  scoreCountsForMmr: true,
+}
 
-const [name] = defineField('name')
-const [isDefault] = defineField('isDefault')
-const [points] = defineField('points')
-const [mmrMultiplier] = defineField('mmrMultiplier')
-const [scoreCountsForMmr] = defineField('scoreCountsForMmr')
+const state = reactive<FormValues>({ ...DEFAULTS })
 
-watch(() => props.visible, (newVal) => {
-  if (newVal) {
-    resetForm({ values: { name: '', ...DEFAULTS } })
-    if (props.editing) {
-      setValues({
-        name: props.editing.name,
-        isDefault: props.editing.isDefault,
-        points: props.editing.points,
-        mmrMultiplier: props.editing.mmrMultiplier,
-        scoreCountsForMmr: props.editing.scoreCountsForMmr,
-      })
-    }
-  }
-})
+watch(
+  () => props.visible,
+  (open) => {
+    if (!open) return
+    const editing = props.editing
+    Object.assign(
+      state,
+      editing
+        ? {
+            name: editing.name,
+            isDefault: editing.isDefault,
+            points: editing.points,
+            mmrMultiplier: editing.mmrMultiplier,
+            scoreCountsForMmr: editing.scoreCountsForMmr,
+          }
+        : DEFAULTS,
+    )
+  },
+)
 
-const onSubmit = handleSubmit((values) => {
-  emit('submit', {
-    name: values.name,
-    isDefault: values.isDefault ?? DEFAULTS.isDefault,
-    points: values.points ?? DEFAULTS.points,
-    mmrMultiplier: values.mmrMultiplier ?? DEFAULTS.mmrMultiplier,
-    scoreCountsForMmr: values.scoreCountsForMmr ?? DEFAULTS.scoreCountsForMmr,
-  })
-})
+function onSubmit({ data }: FormSubmitEvent<FormValues>) {
+  emit('submit', data)
+}
 </script>
-

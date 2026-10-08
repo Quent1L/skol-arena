@@ -1,47 +1,39 @@
 <template>
-  <Dialog
-    :visible="visible"
-    :header="editing ? 'Modifier la raison de résultat' : 'Ajouter une raison de résultat'"
-    :modal="true"
-    :style="{ width: '500px' }"
-    @update:visible="(val) => $emit('update:visible', val)"
+  <UModal
+    :open="visible"
+    :title="editing ? 'Modifier la raison de résultat' : 'Ajouter une raison de résultat'"
+    @update:open="(open) => emit('update:visible', open)"
   >
-    <form @submit="onSubmit">
-      <div class="mb-4">
-        <label for="outcomeReasonName" class="block text-sm font-medium mb-2">
-          Nom <span class="text-red-500">*</span>
-        </label>
-        <InputText
-          id="outcomeReasonName"
-          v-model="name"
-          class="w-full"
-          :class="{ 'p-invalid': errors.name }"
-        />
-        <small class="p-error">{{ errors.name }}</small>
-      </div>
-    </form>
-    <template #footer>
-      <Button
-        label="Annuler"
-        icon="fa fa-times"
-        @click="$emit('update:visible', false)"
-        text
-      />
-      <Button
-        label="Enregistrer"
-        icon="fa fa-check"
-        @click="onSubmit"
-        :loading="loading"
-      />
+    <template #body>
+      <UForm :schema="formSchema" :state="state" class="space-y-4" @submit="onSubmit">
+        <UFormField name="name" label="Nom" required>
+          <UInput v-model="state.name" autofocus class="w-full" />
+        </UFormField>
+        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <UButton
+            label="Annuler"
+            color="neutral"
+            variant="ghost"
+            class="justify-center"
+            @click="emit('update:visible', false)"
+          />
+          <UButton
+            type="submit"
+            label="Enregistrer"
+            icon="i-fa7-solid:check"
+            class="justify-center"
+            :loading="loading"
+          />
+        </div>
+      </UForm>
     </template>
-  </Dialog>
+  </UModal>
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
+import { reactive, watch } from 'vue'
 import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import type { OutcomeReason } from '@skol-arena/shared/types/outcome-reason'
 
 interface Props {
@@ -59,28 +51,22 @@ const emit = defineEmits<{
 
 const formSchema = z.object({
   name: z
-    .string({ message: "Le nom est requis" })
-    .min(1, "Le nom ne peut pas être vide")
-    .max(100, "Le nom ne peut pas dépasser 100 caractères"),
+    .string({ message: 'Le nom est requis' })
+    .min(1, 'Le nom ne peut pas être vide')
+    .max(100, 'Le nom ne peut pas dépasser 100 caractères'),
 })
+type FormValues = z.infer<typeof formSchema>
 
-const { defineField, handleSubmit, errors, resetForm, setValues } = useForm({
-  validationSchema: toTypedSchema(formSchema),
-})
+const state = reactive<FormValues>({ name: '' })
 
-const [name] = defineField('name')
+watch(
+  () => props.visible,
+  (open) => {
+    if (open) state.name = props.editing?.name ?? ''
+  },
+)
 
-watch(() => props.visible, (newVal) => {
-  if (newVal) {
-    resetForm()
-    if (props.editing) {
-      setValues({ name: props.editing.name })
-    }
-  }
-})
-
-const onSubmit = handleSubmit((values) => {
-  emit('submit', values)
-})
+function onSubmit({ data }: FormSubmitEvent<FormValues>) {
+  emit('submit', data)
+}
 </script>
-

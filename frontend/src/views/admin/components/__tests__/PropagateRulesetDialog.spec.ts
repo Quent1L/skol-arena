@@ -1,9 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
 import type { ImpactedCompetition } from '@skol-arena/shared/types/index'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithUi } from '@/test-support/mount'
 import PropagateRulesetDialog from '../PropagateRulesetDialog.vue'
 
 vi.mock('vue-i18n', () => ({
@@ -29,58 +27,60 @@ const upToDate: ImpactedCompetition = {
   hasDrift: false,
 }
 
-async function mountDialog(rows: ImpactedCompetition[]) {
-  const wrapper = mountWithPrime(PropagateRulesetDialog, {
+// The modal teleports to body: query the document, not the wrapper.
+const rows = () => [...document.body.querySelectorAll('[data-testid="propagate-row"]')]
+const checkbox = (row: Element) => row.querySelector<HTMLButtonElement>('[role="checkbox"]')!
+const isChecked = (row: Element) => checkbox(row).getAttribute('aria-checked') === 'true'
+
+async function mountDialog(competitions: ImpactedCompetition[]) {
+  const wrapper = mountWithUi(PropagateRulesetDialog, {
     props: { visible: true, disciplineId: 'd-1' },
-    global: { stubs: { teleport: true } },
   })
   await flushPromises()
-  wrapper.vm.setCompetitions(rows)
+  const dialog = wrapper.findComponent(PropagateRulesetDialog)
+  dialog.vm.setCompetitions(competitions)
   await flushPromises()
-  return wrapper
+  return { wrapper, dialog }
 }
 
 describe('PropagateRulesetDialog', () => {
-  it('renders a real selection column so competitions can be picked', async () => {
-    // Regression: the column was declared with a `selection-style` prop that does
-    // not exist, so it rendered empty and nothing could be selected at all.
-    const wrapper = await mountDialog([drifting, upToDate])
+  it('lists every competition with a checkbox so they can be picked', async () => {
+    const { wrapper } = await mountDialog([drifting, upToDate])
 
-    const selectionColumn = wrapper
-      .findAllComponents(Column)
-      .find((column) => column.props('selectionMode') === 'multiple')
-
-    expect(selectionColumn).toBeDefined()
-    expect(wrapper.findComponent(DataTable).props('selection')).toBeDefined()
+    expect(rows()).toHaveLength(2)
+    expect(rows().every((row) => checkbox(row))).toBe(true)
+    wrapper.unmount()
   })
 
   it('preselects what has drifted and leaves the rest alone', async () => {
-    const wrapper = await mountDialog([drifting, upToDate])
+    const { wrapper } = await mountDialog([drifting, upToDate])
 
-    const selection = wrapper.findComponent(DataTable).props('selection') as ImpactedCompetition[]
-
-    expect(selection.map((row) => row.id)).toEqual(['t-drift'])
+    expect(rows().map(isChecked)).toEqual([true, false])
+    wrapper.unmount()
   })
 
   it('emits only the selected competitions', async () => {
-    const wrapper = await mountDialog([drifting, upToDate])
+    const { wrapper, dialog } = await mountDialog([drifting, upToDate])
 
-    wrapper.vm.$emit('propagate', ['t-drift'])
+    checkbox(rows()[1]!).click()
+    await flushPromises()
+    document.body.querySelector<HTMLButtonElement>('[data-testid="propagate-apply"]')!.click()
     await flushPromises()
 
-    expect(wrapper.emitted('propagate')?.[0]).toEqual([['t-drift']])
+    expect(dialog.emitted('propagate')?.[0]).toEqual([['t-drift', 't-ok']])
+    wrapper.unmount()
   })
 
   it('asks its parent to load when it becomes visible', async () => {
-    const wrapper = mountWithPrime(PropagateRulesetDialog, {
+    const wrapper = mountWithUi(PropagateRulesetDialog, {
       props: { visible: false, disciplineId: 'd-1' },
-      global: { stubs: { teleport: true } },
     })
     await flushPromises()
 
     await wrapper.setProps({ visible: true })
     await flushPromises()
 
-    expect(wrapper.emitted('load')?.[0]).toEqual(['d-1'])
+    expect(wrapper.findComponent(PropagateRulesetDialog).emitted('load')?.[0]).toEqual(['d-1'])
+    wrapper.unmount()
   })
 })

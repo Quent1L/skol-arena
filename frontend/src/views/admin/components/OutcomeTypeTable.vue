@@ -1,148 +1,89 @@
 <template>
-  <div class="mb-6">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-semibold">Types de résultat</h2>
-      <Button
+  <div>
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <h2 class="text-lg font-semibold text-highlighted">Types de résultat</h2>
+      <UButton
         label="Ajouter un type"
-        icon="fa fa-plus"
-        size="small"
+        icon="i-fa7-solid:plus"
+        size="sm"
         @click="emit('add-outcome-type')"
       />
     </div>
 
-    <DataTable
-      v-model:expandedRows="expandedRows"
-      :value="outcomeTypes"
+    <UTable
+      v-model:expanded="expandedRows"
+      :data="outcomeTypes"
+      :columns="columns"
       :loading="loading"
-      dataKey="id"
-      striped-rows
-      class="p-datatable-sm"
-      @rowExpand="onRowExpand"
-      @rowCollapse="onRowCollapse"
+      :get-row-id="(row: OutcomeType) => row.id"
+      empty="Aucun type de résultat"
+      :ui="{ td: 'whitespace-normal' }"
     >
-      <Column expander style="width: 5rem" />
+      <template #expand-cell="{ row }">
+        <UButton
+          :icon="row.getIsExpanded() ? 'i-fa7-solid:chevron-down' : 'i-fa7-solid:chevron-right'"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          :aria-label="`Raisons pour ${row.original.name}`"
+          :aria-expanded="row.getIsExpanded()"
+          @click="row.toggleExpanded()"
+        />
+      </template>
+      <template #name-cell="{ row }">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-medium" :class="{ 'opacity-60': row.original.archivedAt }">
+            {{ row.original.name }}
+          </span>
+          <UBadge v-if="row.original.isDefault" label="Par défaut" color="success" variant="subtle" />
+          <UBadge v-if="row.original.archivedAt" label="Archivé" color="neutral" variant="subtle" />
+        </div>
+        <!-- The numeric columns are hidden on phones: keep their values reachable. -->
+        <p class="mt-1 text-xs text-muted sm:hidden">
+          {{ row.original.points }} pts · MMR ×{{ row.original.mmrMultiplier }}
+        </p>
+      </template>
+      <template #actions-cell="{ row }">
+        <RowActions :actions="typeActions(row.original)" />
+      </template>
 
-      <Column field="name" header="Nom" sortable>
-        <template #body="{ data }">
-          <span class="font-medium" :class="{ 'opacity-60': data.archivedAt }">{{ data.name }}</span>
-          <Tag v-if="data.isDefault" value="Par défaut" severity="success" class="ml-2" />
-          <Tag v-if="data.archivedAt" value="Archivé" severity="secondary" class="ml-2" />
-        </template>
-      </Column>
-
-      <Column field="points" header="Pts / résultat" style="width: 10rem">
-        <template #body="{ data }">
-          <span class="text-gray-700 dark:text-gray-300">{{ data.points }}</span>
-        </template>
-      </Column>
-      <Column field="mmrMultiplier" header="MMR multiplier"></Column>
-
-      <Column header="Actions" style="width: 12rem">
-        <template #body="{ data }">
-          <div class="flex gap-2">
-            <Button
-              icon="fa fa-edit"
-              size="small"
-              text
-              rounded
-              @click="emit('edit-outcome-type', data)"
-              v-tooltip.top="'Modifier'"
-            />
-            <Button
-              v-if="data.archivedAt"
-              icon="fa fa-rotate-left"
-              size="small"
-              text
-              rounded
-              @click="emit('restore-outcome-type', data)"
-              v-tooltip.top="'Restaurer'"
-            />
-            <Button
-              v-else
-              icon="fa fa-trash"
-              size="small"
-              severity="danger"
-              text
-              rounded
-              @click="emit('delete-outcome-type', data)"
-              v-tooltip.top="'Supprimer'"
-            />
-          </div>
-        </template>
-      </Column>
-
-      <template #expansion="slotProps">
-        <div class="p-4">
-          <div class="flex justify-between items-center mb-3">
-            <h5 class="text-lg font-semibold">Raisons pour "{{ slotProps.data.name }}"</h5>
-            <Button
+      <template #expanded="{ row }">
+        <div class="space-y-3 py-2 sm:ps-10">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h3 class="text-sm font-semibold">Raisons pour "{{ row.original.name }}"</h3>
+            <UButton
               label="Ajouter une raison"
-              icon="fa fa-plus"
-              size="small"
-              @click="emit('add-outcome-reason', slotProps.data)"
+              icon="i-fa7-solid:plus"
+              size="xs"
+              variant="soft"
+              @click="emit('add-outcome-reason', row.original)"
             />
           </div>
-
-          <DataTable
-            :value="getOutcomeReasonsForType(slotProps.data.id)"
-            :loading="loading"
-            striped-rows
-            class="p-datatable-sm"
+          <ul
+            v-if="getOutcomeReasonsForType(row.original.id).length"
+            class="divide-y divide-default rounded-md border border-default"
           >
-            <Column field="name" header="Nom" sortable>
-              <template #body="{ data }">
-                <span>{{ data.name }}</span>
-              </template>
-            </Column>
-
-            <Column header="Actions" style="width: 10rem">
-              <template #body="{ data }">
-                <div class="flex gap-2">
-                  <Button
-                    icon="fa fa-edit"
-                    size="small"
-                    text
-                    rounded
-                    @click="emit('edit-outcome-reason', slotProps.data, data)"
-                    v-tooltip.top="'Modifier'"
-                  />
-                  <Button
-                    icon="fa fa-trash"
-                    size="small"
-                    severity="danger"
-                    text
-                    rounded
-                    @click="emit('delete-outcome-reason', data)"
-                    v-tooltip.top="'Supprimer'"
-                  />
-                </div>
-              </template>
-            </Column>
-
-            <template #empty>
-              <div class="text-center py-2">
-                <p class="text-gray-500 text-sm">Aucune raison de résultat</p>
-              </div>
-            </template>
-          </DataTable>
+            <li
+              v-for="reason in getOutcomeReasonsForType(row.original.id)"
+              :key="reason.id"
+              class="flex items-center justify-between gap-2 px-3 py-1.5"
+            >
+              <span class="text-sm">{{ reason.name }}</span>
+              <RowActions :actions="reasonActions(row.original, reason)" />
+            </li>
+          </ul>
+          <p v-else class="text-sm text-muted">Aucune raison de résultat</p>
         </div>
       </template>
-
-      <template #empty>
-        <div class="text-center py-4">
-          <p class="text-gray-500">Aucun type de résultat</p>
-        </div>
-      </template>
-    </DataTable>
+    </UTable>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import Button from 'primevue/button'
-import Tag from 'primevue/tag'
+import { ref, computed, watch } from 'vue'
+import type { TableColumn } from '@nuxt/ui'
+import RowActions, { type RowAction } from '@/components/ui/RowActions.vue'
+import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/admin/table-columns'
 import type { OutcomeType } from '@skol-arena/shared/types/outcome-type'
 import type { OutcomeReason } from '@skol-arena/shared/types/outcome-reason'
 
@@ -180,18 +121,65 @@ const outcomeReasonsByType = computed(() => {
   return map
 })
 
-function onRowExpand(event: { data: OutcomeType }) {
-  const outcomeTypeId = event.data.id
-  // Load reasons only if not already loaded
-  if (!loadedOutcomeTypeIds.value.has(outcomeTypeId)) {
-    loadOutcomeReasonsForType(outcomeTypeId)
-  }
+const columns: TableColumn<OutcomeType>[] = [
+  { id: 'expand', meta: { class: { th: 'w-0', td: 'w-0' } } },
+  { accessorKey: 'name', header: sortableHeader('Nom') },
+  { accessorKey: 'points', header: 'Pts / résultat', meta: hiddenBelow('sm') },
+  { accessorKey: 'mmrMultiplier', header: 'MMR multiplier', meta: hiddenBelow('sm') },
+  { id: 'actions', meta: ACTIONS_COLUMN_META },
+]
+
+function typeActions(outcomeType: OutcomeType): RowAction[] {
+  return [
+    {
+      label: 'Modifier',
+      icon: 'i-fa7-solid:pen',
+      onSelect: () => emit('edit-outcome-type', outcomeType),
+    },
+    {
+      label: 'Restaurer',
+      icon: 'i-fa7-solid:rotate-left',
+      hidden: !outcomeType.archivedAt,
+      onSelect: () => emit('restore-outcome-type', outcomeType),
+    },
+    {
+      label: 'Supprimer',
+      icon: 'i-fa7-solid:trash',
+      color: 'error',
+      hidden: !!outcomeType.archivedAt,
+      onSelect: () => emit('delete-outcome-type', outcomeType),
+    },
+  ]
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function onRowCollapse(_event: { data: OutcomeType }) {
-  // Optional: clean up data if needed
+function reasonActions(outcomeType: OutcomeType, reason: OutcomeReason): RowAction[] {
+  return [
+    {
+      label: 'Modifier',
+      icon: 'i-fa7-solid:pen',
+      onSelect: () => emit('edit-outcome-reason', outcomeType, reason),
+    },
+    {
+      label: 'Supprimer',
+      icon: 'i-fa7-solid:trash',
+      color: 'error',
+      onSelect: () => emit('delete-outcome-reason', reason),
+    },
+  ]
 }
+
+// Reasons are fetched the first time a type is expanded.
+watch(
+  expandedRows,
+  (expanded) => {
+    for (const [outcomeTypeId, isOpen] of Object.entries(expanded)) {
+      if (isOpen && !loadedOutcomeTypeIds.value.has(outcomeTypeId)) {
+        loadOutcomeReasonsForType(outcomeTypeId)
+      }
+    }
+  },
+  { deep: true },
+)
 
 async function loadOutcomeReasonsForType(outcomeTypeId: string) {
   try {

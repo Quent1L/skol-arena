@@ -48,10 +48,14 @@ export function mountWithUi<C extends Component>(
   component: C,
   options: ComponentMountingOptions<C> = {},
 ) {
-  const { global: globalOptions, props, slots, ...rest } = options
+  const { global: globalOptions, slots, ...rest } = options
+  // Props reach the host as attrs and are forwarded, so `wrapper.setProps()` still works.
   const Host = defineComponent({
-    setup: () => () =>
-      h(UApp, null, () => h(component, props as Record<string, unknown>, slots as Slots)),
+    inheritAttrs: false,
+    setup:
+      (_, { attrs }) =>
+      () =>
+        h(UApp, null, () => h(component, attrs, slots as Slots)),
   })
   return mount(Host, {
     ...(rest as ComponentMountingOptions<typeof Host>),
