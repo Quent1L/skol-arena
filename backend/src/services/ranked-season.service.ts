@@ -1222,7 +1222,7 @@ export class RankedSeasonService {
       seasonId,
       playerId: user.id,
       currentMmr: ctx.provisionalMmr.get(user.id) ?? entryMmrOf(user.id, ctx),
-      matchesPlayed: 0,
+      matchesPlayed: ctx.matchesPlayed.get(user.id) ?? 0,
       wins: 0,
       losses: 0,
       draws: 0,
@@ -1248,6 +1248,9 @@ export class RankedSeasonService {
         return {
           ...(p as ClientPlayerMmr),
           currentMmr: ctx.provisionalMmr.get(p.playerId) ?? p.currentMmr,
+          // Counted by the replay too: placement progress and the placement/ranked
+          // split must include the matches the provisional view simulates.
+          matchesPlayed: ctx.matchesPlayed.get(p.playerId) ?? p.matchesPlayed,
           recentResults: [...provisionalResults].reverse(),
           winStreak: countLeadingWins(provisionalResults),
         };

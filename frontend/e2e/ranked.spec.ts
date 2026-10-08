@@ -21,15 +21,15 @@ test('the provisional toggle includes non-finalized matches', async ({ page }) =
   await page.goto(`/tournaments/${SEASON_ID}`)
   await expect(page.getByText(USERS.player1.displayName).first()).toBeVisible()
 
-  // player4 has a "reported" match (not finalized): their provisional MMR
-  // differs from their official MMR (850)
+  // player4 is still in placement (3 of 5 matches) and has a "reported" match that
+  // is not finalized: only the provisional view counts it. A player in placement
+  // shows their progress rather than an MMR.
   const leaderboard = page.locator('.leaderboard')
   const player4Row = leaderboard.locator('a', { hasText: USERS.player4.displayName })
-  await expect(player4Row).toContainText('850')
+  await expect(player4Row).toContainText('3/5')
 
   await page.locator('[data-test="subtab-provisional"]').click()
-  await expect(player4Row).toBeVisible()
-  await expect(player4Row).not.toContainText('850')
+  await expect(player4Row).toContainText('4/5')
 })
 
 test('the MMR profile shows rank, MMR and history', async ({ page }) => {
