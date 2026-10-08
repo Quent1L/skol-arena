@@ -2,6 +2,7 @@ import { mount, RouterLinkStub, type ComponentMountingOptions } from '@vue/test-
 import { defineComponent, h, type Component, type Slots } from 'vue'
 import ui from '@nuxt/ui/vue-plugin'
 import UApp from '@nuxt/ui/components/App.vue'
+import { createMemoryHistory, createRouter } from 'vue-router'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'
@@ -39,6 +40,9 @@ export function mountWithPrime<C extends Component>(
  * Mounts a component inside Nuxt UI's <UApp>, which provides what its toasts,
  * tooltips and programmatic overlays inject. The returned wrapper is the host:
  * reach the component itself with `wrapper.findComponent(component)`.
+ * A catch-all memory router is installed because ULink (inside buttons, cards and
+ * menus with a `to`) needs a real one; tests mocking vue-router must keep its
+ * actual exports (`importOriginal`).
  */
 export function mountWithUi<C extends Component>(
   component: C,
@@ -54,11 +58,18 @@ export function mountWithUi<C extends Component>(
     attachTo: document.body,
     global: {
       ...globalOptions,
-      plugins: [ui, createPinia(), ...(globalOptions?.plugins ?? [])],
+      plugins: [ui, createPinia(), testRouter(), ...(globalOptions?.plugins ?? [])],
       stubs: {
         RouterLink: RouterLinkStub,
         ...(globalOptions?.stubs as Record<string, unknown> | undefined),
       },
     },
+  })
+}
+
+function testRouter() {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [{ path: '/:path(.*)*', component: { render: () => null } }],
   })
 }

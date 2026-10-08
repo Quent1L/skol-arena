@@ -1,14 +1,17 @@
 import { describe, it, expect, vi } from 'vitest'
 import { computed, ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPrime, mountWithUi } from '@/test-support/mount'
 import MaintenanceView from '@/views/admin/MaintenanceView.vue'
 import AdminView from '@/views/admin/AdminView.vue'
 import { useMaintenanceService } from '@/composables/maintenance/maintenance.service'
 import type { AvatarStorageDriver, SystemInfo } from '@skol-arena/shared/types/index'
 
 vi.mock('vue-i18n', async () => (await import('@/test-support/mock-modules')).i18nEchoMock())
-vi.mock('vue-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+vi.mock('vue-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('vue-router')>()),
+  useRouter: () => ({ push: vi.fn() }),
+}))
 vi.mock('@/composables/maintenance/maintenance.service', () => ({
   useMaintenanceService: vi.fn(),
 }))
@@ -121,7 +124,7 @@ describe('MaintenanceView', () => {
 describe('AdminView maintenance card', () => {
   it('warns about stranded avatars from the cached status', async () => {
     const service = mockService(['postgres'])
-    const wrapper = mountWithPrime(AdminView)
+    const wrapper = mountWithUi(AdminView)
     await flushPromises()
 
     expect(service.loadStatus).toHaveBeenCalled()
@@ -130,7 +133,7 @@ describe('AdminView maintenance card', () => {
 
   it('stays quiet when storage is consistent', async () => {
     mockService([])
-    const wrapper = mountWithPrime(AdminView)
+    const wrapper = mountWithUi(AdminView)
     await flushPromises()
 
     expect(wrapper.find('[data-testid="maintenance-avatar-warning"]').exists()).toBe(false)
