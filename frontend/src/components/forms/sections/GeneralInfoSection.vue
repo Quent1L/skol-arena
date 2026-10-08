@@ -1,197 +1,128 @@
 <template>
-  <div class="general-info-section">
-    <h2 class="text-xl font-semibold mb-4">{{ t('generalInfoSection.title') }}</h2>
+  <section>
+    <h2 class="mb-4 text-lg font-semibold text-highlighted">{{ t('generalInfoSection.title') }}</h2>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <!-- Nom -->
-      <div>
-        <label for="name" class="block text-sm font-medium mb-2">
-          {{ t('generalInfoSection.fields.name') }} <span class="text-red-500">*</span>
-        </label>
-        <InputText
-          id="name"
-          v-model="name"
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <UFormField name="name" :label="t('generalInfoSection.fields.name')" required>
+        <UInput
+          v-model="state.name"
           :disabled="!canEdit('name')"
-          class="w-full"
-          :class="{ 'p-invalid': errors.name }"
           :placeholder="namePlaceholder"
+          class="w-full"
         />
-        <small class="p-error">{{ errors.name }}</small>
-      </div>
+      </UFormField>
 
-      <!-- Discipline -->
-      <div>
-        <label for="disciplineId" class="block text-sm font-medium mb-2">
-          {{ t('generalInfoSection.fields.discipline') }} <span class="text-red-500">*</span>
-        </label>
-        <Select
-          v-if="!disciplineLocked"
-          id="disciplineId"
-          v-model="disciplineId"
-          :options="disciplineOptions"
-          option-label="label"
-          option-value="value"
+      <UFormField name="disciplineId" :label="t('generalInfoSection.fields.discipline')" required>
+        <UInput v-if="disciplineLocked" :model-value="lockedDisciplineName" disabled class="w-full" />
+        <USelectMenu
+          v-else
+          v-model="state.disciplineId"
+          :items="disciplineOptions"
+          value-key="value"
           :placeholder="t('generalInfoSection.placeholders.discipline')"
           class="w-full"
-          :class="{ 'p-invalid': errors.disciplineId }"
         />
-        <InputText
-          v-else
-          id="disciplineId"
-          :value="lockedDisciplineName"
-          disabled
-          class="w-full"
-        />
-        <small class="p-error">{{ errors.disciplineId }}</small>
-      </div>
+      </UFormField>
 
-      <!-- Slot for extra fields at the top (tournament mode: status / mode / teamMode) -->
+      <!-- Slot for extra fields at the top (tournament mode: status) -->
       <slot name="after-discipline" />
 
-      <!-- Game rules -->
-      <div>
-        <label for="rulesId" class="block text-sm font-medium mb-2">{{ t('generalInfoSection.fields.rules') }}</label>
-        <Select
-          id="rulesId"
-          v-model="rulesId"
-          :options="rulesOptions"
-          option-label="label"
-          option-value="value"
+      <UFormField name="rulesId" :label="t('generalInfoSection.fields.rules')">
+        <USelectMenu
+          v-model="state.rulesId"
+          :items="rulesOptions"
+          value-key="value"
+          clear
           :placeholder="t('generalInfoSection.placeholders.noRules')"
-          :show-clear="true"
           class="w-full"
         />
-      </div>
+      </UFormField>
 
-      <!-- Organisation (super admin) -->
-      <div v-if="isSuperAdmin">
-        <label for="organizationId" class="block text-sm font-medium mb-2">
-          {{ t('generalInfoSection.fields.organization') }}
-        </label>
-        <Select
-          id="organizationId"
-          v-model="organizationId"
-          :options="organizations"
-          option-label="name"
-          option-value="id"
+      <UFormField
+        v-if="isSuperAdmin"
+        name="organizationId"
+        :label="t('generalInfoSection.fields.organization')"
+      >
+        <USelectMenu
+          v-model="state.organizationId"
+          :items="organizations"
+          value-key="id"
+          label-key="name"
+          clear
           :placeholder="t('generalInfoSection.placeholders.noOrganization')"
           class="w-full"
-          show-clear
         />
-      </div>
+      </UFormField>
 
-      <!-- Description -->
-      <div class="lg:col-span-2">
-        <label for="description" class="block text-sm font-medium mb-2">{{ t('generalInfoSection.fields.description') }}</label>
+      <UFormField
+        name="description"
+        :label="t('generalInfoSection.fields.description')"
+        class="lg:col-span-2"
+      >
         <RichTextEditor
-          :model-value="description ?? ''"
-          @update:model-value="description = $event"
+          :model-value="state.description ?? ''"
           :disabled="!canEdit('description')"
+          @update:model-value="state.description = $event"
         />
-        <small class="p-error">{{ errors.description }}</small>
-      </div>
+      </UFormField>
 
-      <!-- Slot for fields specific before team sizes (tournament mode) -->
+      <!-- Slot for fields specific before team sizes (tournament mode: mode / teamMode) -->
       <slot name="before-team-size" />
 
-      <!-- Min Team Size -->
-      <div>
-        <label for="minTeamSize" class="block text-sm font-medium mb-2">
-          {{ t('generalInfoSection.fields.minTeamSize') }} <span class="text-red-500">*</span>
-        </label>
-        <InputNumber
-          id="minTeamSize"
-          v-model="minTeamSize"
+      <UFormField name="minTeamSize" :label="t('generalInfoSection.fields.minTeamSize')" required>
+        <UInputNumber
+          v-model="state.minTeamSize"
           :min="1"
           :max="10"
           :disabled="!canEdit('minTeamSize')"
           class="w-full"
-          :class="{ 'p-invalid': errors.minTeamSize }"
         />
-        <small class="p-error">{{ errors.minTeamSize }}</small>
         <FieldEditabilityNote
           :locked-by-matches="lockedByMatches('minTeamSize')"
           :match-count="enteredMatchCount"
         />
-      </div>
+      </UFormField>
 
-      <!-- Max Team Size -->
-      <div>
-        <label for="maxTeamSize" class="block text-sm font-medium mb-2">
-          {{ t('generalInfoSection.fields.maxTeamSize') }} <span class="text-red-500">*</span>
-        </label>
-        <InputNumber
-          id="maxTeamSize"
-          v-model="maxTeamSize"
+      <UFormField name="maxTeamSize" :label="t('generalInfoSection.fields.maxTeamSize')" required>
+        <UInputNumber
+          v-model="state.maxTeamSize"
           :min="1"
           :max="10"
           :disabled="!canEdit('maxTeamSize')"
           class="w-full"
-          :class="{ 'p-invalid': errors.maxTeamSize }"
         />
-        <small class="p-error">{{ errors.maxTeamSize }}</small>
-      </div>
+      </UFormField>
 
-      <!-- Start date -->
-      <div>
-        <label for="startDate" class="block text-sm font-medium mb-2">
-          {{ t('generalInfoSection.fields.startDate') }} <span class="text-red-500">*</span>
-        </label>
-        <DatePicker
-          id="startDate"
-          v-model="startDate"
-          date-format="dd/mm/yy"
-          :disabled="!canEdit('startDate')"
-          class="w-full"
-          :class="{ 'p-invalid': errors.startDate }"
-        />
-        <small class="p-error">{{ errors.startDate }}</small>
-      </div>
+      <UFormField name="startDate" :label="t('generalInfoSection.fields.startDate')" required>
+        <UInputDate v-model="startDate" :disabled="!canEdit('startDate')" class="w-full" />
+      </UFormField>
 
-      <!-- Date de fin -->
-      <div>
-        <label for="endDate" class="block text-sm font-medium mb-2">
-          {{ t('generalInfoSection.fields.endDate') }} <span class="text-red-500">*</span>
-        </label>
-        <DatePicker
-          id="endDate"
-          v-model="endDate"
-          date-format="dd/mm/yy"
-          :disabled="!canEdit('endDate')"
-          class="w-full"
-          :class="{ 'p-invalid': errors.endDate }"
-        />
-        <small class="p-error">{{ errors.endDate }}</small>
-      </div>
+      <UFormField name="endDate" :label="t('generalInfoSection.fields.endDate')" required>
+        <UInputDate v-model="endDate" :disabled="!canEdit('endDate')" class="w-full" />
+      </UFormField>
     </div>
 
-    <!-- Allow Draw (always full width after the other fields) -->
-    <div v-if="showAllowDraw" class="flex items-center py-4">
-      <Checkbox
-        id="allowDraw"
-        v-model="allowDraw"
-        :binary="true"
-        :disabled="!canEdit('allowDraw')"
-      />
-      <label for="allowDraw" class="ml-2">{{ t('generalInfoSection.fields.allowDraw') }}</label>
-    </div>
+    <UCheckbox
+      v-if="showAllowDraw"
+      v-model="state.allowDraw"
+      :label="t('generalInfoSection.fields.allowDraw')"
+      :disabled="!canEdit('allowDraw')"
+      class="py-4"
+    />
 
     <!-- Slot for extra fields at the bottom -->
     <slot name="footer" />
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useField } from 'vee-validate'
-import type {
-  OrganizationWithMemberCount,
-  TournamentEditability,
-} from '@skol-arena/shared'
+import type { OrganizationWithMemberCount, TournamentEditability } from '@skol-arena/shared'
 import { useFieldEditability } from '@/composables/useFieldEditability'
+import { useCalendarDateModel } from '@/utils/calendar-date'
 import FieldEditabilityNote from '../FieldEditabilityNote.vue'
 import RichTextEditor from '@/components/editor/RichTextEditor.vue'
+import type { GeneralInfoState } from './section-state'
 
 const { t } = useI18n()
 
@@ -208,7 +139,6 @@ const props = withDefaults(
     isSuperAdmin: boolean
     disciplineLocked?: boolean
     lockedDisciplineName?: string
-    descriptionPlaceholder?: string
     namePlaceholder?: string
     editability?: TournamentEditability | null
     showAllowDraw?: boolean
@@ -216,38 +146,23 @@ const props = withDefaults(
   {
     disciplineLocked: false,
     lockedDisciplineName: '',
-    descriptionPlaceholder: '',
     namePlaceholder: '',
     editability: null,
     showAllowDraw: true,
   },
 )
 
-const { value: name, errorMessage: nameError } = useField<string>('name')
-const { value: description, errorMessage: descriptionError } =
-  useField<string>('description')
-const { value: disciplineId, errorMessage: disciplineIdError } =
-  useField<string>('disciplineId')
-const { value: rulesId } = useField<string | null>('rulesId')
-const { value: organizationId } = useField<string | null>('organizationId')
-const { value: minTeamSize, errorMessage: minTeamSizeError } =
-  useField<number>('minTeamSize')
-const { value: maxTeamSize, errorMessage: maxTeamSizeError } =
-  useField<number>('maxTeamSize')
-const { value: startDate, errorMessage: startDateError } =
-  useField<Date>('startDate')
-const { value: endDate, errorMessage: endDateError } = useField<Date>('endDate')
-const { value: allowDraw } = useField<boolean>('allowDraw')
+/** The parent form's state; this section edits its general-information fields in place. */
+const state = defineModel<GeneralInfoState>('state', { required: true })
 
-const errors = computed(() => ({
-  name: nameError.value,
-  description: descriptionError.value,
-  disciplineId: disciplineIdError.value,
-  minTeamSize: minTeamSizeError.value,
-  maxTeamSize: maxTeamSizeError.value,
-  startDate: startDateError.value,
-  endDate: endDateError.value,
-}))
+const startDate = useCalendarDateModel(
+  () => state.value.startDate,
+  (value) => (state.value.startDate = value),
+)
+const endDate = useCalendarDateModel(
+  () => state.value.endDate,
+  (value) => (state.value.endDate = value),
+)
 
 const { canEdit, lockedByMatches, enteredMatchCount } = useFieldEditability(
   () => props.editability,

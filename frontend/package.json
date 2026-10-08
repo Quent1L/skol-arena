@@ -33,6 +33,7 @@
     "@fortawesome/fontawesome-free": "^7.3.1",
     "@iconify-json/fa7-solid": "^1.2.5",
     "@iconify-json/lucide": "^1.2.141",
+    "@internationalized/date": "^3.12.4",
     "@nuxt/ui": "^4.11.3",
     "@primeuix/themes": "^2.0.3",
     "@primevue/core": "^4.5.5",

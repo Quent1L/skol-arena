@@ -1,12 +1,12 @@
 <template>
-  <small v-if="recalculates" class="block mt-1 text-amber-600 dark:text-amber-400">
-    <i class="fa fa-triangle-exclamation mr-1" />
+  <p v-if="recalculates" class="mt-1 flex items-center gap-1 text-xs text-warning">
+    <UIcon name="i-fa7-solid:triangle-exclamation" />
     {{ t('fieldEditability.recalculates') }}
-  </small>
-  <small v-else-if="lockedByMatches" class="block mt-1 text-gray-500">
-    <i class="fa fa-lock mr-1" />
+  </p>
+  <p v-else-if="lockedByMatches" class="mt-1 flex items-center gap-1 text-xs text-muted">
+    <UIcon name="i-fa7-solid:lock" />
     {{ t('fieldEditability.lockedByMatches', { count: matchCount }) }}
-  </small>
+  </p>
 </template>
 
 <script setup lang="ts">

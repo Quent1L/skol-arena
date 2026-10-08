@@ -1,57 +1,56 @@
 <template>
-  <div class="validation-mode-section">
-    <h2 class="text-xl font-semibold mb-4">{{ t('validationModeSection.title') }}</h2>
+  <section>
+    <h2 class="mb-4 text-lg font-semibold text-highlighted">{{ t('validationModeSection.title') }}</h2>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
-      <div
+    <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" role="radiogroup">
+      <button
         v-for="option in modeOptions"
         :key="option.value"
-        class="cursor-pointer rounded-lg border-2 p-4 transition-colors"
+        type="button"
+        role="radio"
+        :aria-checked="state.validationMode === option.value"
+        :disabled="!canEdit"
+        class="rounded-lg border-2 p-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-75"
         :class="
-          validationMode === option.value
-            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-            : 'border-surface-200 dark:border-surface-700 hover:border-surface-400'
+          state.validationMode === option.value
+            ? 'border-primary bg-primary/10'
+            : 'border-default hover:border-accented'
         "
-        :role="canEdit ? 'button' : undefined"
-        @click="canEdit ? setMode(option.value) : undefined"
+        @click="setMode(option.value)"
       >
-        <div class="flex items-center gap-2 mb-2">
-          <i :class="['fa', option.icon, 'text-lg']" />
-          <span class="font-semibold text-sm">{{ option.label }}</span>
-          <Tag v-if="option.badge" :value="option.badge" severity="secondary" class="text-xs" />
-        </div>
-        <p class="text-xs text-surface-500 dark:text-surface-400">{{ option.description }}</p>
-      </div>
+        <span class="mb-2 flex flex-wrap items-center gap-2">
+          <UIcon :name="option.icon" class="size-5" />
+          <span class="text-sm font-semibold">{{ option.label }}</span>
+          <UBadge v-if="option.badge" :label="option.badge" color="neutral" variant="subtle" size="sm" />
+        </span>
+        <span class="block text-xs text-muted">{{ option.description }}</span>
+      </button>
     </div>
 
-    <div v-if="validationMode === 'auto'" class="mt-3">
-      <label for="validationTimerHours" class="block text-sm font-medium mb-2">
-        {{ t('validationModeSection.fields.validationTimerHours') }}
-      </label>
-      <InputNumber
-        id="validationTimerHours"
-        v-model="validationTimerHours"
+    <UFormField
+      v-if="state.validationMode === 'auto'"
+      name="validationTimerHours"
+      :label="t('validationModeSection.fields.validationTimerHours')"
+      :help="t('validationModeSection.autoValidationHelp')"
+    >
+      <UInputNumber
+        v-model="state.validationTimerHours"
         :min="1"
         :max="168"
         :disabled="!canEdit"
         placeholder="24"
         class="w-40"
-        input-class="w-40"
-        :show-buttons="true"
       />
-      <p class="text-xs text-surface-500 mt-1">
-        {{ t('validationModeSection.autoValidationHelp') }}
-      </p>
-    </div>
-  </div>
+    </UFormField>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useField } from 'vee-validate'
 import type { ValidationMode, TournamentEditability } from '@skol-arena/shared/types/index'
 import { useFieldEditability } from '@/composables/useFieldEditability'
+import type { ValidationModeState } from './section-state'
 
 const { t } = useI18n()
 
@@ -59,8 +58,7 @@ const props = defineProps<{
   editability?: TournamentEditability | null
 }>()
 
-const { value: validationMode } = useField<ValidationMode>('validationMode')
-const { value: validationTimerHours } = useField<number | null>('validationTimerHours')
+const state = defineModel<ValidationModeState>('state', { required: true })
 
 const { canEdit: fieldCanEdit } = useFieldEditability(() => props.editability)
 // Computed, not a plain const: this used to be evaluated once at setup, so it
@@ -68,11 +66,11 @@ const { canEdit: fieldCanEdit } = useFieldEditability(() => props.editability)
 const canEdit = computed(() => fieldCanEdit('validationMode'))
 
 function setMode(mode: ValidationMode) {
-  validationMode.value = mode
+  state.value.validationMode = mode
   if (mode !== 'auto') {
-    validationTimerHours.value = null
-  } else if (!validationTimerHours.value) {
-    validationTimerHours.value = 24
+    state.value.validationTimerHours = null
+  } else if (!state.value.validationTimerHours) {
+    state.value.validationTimerHours = 24
   }
 }
 
@@ -80,28 +78,28 @@ const modeOptions = computed<{ value: ValidationMode; label: string; icon: strin
   {
     value: 'auto',
     label: t('validationModeSection.modes.auto.label'),
-    icon: 'fa-bolt',
+    icon: 'i-fa7-solid:bolt',
     badge: t('validationModeSection.modes.auto.badge'),
     description: t('validationModeSection.modes.auto.description'),
   },
   {
     value: 'strict',
     label: t('validationModeSection.modes.strict.label'),
-    icon: 'fa-shield-halved',
+    icon: 'i-fa7-solid:shield-halved',
     badge: t('validationModeSection.modes.strict.badge'),
     description: t('validationModeSection.modes.strict.description'),
   },
   {
     value: 'admin',
     label: t('validationModeSection.modes.admin.label'),
-    icon: 'fa-crown',
+    icon: 'i-fa7-solid:crown',
     badge: t('validationModeSection.modes.admin.badge'),
     description: t('validationModeSection.modes.admin.description'),
   },
   {
     value: 'none',
     label: t('validationModeSection.modes.none.label'),
-    icon: 'fa-eye-slash',
+    icon: 'i-fa7-solid:eye-slash',
     badge: t('validationModeSection.modes.none.badge'),
     description: t('validationModeSection.modes.none.description'),
   },

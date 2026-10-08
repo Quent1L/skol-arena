@@ -1,408 +1,271 @@
 <template>
-  <div>
-    <div class="ranked-season-form-view p-4">
-      <div class="flex items-center gap-3 mb-6">
-        <Button icon="fa fa-arrow-left" text rounded @click="router.push('/admin/ranked')" />
-        <h1 class="text-2xl font-bold">
-          {{
-            isEditMode ? t('rankedSeasonFormView.editTitle') : t('rankedSeasonFormView.newTitle')
-          }}
-        </h1>
-      </div>
+  <div class="max-w-4xl">
+    <AdminPageHeader
+      :title="isEditMode ? t('rankedSeasonFormView.editTitle') : t('rankedSeasonFormView.newTitle')"
+    />
 
-      <Message v-if="error" severity="error" :closable="true" class="mb-4">
-        {{ error }}
-      </Message>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      icon="i-fa7-solid:circle-xmark"
+      :description="error"
+      class="mb-4"
+    />
 
-      <form @submit="onSubmit" class="max-w-4xl">
-        <Card>
-          <template #content>
-            <!-- General information -->
-            <div class="mb-6">
-              <GeneralInfoSection
-                :discipline-options="disciplineOptions"
-                :rules-options="rulesOptions"
-                :organizations="organizations"
-                :is-super-admin="isSuperAdmin"
-                :discipline-locked="isEditMode"
-                :locked-discipline-name="currentSeason?.discipline?.name ?? ''"
-                :description-placeholder="t('rankedSeasonFormView.descriptionPlaceholder')"
-                :name-placeholder="t('rankedSeasonFormView.namePlaceholder')"
+    <UForm :schema="schema" :state="state" @submit="onSubmit" @error="onInvalid">
+      <UCard :ui="{ body: 'space-y-8' }">
+        <GeneralInfoSection
+          v-model:state="state"
+          :discipline-options="disciplineOptions"
+          :rules-options="rulesOptions"
+          :organizations="organizations"
+          :is-super-admin="isSuperAdmin"
+          :discipline-locked="isEditMode"
+          :locked-discipline-name="currentSeason?.discipline?.name ?? ''"
+          :name-placeholder="t('rankedSeasonFormView.namePlaceholder')"
+        />
+
+        <!-- Elo configuration -->
+        <section class="space-y-4">
+          <h2 class="text-lg font-semibold text-highlighted">
+            {{ t('rankedSeasonFormView.eloConfigTitle') }}
+          </h2>
+
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <UFormField name="baseMmr" :label="t('rankedSeasonFormView.labelBaseMmr')">
+              <UInputNumber v-model="state.baseMmr" :min="100" :max="5000" class="w-full" />
+            </UFormField>
+            <UFormField name="kFactor" :label="t('rankedSeasonFormView.labelKFactor')">
+              <UInputNumber v-model="state.kFactor" :min="8" :max="128" class="w-full" />
+            </UFormField>
+            <UFormField
+              name="placementMatches"
+              :label="t('rankedSeasonFormView.labelPlacementMatches')"
+            >
+              <UInputNumber v-model="state.placementMatches" :min="0" :max="20" class="w-full" />
+            </UFormField>
+          </div>
+
+          <UCheckbox
+            v-model="state.usePreviousMmr"
+            :label="t('rankedSeasonFormView.labelUsePreviousMmr')"
+          />
+          <!-- Carry-over settings: only meaningful once it is switched on. -->
+          <div v-if="state.usePreviousMmr" class="grid grid-cols-1 gap-4 ps-6 sm:grid-cols-2">
+            <UFormField
+              name="softResetFactor"
+              :label="t('rankedSeasonFormView.labelSoftResetFactor')"
+              :help="t('rankedSeasonFormView.helpSoftResetFactor')"
+            >
+              <UInputNumber
+                v-model="state.softResetFactor"
+                :min="0"
+                :max="1"
+                :step="0.05"
+                :format-options="{ maximumFractionDigits: 2 }"
+                class="w-full"
               />
-            </div>
+            </UFormField>
+            <UFormField
+              name="sourceMmrSeasonId"
+              :label="t('rankedSeasonFormView.labelSourceMmrSeasonId')"
+              :help="t('rankedSeasonFormView.helpSourceMmrSeasonId')"
+            >
+              <USelectMenu
+                v-model="state.sourceMmrSeasonId"
+                :items="sourceTierOptions"
+                value-key="value"
+                clear
+                :placeholder="t('rankedSeasonFormView.placeholderSourceMmrSeasonId')"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
 
-            <!-- Configuration Elo -->
-            <div class="mb-6">
-              <h2 class="text-xl font-semibold mb-4">
-                {{ t('rankedSeasonFormView.eloConfigTitle') }}
-              </h2>
+          <UCheckbox
+            v-model="state.allowAsymmetricMatches"
+            :label="t('rankedSeasonFormView.labelAllowAsymmetricMatches')"
+          />
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label for="baseMmr" class="block text-sm font-medium mb-2">{{
-                    t('rankedSeasonFormView.labelBaseMmr')
-                  }}</label>
-                  <InputNumber
-                    id="baseMmr"
-                    v-model="baseMmr"
-                    :min="100"
-                    :max="5000"
-                    class="w-full"
-                    :class="{ 'p-invalid': errors.baseMmr }"
-                  />
-                  <small class="p-error">{{ errors.baseMmr }}</small>
-                </div>
+          <!-- Consumed once by startSeason: past draft, these two mean nothing and
+               the API refuses them, so they are not offered at all. -->
+          <UFormField
+            v-if="isDraft"
+            name="sourceTierSeasonId"
+            :label="t('rankedSeasonFormView.labelSourceTierSeasonId')"
+            :help="t('rankedSeasonFormView.helpSourceTierSeasonId')"
+          >
+            <USelectMenu
+              v-model="state.sourceTierSeasonId"
+              :items="sourceTierOptions"
+              value-key="value"
+              clear
+              :placeholder="t('rankedSeasonFormView.placeholderSourceTierSeasonId')"
+              class="w-full"
+            />
+          </UFormField>
 
-                <div>
-                  <label for="kFactor" class="block text-sm font-medium mb-2">{{
-                    t('rankedSeasonFormView.labelKFactor')
-                  }}</label>
-                  <InputNumber
-                    id="kFactor"
-                    v-model="kFactor"
-                    :min="8"
-                    :max="128"
-                    class="w-full"
-                    :class="{ 'p-invalid': errors.kFactor }"
-                  />
-                  <small class="p-error">{{ errors.kFactor }}</small>
-                </div>
+          <!-- Only matters when a ladder is actually copied. -->
+          <UFormField
+            v-if="isDraft && state.sourceTierSeasonId"
+            name="tierScalingMode"
+            :label="t('rankedSeasonFormView.labelTierScalingMode')"
+            :help="tierScalingHelp(state.tierScalingMode)"
+          >
+            <USelect v-model="state.tierScalingMode" :items="tierScalingOptions" class="w-full" />
+          </UFormField>
+        </section>
 
-                <div>
-                  <label for="placementMatches" class="block text-sm font-medium mb-2">
-                    {{ t('rankedSeasonFormView.labelPlacementMatches') }}
-                  </label>
-                  <InputNumber
-                    id="placementMatches"
-                    v-model="placementMatches"
-                    :min="0"
-                    :max="20"
-                    class="w-full"
-                    :class="{ 'p-invalid': errors.placementMatches }"
-                  />
-                  <small class="p-error">{{ errors.placementMatches }}</small>
-                </div>
-              </div>
+        <!-- Automatic end of season: chaining into the next one, or simply closing -->
+        <section class="space-y-4">
+          <div>
+            <h2 class="text-lg font-semibold text-highlighted">
+              {{ t('rankedSeasonFormView.automationTitle') }}
+            </h2>
+            <p class="mt-1 text-sm text-muted">{{ t('rankedSeasonFormView.automationIntro') }}</p>
+          </div>
 
-              <div class="flex flex-col gap-3 mt-4">
-                <div class="flex items-center gap-2">
-                  <Checkbox id="usePreviousMmr" v-model="usePreviousMmr" :binary="true" />
-                  <label for="usePreviousMmr" class="text-sm">
-                    {{ t('rankedSeasonFormView.labelUsePreviousMmr') }}
-                  </label>
-                </div>
-                <!-- Carry-over settings: only meaningful once it is switched on. -->
-                <div v-if="usePreviousMmr" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-6">
-                  <div>
-                    <label for="softResetFactor" class="block text-sm font-medium mb-2">
-                      {{ t('rankedSeasonFormView.labelSoftResetFactor') }}
-                    </label>
-                    <InputNumber
-                      id="softResetFactor"
-                      v-model="softResetFactor"
-                      :min="0"
-                      :max="1"
-                      :step="0.05"
-                      :min-fraction-digits="0"
-                      :max-fraction-digits="2"
-                      class="w-full"
-                      :class="{ 'p-invalid': errors.softResetFactor }"
-                    />
-                    <small v-if="errors.softResetFactor" class="p-error">{{
-                      errors.softResetFactor
-                    }}</small>
-                    <small v-else class="text-surface-400">
-                      {{ t('rankedSeasonFormView.helpSoftResetFactor') }}
-                    </small>
-                  </div>
+          <UCheckbox
+            v-model="automationEnabled"
+            :label="t('rankedSeasonFormView.labelAutomationEnabled')"
+          />
 
-                  <div>
-                    <label for="sourceMmrSeasonId" class="block text-sm font-medium mb-2">
-                      {{ t('rankedSeasonFormView.labelSourceMmrSeasonId') }}
-                    </label>
-                    <Select
-                      id="sourceMmrSeasonId"
-                      v-model="sourceMmrSeasonId"
-                      :options="sourceTierOptions"
-                      option-label="label"
-                      option-value="value"
-                      :placeholder="t('rankedSeasonFormView.placeholderSourceMmrSeasonId')"
-                      class="w-full"
-                      show-clear
-                    />
-                    <small class="text-surface-400">
-                      {{ t('rankedSeasonFormView.helpSourceMmrSeasonId') }}
-                    </small>
-                  </div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Checkbox
-                    id="allowAsymmetricMatches"
-                    v-model="allowAsymmetricMatches"
-                    :binary="true"
-                  />
-                  <label for="allowAsymmetricMatches" class="text-sm">
-                    {{ t('rankedSeasonFormView.labelAllowAsymmetricMatches') }}
-                  </label>
-                </div>
-              </div>
-
-              <!-- Consumed once by startSeason: past draft, these two mean nothing and
-                   the API refuses them, so they are not offered at all. -->
-              <div v-if="isDraft" class="mt-4">
-                <label for="sourceTierSeasonId" class="block text-sm font-medium mb-2">
-                  {{ t('rankedSeasonFormView.labelSourceTierSeasonId') }}
-                </label>
-                <Select
-                  id="sourceTierSeasonId"
-                  v-model="sourceTierSeasonId"
-                  :options="sourceTierOptions"
-                  option-label="label"
-                  option-value="value"
-                  :placeholder="t('rankedSeasonFormView.placeholderSourceTierSeasonId')"
-                  class="w-full"
-                  show-clear
-                />
-                <small class="text-surface-400">
-                  {{ t('rankedSeasonFormView.helpSourceTierSeasonId') }}
-                </small>
-              </div>
-
-              <!-- Only matters when a ladder is actually copied. -->
-              <div v-if="isDraft && sourceTierSeasonId" class="mt-4">
-                <label for="tierScalingMode" class="block text-sm font-medium mb-2">
-                  {{ t('rankedSeasonFormView.labelTierScalingMode') }}
-                </label>
-                <Select
-                  id="tierScalingMode"
-                  v-model="tierScalingMode"
-                  :options="tierScalingOptions"
-                  option-label="label"
-                  option-value="value"
-                  class="w-full"
-                />
-                <small class="text-surface-400">
-                  {{
-                    tierScalingMode === 'percentile'
-                      ? t('rankedSeasonFormView.helpTierScalingPercentile')
-                      : t('rankedSeasonFormView.helpTierScalingKeep')
-                  }}
-                </small>
-              </div>
-            </div>
-
-            <!-- Fin de saison automatique : enchaînement ou simple clôture -->
-            <div class="mb-6">
-              <h3 class="text-lg font-semibold mb-4">
-                {{ t('rankedSeasonFormView.automationTitle') }}
-              </h3>
-              <p class="text-sm text-surface-400 mb-4">
-                {{ t('rankedSeasonFormView.automationIntro') }}
-              </p>
-
-              <div class="flex items-center gap-2">
-                <Checkbox id="automationEnabled" v-model="automationEnabled" :binary="true" />
-                <label for="automationEnabled" class="text-sm">
-                  {{ t('rankedSeasonFormView.labelAutomationEnabled') }}
-                </label>
-              </div>
-
-              <div v-if="automationEnabled" class="mt-4 pl-6 flex flex-col gap-4">
-                <div>
-                  <label for="automationMode" class="block text-sm font-medium mb-2">
-                    {{ t('rankedSeasonFormView.labelAutomationMode') }}
-                  </label>
-                  <SelectButton
-                    id="automationMode"
-                    v-model="automation.mode"
-                    :options="automationModeOptions"
-                    option-label="label"
-                    option-value="value"
-                    :allow-empty="false"
-                  />
-                  <small class="block text-surface-400 mt-1">
-                    {{
-                      automation.mode === 'close'
-                        ? t('rankedSeasonFormView.helpAutomationModeClose')
-                        : t('rankedSeasonFormView.helpAutomationModeChain')
-                    }}
-                  </small>
-                </div>
-
-                <template v-if="automation.mode === 'chain'">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label for="durationDays" class="block text-sm font-medium mb-2">
-                      {{ t('rankedSeasonFormView.labelDurationDays') }}
-                    </label>
-                    <InputNumber
-                      id="durationDays"
-                      v-model="automation.durationDays"
-                      :min="1"
-                      :max="365"
-                      class="w-full"
-                      :class="{ 'p-invalid': automationErrors.durationDays }"
-                    />
-                    <small v-if="automationErrors.durationDays" class="p-error">{{
-                      automationErrors.durationDays
-                    }}</small>
-                    <small v-else class="text-surface-400">
-                      {{ t('rankedSeasonFormView.helpDurationDays') }}
-                    </small>
-                  </div>
-
-                  <div>
-                    <label for="nameTemplate" class="block text-sm font-medium mb-2">
-                      {{ t('rankedSeasonFormView.labelNameTemplate') }}
-                    </label>
-                    <InputText
-                      id="nameTemplate"
-                      v-model="automation.nameTemplate"
-                      class="w-full"
-                      :class="{ 'p-invalid': automationErrors.nameTemplate }"
-                    />
-                    <small v-if="automationErrors.nameTemplate" class="p-error">{{
-                      automationErrors.nameTemplate
-                    }}</small>
-                    <small v-else class="text-surface-400">
-                      {{
-                        t('rankedSeasonFormView.helpNameTemplate', {
-                          placeholder: seasonNumberPlaceholder,
-                          example: nameTemplatePreview,
-                        })
-                      }}
-                    </small>
-                  </div>
-                </div>
-
-                <div class="flex flex-col gap-3">
-                  <div class="flex items-center gap-2">
-                    <Checkbox
-                      id="carryParticipants"
-                      v-model="automation.carryParticipants"
-                      :binary="true"
-                    />
-                    <label for="carryParticipants" class="text-sm">
-                      {{ t('rankedSeasonFormView.labelCarryParticipants') }}
-                    </label>
-                  </div>
-                  <small class="text-surface-400 pl-6 -mt-2">
-                    {{ t('rankedSeasonFormView.helpCarryParticipants') }}
-                  </small>
-
-                  <div v-if="automation.carryParticipants" class="pl-6">
-                    <label for="participantsMinMatches" class="block text-sm font-medium mb-2">
-                      {{ t('rankedSeasonFormView.labelParticipantsMinMatches') }}
-                    </label>
-                    <InputNumber
-                      id="participantsMinMatches"
-                      v-model="automation.participantsMinMatches"
-                      :min="0"
-                      :max="50"
-                      class="w-full sm:w-48"
-                    />
-                    <small class="block text-surface-400 mt-1">
-                      {{ t('rankedSeasonFormView.helpParticipantsMinMatches') }}
-                    </small>
-                  </div>
-
-                  <div class="flex items-center gap-2">
-                    <Checkbox id="carryTiers" v-model="automation.carryTiers" :binary="true" />
-                    <label for="carryTiers" class="text-sm">
-                      {{ t('rankedSeasonFormView.labelCarryTiers') }}
-                    </label>
-                  </div>
-
-                  <div v-if="automation.carryTiers" class="pl-6">
-                    <label for="automationTierScaling" class="block text-sm font-medium mb-2">
-                      {{ t('rankedSeasonFormView.labelTierScalingMode') }}
-                    </label>
-                    <Select
-                      id="automationTierScaling"
-                      v-model="automation.tierScalingMode"
-                      :options="tierScalingOptions"
-                      option-label="label"
-                      option-value="value"
-                      class="w-full"
-                    />
-                    <small class="text-surface-400">
-                      {{
-                        automation.tierScalingMode === 'percentile'
-                          ? t('rankedSeasonFormView.helpTierScalingPercentile')
-                          : t('rankedSeasonFormView.helpTierScalingKeep')
-                      }}
-                    </small>
-                  </div>
-
-                  <div class="flex items-center gap-2">
-                    <Checkbox id="carryMmr" v-model="automation.carryMmr" :binary="true" />
-                    <label for="carryMmr" class="text-sm">
-                      {{ t('rankedSeasonFormView.labelCarryMmr') }}
-                    </label>
-                  </div>
-
-                  <div v-if="automation.carryMmr" class="pl-6">
-                    <label for="automationSoftReset" class="block text-sm font-medium mb-2">
-                      {{ t('rankedSeasonFormView.labelSoftResetFactor') }}
-                    </label>
-                    <InputNumber
-                      id="automationSoftReset"
-                      v-model="automation.softResetFactor"
-                      :min="0"
-                      :max="1"
-                      :step="0.05"
-                      :min-fraction-digits="0"
-                      :max-fraction-digits="2"
-                      class="w-full sm:w-48"
-                    />
-                    <small class="block text-surface-400 mt-1">
-                      {{ t('rankedSeasonFormView.helpSoftResetFactor') }}
-                    </small>
-                  </div>
-                </div>
-                </template>
-              </div>
-            </div>
-
-            <!-- Contraintes de score -->
-            <div class="mb-6">
-              <ScoreConstraintsSection />
-            </div>
-
-            <!-- Mode de validation -->
-            <div class="mb-6">
-              <ValidationModeSection />
-            </div>
-
-            <!-- Actions -->
-            <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
-              <Button
-                :label="t('common.cancel')"
-                severity="secondary"
-                @click="router.push('/admin/ranked')"
-                :disabled="loading"
+          <div v-if="automationEnabled" class="flex flex-col gap-4 ps-6">
+            <UFormField
+              :label="t('rankedSeasonFormView.labelAutomationMode')"
+              :help="
+                automation.mode === 'close'
+                  ? t('rankedSeasonFormView.helpAutomationModeClose')
+                  : t('rankedSeasonFormView.helpAutomationModeChain')
+              "
+            >
+              <UTabs
+                v-model="automation.mode"
+                :items="automationModeOptions"
+                :content="false"
+                size="sm"
                 class="w-full sm:w-auto"
+                :ui="{ label: 'whitespace-normal text-center' }"
               />
-              <Button
-                type="submit"
-                :label="isEditMode ? t('common.update') : t('rankedSeasonFormView.createSeason')"
-                icon="fa fa-check"
-                :loading="loading"
-                class="w-full sm:w-auto"
+            </UFormField>
+
+            <template v-if="automation.mode === 'chain'">
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <UFormField
+                  :label="t('rankedSeasonFormView.labelDurationDays')"
+                  :error="automationErrors.durationDays"
+                  :help="t('rankedSeasonFormView.helpDurationDays')"
+                >
+                  <UInputNumber
+                    v-model="automation.durationDays"
+                    :min="1"
+                    :max="365"
+                    class="w-full"
+                  />
+                </UFormField>
+                <UFormField
+                  :label="t('rankedSeasonFormView.labelNameTemplate')"
+                  :error="automationErrors.nameTemplate"
+                  :help="
+                    t('rankedSeasonFormView.helpNameTemplate', {
+                      placeholder: seasonNumberPlaceholder,
+                      example: nameTemplatePreview,
+                    })
+                  "
+                >
+                  <UInput v-model="automation.nameTemplate" class="w-full" />
+                </UFormField>
+              </div>
+
+              <UCheckbox
+                v-model="automation.carryParticipants"
+                :label="t('rankedSeasonFormView.labelCarryParticipants')"
+                :description="t('rankedSeasonFormView.helpCarryParticipants')"
               />
-            </div>
-          </template>
-        </Card>
-      </form>
-    </div>
+              <UFormField
+                v-if="automation.carryParticipants"
+                class="ps-6"
+                :label="t('rankedSeasonFormView.labelParticipantsMinMatches')"
+                :help="t('rankedSeasonFormView.helpParticipantsMinMatches')"
+              >
+                <UInputNumber
+                  v-model="automation.participantsMinMatches"
+                  :min="0"
+                  :max="50"
+                  class="w-full sm:w-48"
+                />
+              </UFormField>
+
+              <UCheckbox
+                v-model="automation.carryTiers"
+                :label="t('rankedSeasonFormView.labelCarryTiers')"
+              />
+              <UFormField
+                v-if="automation.carryTiers"
+                class="ps-6"
+                :label="t('rankedSeasonFormView.labelTierScalingMode')"
+                :help="tierScalingHelp(automation.tierScalingMode)"
+              >
+                <USelect
+                  v-model="automation.tierScalingMode"
+                  :items="tierScalingOptions"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UCheckbox v-model="automation.carryMmr" :label="t('rankedSeasonFormView.labelCarryMmr')" />
+              <UFormField
+                v-if="automation.carryMmr"
+                class="ps-6"
+                :label="t('rankedSeasonFormView.labelSoftResetFactor')"
+                :help="t('rankedSeasonFormView.helpSoftResetFactor')"
+              >
+                <UInputNumber
+                  v-model="automation.softResetFactor"
+                  :min="0"
+                  :max="1"
+                  :step="0.05"
+                  :format-options="{ maximumFractionDigits: 2 }"
+                  class="w-full sm:w-48"
+                />
+              </UFormField>
+            </template>
+          </div>
+        </section>
+
+        <ScoreConstraintsSection v-model:state="state" />
+
+        <ValidationModeSection v-model:state="state" />
+
+        <template #footer>
+          <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <UButton
+              :label="t('common.cancel')"
+              color="neutral"
+              variant="ghost"
+              to="/admin/ranked"
+              class="justify-center"
+              :disabled="loading"
+            />
+            <UButton
+              type="submit"
+              :label="isEditMode ? t('common.update') : t('rankedSeasonFormView.createSeason')"
+              icon="i-fa7-solid:check"
+              class="justify-center"
+              :loading="loading"
+            />
+          </div>
+        </template>
+      </UCard>
+    </UForm>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
+import type { FormErrorEvent, FormSubmitEvent } from '@nuxt/ui'
 import { useI18n } from 'vue-i18n'
 import { useAppToast } from '@/composables/useAppToast'
 import {
@@ -418,6 +281,7 @@ import {
 import { useRankedService } from '@/composables/ranked/ranked.service'
 import { useFormReferences } from '@/composables/useFormReferences'
 import { useAuth } from '@/composables/useAuth'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
 import GeneralInfoSection from '@/components/forms/sections/GeneralInfoSection.vue'
 import ScoreConstraintsSection from '@/components/forms/sections/ScoreConstraintsSection.vue'
 import ValidationModeSection from '@/components/forms/sections/ValidationModeSection.vue'
@@ -451,26 +315,17 @@ const isEditMode = computed(() => !!route.params.id && route.params.id !== 'new'
 
 const toast = useAppToast()
 
-const { handleSubmit, defineField, setValues, errors } = useForm({
-  validationSchema: toTypedSchema(
-    isEditMode.value ? updateRankedSeasonFormSchema : createRankedSeasonFormSchema,
-  ),
-})
+const schema = computed(() =>
+  isEditMode.value ? updateRankedSeasonFormSchema : createRankedSeasonFormSchema,
+)
 
-const [baseMmr] = defineField('baseMmr')
-const [kFactor] = defineField('kFactor')
-const [placementMatches] = defineField('placementMatches')
-const [usePreviousMmr] = defineField('usePreviousMmr')
-const [softResetFactor] = defineField('softResetFactor')
-const [allowAsymmetricMatches] = defineField('allowAsymmetricMatches')
-const [sourceTierSeasonId] = defineField('sourceTierSeasonId')
-const [tierScalingMode] = defineField('tierScalingMode')
-const [sourceMmrSeasonId] = defineField('sourceMmrSeasonId')
+type RankedSeasonFormState = Partial<CreateRankedSeasonFormData>
+const state = reactive<RankedSeasonFormState>({})
 
 /**
  * The chain settings are not part of the season payload — they live behind their own endpoint
  * and must never travel through `updateSeason`, which replays the season's MMR whenever a
- * config field moves. Hence plain refs validated by hand rather than vee-validate fields.
+ * config field moves. Hence plain refs validated by hand, outside the season's UForm schema.
  */
 const automationEnabled = ref(false)
 const automationErrors = ref<Record<string, string>>({})
@@ -542,6 +397,12 @@ const tierScalingOptions = computed(() => [
   { label: t('rankedSeasonFormView.tierScalingPercentile'), value: 'percentile' },
 ])
 
+function tierScalingHelp(mode: string | undefined) {
+  return mode === 'percentile'
+    ? t('rankedSeasonFormView.helpTierScalingPercentile')
+    : t('rankedSeasonFormView.helpTierScalingKeep')
+}
+
 const currentSeasonId = computed(() => (isEditMode.value ? (route.params.id as string) : null))
 
 /**
@@ -600,48 +461,47 @@ const fieldLabels: Record<string, string> = {
   validationMode: t('rankedSeasonFormView.fieldValidationMode'),
 }
 
-const onSubmit = handleSubmit(
-  async (values) => {
-    if (!validateAutomation()) {
-      toast.add({
-        severity: 'error',
-        summary: t('rankedSeasonFormView.invalidFieldsTitle'),
-        detail: Object.values(automationErrors.value).join('\n'),
-        life: 8000,
-      })
-      return
-    }
-
-    if (isEditMode.value) {
-      const id = route.params.id as string
-      const changes = changedValues(values as FormValues)
-      const seasonChanged = Object.keys(changes).length > 0
-      const success = seasonChanged
-        ? await updateSeason(id, changes as UpdateRankedSeasonFormData)
-        : true
-      if (!success) return
-      await persistAutomation(id)
-      router.push('/admin/ranked')
-    } else {
-      const season = await createSeason(values as CreateRankedSeasonFormData)
-      if (!season) return
-      await persistAutomation(season.id)
-      router.push('/admin/ranked')
-    }
-  },
-  ({ errors: formErrors }) => {
-    const errs = formErrors as Record<string, string>
-    const detail = Object.keys(errs)
-      .map((k) => `• ${fieldLabels[k] ?? k}: ${errs[k]}`)
-      .join('\n')
+async function onSubmit({ data: values }: FormSubmitEvent<RankedSeasonFormState>) {
+  if (!validateAutomation()) {
     toast.add({
       severity: 'error',
       summary: t('rankedSeasonFormView.invalidFieldsTitle'),
-      detail,
+      detail: Object.values(automationErrors.value).join('\n'),
       life: 8000,
     })
-  },
-)
+    return
+  }
+
+  if (isEditMode.value) {
+    const id = route.params.id as string
+    const changes = changedValues(values as FormValues)
+    const seasonChanged = Object.keys(changes).length > 0
+    const success = seasonChanged
+      ? await updateSeason(id, changes as UpdateRankedSeasonFormData)
+      : true
+    if (!success) return
+    await persistAutomation(id)
+    router.push('/admin/ranked')
+  } else {
+    const season = await createSeason(values as CreateRankedSeasonFormData)
+    if (!season) return
+    await persistAutomation(season.id)
+    router.push('/admin/ranked')
+  }
+}
+
+/** The form is long: list what failed in one place rather than leaving it to scrolling. */
+function onInvalid(event: FormErrorEvent) {
+  const detail = event.errors
+    .map((err) => `• ${fieldLabels[err.name ?? ''] ?? err.name}: ${err.message}`)
+    .join('\n')
+  toast.add({
+    severity: 'error',
+    summary: t('rankedSeasonFormView.invalidFieldsTitle'),
+    detail,
+    life: 8000,
+  })
+}
 
 onMounted(async () => {
   await Promise.all([loadFormReferences(), loadFinishedSeasons()])
@@ -675,7 +535,7 @@ onMounted(async () => {
         validationMode: (s.validationMode ?? 'strict') as 'none' | 'auto' | 'strict' | 'admin',
         validationTimerHours: s.validationTimerHours ?? null,
       }
-      setValues(loaded)
+      Object.assign(state, loaded)
       initialValues.value = { ...loaded }
       if (s.automation) {
         automationEnabled.value = s.automation.enabled
@@ -694,7 +554,7 @@ onMounted(async () => {
       }
     }
   } else {
-    setValues({
+    Object.assign(state, {
       minTeamSize: 1,
       maxTeamSize: 2,
       baseMmr: 1000,
@@ -713,10 +573,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style scoped>
-.ranked-season-form-view {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-</style>
