@@ -10,7 +10,10 @@
 
     <Card v-else-if="rule">
       <template #content>
-        <article class="prose prose-gray dark:prose-invert max-w-none" v-html="sanitizeHtml(rule.content)" />
+        <article
+          class="prose prose-gray dark:prose-invert max-w-none"
+          v-html="sanitizeHtml(rule.content)"
+        />
       </template>
     </Card>
 

@@ -5,8 +5,10 @@
       class="drag-handle mt-2 size-4 shrink-0 cursor-grab text-dimmed"
     />
 
-    <!-- Variable, operator and value stack on phones, sit side by side from `sm`. -->
-    <div class="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[13rem_11rem_minmax(0,1fr)] [&>*]:w-full">
+    <!-- Variable, operator and value stack in a narrow builder, sit side by side once it is wide enough. -->
+    <div
+      class="grid min-w-0 flex-1 grid-cols-1 gap-2 @xl:grid-cols-[13rem_11rem_minmax(0,1fr)] [&>*]:w-full"
+    >
       <USelectMenu
         v-model="node.fact"
         :items="facts"

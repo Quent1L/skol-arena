@@ -1,13 +1,13 @@
 <template>
   <div>
     <p class="mb-2 text-xs font-semibold text-muted">{{ t('conditionPalette.blocksLabel') }}</p>
-    <!-- A scrollable row on phones, a column beside the builder from `lg`. -->
+    <!-- A scrollable row in a narrow builder, a column beside it once there is room. -->
     <VueDraggable
       v-model="items"
       :group="{ name: 'cond', pull: 'clone', put: false }"
       :sort="false"
       :clone="cloneNode"
-      class="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:flex-col lg:overflow-visible"
+      class="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 @3xl:flex-col @3xl:overflow-visible"
     >
       <div
         v-for="item in items"
@@ -25,7 +25,12 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { VueDraggable } from 'vue-draggable-plus'
-import { PALETTE_ITEMS, nodeFromPalette, type BuilderNode, type PaletteItem } from './condition-tree'
+import {
+  PALETTE_ITEMS,
+  nodeFromPalette,
+  type BuilderNode,
+  type PaletteItem,
+} from './condition-tree'
 
 const { t } = useI18n()
 

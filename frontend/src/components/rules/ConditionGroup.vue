@@ -4,12 +4,7 @@
     :class="depth % 2 === 0 ? 'border-primary/50' : 'border-info/50'"
   >
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <UTabs
-        v-model="node.operator"
-        :items="operatorButtons"
-        :content="false"
-        size="xs"
-      />
+      <UTabs v-model="node.operator" :items="operatorButtons" :content="false" size="xs" />
       <span class="text-xs text-muted">
         {{ node.operator === 'all' ? t('conditionGroup.allTrue') : t('conditionGroup.anyTrue') }}
       </span>

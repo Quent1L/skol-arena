@@ -1,7 +1,11 @@
 <template>
-  <div class="grid grid-cols-1 gap-4 lg:grid-cols-[200px_minmax(0,1fr)]">
-    <ConditionPalette />
-    <ConditionGroup v-model="tree" :facts="facts" :players="players" :depth="0" />
+  <!-- Sized by its own width, not the viewport's: the builder sits in a column of
+       the rule form whose width varies with the sidebar and the other panels. -->
+  <div class="@container">
+    <div class="grid grid-cols-1 gap-4 @3xl:grid-cols-[200px_minmax(0,1fr)]">
+      <ConditionPalette />
+      <ConditionGroup v-model="tree" :facts="facts" :players="players" :depth="0" />
+    </div>
   </div>
 </template>
 
@@ -42,7 +46,9 @@ const organisations = ref<OrganizationWithMemberCount[]>([])
 // Outcome types are per-discipline: a discipline-scoped rule only ever sees its own.
 // Filtered here rather than refetched, so switching discipline costs nothing.
 const scopedOutcomeTypes = computed(() =>
-  props.disciplineId ? props.outcomeTypes.filter((o) => o.disciplineId === props.disciplineId) : props.outcomeTypes,
+  props.disciplineId
+    ? props.outcomeTypes.filter((o) => o.disciplineId === props.disciplineId)
+    : props.outcomeTypes,
 )
 const scopedOutcomeReasons = computed(() =>
   props.disciplineId
@@ -81,9 +87,5 @@ watch(
 )
 
 // Propagate edits upward in json-rules-engine format.
-watch(
-  tree,
-  (value) => emit('update:modelValue', toConditions(value)),
-  { deep: true },
-)
+watch(tree, (value) => emit('update:modelValue', toConditions(value)), { deep: true })
 </script>
