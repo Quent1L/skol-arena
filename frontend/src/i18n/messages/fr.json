@@ -2685,5 +2685,26 @@
         "avatars": "Avatars"
       }
     }
+  },
+  "adminNav": {
+    "menu": "Menu d'administration",
+    "openMenu": "Ouvrir le menu",
+    "back": "Retour",
+    "home": "Accueil",
+    "groups": {
+      "competition": "Compétition",
+      "members": "Membres",
+      "system": "Système"
+    },
+    "dashboard": "Tableau de bord",
+    "tournaments": "Tournois",
+    "disciplines": "Disciplines",
+    "ranked": "Saisons Ranked",
+    "rules": "Règles du jeu",
+    "rulesEngine": "Moteur de règles",
+    "users": "Utilisateurs",
+    "organizations": "Organisations",
+    "invitations": "Invitations",
+    "maintenance": "Maintenance"
   }
 }

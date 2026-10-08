@@ -62,6 +62,6 @@ test.describe('admin', () => {
     await page.goto('/admin')
     await expect(page).toHaveURL(/\/admin/)
     await expect(page.getByText('Administration').first()).toBeVisible()
-    await expect(page.getByText('Saisons Ranked')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Saisons Ranked' })).toBeVisible()
   })
 })

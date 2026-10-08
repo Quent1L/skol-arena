@@ -2685,5 +2685,26 @@
         "avatars": "Avatars"
       }
     }
+  },
+  "adminNav": {
+    "menu": "Admin menu",
+    "openMenu": "Open menu",
+    "back": "Back",
+    "home": "Home",
+    "groups": {
+      "competition": "Competition",
+      "members": "Members",
+      "system": "System"
+    },
+    "dashboard": "Dashboard",
+    "tournaments": "Tournaments",
+    "disciplines": "Disciplines",
+    "ranked": "Ranked seasons",
+    "rules": "Game rules",
+    "rulesEngine": "Rules engine",
+    "users": "Users",
+    "organizations": "Organizations",
+    "invitations": "Invitations",
+    "maintenance": "Maintenance"
   }
 }
