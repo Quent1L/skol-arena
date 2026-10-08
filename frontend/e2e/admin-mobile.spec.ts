@@ -72,3 +72,12 @@ test('a game rule can be created and deleted from a phone', async ({ page }) => 
 
   await expect(row).toBeHidden()
 })
+
+test('the seeded championship can be saved unchanged from its form', async ({ page }) => {
+  await page.goto(`/admin/tournaments/${CHAMPIONSHIP_ID}/edit`)
+  await expect(page.getByLabel('Nom', { exact: true })).toHaveValue('E2E Championship')
+
+  await page.getByRole('button', { name: 'Mettre à jour' }).click()
+
+  await expect(page).toHaveURL('/admin/tournaments')
+})

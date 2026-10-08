@@ -33,6 +33,7 @@ import {
   mmrHistory,
 } from "../src/db/schema";
 import { eq } from "drizzle-orm";
+import { CHAMPIONSHIP_LIMITS } from "@skol-arena/shared";
 import { newId } from "../src/utils/uuid";
 
 // ---------------------------------------------------------------------------
@@ -189,11 +190,12 @@ async function seedChampionship() {
   });
   await db.insert(championshipConfigs).values({
     tournamentId: IDS.championship,
-    // High limits: repeated e2e runs create matches between the same
-    // players without reseeding (the idempotent seed doesn't reset the DB)
-    maxMatchesPerPlayer: 1000,
-    maxTimesWithSamePartner: 1000,
-    maxTimesWithSameOpponent: 1000,
+    // The highest caps the form accepts: tests keep creating matches between the same
+    // four players, yet an admin must still be able to save this championship. Matches
+    // created by previous runs are purged by frontend/e2e/global-setup.ts.
+    maxMatchesPerPlayer: CHAMPIONSHIP_LIMITS.maxMatchesPerPlayer.max,
+    maxTimesWithSamePartner: CHAMPIONSHIP_LIMITS.maxTimesWithSamePartner.max,
+    maxTimesWithSameOpponent: CHAMPIONSHIP_LIMITS.maxTimesWithSameOpponent.max,
   });
 
   const players = [IDS.player1App, IDS.player2App, IDS.player3App, IDS.player4App];
