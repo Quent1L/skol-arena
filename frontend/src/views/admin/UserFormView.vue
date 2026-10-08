@@ -1,403 +1,382 @@
 <template>
-  <div class="user-form-view p-4">
-    <div class="flex items-center gap-3 mb-6">
-      <h1 class="text-2xl font-bold">
+  <div class="max-w-4xl">
+    <div class="mb-6 flex flex-wrap items-center gap-3">
+      <h1 class="text-2xl font-bold text-highlighted">
         {{ currentUser?.displayName ?? t('adminUserFormView.title') }}
       </h1>
-      <Tag
+      <UBadge
         v-if="currentUser?.deactivatedAt"
-        :value="t('adminUsersList.deactivated')"
-        severity="danger"
+        :label="t('adminUsersList.deactivated')"
+        color="error"
+        variant="subtle"
       />
     </div>
 
-    <Message v-if="error" severity="error" :closable="true" class="mb-4">
-      {{ error }}
-    </Message>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      icon="i-fa7-solid:circle-xmark"
+      :description="error"
+      class="mb-4"
+    />
 
-    <div class="max-w-4xl space-y-6">
-      <form @submit="onSubmit">
-        <Card>
-          <template #title>{{ t('adminUserFormView.identitySection') }}</template>
-          <template #content>
-            <div class="space-y-4">
-              <div>
-                <label for="displayName" class="block text-sm font-medium mb-2">
-                  {{ t('adminUserFormView.displayNameLabel') }}
-                </label>
-                <InputText
-                  id="displayName"
-                  v-model="displayName"
-                  class="w-full"
-                  :class="{ 'p-invalid': errors.displayName }"
-                />
-                <small class="p-error">{{ errors.displayName }}</small>
-              </div>
-
-              <div>
-                <label for="shortName" class="block text-sm font-medium mb-2">
-                  {{ t('adminUserFormView.shortNameLabel') }}
-                </label>
-                <InputText
-                  id="shortName"
-                  v-model="shortName"
-                  class="w-full"
-                  :class="{ 'p-invalid': errors.shortName }"
-                />
-                <small class="p-error">{{ errors.shortName }}</small>
-              </div>
-
-              <div>
-                <label for="role" class="block text-sm font-medium mb-2">
-                  {{ t('adminUserFormView.roleLabel') }}
-                </label>
-                <Select
-                  id="role"
-                  v-model="role"
-                  :options="roleOptions"
-                  option-label="label"
-                  option-value="value"
-                  class="w-full"
-                  :class="{ 'p-invalid': errors.role }"
-                />
-                <small class="p-error">{{ errors.role }}</small>
-              </div>
-
-              <div>
-                <label for="email" class="block text-sm font-medium mb-2">
-                  {{ t('adminUserFormView.emailLabel') }}
-                </label>
-                <InputText
-                  id="email"
-                  v-model="email"
-                  class="w-full"
-                  :class="{ 'p-invalid': errors.email }"
-                />
-                <small class="p-error">{{ errors.email }}</small>
-                <p class="text-sm text-gray-500 mt-1">
-                  {{ t('adminUserFormView.emailChangeNotice') }}
-                </p>
-              </div>
-
-              <div>
-                <span class="block text-sm font-medium mb-2">
-                  {{ t('adminUserFormView.authProvidersLabel') }}
-                </span>
-                <div v-if="authProviders.length" class="flex flex-wrap gap-1">
-                  <Tag
-                    v-for="provider in authProviders"
-                    :key="provider"
-                    :value="t(`adminUsersList.authProviders.${provider}`)"
-                    :severity="provider === 'keycloak' ? 'warn' : 'info'"
-                  />
-                </div>
-                <span v-else class="text-sm text-gray-400">
-                  {{ t('adminUsersList.authProviders.none') }}
-                </span>
-              </div>
-
-              <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
-                <Button
-                  :label="t('common.cancel')"
-                  severity="secondary"
-                  :disabled="loading"
-                  class="w-full sm:w-auto"
-                  @click="router.push('/admin/users')"
-                />
-                <Button
-                  type="submit"
-                  :label="t('common.update')"
-                  icon="fa fa-check"
-                  :loading="loading"
-                  class="w-full sm:w-auto"
+    <div class="space-y-6">
+      <UForm :schema="adminUpdateUserSchema" :state="state" @submit="onSubmit">
+        <UCard>
+          <template #header>
+            <h2 class="font-semibold text-highlighted">{{ t('adminUserFormView.identitySection') }}</h2>
+          </template>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <UFormField name="displayName" :label="t('adminUserFormView.displayNameLabel')">
+              <UInput v-model="state.displayName" class="w-full" />
+            </UFormField>
+            <UFormField name="shortName" :label="t('adminUserFormView.shortNameLabel')">
+              <UInput v-model="state.shortName" class="w-full" />
+            </UFormField>
+            <UFormField name="role" :label="t('adminUserFormView.roleLabel')">
+              <USelect v-model="state.role" :items="roleOptions" class="w-full" />
+            </UFormField>
+            <UFormField
+              name="email"
+              :label="t('adminUserFormView.emailLabel')"
+              :help="t('adminUserFormView.emailChangeNotice')"
+            >
+              <UInput v-model="state.email" type="email" class="w-full" />
+            </UFormField>
+            <UFormField :label="t('adminUserFormView.authProvidersLabel')" class="sm:col-span-2">
+              <div v-if="authProviders.length" class="flex flex-wrap gap-1">
+                <UBadge
+                  v-for="provider in authProviders"
+                  :key="provider"
+                  :label="t(`adminUsersList.authProviders.${provider}`)"
+                  :color="provider === 'keycloak' ? 'warning' : 'info'"
+                  variant="subtle"
                 />
               </div>
+              <span v-else class="text-sm text-dimmed">{{ t('adminUsersList.authProviders.none') }}</span>
+            </UFormField>
+          </div>
+          <template #footer>
+            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <UButton
+                :label="t('common.cancel')"
+                color="neutral"
+                variant="ghost"
+                to="/admin/users"
+                class="justify-center"
+                :disabled="loading"
+              />
+              <UButton
+                type="submit"
+                :label="t('common.update')"
+                icon="i-fa7-solid:check"
+                class="justify-center"
+                :loading="loading"
+              />
             </div>
           </template>
-        </Card>
-      </form>
+        </UCard>
+      </UForm>
 
       <!-- Moderation: the picture is the player's own, an admin can only take it down -->
-      <Card v-if="currentUser">
-        <template #title>{{ t('adminUserFormView.avatarSection') }}</template>
-        <template #content>
-          <div class="flex items-center gap-4">
-            <PlayerAvatar
-              :name="currentUser.displayName"
-              :color-key="currentUser.shortName"
-              :player-id="userId"
-              size="xl"
-              shape="square"
-            />
-            <div class="flex flex-col gap-2">
-              <Button
-                v-if="hasAvatar"
-                :label="t('adminUserFormView.removeAvatar')"
-                icon="fa fa-trash"
-                severity="danger"
-                outlined
-                size="small"
-                :loading="removingAvatar"
-                @click="confirmRemoveAvatar"
-              />
-              <small class="text-gray-500">
-                {{ hasAvatar ? t('adminUserFormView.removeAvatarHint') : t('adminUserFormView.noAvatar') }}
-              </small>
-            </div>
-          </div>
+      <UCard v-if="currentUser">
+        <template #header>
+          <h2 class="font-semibold text-highlighted">{{ t('adminUserFormView.avatarSection') }}</h2>
         </template>
-      </Card>
+        <div class="flex items-center gap-4">
+          <PlayerAvatar
+            :name="currentUser.displayName"
+            :color-key="currentUser.shortName"
+            :player-id="userId"
+            size="xl"
+            shape="square"
+          />
+          <div class="flex flex-col items-start gap-2">
+            <UButton
+              v-if="hasAvatar"
+              :label="t('adminUserFormView.removeAvatar')"
+              icon="i-fa7-solid:trash"
+              color="error"
+              variant="outline"
+              size="sm"
+              :loading="removingAvatar"
+              @click="confirmRemoveAvatar"
+            />
+            <p class="text-sm text-muted">
+              {{ hasAvatar ? t('adminUserFormView.removeAvatarHint') : t('adminUserFormView.noAvatar') }}
+            </p>
+          </div>
+        </div>
+      </UCard>
 
-      <Card>
-        <template #title>{{ t('adminUserFormView.organizationsSection') }}</template>
-        <template #content>
-          <ul v-if="currentUser?.organizations.length" class="mb-4 divide-y">
-            <li
-              v-for="org in currentUser.organizations"
-              :key="org.id"
-              class="flex items-center justify-between py-2"
-            >
-              <div>
-                <span class="font-medium">{{ org.name }}</span>
-                <Tag
-                  :value="t(`adminUserFormView.orgRoles.${org.role}`)"
-                  severity="secondary"
-                  class="ml-2"
-                />
-              </div>
-              <Button
-                icon="fa fa-xmark"
-                size="small"
-                severity="danger"
-                text
-                rounded
-                v-tooltip.top="t('adminUserFormView.removeFromOrganization')"
+      <UCard>
+        <template #header>
+          <h2 class="font-semibold text-highlighted">
+            {{ t('adminUserFormView.organizationsSection') }}
+          </h2>
+        </template>
+        <ul v-if="currentUser?.organizations.length" class="mb-4 divide-y divide-default">
+          <li
+            v-for="org in currentUser.organizations"
+            :key="org.id"
+            class="flex items-center justify-between gap-2 py-2"
+          >
+            <div class="flex min-w-0 flex-wrap items-center gap-2">
+              <span class="font-medium">{{ org.name }}</span>
+              <UBadge
+                :label="t(`adminUserFormView.orgRoles.${org.role}`)"
+                color="neutral"
+                variant="subtle"
+              />
+            </div>
+            <UTooltip :text="t('adminUserFormView.removeFromOrganization')">
+              <UButton
+                icon="i-fa7-solid:xmark"
+                color="error"
+                variant="ghost"
+                size="sm"
+                :aria-label="t('adminUserFormView.removeFromOrganization')"
                 @click="handleRemoveOrganization(org.id)"
               />
-            </li>
-          </ul>
-          <p v-else class="text-gray-500 mb-4">{{ t('adminUserFormView.noOrganization') }}</p>
+            </UTooltip>
+          </li>
+        </ul>
+        <p v-else class="mb-4 text-muted">{{ t('adminUserFormView.noOrganization') }}</p>
 
-          <div class="flex gap-3">
-            <Select
-              v-model="organizationToAdd"
-              :options="availableOrganizations"
-              option-label="name"
-              option-value="id"
-              :placeholder="t('adminUserFormView.addOrganizationPlaceholder')"
-              class="flex-1"
-            />
-            <Button
-              :label="t('adminUserFormView.addOrganization')"
-              icon="fa fa-plus"
-              :disabled="!organizationToAdd"
-              @click="handleAddOrganization"
-            />
-          </div>
-        </template>
-      </Card>
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <USelectMenu
+            v-model="organizationToAdd"
+            :items="availableOrganizations"
+            value-key="id"
+            label-key="name"
+            :placeholder="t('adminUserFormView.addOrganizationPlaceholder')"
+            class="flex-1"
+          />
+          <UButton
+            :label="t('adminUserFormView.addOrganization')"
+            icon="i-fa7-solid:plus"
+            class="justify-center"
+            :disabled="!organizationToAdd"
+            @click="handleAddOrganization"
+          />
+        </div>
+      </UCard>
 
       <!-- A returning player signs up again, which creates an empty profile.
            Restoring moves that new identity onto this archived history. -->
-      <Card v-if="isArchived">
-        <template #title>{{ t('adminUserFormView.restoreSection') }}</template>
-        <template #content>
-          <p class="text-sm text-gray-500 mb-3">{{ t('adminUserFormView.restoreExplanation') }}</p>
+      <UCard v-if="isArchived">
+        <template #header>
+          <h2 class="font-semibold text-highlighted">{{ t('adminUserFormView.restoreSection') }}</h2>
+        </template>
+        <p class="mb-3 text-sm text-muted">{{ t('adminUserFormView.restoreExplanation') }}</p>
 
-          <InputText
-            v-model="restoreSearch"
-            :placeholder="t('adminUserFormView.restoreSearchPlaceholder')"
-            class="w-full mb-3"
-          />
+        <UInput
+          v-model="restoreSearch"
+          icon="i-fa7-solid:magnifying-glass"
+          :placeholder="t('adminUserFormView.restoreSearchPlaceholder')"
+          class="mb-3 w-full"
+        />
 
-          <Message v-if="deletionBlockers.length" severity="error" :closable="false" class="mb-3">
+        <UAlert v-if="deletionBlockers.length" color="error" variant="subtle" class="mb-3">
+          <template #description>
             <p class="mb-2">{{ t('adminUserFormView.restoreBlockedIntro') }}</p>
-            <ul class="list-disc pl-5">
+            <ul class="list-disc ps-5">
               <li v-for="blocker in deletionBlockers" :key="blocker.resource">
                 {{ t(`adminUsersList.blockers.${blocker.resource}`) }} : {{ blocker.count }}
               </li>
             </ul>
-          </Message>
+          </template>
+        </UAlert>
 
-          <ul v-if="restoreCandidates.length" class="divide-y">
-            <li
-              v-for="candidate in restoreCandidates"
-              :key="candidate.id"
-              class="flex items-center justify-between py-2"
-            >
-              <div>
-                <span class="font-medium">{{ candidate.displayName }}</span>
-                <span class="text-sm text-gray-500 ml-2">{{ candidate.email ?? '—' }}</span>
-              </div>
-              <Button
-                :label="t('adminUserFormView.restoreAction')"
-                icon="fa fa-rotate-left"
-                size="small"
-                :loading="loading"
-                @click="handleRestore(candidate.id)"
-              />
-            </li>
-          </ul>
-          <p v-else-if="restoreSearch.trim()" class="text-gray-500">
-            {{ t('adminUserFormView.restoreNoCandidate') }}
-          </p>
-        </template>
-      </Card>
-
-      <Card>
-        <template #title>{{ t('adminUserFormView.dangerSection') }}</template>
-        <template #content>
-          <div class="flex flex-wrap gap-3">
-            <Button
-              v-if="!isArchived"
-              :label="t('adminUsersList.resetPassword')"
-              icon="fa fa-key"
-              severity="secondary"
-              @click="handleResetPassword"
-            />
-            <Button
-              v-if="!isArchived"
-              :label="t('adminUsersList.archive')"
-              icon="fa fa-box-archive"
-              severity="warn"
+        <ul v-if="restoreCandidates.length" class="divide-y divide-default">
+          <li
+            v-for="candidate in restoreCandidates"
+            :key="candidate.id"
+            class="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div class="min-w-0">
+              <span class="font-medium">{{ candidate.displayName }}</span>
+              <span class="ms-2 text-sm text-muted">{{ candidate.email ?? '—' }}</span>
+            </div>
+            <UButton
+              :label="t('adminUserFormView.restoreAction')"
+              icon="i-fa7-solid:rotate-left"
+              size="sm"
+              class="justify-center"
               :loading="loading"
-              @click="openArchiveDialog"
+              @click="handleRestore(candidate.id)"
             />
-            <Button
-              v-if="!isArchived && currentUser?.deactivatedAt"
-              :label="t('adminUsersList.reactivate')"
-              icon="fa fa-user-check"
-              severity="success"
-              :loading="loading"
-              @click="handleActivation(true)"
-            />
-            <Button
-              v-else-if="!isArchived"
-              :label="t('adminUsersList.deactivate')"
-              icon="fa fa-user-slash"
-              severity="warn"
-              :loading="loading"
-              @click="handleActivation(false)"
-            />
-            <Button
-              v-if="!isArchived"
-              :label="t('adminUsersList.deletePermanently')"
-              icon="fa fa-trash"
-              severity="danger"
-              :loading="loading"
-              @click="deleteDialogVisible = true"
-            />
-            <Message v-if="isArchived" severity="secondary" :closable="false" class="w-full">
-              {{ t('adminUserFormView.archivedNotice') }}
-            </Message>
-          </div>
-          <p v-if="hasNoNativePassword" class="text-sm text-amber-600 mt-3">
-            {{ t('adminUserFormView.resetPasswordHintSso') }}
-          </p>
-          <p class="text-sm text-gray-500 mt-3">
-            {{ t('adminUsersList.deactivateCacheNotice') }}
-          </p>
-        </template>
-      </Card>
-    </div>
-
-    <Dialog
-      v-model:visible="deleteDialogVisible"
-      :header="t('adminUsersList.deleteDialogHeader')"
-      :modal="true"
-      :style="{ width: '480px' }"
-    >
-      <div class="flex items-start gap-3">
-        <i class="pi pi-exclamation-triangle text-3xl text-red-500"></i>
-        <div>
-          <i18n-t keypath="adminUsersList.deleteConfirmMessage" tag="p" scope="global">
-            <template #name><strong>{{ currentUser?.displayName }}</strong></template>
-          </i18n-t>
-          <p class="text-sm text-gray-500 mt-2">{{ t('adminUsersList.deleteIrreversibleNotice') }}</p>
-        </div>
-      </div>
-
-      <Message v-if="deletionBlockers.length" severity="error" :closable="false" class="mt-3">
-        <p class="mb-2">{{ t('adminUsersList.deleteBlockedIntro') }}</p>
-        <ul class="list-disc pl-5">
-          <li v-for="blocker in deletionBlockers" :key="blocker.resource">
-            {{ t(`adminUsersList.blockers.${blocker.resource}`) }} : {{ blocker.count }}
           </li>
         </ul>
-        <p class="mt-2">{{ t('adminUsersList.archiveInstead') }}</p>
-      </Message>
+        <p v-else-if="restoreSearch.trim()" class="text-muted">
+          {{ t('adminUserFormView.restoreNoCandidate') }}
+        </p>
+      </UCard>
 
+      <UCard>
+        <template #header>
+          <h2 class="font-semibold text-highlighted">{{ t('adminUserFormView.dangerSection') }}</h2>
+        </template>
+        <UAlert
+          v-if="isArchived"
+          color="neutral"
+          variant="subtle"
+          :description="t('adminUserFormView.archivedNotice')"
+        />
+        <div v-else class="flex flex-col gap-3 sm:flex-row sm:flex-wrap [&>*]:justify-center">
+          <UButton
+            :label="t('adminUsersList.resetPassword')"
+            icon="i-fa7-solid:key"
+            color="neutral"
+            variant="soft"
+            @click="handleResetPassword"
+          />
+          <UButton
+            :label="t('adminUsersList.archive')"
+            icon="i-fa7-solid:box-archive"
+            color="warning"
+            variant="soft"
+            :loading="loading"
+            @click="openArchiveDialog"
+          />
+          <UButton
+            v-if="currentUser?.deactivatedAt"
+            :label="t('adminUsersList.reactivate')"
+            icon="i-fa7-solid:user-check"
+            color="success"
+            variant="soft"
+            :loading="loading"
+            @click="handleActivation(true)"
+          />
+          <UButton
+            v-else
+            :label="t('adminUsersList.deactivate')"
+            icon="i-fa7-solid:user-slash"
+            color="warning"
+            variant="soft"
+            :loading="loading"
+            @click="handleActivation(false)"
+          />
+          <UButton
+            :label="t('adminUsersList.deletePermanently')"
+            icon="i-fa7-solid:trash"
+            color="error"
+            :loading="loading"
+            @click="deleteDialogVisible = true"
+          />
+        </div>
+        <p v-if="hasNoNativePassword" class="mt-3 text-sm text-warning">
+          {{ t('adminUserFormView.resetPasswordHintSso') }}
+        </p>
+        <p class="mt-3 text-sm text-muted">{{ t('adminUsersList.deactivateCacheNotice') }}</p>
+      </UCard>
+    </div>
+
+    <UModal
+      v-model:open="deleteDialogVisible"
+      :title="t('adminUsersList.deleteDialogHeader')"
+      :ui="{ footer: 'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end' }"
+    >
+      <template #body>
+        <div class="flex items-start gap-3">
+          <UIcon name="i-fa7-solid:triangle-exclamation" class="size-6 shrink-0 text-error" />
+          <div class="text-sm">
+            <i18n-t keypath="adminUsersList.deleteConfirmMessage" tag="p" scope="global">
+              <template #name><strong>{{ currentUser?.displayName }}</strong></template>
+            </i18n-t>
+            <p class="mt-2 text-muted">{{ t('adminUsersList.deleteIrreversibleNotice') }}</p>
+          </div>
+        </div>
+        <UAlert v-if="deletionBlockers.length" color="error" variant="subtle" class="mt-4">
+          <template #description>
+            <p class="mb-2">{{ t('adminUsersList.deleteBlockedIntro') }}</p>
+            <ul class="list-disc ps-5">
+              <li v-for="blocker in deletionBlockers" :key="blocker.resource">
+                {{ t(`adminUsersList.blockers.${blocker.resource}`) }} : {{ blocker.count }}
+              </li>
+            </ul>
+            <p class="mt-2">{{ t('adminUsersList.archiveInstead') }}</p>
+          </template>
+        </UAlert>
+      </template>
       <template #footer>
-        <Button :label="t('common.cancel')" icon="pi pi-times" text @click="deleteDialogVisible = false" />
-        <Button
+        <UButton
+          :label="t('common.cancel')"
+          color="neutral"
+          variant="ghost"
+          class="justify-center"
+          @click="deleteDialogVisible = false"
+        />
+        <UButton
           :label="t('adminUsersList.deletePermanently')"
-          icon="pi pi-check"
-          severity="danger"
+          icon="i-fa7-solid:trash"
+          color="error"
+          class="justify-center"
           :loading="loading"
           @click="handleDelete"
         />
       </template>
-    </Dialog>
+    </UModal>
 
-    <Dialog
-      v-model:visible="archiveDialogVisible"
-      :header="t('adminUserFormView.archiveDialogHeader')"
-      :modal="true"
-      :style="{ width: '480px' }"
+    <UModal
+      v-model:open="archiveDialogVisible"
+      :title="t('adminUserFormView.archiveDialogHeader')"
+      :ui="{ footer: 'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end' }"
     >
-      <div class="flex items-start gap-3">
-        <i class="pi pi-exclamation-triangle text-3xl text-amber-500"></i>
-        <div>
-          <i18n-t keypath="adminUserFormView.archiveConfirmMessage" tag="p" scope="global">
-            <template #name><strong>{{ currentUser?.displayName }}</strong></template>
-          </i18n-t>
-          <p class="text-sm text-gray-500 mt-2">{{ t('adminUserFormView.archiveExplanation') }}</p>
+      <template #body>
+        <div class="mb-4 flex items-start gap-3">
+          <UIcon name="i-fa7-solid:triangle-exclamation" class="size-6 shrink-0 text-warning" />
+          <div class="text-sm">
+            <i18n-t keypath="adminUserFormView.archiveConfirmMessage" tag="p" scope="global">
+              <template #name><strong>{{ currentUser?.displayName }}</strong></template>
+            </i18n-t>
+            <p class="mt-2 text-muted">{{ t('adminUserFormView.archiveExplanation') }}</p>
+          </div>
         </div>
-      </div>
-
-      <div class="space-y-3 mt-4">
-        <div class="flex flex-col gap-1">
-          <label for="form-archive-display-name" class="text-sm font-medium">
-            {{ t('adminUsersList.archiveDisplayNameLabel') }}
-          </label>
-          <InputText id="form-archive-display-name" v-model="archiveDisplayName" class="w-full" />
+        <div class="space-y-3">
+          <UFormField :label="t('adminUsersList.archiveDisplayNameLabel')">
+            <UInput v-model="archiveDisplayName" class="w-full" />
+          </UFormField>
+          <UFormField :label="t('adminUsersList.archiveShortNameLabel')">
+            <UInput
+              v-model="archiveShortName"
+              class="w-full"
+              :maxlength="8"
+              @update:model-value="archiveShortName = String($event).toUpperCase()"
+            />
+          </UFormField>
         </div>
-        <div class="flex flex-col gap-1">
-          <label for="form-archive-short-name" class="text-sm font-medium">
-            {{ t('adminUsersList.archiveShortNameLabel') }}
-          </label>
-          <InputText
-            id="form-archive-short-name"
-            v-model="archiveShortName"
-            class="w-full"
-            maxlength="8"
-            @input="archiveShortName = archiveShortName.toUpperCase()"
-          />
-        </div>
-      </div>
-
+      </template>
       <template #footer>
-        <Button :label="t('common.cancel')" icon="pi pi-times" text @click="archiveDialogVisible = false" />
-        <Button
+        <UButton
+          :label="t('common.cancel')"
+          color="neutral"
+          variant="ghost"
+          class="justify-center"
+          @click="archiveDialogVisible = false"
+        />
+        <UButton
           :label="t('adminUsersList.archive')"
-          icon="fa fa-box-archive"
-          severity="warn"
+          icon="i-fa7-solid:box-archive"
+          color="warning"
+          class="justify-center"
           :loading="loading"
           @click="handleArchive"
         />
       </template>
-    </Dialog>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import { adminUpdateUserSchema } from '@skol-arena/shared/types/index'
 import type {
+  AdminUpdateUserInput,
   AdminUserListItem,
   OrganizationWithMemberCount,
   UserRole,
@@ -407,7 +386,7 @@ import { organizationApi } from '@/composables/organization/organization.api'
 import { adminUsersApi } from '@/composables/admin-users/admin-users.api'
 import { useDebounceFn } from '@vueuse/core'
 import { useAppToast } from '@/composables/useAppToast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import { useAvatarService } from '@/composables/avatar/avatar.service'
 
@@ -415,7 +394,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const toast = useAppToast()
-const confirm = useConfirm()
+const confirm = useConfirmDialog()
 const avatarService = useAvatarService()
 const {
   currentUser,
@@ -440,16 +419,16 @@ const userId = computed(() => route.params.id as string)
 const hasAvatar = computed(() => !!avatarService.versionFor(userId.value))
 const removingAvatar = ref(false)
 
-function confirmRemoveAvatar() {
-  confirm.require({
+async function confirmRemoveAvatar() {
+  const confirmed = await confirm({
+    title: t('adminUserFormView.removeAvatarConfirmHeader'),
     message: t('adminUserFormView.removeAvatarConfirmMessage', {
       name: currentUser.value?.displayName ?? '',
     }),
-    header: t('adminUserFormView.removeAvatarConfirmHeader'),
-    icon: 'fa fa-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: removeAvatar,
+    confirmLabel: t('adminUserFormView.removeAvatar'),
+    color: 'error',
   })
+  if (confirmed) await removeAvatar()
 }
 
 async function removeAvatar() {
@@ -498,16 +477,14 @@ const availableOrganizations = computed(() => {
   return organizations.value.filter((o) => !joined.has(o.id))
 })
 
-const { handleSubmit, defineField, errors, setValues } = useForm({
-  validationSchema: toTypedSchema(adminUpdateUserSchema),
-})
+const state = reactive<{
+  displayName?: string
+  shortName?: string
+  role?: UserRole
+  email?: string
+}>({})
 
-const [displayName] = defineField('displayName')
-const [shortName] = defineField('shortName')
-const [role] = defineField('role')
-const [email] = defineField('email')
-
-const onSubmit = handleSubmit(async (values) => {
+async function onSubmit({ data: values }: FormSubmitEvent<AdminUpdateUserInput>) {
   const updated = await updateUser(userId.value, values)
   if (updated) {
     toast.add({
@@ -517,7 +494,7 @@ const onSubmit = handleSubmit(async (values) => {
       life: 3000,
     })
   }
-})
+}
 
 async function handleResetPassword() {
   const success = await resetPassword(userId.value)
@@ -603,7 +580,7 @@ async function handleRemoveOrganization(organizationId: string) {
 onMounted(async () => {
   await loadUserById(userId.value)
   if (currentUser.value) {
-    setValues({
+    Object.assign(state, {
       displayName: currentUser.value.displayName,
       shortName: currentUser.value.shortName,
       role: currentUser.value.role,
@@ -614,14 +591,3 @@ onMounted(async () => {
   await loadStats()
 })
 </script>
-
-<style scoped>
-.user-form-view {
-  max-width: 1200px;
-  justify-content: center;
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  margin: 0 auto;
-}
-</style>
