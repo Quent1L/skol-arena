@@ -1,176 +1,112 @@
 <template>
-  <div class="tournament-list-view p-4">
-    <h1 class="text-2xl font-bold mb-4">{{ t('tournamentList.title') }}</h1>
-    <div class="flex justify-between items-center mb-4 flex-xrap">
-      <div class="flex flex-wrap gap-4">
-        <Select
-          v-model="selectedStatus"
-          :options="statusOptions"
-          option-label="label"
-          option-value="value"
-          :placeholder="t('tournamentList.allStatuses')"
-          show-clear
-          class="w-48"
-          @change="applyFilters"
-        />
-        <Select
-          v-model="selectedMode"
-          :options="modeOptions"
-          option-label="label"
-          option-value="value"
-          :placeholder="t('tournamentList.allModes')"
-          show-clear
-          class="w-48"
-          @change="applyFilters"
-        />
-      </div>
-      <div>
-        <Button
-          v-if="canCreateTournament"
+  <div>
+    <AdminPageHeader :title="t('tournamentList.title')">
+      <template v-if="canCreateTournament" #actions>
+        <UButton
           :label="t('tournamentList.newTournament')"
-          icon="fa fa-plus"
-          @click="router.push('/admin/tournaments/new')"
+          icon="i-fa7-solid:plus"
+          to="/admin/tournaments/new"
         />
-      </div>
+      </template>
+    </AdminPageHeader>
+
+    <div class="mb-4 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
+      <USelectMenu
+        v-model="selectedStatus"
+        :items="statusOptions"
+        value-key="value"
+        :search-input="false"
+        clear
+        :placeholder="t('tournamentList.allStatuses')"
+        class="sm:w-48"
+        @update:model-value="applyFilters"
+      />
+      <USelectMenu
+        v-model="selectedMode"
+        :items="modeOptions"
+        value-key="value"
+        :search-input="false"
+        clear
+        :placeholder="t('tournamentList.allModes')"
+        class="sm:w-48"
+        @update:model-value="applyFilters"
+      />
     </div>
-    <!-- Error message -->
-    <Message v-if="error" severity="error" :closable="true">
-      {{ error }}
-    </Message>
 
-    <!-- DataTable -->
-    <DataTable
-      :value="tournaments"
-      :loading="loading"
-      striped-rows
-      paginator
-      :rows="10"
-      :rows-per-page-options="[5, 10, 20, 50]"
-      responsive-layout="scroll"
-      class="p-datatable-sm"
-    >
-      <Column field="name" :header="t('common.name')" sortable>
-        <template #body="{ data }">
-          <router-link
-            :to="`/admin/tournaments/${data.id}/edit`"
-            class="text-primary hover:underline font-semibold"
-          >
-            {{ data.name }}
-          </router-link>
-        </template>
-      </Column>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      icon="i-fa7-solid:circle-xmark"
+      :description="error"
+      class="mb-4"
+    />
 
-      <Column field="mode" :header="t('tournamentList.colMode')" sortable>
-        <template #body="{ data }">
-          <Tag
-            :value="data.mode === 'championship' ? t('tournamentList.modeChampionship') : t('tournamentList.modeBracket')"
-            :severity="data.mode === 'championship' ? 'info' : 'warning'"
-          />
-        </template>
-      </Column>
-
-      <Column field="teamMode" :header="t('tournamentList.colTeams')" sortable>
-        <template #body="{ data }">
-          <span>
-            {{ data.teamMode === 'static' ? t('tournamentList.teamModeStatic') : t('tournamentList.teamModeFlex') }}
-            ({{ data.teamSize }}v{{ data.teamSize }})
-          </span>
-        </template>
-      </Column>
-
-      <Column field="startDate" :header="t('tournamentList.colStart')" sortable>
-        <template #body="{ data }">
-          {{ formatDate(data.startDate) }}
-        </template>
-      </Column>
-
-      <Column field="endDate" :header="t('tournamentList.colEnd')" sortable>
-        <template #body="{ data }">
-          {{ formatDate(data.endDate) }}
-        </template>
-      </Column>
-
-      <Column field="status" :header="t('tournamentList.colStatus')" sortable>
-        <template #body="{ data }">
-          <Tag :value="getStatusLabel(data.status)" :severity="getStatusSeverity(data.status)" />
-        </template>
-      </Column>
-
-      <Column :header="t('common.actions')" style="width: 12rem">
-        <template #body="{ data }">
-          <div class="flex gap-2">
-            <Button
-              v-if="canManageTournament(data)"
-              icon="fa fa-edit"
-              size="small"
-              text
-              rounded
-              @click="router.push(`/admin/tournaments/${data.id}/edit`)"
-              v-tooltip.top="t('common.edit')"
-            />
-            <Button
-              v-if="canDeleteTournament(data)"
-              icon="fa fa-trash"
-              size="small"
-              severity="danger"
-              text
-              rounded
-              @click="confirmDelete(data)"
-              v-tooltip.top="t('common.delete')"
-            />
-          </div>
-        </template>
-      </Column>
-
+    <AdminTable :data="tournaments" :columns="columns" :loading="loading">
+      <template #name-cell="{ row }">
+        <RouterLink
+          :to="`/admin/tournaments/${row.original.id}/edit`"
+          class="font-semibold text-primary hover:underline"
+        >
+          {{ row.original.name }}
+        </RouterLink>
+        <!-- Mode and status columns are hidden on phones. -->
+        <div class="mt-1 flex flex-wrap gap-1 md:hidden">
+          <UBadge v-bind="modeBadge(row.original.mode)" variant="subtle" size="sm" />
+          <UBadge v-bind="statusBadge(row.original.status)" variant="subtle" size="sm" />
+        </div>
+      </template>
+      <template #mode-cell="{ row }">
+        <UBadge v-bind="modeBadge(row.original.mode)" variant="subtle" />
+      </template>
+      <template #teamMode-cell="{ row }">
+        {{
+          row.original.teamMode === 'static'
+            ? t('tournamentList.teamModeStatic')
+            : t('tournamentList.teamModeFlex')
+        }}
+        ({{ row.original.teamSize }}v{{ row.original.teamSize }})
+      </template>
+      <template #startDate-cell="{ row }">{{ formatDate(row.original.startDate) }}</template>
+      <template #endDate-cell="{ row }">{{ formatDate(row.original.endDate) }}</template>
+      <template #status-cell="{ row }">
+        <UBadge v-bind="statusBadge(row.original.status)" variant="subtle" />
+      </template>
+      <template #actions-cell="{ row }">
+        <RowActions :actions="rowActions(row.original)" />
+      </template>
       <template #empty>
-        <div class="text-center py-8">
-          <p class="text-gray-500 mb-4">{{ t('tournamentList.empty') }}</p>
-          <Button
+        <div class="flex flex-col items-center gap-4 py-8">
+          <p class="text-muted">{{ t('tournamentList.empty') }}</p>
+          <UButton
             v-if="canCreateTournament"
             :label="t('tournamentList.createFirst')"
-            icon="pi pi-plus"
-            @click="router.push('/admin/tournaments/new')"
+            icon="i-fa7-solid:plus"
+            to="/admin/tournaments/new"
           />
         </div>
       </template>
-    </DataTable>
-
-    <!-- Delete confirmation dialog -->
-    <Dialog
-      v-model:visible="deleteDialogVisible"
-      :header="t('tournamentList.deleteDialogTitle', { name: tournamentToDelete?.name })"
-      :modal="true"
-      :style="{ width: '450px' }"
-    >
-      <div class="flex items-center gap-3 mb-4">
-        <i class="pi pi-exclamation-triangle text-3xl text-red-500"></i>
-        <span>{{ t('tournamentList.deleteConfirm') }}</span>
-      </div>
-      <template #footer>
-        <Button :label="t('common.cancel')" icon="pi pi-times" @click="deleteDialogVisible = false" text />
-        <Button
-          :label="t('common.delete')"
-          icon="pi pi-check"
-          @click="handleDelete"
-          severity="danger"
-          :loading="loading"
-        />
-      </template>
-    </Dialog>
+    </AdminTable>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useI18n } from 'vue-i18n'
+import type { TableColumn } from '@nuxt/ui'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
+import AdminTable from '@/components/admin/AdminTable.vue'
+import RowActions, { type RowAction } from '@/components/ui/RowActions.vue'
+import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/admin/table-columns'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useTournamentService } from '@/composables/tournament/tournament.service'
 import type { TournamentResponse } from '@/composables/tournament/tournament.api'
 
-const router = useRouter()
 const { t } = useI18n()
+const confirm = useConfirmDialog()
 const {
   tournaments,
   loading,
@@ -184,8 +120,36 @@ const {
 
 const selectedStatus = ref()
 const selectedMode = ref()
-const deleteDialogVisible = ref(false)
-const tournamentToDelete = ref<TournamentResponse | null>(null)
+
+const columns: TableColumn<TournamentResponse>[] = [
+  { accessorKey: 'name', header: sortableHeader(t('common.name')) },
+  {
+    accessorKey: 'mode',
+    header: sortableHeader(t('tournamentList.colMode')),
+    meta: hiddenBelow('md'),
+  },
+  {
+    accessorKey: 'teamMode',
+    header: sortableHeader(t('tournamentList.colTeams')),
+    meta: hiddenBelow('xl'),
+  },
+  {
+    accessorKey: 'startDate',
+    header: sortableHeader(t('tournamentList.colStart')),
+    meta: hiddenBelow('lg'),
+  },
+  {
+    accessorKey: 'endDate',
+    header: sortableHeader(t('tournamentList.colEnd')),
+    meta: hiddenBelow('lg'),
+  },
+  {
+    accessorKey: 'status',
+    header: sortableHeader(t('tournamentList.colStatus')),
+    meta: hiddenBelow('md'),
+  },
+  { id: 'actions', meta: ACTIONS_COLUMN_META },
+]
 
 const statusOptions = [
   { label: t('tournamentList.statusDraft'), value: 'draft' },
@@ -213,14 +177,40 @@ function getStatusLabel(status: string): string {
   return labels[status] || status
 }
 
-function getStatusSeverity(status: string): string {
-  const severities: Record<string, string> = {
-    draft: 'secondary',
-    open: 'info',
-    ongoing: 'success',
-    finished: 'danger',
-  }
-  return severities[status] || 'secondary'
+const STATUS_COLORS = {
+  draft: 'neutral',
+  open: 'info',
+  ongoing: 'success',
+  finished: 'error',
+} as const
+
+function statusBadge(status: string) {
+  const color = STATUS_COLORS[status as keyof typeof STATUS_COLORS] ?? 'neutral'
+  return { label: getStatusLabel(status), color }
+}
+
+function modeBadge(mode: string) {
+  return mode === 'championship'
+    ? { label: t('tournamentList.modeChampionship'), color: 'info' as const }
+    : { label: t('tournamentList.modeBracket'), color: 'warning' as const }
+}
+
+function rowActions(tournament: TournamentResponse): RowAction[] {
+  return [
+    {
+      label: t('common.edit'),
+      icon: 'i-fa7-solid:pen',
+      to: `/admin/tournaments/${tournament.id}/edit`,
+      hidden: !canManageTournament(tournament),
+    },
+    {
+      label: t('common.delete'),
+      icon: 'i-fa7-solid:trash',
+      color: 'error',
+      hidden: !canDeleteTournament(tournament),
+      onSelect: () => confirmDelete(tournament),
+    },
+  ]
 }
 
 function applyFilters() {
@@ -230,18 +220,16 @@ function applyFilters() {
   })
 }
 
-function confirmDelete(tournament: TournamentResponse) {
-  tournamentToDelete.value = tournament
-  deleteDialogVisible.value = true
-}
-
-async function handleDelete() {
-  if (!tournamentToDelete.value) return
-
+async function confirmDelete(tournament: TournamentResponse) {
+  const confirmed = await confirm({
+    title: t('tournamentList.deleteDialogTitle', { name: tournament.name }),
+    message: t('tournamentList.deleteConfirm'),
+    confirmLabel: t('common.delete'),
+    color: 'error',
+  })
+  if (!confirmed) return
   try {
-    await deleteTournament(tournamentToDelete.value.id)
-    deleteDialogVisible.value = false
-    tournamentToDelete.value = null
+    await deleteTournament(tournament.id)
   } catch (err) {
     console.error('Erreur lors de la suppression:', err)
   }
@@ -251,10 +239,3 @@ onMounted(() => {
   listTournaments()
 })
 </script>
-
-<style scoped>
-.tournament-list-view {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-</style>
