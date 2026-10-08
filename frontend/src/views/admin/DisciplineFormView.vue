@@ -1,126 +1,123 @@
 <template>
-  <div class="discipline-form-view p-4">
-    <Message v-if="error" severity="error" :closable="true">
-      {{ error }}
-    </Message>
+  <div class="max-w-4xl">
+    <AdminPageHeader
+      :title="isEditMode ? (currentDiscipline?.name ?? '') : t('disciplineList.newDiscipline')"
+    />
+
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      icon="i-fa7-solid:circle-xmark"
+      :description="error"
+      class="mb-4"
+    />
 
     <!-- Outcome types save as you edit them, so drift can appear at any moment
          and not just when the discipline form is submitted. This stays visible
          for as long as a running competition is out of step. -->
-    <Message
+    <UAlert
       v-if="driftingCompetitionCount > 0"
-      severity="warn"
-      :closable="false"
-      class="max-w-4xl mb-4"
-    >
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <span>
-          {{ t('disciplineFormView.driftBanner', { count: driftingCompetitionCount }) }}
-        </span>
-        <Button
-          :label="t('disciplineFormView.reviewPropagation')"
-          icon="fa fa-arrows-rotate"
-          size="small"
-          @click="propagateDialogVisible = true"
-        />
-      </div>
-    </Message>
+      color="warning"
+      variant="subtle"
+      icon="i-fa7-solid:triangle-exclamation"
+      :description="t('disciplineFormView.driftBanner', { count: driftingCompetitionCount })"
+      :actions="[
+        {
+          label: t('disciplineFormView.reviewPropagation'),
+          icon: 'i-fa7-solid:arrows-rotate',
+          color: 'warning',
+          onClick: () => (propagateDialogVisible = true),
+        },
+      ]"
+      orientation="horizontal"
+      class="mb-4"
+      :ui="{ root: 'flex-col sm:flex-row', actions: 'sm:ms-auto' }"
+    />
 
-    <form @submit="onSubmit" class="max-w-4xl">
-      <Card>
-        <template #content>
-          <!-- Informations de la discipline -->
-          <div class="mb-6">
-            <h2 class="text-xl font-semibold mb-4">{{ t('disciplineFormView.sectionInfo') }}</h2>
+    <UForm :schema="schema" :state="state" @submit="onSubmit">
+      <UCard>
+        <h2 class="mb-4 text-lg font-semibold text-highlighted">
+          {{ t('disciplineFormView.sectionInfo') }}
+        </h2>
 
-            <div class="grid grid-cols-1 gap-4">
-              <div>
-                <label for="name" class="block text-sm font-medium mb-2">
-                  {{ t('disciplineFormView.nameLabel') }} <span class="text-red-500">*</span>
-                </label>
-                <InputText
-                  id="name"
-                  v-model="name"
-                  class="w-full"
-                  :class="{ 'p-invalid': errors.name }"
-                />
-                <small class="p-error">{{ errors.name }}</small>
-              </div>
-              <div>
-                <label for="scoreInstructions" class="block text-sm font-medium mb-2">
-                  {{ t('disciplineFormView.scoreInstructionsLabel') }}
-                </label>
-                <Textarea
-                  id="scoreInstructions"
-                  v-model="scoreInstructions"
-                  class="w-full"
-                  :rows="3"
-                  :placeholder="t('disciplineFormView.scoreInstructionsPlaceholder')"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium mb-2">
-                  {{ t('disciplineFormView.iconLabel') }}
-                </label>
-                <FontAwesomeIconPicker v-model="icon" />
-              </div>
-              <div>
-                <label for="teamInteractionMode" class="block text-sm font-medium mb-2">
-                  {{ t('disciplineFormView.teamInteractionModeLabel') }}
-                </label>
-                <Select
-                  id="teamInteractionMode"
-                  v-model="teamInteractionMode"
-                  :options="interactionModeOptions"
-                  option-label="label"
-                  option-value="value"
-                  :placeholder="t('disciplineFormView.selectModePlaceholder')"
-                  class="w-full"
-                  :class="{ 'p-invalid': errors.teamInteractionMode }"
-                  show-clear
-                />
-                <small class="p-error">{{ errors.teamInteractionMode }}</small>
-              </div>
-            </div>
-          </div>
+        <div class="space-y-4">
+          <UFormField name="name" :label="t('disciplineFormView.nameLabel')" required>
+            <UInput v-model="state.name" class="w-full" />
+          </UFormField>
 
-          <!-- Outcome types (edit mode only) -->
-          <OutcomeTypeTable
-            v-if="isEditMode && currentDiscipline"
-            :outcome-types="outcomeTypes"
-            :outcome-reasons="outcomeReasons"
-            :loading="loading"
-            :load-outcome-reasons="loadOutcomeReasons"
-            @add-outcome-type="showOutcomeTypeDialog()"
-            @edit-outcome-type="showOutcomeTypeDialog"
-            @delete-outcome-type="confirmDeleteOutcomeType"
-            @restore-outcome-type="handleRestoreOutcomeType"
-            @add-outcome-reason="showOutcomeReasonDialog"
-            @edit-outcome-reason="(type, reason) => showOutcomeReasonDialog(type, reason)"
-            @delete-outcome-reason="confirmDeleteOutcomeReason"
-            ref="outcomeTypeTableRef"
-          />
-
-          <!-- Actions -->
-          <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
-            <Button
-              :label="t('common.cancel')"
-              severity="secondary"
-              @click="router.back()"
-              :disabled="loading"
-              class="w-full sm:w-auto"
+          <UFormField
+            name="scoreInstructions"
+            :label="t('disciplineFormView.scoreInstructionsLabel')"
+          >
+            <UTextarea
+              v-model="scoreInstructions"
+              :rows="3"
+              autoresize
+              :placeholder="t('disciplineFormView.scoreInstructionsPlaceholder')"
+              class="w-full"
             />
-            <Button
+          </UFormField>
+
+          <UFormField name="icon" :label="t('disciplineFormView.iconLabel')">
+            <FontAwesomeIconPicker v-model="icon" />
+          </UFormField>
+
+          <UFormField
+            name="teamInteractionMode"
+            :label="t('disciplineFormView.teamInteractionModeLabel')"
+          >
+            <USelectMenu
+              v-model="state.teamInteractionMode"
+              :items="interactionModeOptions"
+              value-key="value"
+              :search-input="false"
+              clear
+              :placeholder="t('disciplineFormView.selectModePlaceholder')"
+              class="w-full"
+            />
+          </UFormField>
+        </div>
+
+        <!-- Outcome types (edit mode only) -->
+        <OutcomeTypeTable
+          v-if="isEditMode && currentDiscipline"
+          ref="outcomeTypeTableRef"
+          class="mt-6"
+          :outcome-types="outcomeTypes"
+          :outcome-reasons="outcomeReasons"
+          :loading="loading"
+          :load-outcome-reasons="loadOutcomeReasons"
+          @add-outcome-type="showOutcomeTypeDialog()"
+          @edit-outcome-type="showOutcomeTypeDialog"
+          @delete-outcome-type="confirmDeleteOutcomeType"
+          @restore-outcome-type="handleRestoreOutcomeType"
+          @add-outcome-reason="showOutcomeReasonDialog"
+          @edit-outcome-reason="(type, reason) => showOutcomeReasonDialog(type, reason)"
+          @delete-outcome-reason="confirmDeleteOutcomeReason"
+        />
+
+        <template #footer>
+          <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <UButton
+              :label="t('common.cancel')"
+              color="neutral"
+              variant="ghost"
+              class="justify-center"
+              :disabled="loading"
+              @click="router.back()"
+            />
+            <UButton
               type="submit"
               :label="isEditMode ? t('common.update') : t('common.create')"
-              icon="fa fa-check"
+              icon="i-fa7-solid:check"
+              class="justify-center"
               :loading="loading"
-              class="w-full sm:w-auto"
             />
           </div>
         </template>
-      </Card>
-    </form>
+      </UCard>
+    </UForm>
 
     <!-- Outcome Type Dialog -->
     <OutcomeTypeDialog
@@ -150,12 +147,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
-import Textarea from 'primevue/textarea'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import {
   createDisciplineSchema,
   updateDisciplineSchema,
@@ -166,7 +161,8 @@ import {
 import type { OutcomeReason } from '@skol-arena/shared/types/outcome-reason'
 import { useDisciplineService } from '@/composables/discipline/discipline.service'
 import { disciplineApi, type InteractionModeOption } from '@/composables/discipline/discipline.api'
-import { useConfirm } from 'primevue/useconfirm'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
 import OutcomeTypeTable from './components/OutcomeTypeTable.vue'
 import OutcomeTypeDialog from './components/OutcomeTypeDialog.vue'
 import OutcomeReasonDialog from './components/OutcomeReasonDialog.vue'
@@ -177,7 +173,7 @@ import FontAwesomeIconPicker from '@/components/forms/FontAwesomeIconPicker.vue'
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
-const confirm = useConfirm()
+const confirm = useConfirmDialog()
 const toast = useAppToast()
 const {
   currentDiscipline,
@@ -202,16 +198,22 @@ const {
 const isEditMode = computed(() => route.params.id !== 'new' && !!route.params.id)
 
 // Discipline form
-const { handleSubmit, defineField, errors, setValues } = useForm({
-  validationSchema: toTypedSchema(
-    isEditMode.value ? updateDisciplineSchema : createDisciplineSchema,
-  ),
+const schema = computed(() => (isEditMode.value ? updateDisciplineSchema : createDisciplineSchema))
+const state = reactive<CreateDisciplineRequestData>({
+  name: '',
+  icon: null,
+  scoreInstructions: null,
+  teamInteractionMode: null,
 })
-
-const [name] = defineField('name')
-const [icon] = defineField('icon')
-const [scoreInstructions] = defineField('scoreInstructions')
-const [teamInteractionMode] = defineField('teamInteractionMode')
+// The inputs speak `string`, the schema `string | null`: bridge the empty value.
+const icon = computed({
+  get: () => state.icon ?? '',
+  set: (value: string) => (state.icon = value || null),
+})
+const scoreInstructions = computed({
+  get: () => state.scoreInstructions ?? '',
+  set: (value: string) => (state.scoreInstructions = value || null),
+})
 
 const interactionModeOptions = ref<InteractionModeOption[]>([])
 
@@ -309,48 +311,47 @@ async function handleOutcomeReasonSubmit(values: { name: string }) {
   }
 }
 
-function confirmDeleteOutcomeType(outcomeType: OutcomeType) {
-  confirm.require({
+async function confirmDeleteOutcomeType(outcomeType: OutcomeType) {
+  const confirmed = await confirm({
+    title: t('disciplineFormView.confirmDeleteOutcomeTypeHeader'),
     message: t('disciplineFormView.confirmDeleteOutcomeTypeMessage'),
-    header: t('disciplineFormView.confirmDeleteOutcomeTypeHeader'),
-    icon: 'fa fa-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: async () => {
-      const idToDelete = outcomeType.id
-      try {
-        await deleteOutcomeType(idToDelete)
-        // Remove from expandedRows if present
-        if (outcomeTypeTableRef.value?.expandedRows[idToDelete]) {
-          delete outcomeTypeTableRef.value.expandedRows[idToDelete]
-        }
-        await refreshDrift()
-      } catch (err) {
-        // A type nothing has been played under deletes cleanly. Once matches
-        // reference it the backend refuses, and archiving is the way out — so
-        // offer it rather than leaving the admin with a dead end.
-        if ((err as Error)?.cause === 'OUTCOME_TYPE_IN_USE') {
-          promptArchiveOutcomeType(outcomeType)
-        }
-      }
-    },
+    confirmLabel: t('common.delete'),
+    color: 'error',
   })
+  if (!confirmed) return
+  const idToDelete = outcomeType.id
+  try {
+    await deleteOutcomeType(idToDelete)
+    // Remove from expandedRows if present
+    if (outcomeTypeTableRef.value?.expandedRows[idToDelete]) {
+      delete outcomeTypeTableRef.value.expandedRows[idToDelete]
+    }
+    await refreshDrift()
+  } catch (err) {
+    // A type nothing has been played under deletes cleanly. Once matches
+    // reference it the backend refuses, and archiving is the way out — so
+    // offer it rather than leaving the admin with a dead end.
+    if ((err as Error)?.cause === 'OUTCOME_TYPE_IN_USE') {
+      await promptArchiveOutcomeType(outcomeType)
+    }
+  }
 }
 
-function promptArchiveOutcomeType(outcomeType: OutcomeType) {
-  confirm.require({
+async function promptArchiveOutcomeType(outcomeType: OutcomeType) {
+  const confirmed = await confirm({
+    title: t('disciplineFormView.archiveOutcomeTypeHeader'),
     message: t('disciplineFormView.archiveOutcomeTypeMessage', { name: outcomeType.name }),
-    header: t('disciplineFormView.archiveOutcomeTypeHeader'),
-    icon: 'fa fa-box-archive',
-    acceptLabel: t('disciplineFormView.archive'),
-    accept: async () => {
-      try {
-        await archiveOutcomeType(outcomeType.id)
-        await refreshDrift()
-      } catch {
-        // Handled by the service toast.
-      }
-    },
+    confirmLabel: t('disciplineFormView.archive'),
+    icon: 'i-fa7-solid:box-archive',
+    color: 'warning',
   })
+  if (!confirmed) return
+  try {
+    await archiveOutcomeType(outcomeType.id)
+    await refreshDrift()
+  } catch {
+    // Handled by the service toast.
+  }
 }
 
 async function handleRestoreOutcomeType(outcomeType: OutcomeType) {
@@ -362,26 +363,25 @@ async function handleRestoreOutcomeType(outcomeType: OutcomeType) {
   }
 }
 
-function confirmDeleteOutcomeReason(outcomeReason: OutcomeReason) {
-  confirm.require({
+async function confirmDeleteOutcomeReason(outcomeReason: OutcomeReason) {
+  const confirmed = await confirm({
+    title: t('disciplineFormView.confirmDeleteOutcomeReasonHeader'),
     message: t('disciplineFormView.confirmDeleteOutcomeReasonMessage'),
-    header: t('disciplineFormView.confirmDeleteOutcomeReasonHeader'),
-    icon: 'fa fa-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: async () => {
-      try {
-        const outcomeTypeId = outcomeReason.outcomeTypeId
-        await deleteOutcomeReason(outcomeReason.id)
-        await loadOutcomeReasons(outcomeTypeId)
-        await refreshDrift()
-      } catch (err) {
-        console.error('Erreur lors de la suppression:', err)
-      }
-    },
+    confirmLabel: t('common.delete'),
+    color: 'error',
   })
+  if (!confirmed) return
+  try {
+    const outcomeTypeId = outcomeReason.outcomeTypeId
+    await deleteOutcomeReason(outcomeReason.id)
+    await loadOutcomeReasons(outcomeTypeId)
+    await refreshDrift()
+  } catch (err) {
+    console.error('Erreur lors de la suppression:', err)
+  }
 }
 
-const onSubmit = handleSubmit(async (values) => {
+async function onSubmit({ data: values }: FormSubmitEvent<CreateDisciplineRequestData>) {
   try {
     if (isEditMode.value && route.params.id) {
       await updateDiscipline(route.params.id as string, values)
@@ -389,13 +389,13 @@ const onSubmit = handleSubmit(async (values) => {
       // Leaving now would hide the banner the save may just have raised.
       if (driftingCompetitionCount.value > 0) return
     } else {
-      await createDiscipline(values as CreateDisciplineRequestData)
+      await createDiscipline(values)
     }
     router.push('/admin/disciplines')
   } catch (err) {
     console.error('Erreur lors de la sauvegarde:', err)
   }
-})
+}
 
 /**
  * How many running competitions are out of step with this discipline.
@@ -454,7 +454,7 @@ onMounted(async () => {
   ])
   interactionModeOptions.value = modes
   if (isEditMode.value && currentDiscipline.value) {
-    setValues({
+    Object.assign(state, {
       name: currentDiscipline.value.name,
       icon: currentDiscipline.value.icon,
       scoreInstructions: currentDiscipline.value.scoreInstructions,
@@ -465,10 +465,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style scoped>
-.discipline-form-view {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-</style>

@@ -1,134 +1,115 @@
 <template>
-  <div class="discipline-list-view p-4">
-    <div class="flex justify-between items-center mb-4">
-      <h1 class="text-2xl font-bold">{{ t('disciplineList.title') }}</h1>
-      <Button
-        :label="t('disciplineList.newDiscipline')"
-        icon="fa fa-plus"
-        @click="router.push('/admin/disciplines/new')"
-      />
-    </div>
+  <div>
+    <AdminPageHeader :title="t('disciplineList.title')">
+      <template #actions>
+        <UButton
+          :label="t('disciplineList.newDiscipline')"
+          icon="i-fa7-solid:plus"
+          to="/admin/disciplines/new"
+        />
+      </template>
+    </AdminPageHeader>
 
-    <Message v-if="error" severity="error" :closable="true">
-      {{ error }}
-    </Message>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      icon="i-fa7-solid:circle-xmark"
+      :description="error"
+      class="mb-4"
+    />
 
-    <DataTable
-      :value="disciplines"
+    <AdminTable
+      :data="disciplines"
+      :columns="columns"
       :loading="loading"
-      striped-rows
-      paginator
-      :rows="10"
-      :rows-per-page-options="[5, 10, 20, 50]"
-      responsive-layout="scroll"
-      class="p-datatable-sm"
+      :initial-sorting="[{ id: 'name', desc: false }]"
     >
-      <Column field="name" :header="t('common.name')" sortable>
-        <template #body="{ data }">
-          <div class="flex items-center gap-2">
-            <router-link
-              :to="`/admin/disciplines/${data.id}`"
-              class="text-primary hover:underline font-semibold"
-            >
-              {{ data.name }}
-            </router-link>
-            <Tag
-              v-if="data.archivedAt"
-              severity="secondary"
-              :value="t('disciplineList.archivedTag')"
-            />
-          </div>
-        </template>
-      </Column>
-
-      <Column :header="t('common.actions')" style="width: 12rem">
-        <template #body="{ data }">
-          <div class="flex gap-2">
-            <Button
-              icon="fa fa-edit"
-              size="small"
-              text
-              rounded
-              @click="router.push(`/admin/disciplines/${data.id}`)"
-              v-tooltip.top="t('common.edit')"
-            />
-            <Button
-              v-if="data.archivedAt"
-              icon="fa fa-rotate-left"
-              size="small"
-              text
-              rounded
-              @click="handleRestore(data)"
-              v-tooltip.top="t('disciplineList.restore')"
-            />
-            <Button
-              v-else
-              icon="fa fa-trash"
-              size="small"
-              severity="danger"
-              text
-              rounded
-              @click="confirmDelete(data)"
-              v-tooltip.top="t('common.delete')"
-            />
-          </div>
-        </template>
-      </Column>
-
-      <template #empty>
-        <div class="text-center py-8">
-          <p class="text-gray-500 mb-4">{{ t('disciplineList.emptyState') }}</p>
-          <Button
-            :label="t('disciplineList.createFirst')"
-            icon="fa fa-plus"
-            @click="router.push('/admin/disciplines/new')"
+      <template #name-cell="{ row }">
+        <div class="flex flex-wrap items-center gap-2">
+          <RouterLink
+            :to="`/admin/disciplines/${row.original.id}`"
+            class="font-semibold text-primary hover:underline"
+          >
+            {{ row.original.name }}
+          </RouterLink>
+          <UBadge
+            v-if="row.original.archivedAt"
+            color="neutral"
+            variant="subtle"
+            :label="t('disciplineList.archivedTag')"
           />
         </div>
       </template>
-    </DataTable>
+      <template #actions-cell="{ row }">
+        <RowActions :actions="rowActions(row.original)" />
+      </template>
+      <template #empty>
+        <div class="flex flex-col items-center gap-4 py-8">
+          <p class="text-muted">{{ t('disciplineList.emptyState') }}</p>
+          <UButton
+            :label="t('disciplineList.createFirst')"
+            icon="i-fa7-solid:plus"
+            to="/admin/disciplines/new"
+          />
+        </div>
+      </template>
+    </AdminTable>
 
-    <Dialog
-      v-model:visible="deleteDialogVisible"
-      :header="t('disciplineList.deleteDialogHeader', { name: disciplineToDelete?.name })"
-      :modal="true"
-      :style="{ width: '450px' }"
+    <!-- Not useConfirmDialog: three outcomes, archiving being the way out of a blocked delete. -->
+    <UModal
+      v-model:open="deleteDialogVisible"
+      :title="t('disciplineList.deleteDialogHeader', { name: disciplineToDelete?.name })"
+      :ui="{ footer: 'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end' }"
     >
-      <div class="flex items-start gap-3 mb-4">
-        <i class="pi pi-exclamation-triangle text-3xl text-red-500"></i>
-        <span>
-          {{ t('disciplineList.deleteConfirmMessage') }}
-        </span>
-      </div>
+      <template #body>
+        <div class="flex items-start gap-3">
+          <UIcon name="i-fa7-solid:triangle-exclamation" class="size-6 shrink-0 text-error" />
+          <p class="text-sm">{{ t('disciplineList.deleteConfirmMessage') }}</p>
+        </div>
+      </template>
       <template #footer>
-        <Button :label="t('common.cancel')" icon="pi pi-times" @click="deleteDialogVisible = false" text />
-        <Button
-          :label="t('common.delete')"
-          icon="fa fa-trash"
-          @click="handleDelete"
-          severity="danger"
-          text
-          :loading="loading"
+        <UButton
+          :label="t('common.cancel')"
+          color="neutral"
+          variant="ghost"
+          class="justify-center"
+          @click="closeDialog"
         />
-        <Button
-          :label="t('disciplineList.archive')"
-          icon="fa fa-box-archive"
-          @click="handleArchive"
+        <UButton
+          :label="t('common.delete')"
+          icon="i-fa7-solid:trash"
+          color="error"
+          variant="soft"
+          class="justify-center"
           :loading="loading"
+          @click="handleDelete"
+        />
+        <UButton
+          :label="t('disciplineList.archive')"
+          icon="i-fa7-solid:box-archive"
+          class="justify-center"
+          :loading="loading"
+          @click="handleArchive"
         />
       </template>
-    </Dialog>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import type { TableColumn } from '@nuxt/ui'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
+import AdminTable from '@/components/admin/AdminTable.vue'
+import RowActions, { type RowAction } from '@/components/ui/RowActions.vue'
+import { ACTIONS_COLUMN_META, sortableHeader } from '@/components/admin/table-columns'
 import { useDisciplineService } from '@/composables/discipline/discipline.service'
 import type { Discipline } from '@skol-arena/shared/types/discipline'
 
 const { t } = useI18n()
-const router = useRouter()
 const {
   disciplines,
   loading,
@@ -138,6 +119,30 @@ const {
   archiveDiscipline,
   restoreDiscipline,
 } = useDisciplineService()
+
+const columns: TableColumn<Discipline>[] = [
+  { accessorKey: 'name', header: sortableHeader(t('common.name')) },
+  { id: 'actions', meta: ACTIONS_COLUMN_META },
+]
+
+function rowActions(discipline: Discipline): RowAction[] {
+  return [
+    { label: t('common.edit'), icon: 'i-fa7-solid:pen', to: `/admin/disciplines/${discipline.id}` },
+    {
+      label: t('disciplineList.restore'),
+      icon: 'i-fa7-solid:rotate-left',
+      hidden: !discipline.archivedAt,
+      onSelect: () => handleRestore(discipline),
+    },
+    {
+      label: t('common.delete'),
+      icon: 'i-fa7-solid:trash',
+      color: 'error',
+      hidden: !!discipline.archivedAt,
+      onSelect: () => confirmDelete(discipline),
+    },
+  ]
+}
 
 const deleteDialogVisible = ref(false)
 const disciplineToDelete = ref<Discipline | null>(null)
@@ -197,10 +202,3 @@ function refresh() {
 
 onMounted(refresh)
 </script>
-
-<style scoped>
-.discipline-list-view {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-</style>
