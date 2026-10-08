@@ -179,6 +179,7 @@ declare module 'vue' {
     UBreadcrumb: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Breadcrumb.vue')['default']
     UButton: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
     UIcon: typeof import('./../node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
+    UInput: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
     UModal: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Modal.vue')['default']
     UNavigationMenu: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/NavigationMenu.vue')['default']
     UPageCard: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/PageCard.vue')['default']

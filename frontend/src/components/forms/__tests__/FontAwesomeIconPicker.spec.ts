@@ -1,16 +1,16 @@
 import { describe, it, expect, vi } from 'vitest'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithUi } from '@/test-support/mount'
 import FontAwesomeIconPicker from '@/components/forms/FontAwesomeIconPicker.vue'
 
 vi.mock('vue-i18n', async () => (await import('@/test-support/mock-modules')).i18nEchoMock())
 
-// The real Dialog teleports to body; render its content inline instead.
-const DialogStub = { template: '<div><slot /><slot name="footer" /></div>' }
+// The real modal teleports to body; render its content inline instead.
+const ModalStub = { template: '<div><slot name="body" /><slot name="footer" /></div>' }
 
 function mountPicker(modelValue = '') {
-  return mountWithPrime(FontAwesomeIconPicker, {
+  return mountWithUi(FontAwesomeIconPicker, {
     props: { modelValue },
-    global: { stubs: { Dialog: DialogStub } },
+    global: { stubs: { Modal: ModalStub } },
   })
 }
 
@@ -31,7 +31,7 @@ describe('FontAwesomeIconPicker', () => {
     await wrapper.find('input').setValue('billard')
     await wrapper.find('button[title="Billiards"]').trigger('click')
 
-    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['icf icf-mdi--billiards'])
+    expect(wrapper.findComponent(FontAwesomeIconPicker).emitted('update:modelValue')?.[0]).toEqual(['icf icf-mdi--billiards'])
   })
 
   it('still lists and labels Font Awesome icons', async () => {
@@ -44,7 +44,7 @@ describe('FontAwesomeIconPicker', () => {
 
   it('shows Iconify categories as tabs', () => {
     const wrapper = mountPicker()
-    const tabs = wrapper.findAll('button.px-2').map((b) => b.text())
+    const tabs = wrapper.findAll('[data-testid="icon-picker-tab"]').map((b) => b.text())
     expect(tabs).toEqual(expect.arrayContaining(['Bar + Table games', 'Ball + Racket sports']))
   })
 })

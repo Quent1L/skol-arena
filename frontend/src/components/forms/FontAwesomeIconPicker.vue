@@ -1,104 +1,100 @@
 <template>
   <div>
-    <button
-      type="button"
-      class="flex items-center gap-3 px-3 py-2 border border-surface-300 dark:border-surface-600 rounded-md hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors w-full text-left"
+    <UButton
+      color="neutral"
+      variant="outline"
+      block
+      class="justify-start gap-3"
+      trailing-icon="i-fa7-solid:chevron-down"
+      :ui="{ trailingIcon: 'ms-auto size-3 text-dimmed' }"
       @click="open"
     >
-      <i
-        :class="modelValue || 'fas fa-question'"
-        class="text-2xl text-purple-600 w-8 text-center"
-      />
-      <span class="flex-1 text-sm text-surface-600 dark:text-surface-400">
-        {{ currentLabel }}
-      </span>
-      <i class="fas fa-chevron-down text-xs text-surface-400" />
-    </button>
+      <!-- Stored values are runtime class strings (FA webfont or compiled Iconify CSS). -->
+      <i :class="modelValue || 'fas fa-question'" class="w-8 text-center text-2xl text-primary" />
+      <span class="truncate text-sm text-muted">{{ currentLabel }}</span>
+    </UButton>
 
-    <Dialog
-      v-model:visible="visible"
-      modal
-      :header="t('fontAwesomeIconPicker.dialogHeader')"
-      :style="{ width: '90vw', maxWidth: '760px' }"
-      :draggable="false"
-      @show="searchRef?.$el?.focus()"
+    <UModal
+      v-model:open="visible"
+      :title="t('fontAwesomeIconPicker.dialogHeader')"
+      :ui="{ content: 'sm:max-w-3xl', footer: 'justify-between' }"
     >
-      <div class="space-y-3">
-        <InputText
-          ref="searchRef"
-          v-model="search"
-          :placeholder="t('fontAwesomeIconPicker.searchPlaceholder')"
-          class="w-full"
-        />
+      <template #body>
+        <div class="space-y-3">
+          <UInput
+            v-model="search"
+            autofocus
+            icon="i-fa7-solid:magnifying-glass"
+            :placeholder="t('fontAwesomeIconPicker.searchPlaceholder')"
+            class="w-full"
+          />
 
-        <!-- Tabs (hidden when searching) -->
-        <div v-if="!search" class="flex flex-wrap gap-1">
-          <button
-            v-for="tab in TABS"
-            :key="tab.key"
-            type="button"
-            class="px-2 py-1 text-xs rounded transition-colors"
-            :class="
-              activeTab === tab.key
-                ? 'bg-purple-600 text-white'
-                : 'bg-surface-100 dark:bg-surface-700 hover:bg-surface-200 dark:hover:bg-surface-600'
-            "
-            @click="activeTab = tab.key"
+          <!-- Tabs (hidden when searching): one scrollable row rather than a wall of chips on phones -->
+          <div v-if="!search" class="no-scrollbar -mx-1 flex gap-1 overflow-x-auto px-1 sm:flex-wrap">
+            <UButton
+              v-for="tab in TABS"
+              :key="tab.key"
+              size="xs"
+              :color="activeTab === tab.key ? 'primary' : 'neutral'"
+              :variant="activeTab === tab.key ? 'solid' : 'soft'"
+              class="shrink-0"
+              data-testid="icon-picker-tab"
+              :label="tab.label"
+              @click="activeTab = tab.key"
+            />
+          </div>
+
+          <p class="text-xs text-dimmed">
+            <template v-if="search">
+              {{ t('fontAwesomeIconPicker.resultCount', displayedIcons.length) }}
+              <span v-if="filteredIcons.length > MAX_RESULTS">
+                {{ t('fontAwesomeIconPicker.refineSearch', filteredIcons.length) }}
+              </span>
+            </template>
+            <template v-else>
+              {{ t('fontAwesomeIconPicker.iconCount', displayedIcons.length) }}
+            </template>
+          </p>
+
+          <div
+            class="grid h-[50vh] grid-cols-4 content-start gap-1 overflow-y-auto pr-1 sm:h-80 sm:grid-cols-6 md:grid-cols-8"
           >
-            {{ tab.label }}
-          </button>
-        </div>
-
-        <p class="text-xs text-surface-400">
-          <template v-if="search">
-            {{ t('fontAwesomeIconPicker.resultCount', displayedIcons.length) }}
-            <span v-if="filteredIcons.length > MAX_RESULTS">
-              {{ t('fontAwesomeIconPicker.refineSearch', filteredIcons.length) }}
-            </span>
-          </template>
-          <template v-else>
-            {{ t('fontAwesomeIconPicker.iconCount', displayedIcons.length) }}
-          </template>
-        </p>
-
-        <div class="h-80">
-          <div class="grid grid-cols-6 sm:grid-cols-8 gap-1 max-h-80 overflow-y-auto pr-1">
             <button
               v-for="icon in displayedIcons"
               :key="icon.name"
               type="button"
               :title="icon.label"
-              class="flex flex-col items-center gap-1 p-2 rounded hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors min-w-0"
-              :class="
-                modelValue === icon.class
-                  ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-950'
-                  : ''
-              "
+              class="flex min-w-0 flex-col items-center gap-1 rounded-md p-2 transition-colors hover:bg-elevated"
+              :class="modelValue === icon.class ? 'bg-primary/10 ring-2 ring-primary' : ''"
               @click="select(icon.class)"
             >
               <i :class="icon.class" class="text-xl" />
-              <span class="text-[10px] truncate w-full text-center leading-tight">{{
+              <span class="w-full truncate text-center text-[10px] leading-tight">{{
                 icon.label
               }}</span>
             </button>
           </div>
         </div>
-      </div>
+      </template>
 
       <template #footer>
-        <div class="flex justify-between items-center w-full">
-          <Button
-            v-if="modelValue"
-            :label="t('fontAwesomeIconPicker.clear')"
-            icon="fas fa-times"
-            severity="secondary"
-            text
-            @click="clear"
-          />
-          <Button :label="t('common.close')" text class="ml-auto" @click="visible = false" />
-        </div>
+        <UButton
+          v-if="modelValue"
+          :label="t('fontAwesomeIconPicker.clear')"
+          icon="i-fa7-solid:xmark"
+          color="neutral"
+          variant="ghost"
+          @click="clear"
+        />
+        <UButton
+          :label="t('common.close')"
+          color="neutral"
+          variant="ghost"
+          class="ms-auto"
+          @click="visible = false"
+        />
       </template>
-    </Dialog>
+    </UModal>
   </div>
 </template>
 
@@ -211,7 +207,6 @@ const TABS = computed(() => [
 const visible = ref(false)
 const search = ref('')
 const activeTab = ref('popular')
-const searchRef = ref<{ $el: HTMLInputElement } | null>(null)
 
 const filteredIcons = computed(() => {
   const q = search.value.toLowerCase().trim()
