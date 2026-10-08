@@ -35,6 +35,7 @@ import {
 import { eq } from "drizzle-orm";
 import { CHAMPIONSHIP_LIMITS } from "@skol-arena/shared";
 import { newId } from "../src/utils/uuid";
+import { stampEngineVersion } from "../src/utils/init-mmr-engine";
 
 // ---------------------------------------------------------------------------
 // Fixed IDs — keep in sync with frontend/e2e/fixtures.ts
@@ -240,6 +241,10 @@ async function seedRankedSeason() {
     kFactor: 32,
     placementMatches: 5,
   });
+  // The ladder below is written by hand and does not follow from the season's few
+  // matches. Unstamped, the backend would replay it from those matches at boot
+  // (recalculateOutdatedRankedSeasons) and every MMR the specs expect would be gone.
+  await stampEngineVersion(IDS.season);
   await db.insert(rankTiers).values([
     { seasonId: IDS.season, level: 1, name: "Bronze", percentile: 0, minMmr: 700, subRanks: 1, iconClass: "fa fa-seedling" },
     { seasonId: IDS.season, level: 2, name: "Silver", percentile: 0.4, minMmr: 900, subRanks: 1, iconClass: "fa fa-shield" },

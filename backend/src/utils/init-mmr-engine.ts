@@ -88,8 +88,11 @@ async function isUpToDate(seasonId: string): Promise<boolean> {
  * Stamped before the job runs rather than after: a replay that fails is retried
  * by the worker itself, whereas a stamp that never lands would re-queue the
  * whole ladder on every single boot.
+ *
+ * Exported for fixtures that write a ladder by hand: unstamped, it would be
+ * replayed from its matches at the next boot and lose the values it was given.
  */
-async function stampEngineVersion(seasonId: string): Promise<void> {
+export async function stampEngineVersion(seasonId: string): Promise<void> {
   const data: EngineVersionData = { version: MMR_ENGINE_VERSION };
   await db
     .insert(computedData)
