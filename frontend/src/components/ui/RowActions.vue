@@ -1,30 +1,32 @@
 <template>
   <!-- Icon buttons from `sm` up; a single menu below, where a row of icons would squeeze the data. -->
-  <div class="hidden justify-end gap-1 sm:flex">
-    <UTooltip v-for="action in visibleActions" :key="action.label" :text="action.label">
+  <template v-if="visibleActions.length">
+    <div class="hidden justify-end gap-1 sm:flex">
+      <UTooltip v-for="action in visibleActions" :key="action.label" :text="action.label">
+        <UButton
+          :icon="action.icon"
+          :color="action.color ?? 'neutral'"
+          variant="ghost"
+          size="sm"
+          :to="action.to"
+          :loading="action.loading"
+          :disabled="action.disabled"
+          :aria-label="action.label"
+          @click="action.onSelect?.()"
+        />
+      </UTooltip>
+    </div>
+    <UDropdownMenu :items="menuItems" :content="{ align: 'end' }" class="sm:hidden">
       <UButton
-        :icon="action.icon"
-        :color="action.color ?? 'neutral'"
+        icon="i-fa7-solid:ellipsis-vertical"
+        color="neutral"
         variant="ghost"
         size="sm"
-        :to="action.to"
-        :loading="action.loading"
-        :disabled="action.disabled"
-        :aria-label="action.label"
-        @click="action.onSelect?.()"
+        :aria-label="t('common.actions')"
+        class="sm:hidden"
       />
-    </UTooltip>
-  </div>
-  <UDropdownMenu :items="menuItems" :content="{ align: 'end' }" class="sm:hidden">
-    <UButton
-      icon="i-fa7-solid:ellipsis-vertical"
-      color="neutral"
-      variant="ghost"
-      size="sm"
-      :aria-label="t('common.actions')"
-      class="sm:hidden"
-    />
-  </UDropdownMenu>
+    </UDropdownMenu>
+  </template>
 </template>
 
 <script setup lang="ts">

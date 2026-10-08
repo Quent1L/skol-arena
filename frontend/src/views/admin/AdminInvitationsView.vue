@@ -1,199 +1,143 @@
 <template>
-  <div class="p-6">
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold mb-2">{{ t('adminInvitationsView.title') }}</h1>
-      <p class="text-gray-600">{{ t('adminInvitationsView.subtitle') }}</p>
-    </div>
+  <div>
+    <AdminPageHeader
+      :title="t('adminInvitationsView.title')"
+      :description="t('adminInvitationsView.subtitle')"
+    />
 
-    <Card class="mb-6">
-      <template #title>
-        <div class="flex items-center gap-2">
-          <i class="fa fa-plus-circle"></i>
+    <UCard class="mb-6">
+      <template #header>
+        <h2 class="flex items-center gap-2 font-semibold text-highlighted">
+          <UIcon name="i-fa7-solid:circle-plus" />
           {{ t('adminInvitationsView.generateNewCode') }}
+        </h2>
+      </template>
+      <form
+        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        @submit.prevent="handleGenerateCode"
+      >
+        <UFormField :label="t('adminInvitationsView.maxUses')">
+          <UInputNumber v-model="formData.maxUses" :min="1" :max="100" class="w-full" />
+        </UFormField>
+        <UFormField :label="t('adminInvitationsView.expirationDays')">
+          <UInputNumber
+            v-model="formData.expiresInDays"
+            :min="1"
+            :max="365"
+            :placeholder="t('adminInvitationsView.noExpiration')"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField :label="t('adminInvitationsView.notesOptional')">
+          <UInput
+            v-model="formData.notes"
+            :placeholder="t('adminInvitationsView.notesPlaceholder')"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField :label="t('adminInvitationsView.organizationOptional')">
+          <USelectMenu
+            v-model="formData.organizationId"
+            :items="organizations"
+            value-key="id"
+            label-key="name"
+            clear
+            :placeholder="t('adminInvitationsView.generalAccess')"
+            class="w-full"
+          />
+        </UFormField>
+        <div class="sm:col-span-2 lg:col-span-4">
+          <UButton
+            type="submit"
+            :loading="isGenerating"
+            :label="t('adminInvitationsView.generateCode')"
+            icon="i-fa7-solid:plus"
+            class="w-full justify-center sm:w-auto"
+          />
         </div>
-      </template>
-      <template #content>
-        <form @submit.prevent="handleGenerateCode" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="flex flex-col gap-2">
-            <label for="maxUses" class="font-medium">{{ t('adminInvitationsView.maxUses') }}</label>
-            <InputNumber
-              id="maxUses"
-              v-model="formData.maxUses"
-              :min="1"
-              :max="100"
-              show-buttons
-              button-layout="horizontal"
-              class="w-full"
-            />
-          </div>
+      </form>
+    </UCard>
 
-          <div class="flex flex-col gap-2">
-            <label for="expiresInDays" class="font-medium">{{ t('adminInvitationsView.expirationDays') }}</label>
-            <InputNumber
-              id="expiresInDays"
-              v-model="formData.expiresInDays"
-              :min="1"
-              :max="365"
-              show-buttons
-              button-layout="horizontal"
-              class="w-full"
-              :placeholder="t('adminInvitationsView.noExpiration')"
-            />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="notes" class="font-medium">{{ t('adminInvitationsView.notesOptional') }}</label>
-            <InputText
-              id="notes"
-              v-model="formData.notes"
-              :placeholder="t('adminInvitationsView.notesPlaceholder')"
-              class="w-full"
-            />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="organizationId" class="font-medium">{{ t('adminInvitationsView.organizationOptional') }}</label>
-            <Select
-              id="organizationId"
-              v-model="formData.organizationId"
-              :options="organizations"
-              option-label="name"
-              option-value="id"
-              :placeholder="t('adminInvitationsView.generalAccess')"
-              class="w-full"
-              show-clear
-            />
-          </div>
-
-          <div class="md:col-span-3">
-            <Button
-              type="submit"
-              :loading="isGenerating"
-              :label="t('adminInvitationsView.generateCode')"
-              icon="fa fa-plus"
-              class="w-full md:w-auto"
-            />
-          </div>
-        </form>
-      </template>
-    </Card>
-
-    <Card>
-      <template #title>
-        <div class="flex items-center gap-2">
-          <i class="fa fa-list"></i>
+    <UCard>
+      <template #header>
+        <h2 class="flex items-center gap-2 font-semibold text-highlighted">
+          <UIcon name="i-fa7-solid:list" />
           {{ t('adminInvitationsView.existingCodes') }}
-        </div>
+        </h2>
       </template>
-      <template #content>
-        <DataTable
-          :value="codes"
-          :loading="isLoading"
-          paginator
-          :rows="10"
-          :rows-per-page-options="[10, 25, 50]"
-          striped-rows
-          removable-sort
-          sort-field="createdAt"
-          :sort-order="-1"
-        >
-          <template #empty>
-            <div class="text-center py-6 text-gray-500">
-              {{ t('adminInvitationsView.noCodes') }}
-            </div>
-          </template>
-
-          <Column field="code" :header="t('adminInvitationsView.columnCode')" sortable>
-            <template #body="{ data }">
-              <div class="flex items-center gap-2">
-                <code class="px-2 py-1 rounded font-mono text-sm">
-                  {{ data.code }}
-                </code>
-                <Button
-                  icon="fa fa-copy"
-                  text
-                  rounded
-                  size="small"
-                  @click="copyToClipboard(data.code)"
-                  v-tooltip="t('adminInvitationsView.copyCode')"
-                />
-                <Button
-                  icon="fa fa-link"
-                  text
-                  rounded
-                  size="small"
-                  @click="copySignupUrl(data.code)"
-                  v-tooltip="t('adminInvitationsView.copySignupLink')"
-                />
-              </div>
-            </template>
-          </Column>
-
-          <Column field="usedCount" :header="t('adminInvitationsView.columnUsages')" sortable>
-            <template #body="{ data }">
-              <Tag :severity="data.usedCount >= data.maxUses ? 'danger' : 'success'">
-                {{ data.usedCount }} / {{ data.maxUses }}
-              </Tag>
-            </template>
-          </Column>
-
-          <Column field="isActive" :header="t('common.status')" sortable>
-            <template #body="{ data }">
-              <Tag :severity="data.isActive ? 'success' : 'secondary'">
-                {{ data.isActive ? t('adminInvitationsView.statusActive') : t('adminInvitationsView.statusInactive') }}
-              </Tag>
-            </template>
-          </Column>
-
-          <Column field="expiresAt" :header="t('adminInvitationsView.columnExpiration')" sortable>
-            <template #body="{ data }">
-              <span v-if="data.expiresAt">
-                {{ formatDate(data.expiresAt) }}
-              </span>
-              <span v-else class="text-gray-500">{{ t('adminInvitationsView.noExpirationValue') }}</span>
-            </template>
-          </Column>
-
-          <Column field="creator.displayName" :header="t('adminInvitationsView.columnCreator')" sortable />
-
-          <Column field="createdAt" :header="t('adminInvitationsView.columnCreatedAt')" sortable>
-            <template #body="{ data }">
-              {{ formatDate(data.createdAt) }}
-            </template>
-          </Column>
-
-          <Column field="notes" :header="t('adminInvitationsView.columnNotes')">
-            <template #body="{ data }">
-              <span v-if="data.notes" class="text-sm text-gray-600">
-                {{ data.notes }}
-              </span>
-              <span v-else class="text-gray-400">-</span>
-            </template>
-          </Column>
-
-          <Column :header="t('common.actions')" :exportable="false">
-            <template #body="{ data }">
-              <Button
-                v-if="data.isActive"
-                icon="fa fa-ban"
-                text
-                rounded
-                severity="danger"
-                size="small"
-                @click="handleDeactivate(data)"
-                v-tooltip="t('adminInvitationsView.deactivate')"
+      <AdminTable
+        :data="codes"
+        :columns="columns"
+        :loading="isLoading"
+        :empty="t('adminInvitationsView.noCodes')"
+        :initial-sorting="[{ id: 'createdAt', desc: true }]"
+      >
+        <template #code-cell="{ row }">
+          <div class="flex items-center gap-1">
+            <code class="rounded bg-elevated px-2 py-1 font-mono text-sm">{{ row.original.code }}</code>
+            <UTooltip :text="t('adminInvitationsView.copyCode')">
+              <UButton
+                icon="i-fa7-solid:copy"
+                variant="ghost"
+                size="sm"
+                :aria-label="t('adminInvitationsView.copyCode')"
+                @click="copyToClipboard(row.original.code)"
               />
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
+            </UTooltip>
+            <UTooltip :text="t('adminInvitationsView.copySignupLink')">
+              <UButton
+                icon="i-fa7-solid:link"
+                variant="ghost"
+                size="sm"
+                :aria-label="t('adminInvitationsView.copySignupLink')"
+                @click="copySignupUrl(row.original.code)"
+              />
+            </UTooltip>
+          </div>
+        </template>
+        <template #usedCount-cell="{ row }">
+          <UBadge
+            :color="row.original.usedCount >= row.original.maxUses ? 'error' : 'success'"
+            variant="subtle"
+            :label="`${row.original.usedCount} / ${row.original.maxUses}`"
+          />
+        </template>
+        <template #isActive-cell="{ row }">
+          <UBadge
+            :color="row.original.isActive ? 'success' : 'neutral'"
+            variant="subtle"
+            :label="
+              row.original.isActive
+                ? t('adminInvitationsView.statusActive')
+                : t('adminInvitationsView.statusInactive')
+            "
+          />
+        </template>
+        <template #expiresAt-cell="{ row }">
+          <span v-if="row.original.expiresAt">{{ formatDate(row.original.expiresAt) }}</span>
+          <span v-else class="text-muted">{{ t('adminInvitationsView.noExpirationValue') }}</span>
+        </template>
+        <template #createdAt-cell="{ row }">{{ formatDate(row.original.createdAt) }}</template>
+        <template #notes-cell="{ row }">
+          <span v-if="row.original.notes" class="text-sm text-muted">{{ row.original.notes }}</span>
+          <span v-else class="text-dimmed">-</span>
+        </template>
+        <template #actions-cell="{ row }">
+          <RowActions :actions="rowActions(row.original)" />
+        </template>
+      </AdminTable>
+    </UCard>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { TableColumn } from '@nuxt/ui'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
+import AdminTable from '@/components/admin/AdminTable.vue'
+import RowActions, { type RowAction } from '@/components/ui/RowActions.vue'
+import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/admin/table-columns'
 import { useAppToast } from '@/composables/useAppToast'
 import { useInvitationService } from '@/composables/invitation/invitation.service'
 import { useOrganizationService } from '@/composables/organization/organization.service'
@@ -209,6 +153,50 @@ const codes = ref<InvitationCode[]>([])
 const organizations = ref<OrganizationWithMemberCount[]>([])
 const isLoading = ref(false)
 const isGenerating = ref(false)
+
+const columns: TableColumn<InvitationCode>[] = [
+  { accessorKey: 'code', header: sortableHeader(t('adminInvitationsView.columnCode')) },
+  {
+    accessorKey: 'usedCount',
+    header: sortableHeader(t('adminInvitationsView.columnUsages')),
+    meta: hiddenBelow('sm'),
+  },
+  {
+    accessorKey: 'isActive',
+    header: sortableHeader(t('common.status')),
+    meta: hiddenBelow('md'),
+  },
+  {
+    accessorKey: 'expiresAt',
+    header: sortableHeader(t('adminInvitationsView.columnExpiration')),
+    meta: hiddenBelow('xl'),
+  },
+  {
+    id: 'creator',
+    accessorFn: (code) => code.creator?.displayName ?? '',
+    header: sortableHeader(t('adminInvitationsView.columnCreator')),
+    meta: hiddenBelow('xl'),
+  },
+  {
+    accessorKey: 'createdAt',
+    header: sortableHeader(t('adminInvitationsView.columnCreatedAt')),
+    meta: hiddenBelow('lg'),
+  },
+  { accessorKey: 'notes', header: t('adminInvitationsView.columnNotes'), meta: hiddenBelow('2xl') },
+  { id: 'actions', meta: ACTIONS_COLUMN_META },
+]
+
+function rowActions(code: InvitationCode): RowAction[] {
+  return [
+    {
+      label: t('adminInvitationsView.deactivate'),
+      icon: 'i-fa7-solid:ban',
+      color: 'error',
+      hidden: !code.isActive,
+      onSelect: () => handleDeactivate(code),
+    },
+  ]
+}
 
 const formData = ref({
   maxUses: 1,
