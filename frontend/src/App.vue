@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <UApp :locale="uiLocale" :toaster="{ position: 'top-right' }">
     <SplashLoader :visible="!isAppReady" />
     <UpdateOverlay
       :visible="overlayVisible"
@@ -22,12 +22,13 @@
       @close="stopEasterEgg"
     />
     <AppWrapper v-if="isAppReady" />
-  </div>
+  </UApp>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { en, fr } from '@nuxt/ui/locale'
 import { useRouter } from 'vue-router'
 import { isNetworkError } from '@/utils/HttpErrors'
 import { useAppToast } from './composables/useAppToast'
@@ -41,7 +42,9 @@ import SkillOrLuckOverlay from './components/brand/SkillOrLuckOverlay.vue'
 import SplashLoader from './components/SplashLoader.vue'
 import UpdateOverlay from './components/UpdateOverlay.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+// Follows the vue-i18n locale, so the language switch in useLocale needs no extra step.
+const uiLocale = computed(() => (locale.value === 'en' ? en : fr))
 const router = useRouter()
 const { initialize } = useAuth()
 const { loadConfig } = useConfigService()

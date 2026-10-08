@@ -16,6 +16,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+import ui from '@nuxt/ui/vue-plugin'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
@@ -57,8 +58,8 @@ window.addEventListener('error', (event) => {
   }
 })
 
-// Force dark mode
-document.documentElement.classList.add('my-app-dark')
+// Force dark mode: `my-app-dark` for PrimeVue's selector, `dark` for Nuxt UI and Tailwind
+document.documentElement.classList.add('my-app-dark', 'dark')
 
 // Initialize the theme from localStorage
 //const savedTheme = localStorage.getItem('theme') || 'dark'
@@ -105,5 +106,6 @@ app.use(createPinia())
 app.use(ToastService)
 app.use(ConfirmationService)
 app.use(router)
+app.use(ui)
 
 app.mount('#app')

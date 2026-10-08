@@ -172,6 +172,7 @@ declare module 'vue' {
     TournamentParticipantsList: typeof import('./src/components/tournament/TournamentParticipantsList.vue')['default']
     TournamentRow: typeof import('./src/components/tournament/TournamentRow.vue')['default']
     TournamentTabSkeleton: typeof import('./src/components/tournament/TournamentTabSkeleton.vue')['default']
+    UApp: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
     UpdateOverlay: typeof import('./src/components/UpdateOverlay.vue')['default']
     ValidationModeSection: typeof import('./src/components/forms/sections/ValidationModeSection.vue')['default']
     WeeklyMmrLeaders: typeof import('./src/components/ranked/WeeklyMmrLeaders.vue')['default']
