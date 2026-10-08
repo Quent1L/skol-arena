@@ -1,217 +1,187 @@
 <template>
-  <div class="p-6">
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold mb-2">{{ t('organizationsView.title') }}</h1>
-      <p class="text-gray-600">{{ t('organizationsView.subtitle') }}</p>
-    </div>
+  <div>
+    <AdminPageHeader
+      :title="t('organizationsView.title')"
+      :description="t('organizationsView.subtitle')"
+    />
 
-    <Card class="mb-6">
-      <template #title>
-        <div class="flex items-center gap-2">
-          <i class="fa fa-plus-circle"></i>
+    <UCard class="mb-6">
+      <template #header>
+        <h2 class="flex items-center gap-2 font-semibold text-highlighted">
+          <UIcon name="i-fa7-solid:circle-plus" />
           {{ t('organizationsView.createOrganization') }}
-        </div>
+        </h2>
       </template>
-      <template #content>
-        <form @submit.prevent="handleCreate" class="flex gap-4 items-end">
-          <div class="flex flex-col gap-2 flex-1">
-            <label for="orgName" class="font-medium">{{ t('organizationsView.orgNameLabel') }}</label>
-            <InputText
-              id="orgName"
-              v-model="newOrgName"
-              :placeholder="t('organizationsView.orgNamePlaceholder')"
-              class="w-full"
-              :class="{ 'p-invalid': createError }"
-            />
-            <small v-if="createError" class="p-error">{{ createError }}</small>
-          </div>
-          <Button type="submit" :loading="isCreating" :label="t('common.create')" icon="fa fa-plus" />
-        </form>
-      </template>
-    </Card>
+      <form class="flex flex-col gap-3 sm:flex-row sm:items-start" @submit.prevent="handleCreate">
+        <UFormField
+          :label="t('organizationsView.orgNameLabel')"
+          :error="createError ?? undefined"
+          class="flex-1"
+        >
+          <UInput
+            v-model="newOrgName"
+            :placeholder="t('organizationsView.orgNamePlaceholder')"
+            class="w-full"
+          />
+        </UFormField>
+        <UButton
+          type="submit"
+          :loading="isCreating"
+          :label="t('common.create')"
+          icon="i-fa7-solid:plus"
+          class="justify-center sm:mt-6"
+        />
+      </form>
+    </UCard>
 
-    <Card>
-      <template #title>
-        <div class="flex items-center gap-2">
-          <i class="fa fa-list"></i>
+    <UCard>
+      <template #header>
+        <h2 class="flex items-center gap-2 font-semibold text-highlighted">
+          <UIcon name="i-fa7-solid:list" />
           {{ t('organizationsView.existingOrgs') }}
-        </div>
+        </h2>
       </template>
-      <template #content>
-        <DataTable :value="organizations" :loading="isLoading" striped-rows removable-sort>
-          <template #empty>
-            <div class="text-center py-6 text-gray-500">{{ t('organizationsView.noOrgs') }}</div>
-          </template>
-
-          <Column field="name" :header="t('common.name')" sortable />
-
-          <Column field="memberCount" :header="t('organizationsView.columnMembers')" sortable>
-            <template #body="{ data }">
-              <Tag severity="info">{{ t('organizationsView.memberCount', data.memberCount) }}</Tag>
-            </template>
-          </Column>
-
-          <Column field="createdAt" :header="t('organizationsView.columnCreatedAt')" sortable>
-            <template #body="{ data }">
-              {{ formatDate(data.createdAt) }}
-            </template>
-          </Column>
-
-          <Column :header="t('organizationsView.columnActions')" :exportable="false">
-            <template #body="{ data }">
-              <Button icon="fa fa-cog" :label="t('organizationsView.manage')" size="small" text @click="openManageDialog(data)" />
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-
-    <!-- Management Dialog -->
-    <Dialog
-      v-model:visible="showManageDialog"
-      :header="t('organizationsView.manageDialogHeader', { name: selectedOrg?.name })"
-      :modal="true"
-      :style="{ width: '700px' }"
-      @hide="closeManageDialog"
-    >
-      <!-- Rename section -->
-      <div class="mb-6">
-        <h3 class="text-lg font-semibold mb-3">{{ t('organizationsView.orgNameSectionTitle') }}</h3>
-        <div class="flex gap-2 items-center">
-          <InputText
-            v-model="editingName"
-            class="flex-1"
-            :placeholder="t('organizationsView.orgNameRenamePlaceholder')"
-            :maxlength="100"
-          />
-          <Button
-            :label="t('common.save')"
-            icon="fa fa-check"
-            size="small"
-            :loading="isSavingName"
-            :disabled="!editingName.trim() || editingName.trim() === selectedOrg?.name"
-            @click="handleSaveName"
-          />
-        </div>
-      </div>
-
-      <Divider />
-
-      <!-- Members section -->
-      <div>
-        <div class="flex justify-between items-center mb-3">
-          <h3 class="text-lg font-semibold">
-            {{ t('organizationsView.membersSection') }}
-            <Tag severity="info" class="ml-2">{{ members.length }}</Tag>
-          </h3>
-          <Button :label="t('organizationsView.addMemberButton')" icon="fa fa-user-plus" size="small" @click="showAddMemberDialog = true" />
-        </div>
-
-        <div v-if="isLoadingMembers" class="flex justify-center py-4">
-          <ProgressSpinner />
-        </div>
-
-        <div v-else-if="members.length === 0" class="text-center py-4 text-gray-500">
-          {{ t('organizationsView.noMembers') }}
-        </div>
-
-        <div v-else class="flex flex-col gap-2">
-          <div
-            v-for="member in members"
-            :key="member.id"
-            class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-          >
-            <PlayerAvatar
-              :name="member.user.displayName"
-              :color-key="member.user.shortName"
-              :player-id="member.user.id"
-              size="md"
-              shape="square"
-            />
-            <div class="flex-1 min-w-0">
-              <div class="font-medium truncate">{{ member.user.displayName }}</div>
-              <div class="flex items-center gap-2 mt-0.5">
-                <Tag :severity="member.role === 'owner' ? 'warning' : 'secondary'" size="small">
-                  {{ member.role === 'owner' ? t('organizationsView.roleOwner') : t('organizationsView.roleMember') }}
-                </Tag>
-                <span class="text-sm text-gray-500">{{ t('organizationsView.addedAt', { date: formatDate(member.joinedAt) }) }}</span>
-              </div>
-            </div>
-            <Button
-              v-if="versionFor(member.userId)"
-              icon="fa fa-user-slash"
-              severity="secondary"
-              text
-              rounded
-              size="small"
-              v-tooltip="t('organizationsView.removeAvatarTooltip')"
-              @click="handleRemoveAvatar(member.userId)"
-            />
-            <Button
-              icon="fa fa-user-minus"
-              severity="danger"
-              text
-              rounded
-              size="small"
-              v-tooltip="t('organizationsView.removeMemberTooltip')"
-              @click="handleRemoveMember(member.userId)"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Add member sub-dialog -->
-      <Dialog
-        v-model:visible="showAddMemberDialog"
-        :header="t('organizationsView.addMembersDialogHeader')"
-        :modal="true"
-        :style="{ width: '500px' }"
-        @hide="selectedUserIds = []"
+      <AdminTable
+        :data="organizations"
+        :columns="columns"
+        :loading="isLoading"
+        :empty="t('organizationsView.noOrgs')"
+        :initial-sorting="[{ id: 'name', desc: false }]"
       >
-        <div class="flex flex-col gap-4">
-          <div v-if="isLoadingUsers" class="flex justify-center py-4">
-            <ProgressSpinner />
-          </div>
-          <div v-else>
-            <label for="addMembersSelect" class="block text-sm font-medium mb-2">{{ t('organizationsView.selectUsersLabel') }}</label>
-            <MultiSelect
-              inputId="addMembersSelect"
-              v-model="selectedUserIds"
-              :options="availableUsers"
-              option-label="displayName"
-              option-value="id"
-              :placeholder="t('organizationsView.selectUsersPlaceholder')"
-              class="w-full"
-              filter
-              filter-match-mode="accentInsensitive"
-              display="chip"
-            />
-          </div>
-        </div>
-        <template #footer>
-          <Button
-            :label="t('common.cancel')"
-            severity="secondary"
-            @click="showAddMemberDialog = false"
-            :disabled="isAddingMembers"
-          />
-          <Button
-            :label="t('organizationsView.add')"
-            icon="fa fa-check"
-            :disabled="selectedUserIds.length === 0 || isAddingMembers"
-            :loading="isAddingMembers"
-            @click="handleAddMembers"
+        <template #memberCount-cell="{ row }">
+          <UBadge
+            color="info"
+            variant="subtle"
+            :label="t('organizationsView.memberCount', row.original.memberCount)"
           />
         </template>
-      </Dialog>
-    </Dialog>
+        <template #createdAt-cell="{ row }">{{ formatDate(row.original.createdAt) }}</template>
+        <template #actions-cell="{ row }">
+          <UButton
+            icon="i-fa7-solid:gear"
+            :label="t('organizationsView.manage')"
+            size="sm"
+            variant="ghost"
+            @click="openManageDialog(row.original)"
+          />
+        </template>
+      </AdminTable>
+    </UCard>
+
+    <!-- A side panel rather than a dialog: room for a long member list on any screen. -->
+    <USlideover
+      v-model:open="showManageDialog"
+      :title="t('organizationsView.manageDialogHeader', { name: selectedOrg?.name })"
+      :ui="{ content: 'max-w-xl' }"
+      @after:leave="closeManageDialog"
+    >
+      <template #body>
+        <section class="mb-6">
+          <h3 class="mb-3 font-semibold">{{ t('organizationsView.orgNameSectionTitle') }}</h3>
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <UInput
+              v-model="editingName"
+              class="flex-1"
+              :placeholder="t('organizationsView.orgNameRenamePlaceholder')"
+              :maxlength="100"
+            />
+            <UButton
+              :label="t('common.save')"
+              icon="i-fa7-solid:check"
+              class="justify-center"
+              :loading="isSavingName"
+              :disabled="!editingName.trim() || editingName.trim() === selectedOrg?.name"
+              @click="handleSaveName"
+            />
+          </div>
+        </section>
+
+        <USeparator class="mb-6" />
+
+        <section>
+          <h3 class="mb-3 flex items-center gap-2 font-semibold">
+            {{ t('organizationsView.membersSection') }}
+            <UBadge color="info" variant="subtle" :label="String(members.length)" />
+          </h3>
+
+          <div class="mb-4 flex flex-col gap-2 sm:flex-row">
+            <USelectMenu
+              v-model="selectedUserIds"
+              :items="availableUsers"
+              value-key="id"
+              label-key="displayName"
+              multiple
+              :loading="isLoadingUsers"
+              :placeholder="t('organizationsView.selectUsersPlaceholder')"
+              :aria-label="t('organizationsView.selectUsersLabel')"
+              class="flex-1"
+              @update:open="(open) => open && ensureUsersLoaded()"
+            />
+            <UButton
+              :label="t('organizationsView.add')"
+              icon="i-fa7-solid:user-plus"
+              class="justify-center"
+              :disabled="selectedUserIds.length === 0 || isAddingMembers"
+              :loading="isAddingMembers"
+              @click="handleAddMembers"
+            />
+          </div>
+
+          <div v-if="isLoadingMembers" class="flex justify-center py-4">
+            <UIcon name="i-fa7-solid:spinner" class="size-6 animate-spin text-muted" />
+          </div>
+          <p v-else-if="members.length === 0" class="py-4 text-center text-muted">
+            {{ t('organizationsView.noMembers') }}
+          </p>
+          <ul v-else class="flex flex-col gap-2">
+            <li
+              v-for="member in members"
+              :key="member.id"
+              class="flex items-center gap-3 rounded-lg bg-elevated p-3"
+            >
+              <PlayerAvatar
+                :name="member.user.displayName"
+                :color-key="member.user.shortName"
+                :player-id="member.user.id"
+                size="md"
+                shape="square"
+              />
+              <div class="min-w-0 flex-1">
+                <div class="truncate font-medium">{{ member.user.displayName }}</div>
+                <div class="mt-0.5 flex flex-wrap items-center gap-2">
+                  <UBadge
+                    :color="member.role === 'owner' ? 'warning' : 'neutral'"
+                    variant="subtle"
+                    size="sm"
+                    :label="
+                      member.role === 'owner'
+                        ? t('organizationsView.roleOwner')
+                        : t('organizationsView.roleMember')
+                    "
+                  />
+                  <span class="text-xs text-muted">
+                    {{ t('organizationsView.addedAt', { date: formatDate(member.joinedAt) }) }}
+                  </span>
+                </div>
+              </div>
+              <RowActions :actions="memberActions(member)" />
+            </li>
+          </ul>
+        </section>
+      </template>
+    </USlideover>
   </div>
 </template>
 
 <script setup lang="ts">
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { TableColumn } from '@nuxt/ui'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
+import AdminTable from '@/components/admin/AdminTable.vue'
+import RowActions, { type RowAction } from '@/components/ui/RowActions.vue'
+import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/admin/table-columns'
 import { useAppToast } from '@/composables/useAppToast'
 import { useOrganizationService } from '@/composables/organization/organization.service'
 import { useUserService } from '@/composables/user/user.service'
@@ -237,12 +207,43 @@ const members = ref<OrganizationMemberWithUser[]>([])
 const isLoadingMembers = ref(false)
 const editingName = ref('')
 const isSavingName = ref(false)
-const showAddMemberDialog = ref(false)
 const selectedUserIds = ref<string[]>([])
 const isAddingMembers = ref(false)
 
 const memberUserIds = computed(() => members.value.map((m) => m.userId))
 const availableUsers = computed(() => users.value.filter((u) => !memberUserIds.value.includes(u.id)))
+
+const columns: TableColumn<OrganizationWithMemberCount>[] = [
+  { accessorKey: 'name', header: sortableHeader(t('common.name')) },
+  {
+    accessorKey: 'memberCount',
+    header: sortableHeader(t('organizationsView.columnMembers')),
+    meta: hiddenBelow('sm'),
+  },
+  {
+    accessorKey: 'createdAt',
+    header: sortableHeader(t('organizationsView.columnCreatedAt')),
+    meta: hiddenBelow('md'),
+  },
+  { id: 'actions', meta: ACTIONS_COLUMN_META },
+]
+
+function memberActions(member: OrganizationMemberWithUser): RowAction[] {
+  return [
+    {
+      label: t('organizationsView.removeAvatarTooltip'),
+      icon: 'i-fa7-solid:user-slash',
+      hidden: !versionFor(member.userId),
+      onSelect: () => handleRemoveAvatar(member.userId),
+    },
+    {
+      label: t('organizationsView.removeMemberTooltip'),
+      icon: 'i-fa7-solid:user-minus',
+      color: 'error',
+      onSelect: () => handleRemoveMember(member.userId),
+    },
+  ]
+}
 
 onMounted(loadOrganizations)
 
@@ -342,7 +343,6 @@ async function handleAddMembers() {
     members.value = await getMembers(selectedOrg.value.id)
     const idx = organizations.value.findIndex((o) => o.id === selectedOrg.value!.id)
     if (idx !== -1) organizations.value[idx].memberCount = members.value.length
-    showAddMemberDialog.value = false
     selectedUserIds.value = []
     toast.add({ severity: 'success', summary: t('organizationsView.membersAddedSummary'), life: 2000 })
   } catch (error: unknown) {
@@ -352,11 +352,9 @@ async function handleAddMembers() {
   }
 }
 
-watch(showAddMemberDialog, async (visible) => {
-  if (visible && users.value.length === 0) {
-    await listUsers()
-  }
-})
+async function ensureUsersLoaded() {
+  if (users.value.length === 0) await listUsers()
+}
 
 function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })

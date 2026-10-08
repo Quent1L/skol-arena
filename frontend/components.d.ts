@@ -196,6 +196,7 @@ declare module 'vue' {
     UpdateOverlay: typeof import('./src/components/UpdateOverlay.vue')['default']
     USelect: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
     USelectMenu: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/SelectMenu.vue')['default']
+    USeparator: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
     USlideover: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Slideover.vue')['default']
     USwitch: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Switch.vue')['default']
     UTable: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']
