@@ -24,7 +24,7 @@ export default defineConfigWithVueTs(
     },
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/LiquidEther.vue']),
+  globalIgnores(['**/dist/**', '**/dist-e2e/**', '**/dist-ssr/**', '**/coverage/**', '**/LiquidEther.vue']),
 
   pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
