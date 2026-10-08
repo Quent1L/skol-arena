@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Skol is a tournament management application with a Bun monorepo structure:
 
 - **Backend**: Hono + Bun + Drizzle ORM + PostgreSQL + Better Auth
-- **Frontend**: Vue 3 + Vite + PrimeVue + TailwindCSS
+- **Frontend**: Vue 3 + Vite + Nuxt UI (migrating from PrimeVue) + TailwindCSS
 - **Shared**: TypeScript types and Zod schemas consumed by both
 - **Docs**: Astro static showcase + self-hosting documentation site
 
@@ -71,6 +71,23 @@ skol-arena/
 - **Repositories** (`backend/src/repository/`): Database operations only (Drizzle ORM)
 - **Errors**: Use I18n keys for user-facing error messages
 - **API layer** (`backend/src/api/`): version negotiation, route manifest, OpenAPI — see below
+
+### UI library: PrimeVue → Nuxt UI migration
+
+The frontend is migrating from PrimeVue to Nuxt UI v4 (Vue/Vite mode, `@nuxt/ui/vite`).
+Both coexist until every screen is migrated; new or reworked screens use Nuxt UI only.
+
+- `ui()` in `vite.config.ts` owns Tailwind and component auto-import; PrimeVue's resolver
+  rides in its `components.resolvers`. Composable auto-import is off: import from
+  `@nuxt/ui/composables`. Color mode is off — the app is dark-only (`dark` class on `<html>`)
+- `<UApp>` wraps the app in `App.vue`, its `locale` follows vue-i18n
+- Toasts: `useAppToast()` (Nuxt UI under the hood). Confirmations: `useConfirmDialog()`,
+  which returns a `Promise<boolean>`. Never PrimeVue's `useToast`/`useConfirm` in new code
+- Forms: `<UForm :schema :state>` + `<UFormField name>` with the Zod schemas from
+  `@skol-arena/shared`, not vee-validate
+- Every screen must work at phone width: no fixed widths on modals, secondary table
+  columns hidden below `md`, row actions in a `UDropdownMenu` on small screens
+- Component tests: `mountWithUi()` from `src/test-support/mount.ts` (wraps in `UApp`)
 
 ### Frontend Layer Pattern (Components → Services → API)
 
@@ -166,7 +183,10 @@ SEO and GEO metadata is centralised, not spread across pages:
 - All code in English
 - No `any` type - use proper types or `unknown`
 - Functions should be under 30 lines
-- Use Font Awesome icons (`fa fa-*`) for action buttons, not PrimeIcons
+- Use Font Awesome icons for action buttons, not PrimeIcons nor Lucide. In Nuxt UI
+  components pass them through Iconify: `icon="i-fa7-solid:pen"` — the colon is required
+  because the collection name contains a dash. Icons stored in the database (picker
+  values) are runtime names and keep the `<i class="fa …">` webfont rendering
 - Backend error messages use I18n keys (e.g., `throw new ValidationError('INVALID_EMAIL_FORMAT')`)
 
 ### Database
