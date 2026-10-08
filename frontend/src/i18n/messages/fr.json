@@ -1346,7 +1346,7 @@
     "helpParticipantsMinMatches": "0 réinscrit tous les joueurs inscrits, quel que soit leur nombre de matchs.",
     "helpSoftResetFactor": "0 = tout le monde repart au MMR de base, 1 = aucune compression. Le MMR repris est calculé par rapport à la médiane de la saison source.",
     "helpSourceMmrSeasonId": "Par défaut, la dernière saison terminée de la discipline.",
-    "helpSourceTierSeasonId": "La structure des rangs sera copiée au démarrage de la saison. Les seuils MMR seront",
+    "helpSourceTierSeasonId": "La structure des rangs sera copiée au démarrage de la saison. Le champ suivant décide de ses seuils MMR.",
     "helpTierScalingKeep": "Les seuils MMR de la saison source sont recopiés à l'identique. Rien n'est recalculé automatiquement.",
     "helpTierScalingPercentile": "Les seuils sont recalculés à partir du peak MMR des joueurs classés de la saison source, puis ramenés sur l'échelle de la nouvelle saison.",
     "invalidFieldsTitle": "Champs invalides",

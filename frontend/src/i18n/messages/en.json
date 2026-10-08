@@ -1346,7 +1346,7 @@
     "helpParticipantsMinMatches": "0 re-registers every registered player, whatever their match count.",
     "helpSoftResetFactor": "0 = everyone restarts at the base MMR, 1 = no compression. The carried MMR is computed relative to the source season's median.",
     "helpSourceMmrSeasonId": "Defaults to the last finished season of the discipline.",
-    "helpSourceTierSeasonId": "Tier structure will be copied when the season starts. MMR thresholds will be recalculated.",
+    "helpSourceTierSeasonId": "Tier structure will be copied when the season starts. The next field decides its MMR thresholds.",
     "helpTierScalingKeep": "The source season's MMR thresholds are copied as they are. Nothing is recalculated automatically.",
     "helpTierScalingPercentile": "Thresholds are rebuilt from the peak MMR of the source season's ranked players, then mapped onto the new season's scale.",
     "invalidFieldsTitle": "Invalid fields",
