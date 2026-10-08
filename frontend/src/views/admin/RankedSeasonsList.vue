@@ -1,237 +1,88 @@
 <template>
-  <div class="ranked-seasons-list p-4">
-    <div class="flex justify-between items-center mb-4">
-      <h1 class="text-2xl font-bold">{{ t('rankedSeasonsList.title') }}</h1>
-      <Button
-        :label="t('rankedSeasonsList.newSeason')"
-        icon="fa fa-plus"
-        @click="router.push('/admin/ranked/new')"
-      />
-    </div>
+  <div>
+    <AdminPageHeader :title="t('rankedSeasonsList.title')">
+      <template #actions>
+        <UButton
+          :label="t('rankedSeasonsList.newSeason')"
+          icon="i-fa7-solid:plus"
+          to="/admin/ranked/new"
+        />
+      </template>
+    </AdminPageHeader>
 
-    <Message v-if="error" severity="error" :closable="true">
-      {{ error }}
-    </Message>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      icon="i-fa7-solid:circle-xmark"
+      :description="error"
+      class="mb-4"
+    />
 
-    <DataTable
-      :value="seasons"
-      :loading="loading"
-      striped-rows
-      paginator
-      :rows="10"
-      :rows-per-page-options="[5, 10, 20, 50]"
-      responsive-layout="scroll"
-      class="p-datatable-sm"
-    >
-      <Column field="name" :header="t('common.name')" sortable>
-        <template #body="{ data }">
-          <span class="font-semibold">{{ data.name }}</span>
-        </template>
-      </Column>
-
-      <Column field="discipline.name" :header="t('common.discipline')" sortable />
-
-      <Column field="status" :header="t('common.status')" sortable>
-        <template #body="{ data }">
-          <Tag :severity="statusSeverity(data.status)" :value="statusLabel(data.status)" />
-        </template>
-      </Column>
-
-      <Column field="startDate" :header="t('rankedSeasonsList.colStart')" sortable>
-        <template #body="{ data }">
-          {{ formatDate(data.startDate) }}
-        </template>
-      </Column>
-
-      <Column field="endDate" :header="t('rankedSeasonsList.colEnd')" sortable>
-        <template #body="{ data }">
-          {{ formatDate(data.endDate) }}
-        </template>
-      </Column>
-
-      <Column :header="t('rankedSeasonsList.colChaining')">
-        <template #body="{ data }">
-          <Tag
-            v-if="data.automation?.enabled"
-            severity="info"
-            :value="chainingLabel(data)"
-            v-tooltip.top="
-              data.automation.mode === 'close'
-                ? t('rankedSeasonsList.tooltipClosing')
-                : t('rankedSeasonsList.tooltipChaining')
-            "
-          />
-          <span v-else class="text-surface-400">—</span>
-        </template>
-      </Column>
-
-      <Column :header="t('common.actions')" style="width: 14rem">
-        <template #body="{ data }">
-          <div class="flex gap-2">
-            <Button
-              icon="fa fa-eye"
-              size="small"
-              text
-              rounded
-              @click="router.push(`/tournaments/${data.id}`)"
-              v-tooltip.top="t('rankedSeasonsList.tooltipView')"
-            />
-            <Button
-              v-if="data.status !== 'draft'"
-              icon="fa fa-trophy"
-              size="small"
-              text
-              rounded
-              @click="router.push(`/admin/ranked/${data.id}/tiers`)"
-              v-tooltip.top="t('rankedSeasonsList.tooltipManageRanks')"
-            />
-            <!-- A running season is no longer frozen: its metadata is always
-                 editable and its MMR settings replay the season when changed.
-                 Only a finished one is closed for good. -->
-            <Button
-              v-if="data.status !== 'finished'"
-              icon="fa fa-edit"
-              size="small"
-              text
-              rounded
-              @click="router.push(`/admin/ranked/${data.id}/edit`)"
-              v-tooltip.top="t('common.edit')"
-            />
-            <Button
-              v-if="data.status === 'draft'"
-              icon="fa fa-play"
-              size="small"
-              text
-              rounded
-              severity="success"
-              @click="handleStart(data)"
-              v-tooltip.top="t('rankedSeasonsList.tooltipStart')"
-            />
-            <Button
-              v-if="data.status === 'ongoing'"
-              icon="fa fa-stop"
-              size="small"
-              text
-              rounded
-              severity="danger"
-              @click="confirmEnd(data)"
-              v-tooltip.top="t('rankedSeasonsList.tooltipEnd')"
-            />
-            <Button
-              v-if="
-                data.status === 'ongoing' &&
-                data.automation?.enabled &&
-                data.automation.mode === 'chain'
-              "
-              icon="fa fa-forward"
-              size="small"
-              text
-              rounded
-              severity="warn"
-              @click="confirmRollover(data)"
-              v-tooltip.top="t('rankedSeasonsList.tooltipRollover')"
-            />
-            <Button
-              v-if="data.status === 'finished'"
-              icon="fa fa-film"
-              size="small"
-              text
-              rounded
-              :loading="regeneratingId === data.id"
-              @click="handleRegenerateRewind(data)"
-              v-tooltip.top="t('rankedSeasonsList.tooltipRegenerateRewind')"
-            />
-          </div>
-        </template>
-      </Column>
-
+    <AdminTable :data="seasons" :columns="columns" :loading="loading">
+      <template #name-cell="{ row }">
+        <span class="font-semibold text-highlighted">{{ row.original.name }}</span>
+        <!-- Status and discipline columns are hidden on phones. -->
+        <div class="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted md:hidden">
+          <UBadge v-bind="statusBadge(row.original.status)" variant="subtle" size="sm" />
+          <span v-if="row.original.discipline">{{ row.original.discipline.name }}</span>
+        </div>
+      </template>
+      <template #status-cell="{ row }">
+        <UBadge v-bind="statusBadge(row.original.status)" variant="subtle" />
+      </template>
+      <template #startDate-cell="{ row }">{{ formatDate(row.original.startDate) }}</template>
+      <template #endDate-cell="{ row }">{{ formatDate(row.original.endDate) }}</template>
+      <template #chaining-cell="{ row }">
+        <UTooltip
+          v-if="row.original.automation?.enabled"
+          :text="
+            row.original.automation.mode === 'close'
+              ? t('rankedSeasonsList.tooltipClosing')
+              : t('rankedSeasonsList.tooltipChaining')
+          "
+        >
+          <UBadge color="info" variant="subtle" :label="chainingLabel(row.original)" />
+        </UTooltip>
+        <span v-else class="text-dimmed">—</span>
+      </template>
+      <template #actions-cell="{ row }">
+        <RowActions :actions="rowActions(row.original)" />
+      </template>
       <template #empty>
-        <div class="text-center py-8">
-          <p class="text-gray-500 mb-4">{{ t('rankedSeasonsList.empty') }}</p>
-          <Button
+        <div class="flex flex-col items-center gap-4 py-8">
+          <p class="text-muted">{{ t('rankedSeasonsList.empty') }}</p>
+          <UButton
             :label="t('rankedSeasonsList.createSeason')"
-            icon="fa fa-plus"
-            @click="router.push('/admin/ranked/new')"
+            icon="i-fa7-solid:plus"
+            to="/admin/ranked/new"
           />
         </div>
       </template>
-    </DataTable>
-
-    <Dialog
-      v-model:visible="endDialogVisible"
-      :header="t('rankedSeasonsList.endDialogHeader')"
-      :modal="true"
-      :style="{ width: '450px' }"
-    >
-      <div class="flex items-center gap-3 mb-4">
-        <i class="pi pi-exclamation-triangle text-3xl text-orange-500"></i>
-        <span>{{ t('rankedSeasonsList.endDialogConfirm', { name: seasonToEnd?.name }) }}</span>
-      </div>
-      <template #footer>
-        <Button :label="t('common.cancel')" icon="pi pi-times" @click="endDialogVisible = false" text />
-        <Button
-          :label="t('rankedSeasonsList.end')"
-          icon="pi pi-check"
-          @click="handleEnd"
-          severity="danger"
-          :loading="loading"
-        />
-      </template>
-    </Dialog>
-
-    <Dialog
-      v-model:visible="rolloverDialogVisible"
-      :header="t('rankedSeasonsList.rolloverDialogHeader')"
-      :modal="true"
-      :style="{ width: '480px' }"
-    >
-      <div class="flex items-start gap-3 mb-4">
-        <i class="pi pi-exclamation-triangle text-3xl text-orange-500"></i>
-        <div>
-          <p>{{ t('rankedSeasonsList.rolloverDialogConfirm', { name: seasonToRollover?.name }) }}</p>
-          <p class="text-sm text-surface-400 mt-2">
-            {{ t('rankedSeasonsList.rolloverDialogDetail') }}
-          </p>
-        </div>
-      </div>
-      <template #footer>
-        <Button
-          :label="t('common.cancel')"
-          icon="pi pi-times"
-          @click="rolloverDialogVisible = false"
-          text
-        />
-        <Button
-          :label="t('rankedSeasonsList.rollover')"
-          icon="pi pi-check"
-          @click="handleRollover"
-          severity="warn"
-          :loading="loading"
-        />
-      </template>
-    </Dialog>
+    </AdminTable>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import type { TableColumn } from '@nuxt/ui'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
+import AdminTable from '@/components/admin/AdminTable.vue'
+import RowActions, { type RowAction } from '@/components/ui/RowActions.vue'
+import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/admin/table-columns'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useRankedService } from '@/composables/ranked/ranked.service'
 import { rewindApi } from '@/composables/ranked/rewind.api'
 import { useAppToast } from '@/composables/useAppToast'
 import type { RankedSeason } from '@/composables/ranked/ranked.api'
 
-const router = useRouter()
 const { t } = useI18n()
+const confirm = useConfirmDialog()
 const toast = useAppToast()
 const { seasons, loading, error, loadSeasons, startSeason, endSeason, rolloverNow } =
   useRankedService()
 
-const endDialogVisible = ref(false)
-const seasonToEnd = ref<RankedSeason | null>(null)
-const rolloverDialogVisible = ref(false)
-const seasonToRollover = ref<RankedSeason | null>(null)
 const regeneratingId = ref<string | null>(null)
 
 function formatDate(date: string) {
@@ -265,15 +116,93 @@ function statusLabel(status: string) {
   return labels[status] ?? status
 }
 
-function statusSeverity(status: string) {
-  const severities: Record<string, string> = {
-    draft: 'secondary',
-    open: 'info',
-    ongoing: 'success',
-    finished: 'contrast',
-    cancelled: 'danger',
-  }
-  return severities[status] ?? 'secondary'
+const STATUS_COLORS = {
+  draft: 'neutral',
+  open: 'info',
+  ongoing: 'success',
+  finished: 'secondary',
+  cancelled: 'error',
+} as const
+
+function statusBadge(status: string) {
+  const color = STATUS_COLORS[status as keyof typeof STATUS_COLORS] ?? 'neutral'
+  return { label: statusLabel(status), color }
+}
+
+const columns: TableColumn<RankedSeason>[] = [
+  { accessorKey: 'name', header: sortableHeader(t('common.name')) },
+  {
+    id: 'discipline',
+    accessorFn: (season) => season.discipline?.name ?? '',
+    header: sortableHeader(t('common.discipline')),
+    meta: hiddenBelow('lg'),
+  },
+  { accessorKey: 'status', header: sortableHeader(t('common.status')), meta: hiddenBelow('md') },
+  {
+    accessorKey: 'startDate',
+    header: sortableHeader(t('rankedSeasonsList.colStart')),
+    meta: hiddenBelow('xl'),
+  },
+  {
+    accessorKey: 'endDate',
+    header: sortableHeader(t('rankedSeasonsList.colEnd')),
+    meta: hiddenBelow('xl'),
+  },
+  { id: 'chaining', header: t('rankedSeasonsList.colChaining'), meta: hiddenBelow('2xl') },
+  { id: 'actions', meta: ACTIONS_COLUMN_META },
+]
+
+// A running season is no longer frozen: its metadata is always editable and its MMR
+// settings replay the season when changed. Only a finished one is closed for good.
+function rowActions(season: RankedSeason): RowAction[] {
+  const chains = season.automation?.enabled && season.automation.mode === 'chain'
+  return [
+    {
+      label: t('rankedSeasonsList.tooltipView'),
+      icon: 'i-fa7-solid:eye',
+      to: `/tournaments/${season.id}`,
+    },
+    {
+      label: t('rankedSeasonsList.tooltipManageRanks'),
+      icon: 'i-fa7-solid:trophy',
+      to: `/admin/ranked/${season.id}/tiers`,
+      hidden: season.status === 'draft',
+    },
+    {
+      label: t('common.edit'),
+      icon: 'i-fa7-solid:pen',
+      to: `/admin/ranked/${season.id}/edit`,
+      hidden: season.status === 'finished',
+    },
+    {
+      label: t('rankedSeasonsList.tooltipStart'),
+      icon: 'i-fa7-solid:play',
+      color: 'success',
+      hidden: season.status !== 'draft',
+      onSelect: () => handleStart(season),
+    },
+    {
+      label: t('rankedSeasonsList.tooltipEnd'),
+      icon: 'i-fa7-solid:stop',
+      color: 'error',
+      hidden: season.status !== 'ongoing',
+      onSelect: () => confirmEnd(season),
+    },
+    {
+      label: t('rankedSeasonsList.tooltipRollover'),
+      icon: 'i-fa7-solid:forward',
+      color: 'warning',
+      hidden: season.status !== 'ongoing' || !chains,
+      onSelect: () => confirmRollover(season),
+    },
+    {
+      label: t('rankedSeasonsList.tooltipRegenerateRewind'),
+      icon: 'i-fa7-solid:film',
+      loading: regeneratingId.value === season.id,
+      hidden: season.status !== 'finished',
+      onSelect: () => handleRegenerateRewind(season),
+    },
+  ]
 }
 
 async function handleStart(season: RankedSeason) {
@@ -281,9 +210,14 @@ async function handleStart(season: RankedSeason) {
   await loadSeasons()
 }
 
-function confirmEnd(season: RankedSeason) {
-  seasonToEnd.value = season
-  endDialogVisible.value = true
+async function confirmEnd(season: RankedSeason) {
+  const confirmed = await confirm({
+    title: t('rankedSeasonsList.endDialogHeader'),
+    message: t('rankedSeasonsList.endDialogConfirm', { name: season.name }),
+    confirmLabel: t('rankedSeasonsList.end'),
+    color: 'error',
+  })
+  if (confirmed && (await endSeason(season.id))) await loadSeasons()
 }
 
 /**
@@ -308,8 +242,7 @@ async function handleRegenerateRewind(season: RankedSeason) {
     toast.add({
       severity: 'error',
       summary: t('common.error'),
-      detail:
-        err instanceof Error ? err.message : t('rankedSeasonsList.rewindFailedDetail'),
+      detail: err instanceof Error ? err.message : t('rankedSeasonsList.rewindFailedDetail'),
       life: 6000,
     })
   } finally {
@@ -317,14 +250,18 @@ async function handleRegenerateRewind(season: RankedSeason) {
   }
 }
 
-function confirmRollover(season: RankedSeason) {
-  seasonToRollover.value = season
-  rolloverDialogVisible.value = true
+async function confirmRollover(season: RankedSeason) {
+  const confirmed = await confirm({
+    title: t('rankedSeasonsList.rolloverDialogHeader'),
+    message: `${t('rankedSeasonsList.rolloverDialogConfirm', { name: season.name })}\n\n${t('rankedSeasonsList.rolloverDialogDetail')}`,
+    confirmLabel: t('rankedSeasonsList.rollover'),
+    color: 'warning',
+  })
+  if (confirmed) await handleRollover(season)
 }
 
-async function handleRollover() {
-  if (!seasonToRollover.value) return
-  const next = await rolloverNow(seasonToRollover.value.id)
+async function handleRollover(season: RankedSeason) {
+  const next = await rolloverNow(season.id)
   if (!next) {
     toast.add({
       severity: 'error',
@@ -334,8 +271,6 @@ async function handleRollover() {
     })
     return
   }
-  rolloverDialogVisible.value = false
-  seasonToRollover.value = null
   toast.add({
     severity: 'success',
     summary: t('rankedSeasonsList.rolloverDone'),
@@ -345,24 +280,7 @@ async function handleRollover() {
   await loadSeasons()
 }
 
-async function handleEnd() {
-  if (!seasonToEnd.value) return
-  const success = await endSeason(seasonToEnd.value.id)
-  if (success) {
-    endDialogVisible.value = false
-    seasonToEnd.value = null
-    await loadSeasons()
-  }
-}
-
 onMounted(() => {
   loadSeasons()
 })
 </script>
-
-<style scoped>
-.ranked-seasons-list {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-</style>
