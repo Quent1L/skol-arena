@@ -26,36 +26,39 @@
 
       <!-- Admin Controls -->
       <div v-if="canManage" class="mb-6 flex gap-3 items-center flex-wrap">
-      <Button
+      <UButton
         v-if="!hasBracket"
         :label="t('bracketView.generateBracket')"
-        icon="fa fa-sitemap"
+        icon="i-fa7-solid:sitemap"
+        size="lg"
         :disabled="!isOptimalCount"
         @click="showGenerateDialog = true"
       />
 
       <template v-else>
-        <Button
+        <UButton
           :label="t('bracketView.regenerate')"
-          icon="fa fa-redo"
-          severity="warning"
-          outlined
+          icon="i-fa7-solid:rotate-right"
+          variant="outline"
+          size="lg"
           @click="handleRegenerate"
         />
-        <Button
+        <UButton
           :label="t('bracketView.deleteBracket')"
-          icon="fa fa-trash"
-          severity="danger"
-          outlined
+          icon="i-fa7-solid:trash"
+          color="error"
+          variant="outline"
+          size="lg"
           @click="confirmDelete"
         />
       </template>
 
-      <Button
+      <UButton
         :label="t('bracketView.refresh')"
-        icon="fa fa-sync"
-        severity="secondary"
-        outlined
+        icon="i-fa7-solid:arrows-rotate"
+        color="neutral"
+        variant="outline"
+        size="lg"
         :loading="loading"
         @click="loadBracketData"
       />
@@ -63,7 +66,7 @@
 
     <!-- Loading State -->
     <div v-if="loading && !bracketData" class="flex justify-center items-center py-20">
-      <ProgressSpinner />
+      <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
     </div>
 
     <!-- Empty State -->
@@ -85,11 +88,11 @@
         </template>
       </p>
 
-      <Button
+      <UButton
         v-if="canManage"
         :label="t('bracketView.generateBracket')"
-        icon="fa fa-sitemap"
-        size="large"
+        icon="i-fa7-solid:sitemap"
+        size="xl"
         :disabled="!isOptimalCount"
         @click="showGenerateDialog = true"
       />
@@ -136,36 +139,40 @@
       />
 
       <!-- Delete Confirmation Dialog -->
-      <Dialog
-        v-model:visible="showDeleteDialog"
-        :header="t('bracketView.deleteDialogHeader')"
-        :modal="true"
-        :style="{ width: '450px' }"
+      <UModal
+        v-model:open="showDeleteDialog"
+        :title="t('bracketView.deleteDialogHeader')"
+        :ui="{ footer: 'justify-end' }"
       >
-      <div class="flex items-start gap-4">
-        <i class="fa fa-exclamation-triangle text-4xl text-orange-500" />
-        <div>
-          <p class="mb-3">
-            {{ t('bracketView.deleteConfirmText') }}
-          </p>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            {{ t('bracketView.deleteHint') }}
-          </p>
-        </div>
-      </div>
+        <template #body>
+          <div class="flex items-start gap-4">
+            <i class="fa fa-exclamation-triangle text-4xl text-orange-500" />
+            <div>
+              <p class="mb-3">
+                {{ t('bracketView.deleteConfirmText') }}
+              </p>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                {{ t('bracketView.deleteHint') }}
+              </p>
+            </div>
+          </div>
+        </template>
 
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <Button :label="t('common.cancel')" severity="secondary" @click="showDeleteDialog = false" />
-          <Button
+        <template #footer>
+          <UButton
+            :label="t('common.cancel')"
+            color="neutral"
+            variant="outline"
+            @click="showDeleteDialog = false"
+          />
+          <UButton
             :label="t('common.delete')"
-            severity="danger"
+            color="error"
             :loading="deleting"
             @click="handleDeleteBracket"
           />
-        </div>
-      </template>
-    </Dialog>
+        </template>
+      </UModal>
     </template>
   </div>
 </template>

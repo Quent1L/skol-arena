@@ -1,22 +1,20 @@
 <template>
-  <Dialog
-    v-model:visible="visible"
-    modal
-    :header="isRegeneration ? t('generateBracketDialog.headerRegenerate') : t('generateBracketDialog.headerGenerate')"
-    :style="{ width: '90vw', maxWidth: '600px' }"
-    :draggable="false"
+  <UModal
+    v-model:open="visible"
+    :title="isRegeneration ? t('generateBracketDialog.headerRegenerate') : t('generateBracketDialog.headerGenerate')"
+    :ui="{ content: 'sm:max-w-xl', footer: 'justify-end' }"
   >
-    <div class="space-y-6 py-4">
+    <template #body>
+    <div class="space-y-6">
       <!-- Warning for regeneration -->
-      <Message v-if="isRegeneration" severity="warn" :closable="false" class="mb-4">
-        <template #messageicon>
-          <i class="fa fa-exclamation-triangle mr-2" />
-        </template>
-        <p class="font-semibold">{{ t('generateBracketDialog.warningTitle') }}</p>
-        <p class="text-sm mt-1">
-          {{ t('generateBracketDialog.warningDesc') }}
-        </p>
-      </Message>
+      <UAlert
+        v-if="isRegeneration"
+        color="warning"
+        variant="subtle"
+        icon="i-fa7-solid:triangle-exclamation"
+        :title="t('generateBracketDialog.warningTitle')"
+        :description="t('generateBracketDialog.warningDesc')"
+      />
 
       <!-- Bracket Type -->
       <div class="space-y-2">
@@ -104,50 +102,42 @@
         >
           {{ t('generateBracketDialog.sourceTournamentLabel') }}
         </label>
-        <Dropdown
+        <USelectMenu
           id="source-tournament"
           v-model="formData.sourceTournamentId"
-          :options="finishedTournaments"
-          option-label="name"
-          option-value="id"
+          :items="finishedTournaments"
+          value-key="id"
+          label-key="name"
           :placeholder="t('generateBracketDialog.sourceTournamentPlaceholder')"
           :loading="loadingTournaments"
+          size="xl"
           class="w-full"
-          show-clear
-        >
-          <template #value="slotProps">
-            <div v-if="slotProps.value">
-              {{ finishedTournaments.find((t) => t.id === slotProps.value)?.name }}
-            </div>
-            <span v-else>{{ slotProps.placeholder }}</span>
-          </template>
-        </Dropdown>
+        />
         <small class="text-gray-600 dark:text-gray-400">
           {{ t('generateBracketDialog.sourceTournamentHint') }}
         </small>
       </div>
 
       <!-- Bronze Match (single elimination only) -->
-      <div v-if="formData.bracketType === 'single_elimination'" class="flex items-center">
-        <Checkbox id="bronze-match" v-model="formData.hasBronzeMatch" :binary="true" class="mr-2" />
-        <label for="bronze-match" class="cursor-pointer text-sm">
-          {{ t('generateBracketDialog.bronzeMatchLabel') }}
-        </label>
-      </div>
+      <UCheckbox
+        v-if="formData.bracketType === 'single_elimination'"
+        id="bronze-match"
+        v-model="formData.hasBronzeMatch"
+        :label="t('generateBracketDialog.bronzeMatchLabel')"
+      />
     </div>
+    </template>
 
     <template #footer>
-      <div class="flex justify-end gap-2">
-        <Button :label="t('common.cancel')" severity="secondary" @click="close" />
-        <Button
-          :label="isRegeneration ? t('generateBracketDialog.regenerate') : t('generateBracketDialog.generate')"
-          :loading="loading"
-          :disabled="!isFormValid || loading"
-          @click="handleSubmit"
-        />
-      </div>
+      <UButton :label="t('common.cancel')" color="neutral" variant="outline" @click="close" />
+      <UButton
+        :label="isRegeneration ? t('generateBracketDialog.regenerate') : t('generateBracketDialog.generate')"
+        :loading="loading"
+        :disabled="!isFormValid || loading"
+        @click="handleSubmit"
+      />
     </template>
-  </Dialog>
+  </UModal>
 </template>
 
 <script setup lang="ts">

@@ -23,22 +23,20 @@
         </div>
 
         <div v-if="hasOverflow" class="flex gap-2">
-          <Button
-            severity="secondary"
-            outlined
-            size="small"
-            icon="fa fa-chevron-left"
+          <UButton
+            color="neutral"
+            variant="outline"
+            icon="i-fa7-solid:chevron-left"
+            :aria-label="t('common.previous')"
             @click="scrollRound(-1)"
-          >
-          </Button>
-          <Button
-            severity="secondary"
-            outlined
-            icon="fa fa-chevron-right"
-            size="small"
+          />
+          <UButton
+            color="neutral"
+            variant="outline"
+            icon="i-fa7-solid:chevron-right"
+            :aria-label="t('common.next')"
             @click="scrollRound(1)"
-          >
-          </Button>
+          />
         </div>
       </div>
     </div>
@@ -61,7 +59,7 @@
               :key="conn.key"
               :d="conn.d"
               fill="none"
-              stroke="var(--p-surface-400)"
+              stroke="var(--ui-color-neutral-400)"
               stroke-width="1.5"
               stroke-linecap="square"
             />
@@ -97,6 +95,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type {
   ClientBracketRound,
   ClientBracketMatchWithMetadata,
@@ -104,6 +103,8 @@ import type {
 } from '@skol-arena/shared'
 import BracketMatchCard from '@/components/bracket/BracketMatchCard.vue'
 import { useServerLabels } from '@/i18n/serverLabels'
+
+const { t } = useI18n()
 
 const CARD_HEIGHT = 110
 const CARD_WIDTH = 220
@@ -267,7 +268,7 @@ const connectors = computed<Connector[]>(() => {
   position: sticky;
   top: var(--bracket-sticky-top, 0px);
   z-index: 10;
-  background: var(--p-surface-800);
+  background: var(--ui-color-neutral-800);
   padding-bottom: 0.25rem;
 }
 
@@ -281,7 +282,7 @@ const connectors = computed<Connector[]>(() => {
 .bracket-title-accent {
   width: 3px;
   height: 1rem;
-  background: var(--p-primary-color);
+  background: var(--ui-primary);
   border-radius: 2px;
   flex-shrink: 0;
 }
@@ -292,7 +293,7 @@ const connectors = computed<Connector[]>(() => {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--p-text-muted-color);
+  color: var(--ui-text-muted);
 }
 
 .bracket-rounds-strip {
@@ -318,7 +319,7 @@ const connectors = computed<Connector[]>(() => {
   -webkit-overflow-scrolling: touch;
   padding: 0.5rem 1rem 1rem;
   scrollbar-width: thin;
-  scrollbar-color: var(--p-surface-400) transparent;
+  scrollbar-color: var(--ui-color-neutral-400) transparent;
 }
 
 .bracket-canvas-scroll::-webkit-scrollbar {
@@ -328,7 +329,7 @@ const connectors = computed<Connector[]>(() => {
   background: transparent;
 }
 .bracket-canvas-scroll::-webkit-scrollbar-thumb {
-  background-color: var(--p-surface-400);
+  background-color: var(--ui-color-neutral-400);
   border-radius: 3px;
 }
 
@@ -340,7 +341,7 @@ const connectors = computed<Connector[]>(() => {
   font-size: 0.8rem;
   font-weight: 600;
   font-style: italic;
-  color: var(--p-text-muted-color);
+  color: var(--ui-text-muted);
   flex-shrink: 0;
 }
 </style>

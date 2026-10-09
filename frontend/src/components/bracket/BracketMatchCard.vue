@@ -33,7 +33,7 @@
           </abbr>
         </template>
         <template v-else>
-          <i class="fas fa-user-clock text-muted-color text-sm"></i>
+          <i class="fas fa-user-clock text-muted text-sm"></i>
         </template>
       </div>
 
@@ -49,12 +49,12 @@
               ? 'bg-match-win/20 text-match-win'
               : isWinner(match, sideA) === false
                 ? 'bg-match-loss/20 text-match-loss'
-                : 'text-color'
+                : 'text-highlighted'
           "
         >
           {{ match.status === 'scheduled' ? '-' : (sideA?.score ?? '-') }}
         </span>
-        <span class="text-muted-color/40 text-[10px]">-</span>
+        <span class="text-[10px]">-</span>
         <span
           class="px-1 py-0.5 rounded text-xs"
           :class="
@@ -62,13 +62,13 @@
               ? 'bg-match-win/20 text-match-win'
               : isWinner(match, sideB) === false
                 ? 'bg-match-loss/20 text-match-loss'
-                : 'text-color'
+                : 'text-highlighted'
           "
         >
           {{ match.status === 'scheduled' ? '-' : (sideB?.score ?? '-') }}
         </span>
       </div>
-      <div v-else class="font-headline font-black text-muted-color/40 text-xs shrink-0">{{ t('bracketMatchCard.vs') }}</div>
+      <div v-else class="font-headline font-black text-xs shrink-0">{{ t('bracketMatchCard.vs') }}</div>
 
       <!-- Side B -->
       <div class="flex-1 flex flex-col items-center gap-1 relative">
@@ -87,7 +87,7 @@
           </abbr>
         </template>
         <template v-else>
-          <i class="fas fa-user-clock text-muted-color text-sm"></i>
+          <i class="fas fa-user-clock text-muted text-sm"></i>
         </template>
       </div>
     </div>
@@ -158,7 +158,7 @@ function isWinner(match: ClientMatchModel, side: MatchSideModel | null): boolean
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: var(--p-surface-800);
+  background-color: var(--ui-color-neutral-800);
   padding: 0.6em 0.75em 0.75em;
   border: 1px solid transparent;
   border-radius: 0.25em;
@@ -212,7 +212,7 @@ function isWinner(match: ClientMatchModel, side: MatchSideModel | null): boolean
 
 .bracket-code {
   font-size: 0.65rem;
-  color: var(--p-text-color);
+  color: var(--ui-text-highlighted);
   font-weight: 600;
   text-transform: uppercase;
   border: 0;
