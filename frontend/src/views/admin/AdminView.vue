@@ -19,7 +19,6 @@
           :description="t(`adminView.${section.navKey}Description`)"
           :highlight="isMaintenance(section) && hasStrandedAvatars"
           highlight-color="warning"
-          spotlight
           :data-testid="isMaintenance(section) ? 'maintenance-card' : undefined"
         >
           <template #title>
