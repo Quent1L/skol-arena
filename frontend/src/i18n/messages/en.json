@@ -329,6 +329,7 @@
   },
   "common": {
     "actions": "Actions",
+    "back": "Back",
     "cancel": "Cancel",
     "close": "Close",
     "confirm": "Confirm",

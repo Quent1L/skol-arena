@@ -15,7 +15,7 @@
       </div>
 
       <div v-if="loading" class="flex justify-center py-8">
-        <ProgressSpinner />
+        <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
       </div>
 
       <div v-else-if="availableBadges.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -30,14 +30,14 @@
           class="flex flex-col items-center text-center p-4 rounded-xl gap-2 transition-all hover:scale-[1.03] hover:shadow-md cursor-default"
           :class="isEarned(badge.ruleId)
             ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 hover:border-purple-400 dark:hover:border-purple-500'
-            : 'bg-surface-100 dark:bg-surface-800 opacity-50 hover:opacity-80'"
+            : 'bg-slate-100 dark:bg-slate-800 opacity-50 hover:opacity-80'"
         >
           <i
             :class="[badge.icon || 'fa fa-medal', isEarned(badge.ruleId) ? 'text-purple-600' : 'text-gray-400 dark:text-gray-500']"
             class="text-3xl"
           />
           <div class="font-semibold text-sm leading-tight">{{ badge.label }}</div>
-          <div class="text-xs text-surface-500 line-clamp-2">{{ badge.description }}</div>
+          <div class="text-xs text-slate-500 line-clamp-2">{{ badge.description }}</div>
           <span
             v-if="badge.recurrence === 'once'"
             class="text-[10px] uppercase tracking-wide font-bold text-amber-600 dark:text-amber-400"
@@ -47,7 +47,7 @@
           <div v-if="isEarned(badge.ruleId)" class="text-xs text-purple-600 dark:text-purple-400 font-medium">
             <i class="fa fa-check mr-1" />{{ formatDate(getEarnedDate(badge.ruleId)) }}
           </div>
-          <div v-else-if="previousSeasons(badge.ruleId).length" class="text-xs text-surface-500">
+          <div v-else-if="previousSeasons(badge.ruleId).length" class="text-xs text-slate-500">
             <i class="fa fa-clock-rotate-left mr-1" />{{
               t('tournamentBadgesTab.alreadyEarnedIn', { seasons: previousSeasons(badge.ruleId).join(', ') })
             }}
@@ -66,7 +66,6 @@ import { rulesApi } from '@/composables/rules/rules.api'
 import { useAuth } from '@/composables/useAuth'
 import { onWsEvent } from '@/composables/notification/notification.socket'
 import type { AvailableBadge, ClientPlayerBadge } from '@skol-arena/shared/types/index'
-import ProgressSpinner from 'primevue/progressspinner'
 
 const route = useRoute()
 const { appUser } = useAuth()

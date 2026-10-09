@@ -16,7 +16,7 @@
           </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-          <Badge :value="store.participantCount" severity="info" size="small" />
+          <UBadge :label="store.participantCount" color="info" size="sm" />
           <i class="fa fa-chevron-right text-gray-400 text-xs sm:text-sm group-hover:text-primary-500 transition-colors" />
         </div>
       </button>

@@ -34,9 +34,9 @@
       </p>
     </div>
     <div v-else class="p-4 space-y-3">
-      <Skeleton height="6rem" class="rounded-xl" />
-      <Skeleton height="4rem" class="rounded-xl" />
-      <Skeleton height="10rem" class="rounded-xl" />
+      <USkeleton class="h-[6rem] w-full rounded-xl" />
+      <USkeleton class="h-[4rem] w-full rounded-xl" />
+      <USkeleton class="h-[10rem] w-full rounded-xl" />
     </div>
 
     <!-- The full history lives on the player's own page: it spans every

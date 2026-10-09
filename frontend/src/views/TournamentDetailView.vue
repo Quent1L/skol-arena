@@ -7,9 +7,13 @@
       :tab="activeTabName"
     />
 
-    <Message v-else-if="store.error" severity="error" class="mb-6 mx-4 mt-4">
-      {{ store.error }}
-    </Message>
+    <UAlert
+      v-else-if="store.error"
+      color="error"
+      variant="subtle"
+      class="mb-6 mx-4 mt-4 w-auto"
+      :title="store.error"
+    />
 
     <div v-else-if="store.tournament">
       <!-- Mobile version -->
@@ -19,12 +23,14 @@
           <div
             class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-14 flex items-center px-4 shadow-sm"
           >
-            <Button
-              icon="fa fa-arrow-left"
-              text
-              rounded
+            <UButton
+              icon="i-fa7-solid:arrow-left"
+              color="neutral"
+              variant="ghost"
+              size="lg"
+              class="mr-2 rounded-full"
+              :aria-label="t('common.back')"
               @click="router.back()"
-              class="mr-2 !w-10 !h-10 text-gray-700 dark:text-gray-200"
             />
             <h1 class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
               {{ t('tournamentDetailView.tabs.' + (activeTabName ?? '')) }}
@@ -43,14 +49,16 @@
         <div class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
           <div class="max-w-5xl mx-auto px-6 pt-5" :class="isScrolled ? 'pb-3' : 'pb-5'">
             <div class="flex items-start gap-3">
-              <Button
-                icon="fa fa-arrow-left"
-                text
-                rounded
-                @click="router.push('/')"
-                class="shrink-0 mt-0.5! text-gray-500 dark:text-gray-400"
-                v-tooltip.bottom="t('tournamentDetailView.backToHome')"
-              />
+              <UTooltip :text="t('tournamentDetailView.backToHome')" :content="{ side: 'bottom' }">
+                <UButton
+                  icon="i-fa7-solid:arrow-left"
+                  variant="ghost"
+                  size="lg"
+                  class="shrink-0 mt-0.5 rounded-full"
+                  :aria-label="t('tournamentDetailView.backToHome')"
+                  to="/"
+                />
+              </UTooltip>
               <div class="flex-1 min-w-0">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white leading-tight truncate">
                   {{ store.tournament.name }}
@@ -83,13 +91,13 @@
                 </div>
               </div>
               <div class="flex items-center gap-2 shrink-0">
-                <Button
+                <UButton
                   v-if="store.isAuthenticated && !store.isParticipant && store.canJoinTournament"
                   :label="t('tournamentDetailView.joinBtn')"
-                  icon="fa fa-user-plus"
-                  @click="store.joinTournament()"
+                  icon="i-fa7-solid:user-plus"
+                  size="lg"
                   :loading="store.joining"
-                  class="bg-green-600 hover:bg-green-700"
+                  @click="store.joinTournament()"
                 />
                 <div
                   v-if="store.isAuthenticated && store.isParticipant && !store.canLeaveTournament"
@@ -98,12 +106,12 @@
                   <i class="fa fa-check-circle"></i>
                   <span>{{ t('tournamentDetailView.registered') }}</span>
                 </div>
-                <Button
+                <UButton
                   v-if="store.canCreateMatch"
                   :label="t('tournamentDetailView.createMatchBtn')"
-                  icon="fa fa-plus"
-                  @click="router.push(`/tournaments/${store.tournamentId}/create-match`)"
-                  class="bg-blue-600 hover:bg-blue-700"
+                  icon="i-fa7-solid:plus"
+                  size="lg"
+                  :to="`/tournaments/${store.tournamentId}/create-match`"
                 />
                 <OverflowMenuButton :items="store.menuItems" />
               </div>
@@ -155,10 +163,9 @@
 
     <!-- Not found -->
     <div v-else class="tournament-detail-view">
-      <Card class="text-center py-12">
-        <template #content>
+      <UCard variant="soft" class="text-center py-12">
           <div class="space-y-4">
-            <i class="pi pi-exclamation-triangle text-4xl text-orange-400"></i>
+            <i class="fa fa-triangle-exclamation text-4xl text-orange-400"></i>
             <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300">
               {{ t('tournamentDetailView.notFound.title') }}
             </h3>
@@ -166,11 +173,10 @@
               {{ t('tournamentDetailView.notFound.description') }}
             </p>
             <div>
-              <Button :label="t('tournamentDetailView.notFound.backBtn')" @click="router.push('/')" class="text-blue-600" />
+              <UButton :label="t('tournamentDetailView.notFound.backBtn')" to="/" />
             </div>
           </div>
-        </template>
-      </Card>
+      </UCard>
     </div>
 
     <!-- MMR Animation System -->

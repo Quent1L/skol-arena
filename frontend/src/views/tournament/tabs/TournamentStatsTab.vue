@@ -3,7 +3,7 @@
     <!-- Loading. A background refresh reuses this same flag, so the guard keeps the
          stats already on screen instead of blanking them mid-read. -->
     <div v-if="store.tournamentStatsLoading && !store.tournamentStats" class="flex justify-center py-16">
-      <ProgressSpinner />
+      <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
     </div>
 
     <div
@@ -65,7 +65,7 @@
             {{ t('tournamentStatsTab.activity.title') }}
           </h2>
           <div v-if="isMounted && momentumChartData" class="h-48">
-            <Chart type="line" :data="momentumChartData" :options="lineOptions" class="h-full" />
+            <AppChart type="line" :data="momentumChartData" :options="lineOptions" class="h-full" />
           </div>
           <p v-else class="text-gray-500 dark:text-gray-400 text-sm">
             {{ t('tournamentStatsTab.activity.empty') }}
@@ -193,7 +193,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, ref, nextTick } from 'vue'
-import Chart from 'primevue/chart'
+import AppChart from '@/components/charts/AppChart.vue'
 import { useI18n } from 'vue-i18n'
 import { useTournamentDetailStore } from '@/stores/tournamentDetail.store'
 import { formatDate } from 'date-fns'

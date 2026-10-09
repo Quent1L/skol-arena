@@ -1,16 +1,15 @@
 <template>
   <div>
     <div v-if="canAddParticipants" class="mb-4 flex justify-end">
-      <Button
+      <UButton
         :label="t('tournamentParticipantsList.addParticipant')"
-        icon="fa fa-user-plus"
+        icon="i-fa7-solid:user-plus"
         @click="showAddParticipantDialog = true"
-        size="small"
       />
     </div>
 
     <div v-if="loading" class="flex justify-center py-8">
-      <ProgressSpinner />
+      <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
     </div>
 
     <div
@@ -45,13 +44,14 @@
           </div>
           <i class="fa fa-chevron-right text-gray-400 text-xs shrink-0"></i>
         </RouterLink>
-        <Button
+        <UButton
           v-if="canAddParticipants"
-          icon="fa fa-user-minus"
-          severity="danger"
-          text
-          rounded
-          size="small"
+          icon="i-fa7-solid:user-minus"
+          color="error"
+          variant="ghost"
+          size="sm"
+          class="rounded-full"
+          :aria-label="t('common.delete')"
           @click="handleRemoveParticipant(participant.userId)"
         />
       </div>
@@ -61,48 +61,45 @@
       {{ t('tournamentParticipantsList.noParticipants') }}
     </div>
 
-    <Dialog
-      v-model:visible="showAddParticipantDialog"
-      :header="t('tournamentParticipantsList.addParticipantsTitle')"
-      :modal="true"
-      :style="{ width: '600px' }"
+    <UModal
+      v-model:open="showAddParticipantDialog"
+      :title="t('tournamentParticipantsList.addParticipantsTitle')"
+      :ui="{ content: 'sm:max-w-xl', footer: 'justify-end' }"
     >
-      <div class="flex flex-col gap-4">
+      <template #body>
         <div v-if="loadingUsers" class="flex justify-center py-4">
-          <ProgressSpinner />
+          <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
         </div>
-        <div v-else>
-          <label for="participants-user-select" class="block text-sm font-medium mb-2">{{ t('tournamentParticipantsList.selectUsersLabel') }}</label>
-          <MultiSelect
+        <UFormField v-else :label="t('tournamentParticipantsList.selectUsersLabel')" size="xl">
+          <USelectMenu
             v-model="selectedUserIds"
-            input-id="participants-user-select"
-            :options="availableUsers"
-            option-label="displayName"
-            option-value="id"
+            :items="availableUsers"
+            value-key="id"
+            label-key="displayName"
+            multiple
             :placeholder="t('tournamentParticipantsList.selectUsersPlaceholder')"
             class="w-full"
-            filter
-            display="chip"
           />
-        </div>
-        <ProgressBar v-if="addingParticipant" mode="indeterminate" class="mt-4 h-1" />
-      </div>
+        </UFormField>
+        <UProgress v-if="addingParticipant" animation="carousel" size="xs" class="mt-4" />
+      </template>
       <template #footer>
-        <Button
+        <UButton
           :label="t('common.cancel')"
-          severity="secondary"
-          @click="showAddParticipantDialog = false"
+          color="neutral"
+          variant="outline"
           :disabled="addingParticipant"
+          @click="showAddParticipantDialog = false"
         />
-        <Button
+        <UButton
           :label="t('tournamentParticipantsList.addButton')"
-          icon="fa fa-check"
-          @click="handleAddParticipant"
+          icon="i-fa7-solid:check"
           :disabled="selectedUserIds.length === 0 || addingParticipant"
           :loading="addingParticipant"
+          @click="handleAddParticipant"
         />
       </template>
-    </Dialog>
+    </UModal>
   </div>
 </template>
 

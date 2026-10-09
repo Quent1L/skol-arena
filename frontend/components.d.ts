@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AdminPageHeader: typeof import('./src/components/admin/AdminPageHeader.vue')['default']
     AdminTable: typeof import('./src/components/admin/AdminTable.vue')['default']
+    AppChart: typeof import('./src/components/charts/AppChart.vue')['default']
     AppHeader: typeof import('./src/components/AppHeader.vue')['default']
     AutoComplete: typeof import('primevue/autocomplete')['default']
     AvatarCropDialog: typeof import('./src/components/avatar/AvatarCropDialog.vue')['default']
@@ -194,6 +195,7 @@ declare module 'vue' {
     UPagination: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Pagination.vue')['default']
     UpdateOverlay: typeof import('./src/components/UpdateOverlay.vue')['default']
     UPopover: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Popover.vue')['default']
+    UProgress: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Progress.vue')['default']
     USelect: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
     USelectMenu: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/SelectMenu.vue')['default']
     USeparator: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']

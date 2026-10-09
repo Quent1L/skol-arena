@@ -12,7 +12,6 @@
             v-if="isAuthenticated && !isParticipant && canJoin"
             :label="t('tournamentHeader.participate')"
             icon="i-fa7-solid:user-plus"
-            color="success"
             :loading="joining"
             @click="$emit('join')"
           />
@@ -29,7 +28,6 @@
             v-if="canCreateMatch"
             :label="t('tournamentHeader.createMatch')"
             icon="i-fa7-solid:plus"
-            color="info"
             class="hidden md:flex"
             @click="emit('create-match')"
           />
