@@ -1,10 +1,17 @@
 <template>
-  <div class="flex flex-col h-screen bg-surface-50 dark:bg-surface-900">
+  <div class="flex flex-col h-screen bg-slate-50 dark:bg-slate-900">
     <!-- Sticky header -->
     <div
-      class="sticky top-0 z-10 bg-surface-0 dark:bg-surface-800 border-b dark:border-surface-700 px-4 py-3 flex items-center shadow-sm"
+      class="sticky top-0 z-10 bg-white dark:bg-slate-800 border-b dark:border-slate-700 px-4 py-3 flex items-center shadow-sm"
     >
-      <Button icon="fas fa-arrow-left" text rounded class="mr-2" @click="goBack" />
+      <UButton
+        icon="i-fa7-solid:arrow-left"
+        variant="ghost"
+        size="lg"
+        class="mr-2 rounded-full"
+        :aria-label="t('common.back')"
+        @click="goBack"
+      />
       <h1 class="text-lg font-bold">
         {{
           props.resultOnly
@@ -17,17 +24,17 @@
     </div>
 
     <!-- Step progress indicator -->
-    <div class="px-4 pt-3 pb-2 bg-surface-0 dark:bg-surface-800 border-b dark:border-surface-700">
+    <div class="px-4 pt-3 pb-2 bg-white dark:bg-slate-800 border-b dark:border-slate-700">
       <div class="flex items-center">
         <template v-for="(step, idx) in visibleSteps" :key="step.value">
           <span
             :class="[
               'rounded-full border-2 w-9 h-9 inline-flex items-center justify-center flex-none transition-colors',
               activeStep === step.value
-                ? 'bg-primary text-primary-contrast border-primary'
+                ? 'bg-primary text-inverted border-primary'
                 : idx < activeStepIndex
                   ? 'bg-primary/10 border-primary text-primary'
-                  : 'border-surface-300 dark:border-surface-600 text-surface-400',
+                  : 'border-slate-300 dark:border-slate-600 text-slate-400',
             ]"
           >
             <i :class="[step.icon, 'text-sm']" />
@@ -36,7 +43,7 @@
             v-if="idx < visibleSteps.length - 1"
             :class="[
               'flex-1 h-0.5 transition-colors',
-              idx < activeStepIndex ? 'bg-primary' : 'bg-surface-300 dark:bg-surface-600',
+              idx < activeStepIndex ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600',
             ]"
           />
         </template>
@@ -130,33 +137,37 @@
 
     <!-- Fixed full-width bottom action bar -->
     <div
-      class="fixed bottom-0 left-0 right-0 px-4 py-3 bg-surface-0 dark:bg-surface-800 border-t dark:border-surface-700"
+      class="fixed bottom-0 left-0 right-0 px-4 py-3 bg-white dark:bg-slate-800 border-t dark:border-slate-700"
     >
       <!-- Steps before result -->
       <template v-if="activeStep !== 'result'">
         <div class="flex gap-3">
-          <Button
+          <UButton
             v-if="activeStep !== 'when'"
-            severity="secondary"
-            icon="fas fa-arrow-left"
+            color="neutral"
+            variant="ghost"
+            size="xl"
+            icon="i-fa7-solid:arrow-left"
             class="flex-none"
+            :aria-label="t('matchFormStepperMobile.back')"
             @click="currentStepBack"
           />
-          <Button
+          <UButton
             v-if="isFutureDate && canSchedule && isLastStepBeforeResult"
             :label="t('matchFormStepperMobile.scheduleMatch')"
-            icon="fas fa-calendar-check"
+            icon="i-fa7-solid:calendar-check"
+            size="xl"
             :loading="matchLoading"
-            class="flex-1"
+            class="flex-1 justify-center"
             @click="submitMatch"
           />
-          <Button
+          <UButton
             v-else
             :label="t('matchFormStepperMobile.next')"
-            icon="fas fa-arrow-right"
-            icon-pos="right"
+            trailing-icon="i-fa7-solid:arrow-right"
+            size="xl"
             :disabled="!canProceedStep"
-            class="flex-1"
+            class="flex-1 justify-center"
             @click="currentStepNext"
           />
         </div>
@@ -165,19 +176,22 @@
       <!-- Result step -->
       <template v-else>
         <div class="flex gap-3">
-          <Button
+          <UButton
             :label="t('matchFormStepperMobile.back')"
-            severity="secondary"
-            icon="fas fa-arrow-left"
-            class="flex-1"
+            color="neutral"
+            variant="ghost"
+            size="xl"
+            icon="i-fa7-solid:arrow-left"
+            class="flex-1 justify-center"
             @click="goBackFromResult"
           />
-          <Button
+          <UButton
             :label="isEditMode ? t('common.update') : t('common.save')"
-            icon="fas fa-check"
+            icon="i-fa7-solid:check"
+            size="xl"
             :disabled="!canSubmit"
             :loading="matchLoading"
-            class="flex-1"
+            class="flex-1 justify-center"
             @click="submitMatch"
           />
         </div>

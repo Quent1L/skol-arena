@@ -10,9 +10,8 @@
       }}
     </h1>
 
-    <Card>
-      <template #content>
-        <Stepper :value="activeStep" linear class="w-full">
+    <UCard variant="soft">
+        <div class="w-full">
           <!-- Custom step progress indicator -->
           <div class="flex items-center mb-6">
             <template v-for="(step, idx) in visibleSteps" :key="step.value">
@@ -25,10 +24,10 @@
                   :class="[
                     'rounded-full border-2 w-10 h-10 inline-flex items-center justify-center transition-colors',
                     activeStep === step.value
-                      ? 'bg-primary text-primary-contrast border-primary'
+                      ? 'bg-primary text-inverted border-primary'
                       : idx < activeStepIndex
                         ? 'bg-primary/10 border-primary text-primary cursor-pointer'
-                        : 'border-surface-300 dark:border-surface-600 text-surface-400',
+                        : 'border-slate-300 dark:border-slate-600 text-slate-400',
                   ]"
                 >
                   <i :class="step.icon" />
@@ -38,24 +37,24 @@
                 v-if="idx < visibleSteps.length - 1"
                 :class="[
                   'flex-1 h-0.5 transition-colors',
-                  idx < activeStepIndex ? 'bg-primary' : 'bg-surface-300 dark:bg-surface-600',
+                  idx < activeStepIndex ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600',
                 ]"
               />
             </template>
           </div>
 
           <!-- Step 1: Quand -->
-          <StepPanel value="when">
+          <div v-if="activeStep === 'when'">
             <WhenStep
               v-model:played-at="formState.playedAt"
               :min-date="tournamentMinDate"
               :max-date="tournamentMaxDate"
               @next="goToStep('when', nextStepAfterWhen)"
             />
-          </StepPanel>
+          </div>
 
           <!-- Step 2a: Participants (flex) -->
-          <StepPanel v-if="isFlexMode" value="participants">
+          <div v-if="isFlexMode && activeStep === 'participants'">
             <ParticipantsStep
               v-model:all-player-ids="formState.allPlayerIds"
               :tournament-id="props.tournamentId"
@@ -68,10 +67,10 @@
               @previous="activeStep = 'when'"
               @next="goToStepFromParticipants"
             />
-          </StepPanel>
+          </div>
 
           <!-- Step 2b: Teams (static) -->
-          <StepPanel v-if="isStaticMode" value="teams">
+          <div v-if="isStaticMode && activeStep === 'teams'">
             <h3 class="text-base font-semibold mb-4">
               {{ t('matchFormStepperDesktop.teamsStep') }}
             </h3>
@@ -85,10 +84,10 @@
               @previous="activeStep = 'when'"
               @next="goToStepAfterTeams"
             />
-          </StepPanel>
+          </div>
 
           <!-- Step 3: Composition (flex, >2 players) -->
-          <StepPanel v-if="isFlexMode && needsComposition" value="composition">
+          <div v-if="isFlexMode && needsComposition && activeStep === 'composition'">
             <CompositionStep
               v-model:sides="formState.sides"
               v-model:all-player-ids="formState.allPlayerIds"
@@ -103,10 +102,10 @@
               @previous="activeStep = 'participants'"
               @next="goToStepAfterComposition"
             />
-          </StepPanel>
+          </div>
 
           <!-- Step 4: Result -->
-          <StepPanel value="result">
+          <div v-if="activeStep === 'result'">
             <ResultStep
               v-model:sides="formState.sides"
               v-model:winner="formState.winnerPosition"
@@ -129,10 +128,9 @@
               @previous="goBackFromResult"
               @create="submitMatch"
             />
-          </StepPanel>
-        </Stepper>
-      </template>
-    </Card>
+          </div>
+        </div>
+    </UCard>
   </div>
 </template>
 

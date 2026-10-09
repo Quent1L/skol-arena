@@ -4,24 +4,24 @@
        as the `when` step: it is always the one the wizard opens on. -->
   <div class="sk-shimmer">
     <template v-if="variant === 'mobile'">
-      <div class="flex flex-col h-screen bg-surface-50 dark:bg-surface-900">
+      <div class="flex flex-col h-screen bg-slate-50 dark:bg-slate-900">
         <!-- Sticky header -->
         <div
-          class="sticky top-0 z-10 bg-surface-0 dark:bg-surface-800 border-b dark:border-surface-700 px-4 py-3 flex items-center gap-2 shadow-sm"
+          class="sticky top-0 z-10 bg-white dark:bg-slate-800 border-b dark:border-slate-700 px-4 py-3 flex items-center gap-2 shadow-sm"
         >
-          <Skeleton shape="circle" size="2.5rem" />
-          <Skeleton height="1.25rem" width="9rem" />
+          <USkeleton class="size-[2.5rem] rounded-full" />
+          <USkeleton class="h-[1.25rem] w-[9rem]" />
         </div>
 
         <!-- Step progress indicator -->
         <div
-          class="px-4 pt-3 pb-2 bg-surface-0 dark:bg-surface-800 border-b dark:border-surface-700"
+          class="px-4 pt-3 pb-2 bg-white dark:bg-slate-800 border-b dark:border-slate-700"
         >
           <div class="flex items-center">
             <template v-for="(step, idx) in STEP_COUNT_RANGE" :key="step">
-              <Skeleton shape="circle" size="2.25rem" class="flex-none!" />
+              <USkeleton class="size-[2.25rem] rounded-full flex-none!" />
               <div v-if="idx < STEP_COUNT - 1" class="flex-1 px-1">
-                <Skeleton height="0.125rem" />
+                <USkeleton class="h-[0.125rem] w-full" />
               </div>
             </template>
           </div>
@@ -30,58 +30,58 @@
         <!-- Step body -->
         <div class="flex-1 overflow-y-auto px-4 pb-28">
           <div class="mt-4 flex flex-col gap-6 pt-4">
-            <Skeleton height="1.25rem" width="7rem" />
+            <USkeleton class="h-[1.25rem] w-[7rem]" />
             <div class="flex flex-col gap-2">
-              <Skeleton height="1rem" width="5rem" />
-              <Skeleton height="2.75rem" />
+              <USkeleton class="h-[1rem] w-[5rem]" />
+              <USkeleton class="h-[2.75rem] w-full" />
             </div>
             <div class="flex flex-col gap-2">
-              <Skeleton height="1rem" width="6rem" />
-              <Skeleton height="2.75rem" />
+              <USkeleton class="h-[1rem] w-[6rem]" />
+              <USkeleton class="h-[2.75rem] w-full" />
             </div>
           </div>
         </div>
 
         <!-- Fixed bottom action bar -->
         <div
-          class="sk-action-bar fixed bottom-0 left-0 right-0 px-4 py-3 bg-surface-0 dark:bg-surface-800 border-t dark:border-surface-700"
+          class="sk-action-bar fixed bottom-0 left-0 right-0 px-4 py-3 bg-white dark:bg-slate-800 border-t dark:border-slate-700"
         >
-          <Skeleton height="2.75rem" />
+          <USkeleton class="h-[2.75rem] w-full" />
         </div>
       </div>
     </template>
 
     <template v-else>
       <div class="max-w-2xl mx-auto p-4 sm:p-6">
-        <Skeleton height="2rem" width="14rem" class="mb-6" />
+        <USkeleton class="h-[2rem] w-[14rem] mb-6" />
 
         <div
-          class="rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-800 p-6"
+          class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6"
         >
           <!-- Step progress indicator -->
           <div class="flex items-center mb-6">
             <template v-for="(step, idx) in STEP_COUNT_RANGE" :key="step">
-              <Skeleton shape="circle" size="2.5rem" class="flex-none!" />
+              <USkeleton class="size-[2.5rem] rounded-full flex-none!" />
               <div v-if="idx < STEP_COUNT - 1" class="flex-1 px-1">
-                <Skeleton height="0.125rem" />
+                <USkeleton class="h-[0.125rem] w-full" />
               </div>
             </template>
           </div>
 
           <!-- Step body -->
           <div class="flex flex-col gap-6 pt-4">
-            <Skeleton height="1.25rem" width="7rem" />
+            <USkeleton class="h-[1.25rem] w-[7rem]" />
             <div class="flex flex-col gap-2">
-              <Skeleton height="1rem" width="5rem" />
-              <Skeleton height="2.75rem" />
+              <USkeleton class="h-[1rem] w-[5rem]" />
+              <USkeleton class="h-[2.75rem] w-full" />
             </div>
             <div class="flex flex-col gap-2">
-              <Skeleton height="1rem" width="6rem" />
-              <Skeleton height="2.75rem" />
+              <USkeleton class="h-[1rem] w-[6rem]" />
+              <USkeleton class="h-[2.75rem] w-full" />
             </div>
 
             <div class="flex justify-end pt-2">
-              <Skeleton height="2.75rem" width="8rem" />
+              <USkeleton class="h-[2.75rem] w-[8rem]" />
             </div>
           </div>
         </div>

@@ -11,12 +11,13 @@
     <MatchFormSkeleton v-if="isLoading" :variant="isMobile ? 'mobile' : 'desktop'" />
 
     <div v-else-if="loadError" class="max-w-2xl mx-auto p-4 sm:p-6 flex flex-col gap-4">
-      <Message severity="error" :closable="false">{{ t('createMatchView.loadError') }}</Message>
+      <UAlert color="error" variant="subtle" :title="t('createMatchView.loadError')" />
       <div>
-        <Button
+        <UButton
           :label="t('createMatchView.retry')"
-          icon="fas fa-rotate-right"
-          outlined
+          icon="i-fa7-solid:rotate-right"
+          variant="outline"
+          size="lg"
           @click="loadForm"
         />
       </div>
@@ -43,8 +44,6 @@
 import { ref, computed, provide, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import Button from 'primevue/button'
-import Message from 'primevue/message'
 import { useAppToast } from '@/composables/useAppToast'
 import { useViewport } from '@/composables/useViewport'
 import MatchFormSkeleton from '@/components/match/MatchFormSkeleton.vue'
