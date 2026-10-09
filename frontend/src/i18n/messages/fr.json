@@ -1078,16 +1078,6 @@
     "removeAvatarTooltip": "Retirer la photo de profil",
     "avatarRemovedSummary": "Photo de profil retirée"
   },
-  "outcomeSelector": {
-    "draw": "Match nul",
-    "outcomeReasonLabel": "Raison du résultat",
-    "outcomeReasonPlaceholder": "Sélectionner une raison",
-    "outcomeTypeLabel": "Type de résultat",
-    "outcomeTypePlaceholder": "Sélectionner un type",
-    "teamA": "Équipe A",
-    "teamB": "Équipe B",
-    "winnerLabel": "Vainqueur"
-  },
   "outcomeTypeStats": {
     "drawSuffix": "N",
     "lossSuffix": "D",
@@ -1790,14 +1780,6 @@
       "noLimit": "Aucune limite"
     },
     "title": "Contraintes de score"
-  },
-  "scoreInput": {
-    "enterScore": "Saisir le score",
-    "matchDateTime": "Date et heure du match",
-    "schedule": "Programmer",
-    "scoreA": "Score A",
-    "scoreB": "Score B",
-    "vs": "VS"
   },
   "settings": {
     "account": {

@@ -1,35 +1,46 @@
 <template>
-  <Dialog
-    v-model:visible="visible"
-    modal
-    :style="{ width: '100%', height: '100%', margin: 0, maxHeight: '100%' }"
-    :pt="{
-      root: { class: 'h-full w-full border-0 rounded-none' },
-      header: { class: 'border-b p-4' },
-      content: { class: 'p-0 h-full' },
-      footer: { class: 'border-t p-4' },
-    }"
-    :showHeader="false"
-  >
+  <UModal v-model:open="visible" fullscreen :title="title" :ui="{ content: 'divide-y-0' }">
+    <template #content>
     <div class="flex flex-col h-full bg-white dark:bg-gray-900">
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
         <h3 class="text-lg font-semibold">{{ title }}</h3>
-        <Button icon="fas fa-times" text rounded @click="close" />
+        <UButton
+          icon="i-fa7-solid:xmark"
+          variant="ghost"
+          size="lg"
+          class="rounded-full"
+          :aria-label="t('common.close')"
+          @click="close"
+        />
       </div>
 
       <!-- Search -->
       <div class="p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-        <IconField>
-          <InputText v-model="searchQuery" :placeholder="t('playerPickerDialog.searchPlaceholder')" class="w-full" />
-          <InputIcon :class="inputFilterIcon" @click="searchQuery = ''" />
-        </IconField>
+        <UInput
+          v-model="searchQuery"
+          :placeholder="t('playerPickerDialog.searchPlaceholder')"
+          size="xl"
+          class="w-full"
+        >
+          <template #trailing>
+            <UButton
+              color="neutral"
+              variant="link"
+              :icon="searchQuery ? 'i-fa7-solid:xmark' : 'i-fa7-solid:magnifying-glass'"
+              :aria-label="t('whenStep.clearButton')"
+              :disabled="!searchQuery"
+              class="px-0"
+              @click="searchQuery = ''"
+            />
+          </template>
+        </UInput>
       </div>
 
       <!-- Player List -->
       <div class="flex-1 overflow-y-auto p-2">
         <div v-if="searching" class="flex justify-center p-8">
-          <ProgressSpinner style="width: 32px; height: 32px" />
+          <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
         </div>
         <div v-else-if="displayedPlayers.length === 0" class="text-center p-8 text-gray-500">
           {{ t('playerPickerDialog.noResults') }}
@@ -65,10 +76,11 @@
 
       <!-- Footer (multi-select only) -->
       <div v-if="!single" class="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-900">
-        <Button :label="t('playerPickerDialog.done')" class="w-full" @click="close" />
+        <UButton :label="t('playerPickerDialog.done')" size="xl" block @click="close" />
       </div>
     </div>
-  </Dialog>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
@@ -76,7 +88,6 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { matchesSearch } from '@/utils/StringUtils'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
-import ProgressSpinner from 'primevue/progressspinner'
 
 interface Player {
   id: string
@@ -142,12 +153,6 @@ watch(searchQuery, (q) => {
       searching.value = false
     }
   }, 300)
-})
-
-const inputFilterIcon = computed(() => {
-  const query = searchQuery.value.toLowerCase().trim()
-  if (!query) return 'fas fa-search'
-  return 'fas fa-x cursor-pointer'
 })
 
 function isSelected(id: string) {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { MatchSideInput } from '@skol-arena/shared/types/index'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithUi } from '@/test-support/mount'
 import CompositionStep from '../CompositionStep.vue'
 import { DUEL_TAPS } from '@/composables/match/useComposeEasterEggs'
 
@@ -16,7 +16,7 @@ const ids = ['p1', 'p2', 'p3', 'p4']
 const standings = Object.fromEntries(ids.map((id) => [id, { mmr: 1500, isPlacement: false }]))
 
 function mountStep(props: Record<string, unknown> = {}) {
-  return mountWithPrime(CompositionStep, {
+  return mountWithUi(CompositionStep, {
     props: {
       tournamentId: 't1',
       playerNames: { p1: 'Ann', p2: 'Bob', p3: 'Cid', p4: 'Dan' },
@@ -29,7 +29,7 @@ function mountStep(props: Record<string, unknown> = {}) {
 }
 
 function lastSides(wrapper: ReturnType<typeof mountStep>) {
-  const emitted = wrapper.emitted('update:sides')!
+  const emitted = wrapper.findComponent(CompositionStep).emitted('update:sides')!
   return emitted[emitted.length - 1][0] as MatchSideInput[]
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithUi } from '@/test-support/mount'
 import WhenStep from '../WhenStep.vue'
 
 vi.mock('vue-i18n', () => ({
@@ -7,7 +7,14 @@ vi.mock('vue-i18n', () => ({
 }))
 
 function mountStep(props: Record<string, unknown> = {}) {
-  return mountWithPrime(WhenStep, { props })
+  return mountWithUi(WhenStep, { props })
+}
+
+const emitted = (wrapper: ReturnType<typeof mountStep>, event: string) =>
+  wrapper.findComponent(WhenStep).emitted(event)
+
+function nextButton(wrapper: ReturnType<typeof mountStep>) {
+  return wrapper.findAll('button').find((b) => b.text().includes('whenStep.next'))
 }
 
 function quickCard(wrapper: ReturnType<typeof mountStep>, label: string) {
@@ -33,9 +40,9 @@ describe('WhenStep', () => {
     vi.setSystemTime(new Date('2026-07-06T14:00:00'))
     const wrapper = mountStep()
     await quickCard(wrapper, 'whenStep.now').trigger('click')
-    const emitted = wrapper.emitted('update:playedAt')
-    expect(emitted).toHaveLength(1)
-    expect((emitted![0][0] as Date).getTime()).toBe(new Date('2026-07-06T14:00:00').getTime())
+    const events = emitted(wrapper, 'update:playedAt')
+    expect(events).toHaveLength(1)
+    expect((events![0][0] as Date).getTime()).toBe(new Date('2026-07-06T14:00:00').getTime())
     vi.useRealTimers()
   })
 
@@ -44,31 +51,31 @@ describe('WhenStep', () => {
     vi.setSystemTime(new Date('2026-07-06T14:00:00'))
     const wrapper = mountStep()
     await quickCard(wrapper, 'whenStep.minus5').trigger('click')
-    const date = wrapper.emitted('update:playedAt')![0][0] as Date
+    const date = emitted(wrapper, 'update:playedAt')![0][0] as Date
     expect(date.getTime()).toBe(new Date('2026-07-06T13:55:00').getTime())
     vi.useRealTimers()
   })
 
-  it('choosing "custom" shows the DatePicker', async () => {
+  it('choosing "custom" shows the date input', async () => {
     const wrapper = mountStep()
-    expect(wrapper.findComponent({ name: 'DatePicker' }).exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'InputDate' }).exists()).toBe(false)
     await quickCard(wrapper, 'whenStep.custom').trigger('click')
-    expect(wrapper.findComponent({ name: 'DatePicker' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'InputDate' }).exists()).toBe(true)
   })
 
   it('next button disabled with no date, emits next with a date', async () => {
     const wrapper = mountStep()
-    const next = wrapper.find('button.p-button')
-    expect(next.attributes('disabled')).toBeDefined()
+    expect(nextButton(wrapper)!.attributes('disabled')).toBeDefined()
 
     await wrapper.setProps({ playedAt: new Date() })
+    const next = nextButton(wrapper)!
     expect(next.attributes('disabled')).toBeUndefined()
     await next.trigger('click')
-    expect(wrapper.emitted('next')).toHaveLength(1)
+    expect(emitted(wrapper, 'next')).toHaveLength(1)
   })
 
   it('hideNavigation hides the next button', () => {
     const wrapper = mountStep({ hideNavigation: true })
-    expect(wrapper.find('button.p-button').exists()).toBe(false)
+    expect(nextButton(wrapper)).toBeUndefined()
   })
 })

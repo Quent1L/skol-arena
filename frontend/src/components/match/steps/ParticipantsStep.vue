@@ -4,26 +4,29 @@
 
     <div>
       <!-- Desktop: AutoComplete -->
-      <AutoComplete
+      <UInputMenu
         v-if="!isMobile"
-        v-model="searchQuery"
-        :suggestions="filteredPlayers"
-        option-label="displayName"
+        v-model="pickedPlayer"
+        v-model:search-term="searchQuery"
+        :items="filteredPlayers"
+        label-key="displayName"
+        ignore-filter
+        open-on-click
         :placeholder="t('participantsStep.searchPlaceholder')"
-        class="w-full"
         :disabled="loadingPlayers"
-        dropdown
-        @complete="searchPlayers"
-        @item-select="addPlayer"
+        size="xl"
+        class="w-full"
+        @update:model-value="addPlayer"
       />
 
       <!-- Mobile: open picker dialog -->
-      <Button
+      <UButton
         v-else
         :label="t('participantsStep.addPlayers')"
-        icon="fas fa-user-plus"
-        outlined
-        class="w-full"
+        icon="i-fa7-solid:user-plus"
+        variant="outline"
+        size="xl"
+        block
         :disabled="loadingPlayers"
         @click="pickerVisible = true"
       />
@@ -35,45 +38,43 @@
         <div
           v-for="playerId in allPlayerIdsModel"
           :key="playerId"
-          class="flex items-center pl-3 py-2 rounded-md bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 min-w-0"
+          class="flex items-center pl-3 py-2 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 min-w-0"
         >
           <PlayerAvatar :name="getPlayerName(playerId)" :player-id="playerId" size="sm" />
           <span class="text-sm truncate flex-1 ml-2">{{ getPlayerName(playerId) }}</span>
-          <Button
-            severity="danger"
-            outlined
-            text
-            class="p-0"
-            icon="fas fa-times"
+          <UButton
+            color="error"
+            variant="link"
+            icon="i-fa7-solid:xmark"
+            :aria-label="t('common.delete')"
             @click="removePlayer(playerId)"
-          >
-          </Button>
+          />
         </div>
       </div>
     </div>
 
     <div v-if="errors.length > 0" class="flex flex-col gap-2">
-      <Message v-for="err in errors" :key="err" severity="error" :closable="false">{{
-        err
-      }}</Message>
+      <UAlert v-for="err in errors" :key="err" color="error" variant="subtle" :title="err" />
     </div>
 
     <div v-if="warnings.length > 0" class="flex flex-col gap-2">
-      <Message v-for="w in warnings" :key="w" severity="warn" :closable="false">{{ w }}</Message>
+      <UAlert v-for="w in warnings" :key="w" color="warning" variant="subtle" :title="w" />
     </div>
 
     <div v-if="!hideNavigation" class="flex justify-between pt-2">
-      <Button
+      <UButton
         :label="t('participantsStep.previous')"
-        severity="secondary"
-        icon="fas fa-arrow-left"
+        color="neutral"
+        variant="ghost"
+        size="lg"
+        icon="i-fa7-solid:arrow-left"
         @click="emit('previous')"
       />
-      <Button
+      <UButton
         :label="props.nextLabel ?? t('participantsStep.next')"
-        :icon="props.nextLabel ? 'fas fa-calendar-check' : 'fas fa-arrow-right'"
-        :icon-pos="props.nextLabel ? undefined : 'right'"
-        :class="props.nextLabel ? 'bg-green-600 hover:bg-green-700' : ''"
+        :icon="props.nextLabel ? 'i-fa7-solid:calendar-check' : undefined"
+        :trailing-icon="props.nextLabel ? undefined : 'i-fa7-solid:arrow-right'"
+        size="lg"
         :loading="validating"
         :disabled="allPlayerIdsModel.length < 2 || errors.length > 0"
         @click="onNext"
@@ -91,18 +92,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { matchesSearch } from '@/utils/StringUtils'
-import Button from 'primevue/button'
-import AutoComplete from 'primevue/autocomplete'
-import Message from 'primevue/message'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import { useParticipantService } from '@/composables/participant.service'
 import { useMatchService } from '@/composables/match/match.service'
 import { useViewport } from '@/composables/useViewport'
 import PlayerPickerDialog from '@/components/match/mobile/PlayerPickerDialog.vue'
-import type { AutoCompleteCompleteEvent } from 'primevue/autocomplete'
 
 interface Player {
   id: string
@@ -134,8 +131,9 @@ const { validateParticipants } = useMatchService()
 const { isMobile } = useViewport()
 
 const allPlayers = ref<Player[]>([])
-const filteredPlayers = ref<Player[]>([])
 const searchQuery = ref('')
+/** Only a relay for the menu's selection: a pick is added, then cleared. */
+const pickedPlayer = ref<Player | undefined>()
 const loadingPlayers = ref(false)
 const validating = ref(false)
 const pickerVisible = ref(false)
@@ -163,18 +161,19 @@ watch(
   { immediate: true },
 )
 
-function searchPlayers(e: AutoCompleteCompleteEvent) {
-  filteredPlayers.value = allPlayers.value.filter(
-    (p) => matchesSearch(p.displayName, e.query) && !allPlayerIdsModel.value.includes(p.id),
-  )
-}
+const filteredPlayers = computed(() =>
+  allPlayers.value.filter(
+    (p) => matchesSearch(p.displayName, searchQuery.value) && !allPlayerIdsModel.value.includes(p.id),
+  ),
+)
 
-function addPlayer(event: { value: Player }) {
-  const player = event.value
+function addPlayer(player: Player | undefined) {
   if (player && !allPlayerIdsModel.value.includes(player.id)) {
     allPlayerIdsModel.value = [...allPlayerIdsModel.value, player.id]
   }
+  // After the menu has written its own label into the input.
   setTimeout(() => {
+    pickedPlayer.value = undefined
     searchQuery.value = ''
   }, 0)
 }

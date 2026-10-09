@@ -4,30 +4,28 @@
 
     <div class="flex flex-col gap-3">
       <div v-if="canCompose" class="flex gap-2">
-        <Button
+        <UButton
           :label="randomLabel"
-          severity="secondary"
-          outlined
-          class="flex-1 min-h-11 sm:flex-none sm:min-h-0"
+          color="neutral"
+          variant="outline"
+          size="lg"
+          class="flex-1 justify-center min-h-11 sm:flex-none sm:min-h-0"
           :class="{ [ARMED_CLASS]: armedKind === 'random' }"
           data-testid="compose-random"
           @click="applyComposition('random')"
         >
-          <template #icon="{ class: iconClass }">
-            <i
-              class="fa fa-dice"
-              :class="iconClass"
-              :style="{ transform: `rotate(${diceAngle}deg)` }"
-            />
+          <template #leading>
+            <i class="fa fa-dice" :style="{ transform: `rotate(${diceAngle}deg)` }" />
           </template>
-        </Button>
-        <Button
+        </UButton>
+        <UButton
           v-if="canBalance"
           :label="t('compositionStep.balanced')"
-          icon="fa fa-scale-balanced"
-          severity="secondary"
-          outlined
-          class="flex-1 min-h-11 sm:flex-none sm:min-h-0"
+          icon="i-fa7-solid:scale-balanced"
+          color="neutral"
+          variant="outline"
+          size="lg"
+          class="flex-1 justify-center min-h-11 sm:flex-none sm:min-h-0"
           :class="{ [ARMED_CLASS]: armedKind === 'balanced' }"
           data-testid="compose-balanced"
           @click="applyComposition('balanced')"
@@ -45,25 +43,25 @@
       </p>
       <p
         v-else-if="balanceSettled"
-        class="flex items-center gap-2 text-sm text-surface-500"
+        class="flex items-center gap-2 text-sm text-slate-500"
         role="status"
         data-testid="compose-balance-settled"
       >
         <i class="fa fa-circle-check text-green-600" />
         {{ t('compositionStep.balancedOnly') }}
       </p>
-      <p v-else class="text-sm text-surface-500">{{ t('compositionStep.instruction') }}</p>
+      <p v-else class="text-sm text-slate-500">{{ t('compositionStep.instruction') }}</p>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col gap-2">
         <div class="text-sm font-semibold">{{ t('compositionStep.teamA') }}</div>
         <div
-          class="relative min-h-20 rounded-lg border-2 border-dashed border-surface-300 dark:border-surface-600 p-3"
+          class="relative min-h-20 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 p-3"
         >
           <span
             v-if="playersA.length === 0"
-            class="absolute inset-0 flex items-center justify-center text-xs text-surface-400 pointer-events-none"
+            class="absolute inset-0 flex items-center justify-center text-xs text-slate-400 pointer-events-none"
             >{{ t('compositionStep.empty') }}</span
           >
           <VueDraggable
@@ -75,10 +73,10 @@
             <div
               v-for="player in playersA"
               :key="player.id"
-              class="flex items-center gap-2 rounded-md bg-surface-100 dark:bg-surface-800 px-3 py-2 cursor-grab select-none touch-none text-sm hover:bg-surface-200 dark:hover:bg-surface-700 hover:shadow-sm transition-colors duration-150"
+              class="flex items-center gap-2 rounded-md bg-slate-100 dark:bg-slate-800 px-3 py-2 cursor-grab select-none touch-none text-sm hover:bg-slate-200 dark:hover:bg-slate-700 hover:shadow-sm transition-colors duration-150"
               @contextmenu.prevent
             >
-              <i class="fas fa-grip-vertical text-surface-400 text-xs" />
+              <i class="fas fa-grip-vertical text-slate-400 text-xs" />
               <PlayerAvatar :name="player.displayName" :player-id="player.id" size="xs" />
               {{ player.displayName }}
             </div>
@@ -89,11 +87,11 @@
       <div class="flex flex-col gap-2">
         <div class="text-sm font-semibold">{{ t('compositionStep.teamB') }}</div>
         <div
-          class="relative min-h-20 rounded-lg border-2 border-dashed border-surface-300 dark:border-surface-600 p-3"
+          class="relative min-h-20 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 p-3"
         >
           <span
             v-if="playersB.length === 0"
-            class="absolute inset-0 flex items-center justify-center text-xs text-surface-400 pointer-events-none"
+            class="absolute inset-0 flex items-center justify-center text-xs text-slate-400 pointer-events-none"
             >{{ t('compositionStep.empty') }}</span
           >
           <VueDraggable
@@ -105,10 +103,10 @@
             <div
               v-for="player in playersB"
               :key="player.id"
-              class="flex items-center gap-2 rounded-md bg-surface-100 dark:bg-surface-800 px-3 py-2 cursor-grab select-none touch-none text-sm hover:bg-surface-200 dark:hover:bg-surface-700 hover:shadow-sm transition-colors duration-150"
+              class="flex items-center gap-2 rounded-md bg-slate-100 dark:bg-slate-800 px-3 py-2 cursor-grab select-none touch-none text-sm hover:bg-slate-200 dark:hover:bg-slate-700 hover:shadow-sm transition-colors duration-150"
               @contextmenu.prevent
             >
-              <i class="fas fa-grip-vertical text-surface-400 text-xs" />
+              <i class="fas fa-grip-vertical text-slate-400 text-xs" />
               <PlayerAvatar :name="player.displayName" :player-id="player.id" size="xs" />
               {{ player.displayName }}
             </div>
@@ -120,29 +118,27 @@
     <MatchBalanceBar v-if="balance" :balance="balance" :allow-draw="allowDraw" />
 
     <div v-if="emptySide" class="text-sm">
-      <Message severity="error" :closable="false">
-        {{ t('compositionStep.emptySideError') }}
-      </Message>
+      <UAlert color="error" variant="subtle" :title="t('compositionStep.emptySideError')" />
     </div>
 
     <div v-if="errors.length > 0" class="flex flex-col gap-2">
-      <Message v-for="err in errors" :key="err" severity="error" :closable="false">{{
-        err
-      }}</Message>
+      <UAlert v-for="err in errors" :key="err" color="error" variant="subtle" :title="err" />
     </div>
 
     <div v-if="!hideNavigation" class="flex justify-between pt-2">
-      <Button
+      <UButton
         :label="t('compositionStep.previous')"
-        severity="secondary"
-        icon="fas fa-arrow-left"
+        color="neutral"
+        variant="ghost"
+        size="lg"
+        icon="i-fa7-solid:arrow-left"
         @click="emit('previous')"
       />
-      <Button
+      <UButton
         :label="props.nextLabel ?? t('compositionStep.next')"
-        :icon="props.nextLabel ? 'fas fa-calendar-check' : 'fas fa-arrow-right'"
-        :icon-pos="props.nextLabel ? undefined : 'right'"
-        :class="props.nextLabel ? 'bg-green-600 hover:bg-green-700' : ''"
+        :icon="props.nextLabel ? 'i-fa7-solid:calendar-check' : undefined"
+        :trailing-icon="props.nextLabel ? undefined : 'i-fa7-solid:arrow-right'"
+        size="lg"
         :loading="validating"
         :disabled="emptySide || errors.length > 0"
         @click="onNext"
@@ -154,8 +150,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Button from 'primevue/button'
-import Message from 'primevue/message'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import MatchBalanceBar from '@/components/match/MatchBalanceBar.vue'

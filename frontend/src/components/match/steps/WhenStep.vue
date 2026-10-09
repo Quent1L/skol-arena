@@ -11,7 +11,7 @@
         :class="
           selectedQuick === card.key
             ? 'border-primary bg-primary/10 text-primary'
-            : 'border-surface-200 dark:border-surface-700 hover:border-primary/50'
+            : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'
         "
         @click="selectQuick(card.key)"
       >
@@ -24,50 +24,60 @@
       <label for="when-custom-date" class="text-sm font-medium">{{
         t('whenStep.dateTimeLabel')
       }}</label>
-      <DatePicker
-        v-model="customDate"
-        input-id="when-custom-date"
-        show-time
-        hour-format="24"
-        icon-display="input"
-        showIcon
-        showButtonBar
-        :min-date="minDate ?? undefined"
-        :max-date="maxDate ?? undefined"
-        manualInput
-        @update:model-value="onCustomDate"
+      <UInputDate
+        id="when-custom-date"
+        v-model="customDateTime"
+        granularity="minute"
+        :hour-cycle="24"
+        :min-value="minValue"
+        :max-value="maxValue"
+        size="xl"
+        class="w-full"
       >
-        <template #buttonbar="{ clearCallback }">
-          <div class="flex justify-between w-full">
-            <Button
-              size="small"
-              severity="secondary"
-              :label="t('whenStep.now')"
-              variant="text"
-              @click="
-                () => {
-                  customDate = new Date()
-                  onCustomDate(customDate)
-                }
-              "
+        <template #trailing>
+          <UPopover>
+            <UButton
+              color="neutral"
+              variant="link"
+              size="sm"
+              icon="i-fa7-solid:calendar"
+              :aria-label="t('whenStep.dateTimeLabel')"
+              class="px-0"
             />
-            <Button
-              size="small"
-              severity="secondary"
-              :label="t('whenStep.clearButton')"
-              variant="text"
-              @click="clearCallback"
-            />
-          </div>
+            <template #content>
+              <UCalendar
+                v-model="customDay"
+                :min-value="minValue"
+                :max-value="maxValue"
+                class="p-2"
+              />
+            </template>
+          </UPopover>
         </template>
-      </DatePicker>
+      </UInputDate>
+      <div class="flex justify-between">
+        <UButton
+          size="sm"
+          color="neutral"
+          variant="ghost"
+          :label="t('whenStep.now')"
+          @click="onCustomDate((customDate = new Date()))"
+        />
+        <UButton
+          size="sm"
+          color="neutral"
+          variant="ghost"
+          :label="t('whenStep.clearButton')"
+          @click="onCustomDate((customDate = null))"
+        />
+      </div>
     </div>
 
     <div v-if="!hideNavigation" class="flex justify-end pt-2">
-      <Button
+      <UButton
         :label="t('whenStep.next')"
-        icon="fas fa-arrow-right"
-        icon-pos="right"
+        trailing-icon="i-fa7-solid:arrow-right"
+        size="lg"
         :disabled="!playedAtModel"
         @click="emit('next')"
       />
@@ -78,8 +88,12 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Button from 'primevue/button'
-import DatePicker from 'primevue/datepicker'
+import type { DateValue } from '@internationalized/date'
+import {
+  fromCalendarDateTime,
+  toCalendarDate,
+  toCalendarDateTime,
+} from '@/utils/calendar-date'
 
 type QuickKey = 'now' | 'minus5' | 'minus10' | 'custom'
 
@@ -93,7 +107,7 @@ interface Emits {
   (e: 'next'): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 const { t } = useI18n()
 
@@ -129,6 +143,31 @@ function selectQuick(key: QuickKey) {
 function onCustomDate(date: Date | null) {
   playedAtModel.value = date
 }
+
+const minValue = computed(() => toCalendarDateTime(props.minDate))
+const maxValue = computed(() => toCalendarDateTime(props.maxDate))
+
+/** The typed date and time; the input emits on every segment, each one a valid instant. */
+const customDateTime = computed({
+  get: () => toCalendarDateTime(customDate.value),
+  set: (value: DateValue | undefined) => {
+    customDate.value = fromCalendarDateTime(value) ?? null
+    onCustomDate(customDate.value)
+  },
+})
+
+/** The calendar picks the day only: the time already typed is kept. */
+const customDay = computed({
+  get: () => toCalendarDate(customDate.value),
+  set: (value: DateValue | undefined) => {
+    if (!value) return
+    const time = customDate.value ?? new Date()
+    const date = new Date(time)
+    date.setFullYear(value.year, value.month - 1, value.day)
+    customDate.value = date
+    onCustomDate(date)
+  },
+})
 
 function triggerNext() {
   if (playedAtModel.value) emit('next')

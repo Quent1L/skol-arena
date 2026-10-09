@@ -1078,16 +1078,6 @@
     "removeAvatarTooltip": "Remove profile picture",
     "avatarRemovedSummary": "Profile picture removed"
   },
-  "outcomeSelector": {
-    "draw": "Draw",
-    "outcomeReasonLabel": "Outcome reason",
-    "outcomeReasonPlaceholder": "Select a reason",
-    "outcomeTypeLabel": "Outcome type",
-    "outcomeTypePlaceholder": "Select a type",
-    "teamA": "Team A",
-    "teamB": "Team B",
-    "winnerLabel": "Winner"
-  },
   "outcomeTypeStats": {
     "drawSuffix": "D",
     "lossSuffix": "L",
@@ -1790,14 +1780,6 @@
       "noLimit": "No limit"
     },
     "title": "Score constraints"
-  },
-  "scoreInput": {
-    "enterScore": "Enter score",
-    "matchDateTime": "Match date and time",
-    "schedule": "Schedule",
-    "scoreA": "Score A",
-    "scoreB": "Score B",
-    "vs": "VS"
   },
   "settings": {
     "account": {

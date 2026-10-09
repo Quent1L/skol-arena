@@ -16,18 +16,18 @@
           :class="
             winnerModel === side.position
               ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-              : 'border-surface-200 dark:border-surface-700 hover:border-surface-400 dark:hover:border-surface-500'
+              : 'border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500'
           "
           @click="winnerModel = side.position"
         >
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-surface-500">{{
+            <span class="text-xs font-semibold text-slate-500">{{
               t('resultStep.team', { number: idx + 1 })
             }}</span>
             <span class="flex items-center gap-2">
               <span
                 v-if="balance"
-                class="rounded-full bg-surface-100 dark:bg-surface-800 px-2 py-0.5 text-xs font-semibold"
+                class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-semibold"
                 :title="t('matchBalance.title')"
                 >{{ idx === 0 ? sidePercents.a : sidePercents.b }}%</span
               >
@@ -52,15 +52,15 @@
           :class="
             winnerModel === 0
               ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
-              : 'border-surface-200 dark:border-surface-700 hover:border-surface-400 dark:hover:border-surface-500'
+              : 'border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500'
           "
           @click="winnerModel = 0"
         >
           <i
-            class="fa fa-handshake text-surface-400"
+            class="fa fa-handshake text-slate-400"
             :class="winnerModel === 0 ? 'text-yellow-500' : ''"
           />
-          <span class="text-xs font-semibold text-surface-500">{{ t('resultStep.draw') }}</span>
+          <span class="text-xs font-semibold text-slate-500">{{ t('resultStep.draw') }}</span>
         </button>
       </div>
     </div>
@@ -70,39 +70,37 @@
       <label for="result-outcome-type" class="text-sm font-medium">{{
         t('resultStep.outcomeType')
       }}</label>
-      <Select
+      <USelectMenu
+        id="result-outcome-type"
         v-model="outcomeTypeIdModel"
-        input-id="result-outcome-type"
-        :options="outcomeTypes"
-        option-label="name"
-        option-value="id"
+        :items="outcomeTypes"
+        value-key="id"
+        label-key="name"
         :placeholder="t('resultStep.selectOutcomeType')"
-        class="w-full"
         :loading="loadingOutcomeTypes"
-        @change="onOutcomeTypeChange"
+        :search-input="false"
+        size="xl"
+        class="w-full"
+        @update:model-value="onOutcomeTypeChange"
       >
-        <template v-if="showMmrMultiplier" #value="{ placeholder }">
-          <div v-if="selectedOutcomeType" class="flex items-center gap-2">
+        <template v-if="showMmrMultiplier && selectedOutcomeType" #default>
+          <span class="flex items-center gap-2">
             <span>{{ selectedOutcomeType.name }}</span>
             <span
-              class="rounded-full bg-surface-100 dark:bg-surface-800 px-2 py-0.5 text-xs font-semibold"
+              class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-semibold"
               :title="t('resultStep.mmrMultiplier')"
               >{{ formatMmrMultiplier(selectedOutcomeType.mmrMultiplier) }}</span
             >
-          </div>
-          <span v-else>{{ placeholder }}</span>
+          </span>
         </template>
-        <template v-if="showMmrMultiplier" #option="{ option }">
-          <div class="flex w-full items-center justify-between gap-3">
-            <span>{{ option.name }}</span>
-            <span
-              class="rounded-full bg-surface-100 dark:bg-surface-800 px-2 py-0.5 text-xs font-semibold"
-              :title="t('resultStep.mmrMultiplier')"
-              >{{ formatMmrMultiplier(option.mmrMultiplier) }}</span
-            >
-          </div>
+        <template v-if="showMmrMultiplier" #item-trailing="{ item }">
+          <span
+            class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-semibold"
+            :title="t('resultStep.mmrMultiplier')"
+            >{{ formatMmrMultiplier(item.mmrMultiplier) }}</span
+          >
         </template>
-      </Select>
+      </USelectMenu>
     </div>
 
     <!-- Outcome reason -->
@@ -110,15 +108,17 @@
       <label for="result-outcome-reason" class="text-sm font-medium">{{
         t('resultStep.reason')
       }}</label>
-      <Select
+      <USelectMenu
+        id="result-outcome-reason"
         v-model="outcomeReasonIdModel"
-        input-id="result-outcome-reason"
-        :options="filteredOutcomeReasons"
-        option-label="name"
-        option-value="id"
+        :items="filteredOutcomeReasons"
+        value-key="id"
+        label-key="name"
         :placeholder="t('resultStep.selectReason')"
-        class="w-full"
         :loading="loadingOutcomeReasons"
+        :search-input="false"
+        size="xl"
+        class="w-full"
       />
     </div>
 
@@ -127,19 +127,21 @@
       <span class="text-sm font-medium"
         >{{ t('resultStep.score') }} <span class="text-red-500">*</span></span
       >
-      <Message v-if="scoreInstructions" severity="info" :closable="false">{{
-        scoreInstructions
-      }}</Message>
+      <UAlert v-if="scoreInstructions" color="info" variant="subtle" :title="scoreInstructions" />
       <div class="flex items-center justify-center gap-8">
         <div v-for="(side, idx) in sidesModel" :key="side.position" class="text-center">
-          <div class="text-xs text-surface-500 mb-2">
+          <div class="text-xs text-slate-500 mb-2">
             {{ t('resultStep.team', { number: idx + 1 }) }}
           </div>
-          <InputNumber
+          <UInputNumber
             :model-value="scorePerSideModel[side.position] ?? 0"
             :min="minScore ?? 0"
             :max="maxScore ?? undefined"
-            input-class="w-20 text-center"
+            :increment="false"
+            :decrement="false"
+            size="xl"
+            class="w-20"
+            :ui="{ base: 'text-center px-2' }"
             @update:model-value="(v) => setScore(side.position, v ?? 0)"
           />
         </div>
@@ -147,24 +149,30 @@
     </div>
 
     <div v-if="validationMessages.length > 0" class="flex flex-col gap-2">
-      <Message v-for="msg in validationMessages" :key="msg" severity="warn" :closable="false">{{
-        msg
-      }}</Message>
+      <UAlert
+        v-for="msg in validationMessages"
+        :key="msg"
+        color="warning"
+        variant="subtle"
+        :title="msg"
+      />
     </div>
 
     <div v-if="!hideNavigation" class="flex justify-between pt-2">
-      <Button
+      <UButton
         :label="t('resultStep.previous')"
-        severity="secondary"
-        icon="fas fa-arrow-left"
+        color="neutral"
+        variant="ghost"
+        size="lg"
+        icon="i-fa7-solid:arrow-left"
         @click="emit('previous')"
       />
-      <Button
+      <UButton
         :label="submitLabel || t('resultStep.create')"
-        icon="fas fa-check"
+        icon="i-fa7-solid:check"
+        size="lg"
         :loading="loading"
         :disabled="!canCreate"
-        class="bg-green-600 hover:bg-green-700"
         @click="emit('create')"
       />
     </div>
@@ -174,11 +182,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Button from 'primevue/button'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
-import Select from 'primevue/select'
-import InputNumber from 'primevue/inputnumber'
-import Message from 'primevue/message'
 import { outcomeTypeApi } from '@/composables/outcome-type.api'
 import { outcomeReasonApi } from '@/composables/outcome-reason.api'
 import { tournamentApi } from '@/composables/tournament/tournament.api'

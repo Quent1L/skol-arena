@@ -4,44 +4,47 @@
       <label :for="`teams-side-${side.position}`" class="text-sm font-medium">
         {{ t('teamsStep.team', { number: idx + 1 }) }} <span class="text-red-500">*</span>
       </label>
-      <Select
-        :input-id="`teams-side-${side.position}`"
-        :model-value="side.teamId"
-        :options="availableTeamsFor(side.position)"
-        option-label="name"
-        option-value="id"
+      <USelectMenu
+        :id="`teams-side-${side.position}`"
+        :model-value="side.teamId ?? undefined"
+        :items="availableTeamsFor(side.position)"
+        value-key="id"
+        label-key="name"
         :placeholder="t('teamsStep.selectTeam')"
+        size="xl"
         class="w-full"
         @update:model-value="(val) => setTeam(side.position, val)"
       />
       <div v-if="side.teamId" class="flex flex-wrap gap-1 mt-1">
-        <Chip
+        <UBadge
           v-for="member in teamMembers(side.teamId)"
           :key="member.id"
           :label="member.user.displayName"
-          class="text-xs"
+          color="neutral"
+          variant="soft"
+          class="rounded-full"
         />
       </div>
     </div>
 
     <div v-if="errors.length > 0" class="flex flex-col gap-2">
-      <Message v-for="err in errors" :key="err" severity="error" :closable="false">{{
-        err
-      }}</Message>
+      <UAlert v-for="err in errors" :key="err" color="error" variant="subtle" :title="err" />
     </div>
 
     <div v-if="!hideNavigation" class="flex justify-between pt-2">
-      <Button
+      <UButton
         :label="t('teamsStep.previous')"
-        severity="secondary"
-        icon="fas fa-arrow-left"
+        color="neutral"
+        variant="ghost"
+        size="lg"
+        icon="i-fa7-solid:arrow-left"
         @click="emit('previous')"
       />
-      <Button
+      <UButton
         :label="props.nextLabel ?? t('teamsStep.next')"
-        :icon="props.nextLabel ? 'fas fa-calendar-check' : 'fas fa-arrow-right'"
-        :icon-pos="props.nextLabel ? undefined : 'right'"
-        :class="props.nextLabel ? 'bg-green-600 hover:bg-green-700' : ''"
+        :icon="props.nextLabel ? 'i-fa7-solid:calendar-check' : undefined"
+        :trailing-icon="props.nextLabel ? undefined : 'i-fa7-solid:arrow-right'"
+        size="lg"
         :loading="validating"
         :disabled="!canProceed"
         @click="onNext"
@@ -53,10 +56,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Button from 'primevue/button'
-import Select from 'primevue/select'
-import Chip from 'primevue/chip'
-import Message from 'primevue/message'
 import { useMatchService } from '@/composables/match/match.service'
 import type { ClientTeam, MatchSideInput } from '@skol-arena/shared/types/index'
 
