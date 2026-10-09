@@ -81,7 +81,10 @@ export default defineConfig({
         // they are the only asset a page still served by the previous worker fetches from
         // the network — where their content-hashed filename no longer exists after a
         // deployment that changed the font bytes. Icons then render as tofu until reload.
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // woff2 only: every @font-face lists it before its woff fallback, and every
+        // browser able to run a service worker reads woff2, so the woff files are never
+        // requested — precaching them would only download them for nothing.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
       },
       devOptions: {
         // Disabled during e2e runs: the dev service worker caches bundles and

@@ -24,7 +24,7 @@ const chart = shallowRef<Chart | null>(null)
 
 async function render() {
   if (!canvas.value) return
-  const { default: ChartJs } = await import('chart.js/auto')
+  const { default: ChartJs } = await import('./chart-setup')
   chart.value?.destroy()
   // The canvas may have been unmounted while chart.js was loading.
   if (!canvas.value) return

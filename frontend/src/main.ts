@@ -1,16 +1,22 @@
 import '@/assets/css/tailwind-related.css'
 import '@/assets/css/main.css'
-import '@fortawesome/fontawesome-free/css/all.min.css'
+// Solid only: the app and the icon picker (scripts/generate-fa-icons.mjs) never use the
+// brands or regular styles, and `all.min.css` would pull their fonts into the precache.
+import '@fortawesome/fontawesome-free/css/fontawesome.min.css'
+import '@fortawesome/fontawesome-free/css/solid.min.css'
 // Curated Iconify icons compiled to `icf icf-<set>--<name>` classes (scripts/generate-iconify-icons.mjs).
 import '@/assets/css/iconify-icons.css'
-import '@fontsource/exo-2/900.css'
-import '@fontsource/rajdhani/700.css'
+// Latin subset only: the default entry points declare every subset (cyrillic, greek,
+// vietnamese, devanagari…) and the precache downloads all of them regardless of
+// unicode-range. A glyph outside Latin falls back to the system font.
+import '@fontsource/exo-2/latin-900.css'
+import '@fontsource/rajdhani/latin-700.css'
 // Backs the --font-headline / --font-body tokens declared in tailwind-related.css.
 // Without these the `font-headline` utility silently falls back to system sans.
-import '@fontsource/space-grotesk/500.css'
-import '@fontsource/space-grotesk/700.css'
-import '@fontsource/manrope/400.css'
-import '@fontsource/manrope/600.css'
+import '@fontsource/space-grotesk/latin-500.css'
+import '@fontsource/space-grotesk/latin-700.css'
+import '@fontsource/manrope/latin-400.css'
+import '@fontsource/manrope/latin-600.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
