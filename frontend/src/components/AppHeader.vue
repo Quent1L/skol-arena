@@ -46,7 +46,9 @@
                   <span
                     v-if="showWhatsNew && whatsNew.hasUnseen.value"
                     class="unseen-dot top-0 right-0 ring-2 ring-white dark:ring-gray-900"
+                    :class="{ invisible: dotFlight.inFlight.value }"
                     data-testid="avatar-whats-new-dot"
+                    data-whats-new-target
                   ></span>
                 </span>
                 <span class="hidden sm:block text-sm font-medium">
@@ -101,6 +103,7 @@ import NotificationDropdown from './NotificationDropdown.vue'
 import SkolLogo from '@/components/brand/SkolLogo.vue'
 import PlayerAvatar from './PlayerAvatar.vue'
 import { useWhatsNew } from '@/composables/whats-new/useWhatsNew'
+import { useWhatsNewDotFlight } from '@/composables/whats-new/dot-flight'
 
 const { t } = useI18n()
 
@@ -126,6 +129,7 @@ const showBackButton = computed(
 )
 
 const whatsNew = useWhatsNew()
+const dotFlight = useWhatsNewDotFlight()
 // A kiosk is a shared screen, not a person catching up on the news.
 const showWhatsNew = computed(() => appUser.value?.role !== 'kiosk')
 // The badge alone says nothing to a screen reader.

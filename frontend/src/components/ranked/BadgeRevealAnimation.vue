@@ -42,11 +42,15 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { BadgeAnimationResponse } from '@skol-arena/shared'
+import { holdScreen } from '@/composables/useScreenTakeover'
 
 const { t } = useI18n()
 
 defineProps<{ badge: BadgeAnimationResponse }>()
 defineEmits<{ (e: 'close'): void }>()
+
+// A full-screen moment: secondary messages wait for it to close.
+holdScreen()
 
 const show = ref(false)
 onMounted(() => {

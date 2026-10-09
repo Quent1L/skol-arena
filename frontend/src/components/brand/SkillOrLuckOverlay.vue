@@ -174,6 +174,7 @@ import {
   type LogoVariant,
 } from './logo-paths'
 import type { EasterEggVariant } from '@/composables/useEasterEgg'
+import { holdScreenWhile } from '@/composables/useScreenTakeover'
 
 /** How long the whole thing runs before it bows out on its own. */
 const AUTO_DISMISS_MS = 2600
@@ -186,6 +187,9 @@ const props = withDefaults(defineProps<{ visible: boolean; variant?: EasterEggVa
   variant: 'classic',
 })
 const emit = defineEmits<{ close: [] }>()
+
+// A full-screen moment: secondary messages wait for it to close.
+holdScreenWhile(() => props.visible)
 
 const instanceId = useId()
 

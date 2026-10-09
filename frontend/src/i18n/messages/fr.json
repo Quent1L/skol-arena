@@ -2340,6 +2340,9 @@
       "ranked": "Ranked"
     }
   },
+  "updateNotice": {
+    "done": "Mise à jour effectuée"
+  },
   "updateOverlay": {
     "continueAnyway": "Continuer sans attendre",
     "doneSubtitle": "L'application vient d'être mise à jour.",

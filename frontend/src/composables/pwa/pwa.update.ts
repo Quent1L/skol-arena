@@ -61,15 +61,27 @@ const downloadTotal = ref<number | null>(null)
  * and the user gets no way out of it. Resolved at detection.
  */
 const updateForced = ref(false)
+/**
+ * The apply routine shows the blocking overlay: the update is mandatory, or the user
+ * has a real download to wait out. A routine handover is a bare reload — the page
+ * looks like it is loading, and the discreet notice explains it once it is back.
+ */
+const applyShown = ref(false)
 /** Version to announce as freshly installed, null when there is nothing to announce. */
 const confirmedVersion = ref<string | null>(null)
+/**
+ * Version a routine update just moved to, announced by the discreet pill rather than
+ * the full-screen confirmation. Null when there is nothing to announce.
+ */
+const updateNotice = ref<string | null>(null)
 
 /**
  * The overlay is the apply routine made visible — unless the user waved it away —
  * plus the confirmation shown once on the other side of the reload.
  */
 const overlayVisible = computed(
-  () => (isApplying.value && !deferred.value) || confirmedVersion.value !== null,
+  () =>
+    (isApplying.value && applyShown.value && !deferred.value) || confirmedVersion.value !== null,
 )
 
 /** True once a deployment is detected. Only a reload clears it. */
@@ -163,6 +175,11 @@ function reloadLoopDetected(version: string): boolean {
   return attempts?.version === version && attempts.count >= MAX_RELOAD_ATTEMPTS
 }
 
+/** The discreet notice has played out. */
+export function clearUpdateNotice(): void {
+  updateNotice.value = null
+}
+
 /* -------------------------------------------------------------------------- */
 /* Detection                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -236,10 +253,21 @@ export function consumeUpdateConfirmation(): string | null {
   return __APP_VERSION__
 }
 
-/** Holds the confirmation screen up long enough to read, then hands over to the app. */
-export async function announceUpdate(): Promise<void> {
+/**
+ * Says the app was just updated. A mandatory update — the jump from the previous
+ * version crossed the floor of the bundle now running — holds the full-screen
+ * confirmation up long enough to read, then hands over to the app. A routine one only
+ * raises the discreet notice and returns at once: it must not delay the boot.
+ */
+export async function announceUpdate(minVersion: string | null = __MIN_VERSION__): Promise<void> {
+  const previous = readLastVersion()
   const version = consumeUpdateConfirmation()
   if (!version) return
+
+  if (!previous || !isVersionBelowMin(previous, minVersion)) {
+    updateNotice.value = version
+    return
+  }
 
   updatePhase.value = 'done'
   confirmedVersion.value = version
@@ -372,6 +400,9 @@ async function prepareWorker(): Promise<boolean> {
   if (controllerTakenOver.value) return true
 
   updatePhase.value = registration.waiting ? 'applying' : 'downloading'
+  // Waiting on a download is the one routine case worth a screen: without it the
+  // navigation would just hang, with no sign of why.
+  if (!registration.waiting) applyShown.value = true
 
   // Always revalidate, even when a worker is already waiting: it may be left
   // over from an earlier deployment. Letting that one take over would strand us
@@ -426,6 +457,7 @@ export async function shouldApplyAtBoot(): Promise<boolean> {
 
 function stopApplying(): void {
   isApplying.value = false
+  applyShown.value = false
   updatePhase.value = 'idle'
 }
 
@@ -443,6 +475,7 @@ export async function applyUpdate(targetUrl?: string): Promise<boolean> {
 
   const deferredAtEntry = deferred.value
   isApplying.value = true
+  applyShown.value = updateForced.value
   updatePhase.value = 'applying'
 
   const target = new URL(targetUrl ?? window.location.href, window.location.origin).href
@@ -472,8 +505,11 @@ export async function applyUpdate(targetUrl?: string): Promise<boolean> {
     return false
   }
 
-  // The floor keeps the overlay from just flashing by on the fast path.
-  await delay(Math.max(0, UPDATE_OVERLAY_MIN_MS - (Date.now() - startedAt)))
+  // The floor keeps the overlay from just flashing by on the fast path. Nothing to
+  // read when it was never shown: reload right away.
+  if (applyShown.value) {
+    await delay(Math.max(0, UPDATE_OVERLAY_MIN_MS - (Date.now() - startedAt)))
+  }
 
   recordReloadAttempt(pendingVersion ?? 'unknown')
   // Everything still in flight is about to be cut off. Say so, or each aborted
@@ -534,6 +570,7 @@ export function usePWAUpdate() {
     updatePending: readonly(updatePending),
     updateForced: readonly(updateForced),
     confirmedVersion: readonly(confirmedVersion),
+    updateNotice: readonly(updateNotice),
     isApplying: readonly(isApplying),
     updatePhase: readonly(updatePhase),
     downloadProgress: readonly(downloadProgress),
@@ -543,6 +580,7 @@ export function usePWAUpdate() {
     checkVersion,
     checkVersionThrottled,
     announceUpdate,
+    clearUpdateNotice,
     applyUpdate,
     shouldApplyAtBoot,
     dismissUpdate,

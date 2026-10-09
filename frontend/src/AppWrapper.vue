@@ -9,6 +9,7 @@
         </Transition>
       </RouterView>
       <PwaInstallBanner />
+      <UpdateNotice />
     </NotificationsInit>
   </div>
 </template>

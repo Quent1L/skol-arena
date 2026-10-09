@@ -116,7 +116,7 @@ describe('pwa.update', () => {
   })
 
   describe('post-update confirmation', () => {
-    it("says nothing on the very first launch", async () => {
+    it('says nothing on the very first launch', async () => {
       const { consumeUpdateConfirmation } = await loadModule()
 
       expect(consumeUpdateConfirmation()).toBeNull()
@@ -158,13 +158,14 @@ describe('pwa.update', () => {
       expect(consumeUpdateConfirmation()).toBe(__APP_VERSION__)
     })
 
-    it("holds the screen long enough to read it, then hands back control", async () => {
+    it('holds the screen long enough to read it, then hands back control', async () => {
       localStorage.setItem('skol.lastVersion', '0.0.1')
       vi.useFakeTimers()
       const { announceUpdate, usePWAUpdate } = await loadModule()
       const { confirmedVersion, updatePhase, overlayVisible } = usePWAUpdate()
 
-      const announced = announceUpdate()
+      // 0.0.1 is below this floor: the jump was a mandatory update.
+      const announced = announceUpdate('1.0.0')
       await vi.advanceTimersByTimeAsync(0)
       expect(confirmedVersion.value).toBe(__APP_VERSION__)
       expect(updatePhase.value).toBe('done')
@@ -175,6 +176,31 @@ describe('pwa.update', () => {
 
       expect(confirmedVersion.value).toBeNull()
       expect(overlayVisible.value).toBe(false)
+    })
+  })
+
+  describe('announceUpdate after a routine update', () => {
+    it('raises the discreet notice and returns at once', async () => {
+      localStorage.setItem('skol.lastVersion', '0.0.1')
+      const { announceUpdate, usePWAUpdate } = await loadModule()
+      const { confirmedVersion, updateNotice, overlayVisible, clearUpdateNotice } = usePWAUpdate()
+
+      await announceUpdate(null)
+
+      expect(updateNotice.value).toBe(__APP_VERSION__)
+      expect(confirmedVersion.value).toBeNull()
+      expect(overlayVisible.value).toBe(false)
+      clearUpdateNotice()
+      expect(updateNotice.value).toBeNull()
+    })
+
+    it('says nothing when the version has not changed', async () => {
+      localStorage.setItem('skol.lastVersion', __APP_VERSION__)
+      const { announceUpdate, usePWAUpdate } = await loadModule()
+
+      await announceUpdate(null)
+
+      expect(usePWAUpdate().updateNotice.value).toBeNull()
     })
   })
 
@@ -235,10 +261,7 @@ describe('pwa.update', () => {
     })
 
     it('gives up after two unsuccessful reloads on the same version', async () => {
-      sessionStorage.setItem(
-        'skol.updateReloads',
-        JSON.stringify({ version: '99.0.0', count: 2 }),
-      )
+      sessionStorage.setItem('skol.updateReloads', JSON.stringify({ version: '99.0.0', count: 2 }))
       stubFetch({ version: '99.0.0' })
       const { checkVersion, isUpdatePending } = await loadModule()
 
@@ -343,10 +366,7 @@ describe('pwa.update', () => {
     it('does not force a version that already failed to install', async () => {
       // The circuit breaker kicks in first: otherwise the user stays locked behind an
       // update that will never land.
-      sessionStorage.setItem(
-        'skol.updateReloads',
-        JSON.stringify({ version: '99.9.9', count: 2 }),
-      )
+      sessionStorage.setItem('skol.updateReloads', JSON.stringify({ version: '99.9.9', count: 2 }))
       stubFetch({ version: '99.9.9', minVersion: FORCING_MIN_VERSION })
       stubServiceWorker()
       const { checkVersion, isUpdateForcedPending } = await loadModule()
@@ -391,7 +411,7 @@ describe('pwa.update', () => {
       expect(location.href).toBe(`${ORIGIN}/tournaments/42`)
     })
 
-    it("releases the app when the download truly fails, without looping", async () => {
+    it('releases the app when the download truly fails, without looping', async () => {
       // The only escape hatch from a mandatory update: offline, the app must
       // stay usable instead of being condemned.
       const installing = createInstallingWorker()
@@ -472,7 +492,7 @@ describe('pwa.update', () => {
       expect(location.href).toBe(`${ORIGIN}/tournaments/42`)
     })
 
-    it("reloads the current page when no destination is provided", async () => {
+    it('reloads the current page when no destination is provided', async () => {
       stubServiceWorker()
       const location = stubLocation()
       vi.useFakeTimers()
@@ -485,18 +505,38 @@ describe('pwa.update', () => {
       expect(location.reload).toHaveBeenCalled()
     })
 
-    it("leaves time to read the overlay before reloading", async () => {
+    it('leaves time to read the overlay of a mandatory update before reloading', async () => {
       stubServiceWorker()
+      stubFetch({ version: '99.0.1', minVersion: FORCING_MIN_VERSION })
       const location = stubLocation()
+      const { applyUpdate, checkVersion, usePWAUpdate } = await loadModule()
+      await checkVersion()
       vi.useFakeTimers()
-      const { applyUpdate } = await loadModule()
+      const { overlayVisible } = usePWAUpdate()
 
       const applied = applyUpdate('/tournaments/42')
       await vi.advanceTimersByTimeAsync(1400)
+      expect(overlayVisible.value).toBe(true)
       expect(location.href).toBe(`${ORIGIN}/`)
 
       await vi.advanceTimersByTimeAsync(100)
       await applied
+      expect(location.href).toBe(`${ORIGIN}/tournaments/42`)
+    })
+
+    it('reloads a routine update already downloaded straight away, without the overlay', async () => {
+      stubServiceWorker()
+      stubFetch({ version: '99.0.1' })
+      const location = stubLocation()
+      const { applyUpdate, checkVersion, usePWAUpdate } = await loadModule()
+      await checkVersion()
+      vi.useFakeTimers()
+      const { overlayVisible } = usePWAUpdate()
+
+      const applied = applyUpdate('/tournaments/42')
+      expect(overlayVisible.value).toBe(false)
+      await vi.advanceTimersByTimeAsync(0)
+      expect(await applied).toBe(true)
       expect(location.href).toBe(`${ORIGIN}/tournaments/42`)
     })
 
@@ -532,7 +572,7 @@ describe('pwa.update', () => {
       expect(location.href).toBe(`${ORIGIN}/tournaments/42`)
     })
 
-    it("never reloads while the old worker still controls the page", async () => {
+    it('never reloads while the old worker still controls the page', async () => {
       // Regression: reloading here would serve the old bundle from the precache, hence
       // a new version mismatch, hence a new overlay — the infinite loop.
       const installing = createInstallingWorker()
@@ -584,7 +624,7 @@ describe('pwa.update', () => {
       expect(location.href).toBe(`${ORIGIN}/tournaments/42`)
     })
 
-    it("exposes isApplying during the operation to drive the overlay", async () => {
+    it('exposes isApplying during the operation to drive the overlay', async () => {
       stubServiceWorker()
       stubLocation()
       vi.useFakeTimers()
@@ -601,7 +641,7 @@ describe('pwa.update', () => {
   })
 
   describe('dismissUpdate', () => {
-    it("hides the overlay and leaves the page in place when the download finishes", async () => {
+    it('hides the overlay and leaves the page in place when the download finishes', async () => {
       const installing = createInstallingWorker()
       const stub = stubServiceWorker({ waiting: false, installing })
       const location = stubLocation()
@@ -662,7 +702,7 @@ describe('pwa.update', () => {
       expect(await applyUpdate('/tournaments/7')).toBe(false)
     })
 
-    it("resumes on its own when the worker lands long after the abandonment", async () => {
+    it('resumes on its own when the worker lands long after the abandonment', async () => {
       // A worker that finishes installing stays in `waiting` indefinitely: nothing
       // signals the new bundle's arrival once you've stopped watching for it.
       const installing = createInstallingWorker()

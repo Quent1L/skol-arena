@@ -134,6 +134,7 @@ import { useMmrBarPlayback, MMR_REVEAL_TIMING } from '@/composables/ranked/useMm
 import { useCountUp } from '@/composables/ui/useCountUp'
 import { useServerLabels } from '@/i18n/serverLabels'
 import MmrProgressBar from './MmrProgressBar.vue'
+import { holdScreen } from '@/composables/useScreenTakeover'
 
 const { t } = useI18n()
 const { tierName } = useServerLabels()
@@ -142,6 +143,9 @@ const props = defineProps<{
   event: MmrAnimationEventResponse
   tiers: ClientRankTier[]
 }>()
+
+// A full-screen moment: secondary messages wait for it to close.
+holdScreen()
 
 const emit = defineEmits<{ (e: 'close'): void }>()
 

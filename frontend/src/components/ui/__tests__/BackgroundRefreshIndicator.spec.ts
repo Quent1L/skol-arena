@@ -20,20 +20,20 @@ describe('BackgroundRefreshIndicator', () => {
     const wrapper = mountIndicator({ active: false, done: false })
 
     expect(wrapper.find('.refresh-bar').exists()).toBe(false)
-    expect(wrapper.find('.refresh-pill').exists()).toBe(false)
+    expect(wrapper.find('.status-pill').exists()).toBe(false)
   })
 
   it('shows the bar and the running label during a refresh', () => {
     const wrapper = mountIndicator({ active: true, done: false })
 
     expect(wrapper.find('.refresh-bar').exists()).toBe(true)
-    expect(wrapper.find('.refresh-pill').text()).toContain('Actualisation…')
+    expect(wrapper.find('.status-pill').text()).toContain('Actualisation…')
   })
 
   it('drops the bar and confirms once the refresh has landed', () => {
     const wrapper = mountIndicator({ active: false, done: true })
 
     expect(wrapper.find('.refresh-bar').exists()).toBe(false)
-    expect(wrapper.find('.refresh-pill').text()).toContain('Mis à jour')
+    expect(wrapper.find('.status-pill').text()).toContain('Mis à jour')
   })
 })

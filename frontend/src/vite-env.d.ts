@@ -13,6 +13,8 @@ interface WindowEventMap {
 declare const __APP_VERSION__: string
 /** Latest version with functional release notes, `''` when there are none. */
 declare const __NOTES_VERSION__: string
+/** MIN_VERSION when this bundle was built, `null` when there was none. */
+declare const __MIN_VERSION__: string | null
 
 declare module 'virtual:pwa-register' {
   export interface RegisterSWOptions {

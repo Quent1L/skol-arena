@@ -139,8 +139,9 @@ onMounted(async () => {
   }
 
   await minDelay
-  // Runs after the version check so it knows whether the update that just landed was
-  // a mandatory one. Nothing to announce on a normal boot: this returns immediately.
+  // A mandatory update that just landed holds its full-screen confirmation here; a
+  // routine one only raises the pill UpdateNotice plays once the shell is mounted.
+  // Nothing to announce on a normal boot: this returns immediately.
   await announceUpdate()
   isAppReady.value = true
 })

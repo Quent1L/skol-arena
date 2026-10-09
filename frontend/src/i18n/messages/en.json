@@ -2340,6 +2340,9 @@
       "ranked": "Ranked"
     }
   },
+  "updateNotice": {
+    "done": "Update installed"
+  },
   "updateOverlay": {
     "continueAnyway": "Continue anyway",
     "doneSubtitle": "The app has just been updated.",

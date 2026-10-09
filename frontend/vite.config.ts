@@ -30,6 +30,9 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(version),
     __NOTES_VERSION__: JSON.stringify(notesVersion),
+    // The floor this bundle shipped with: after an update, tells a mandatory jump from
+    // a routine one without waiting on the network.
+    __MIN_VERSION__: JSON.stringify(minVersion),
   },
   plugins: [
     {

@@ -15,6 +15,7 @@ import { useRouter } from 'vue-router'
 import { useRewindService } from '@/composables/ranked/rewind.service'
 import { useAuth } from '@/composables/useAuth'
 import SeasonRewind from './SeasonRewind.vue'
+import { holdScreenWhile } from '@/composables/useScreenTakeover'
 
 /**
  * Single place that owns opening a rewind: loading the bundle, stamping the
@@ -23,6 +24,9 @@ import SeasonRewind from './SeasonRewind.vue'
  * lifecycle — which is what keeps `opened` and `viewed` from drifting apart.
  */
 const props = defineProps<{ seasonId: string | null; open: boolean }>()
+
+// A full-screen moment: secondary messages wait for it to close.
+holdScreenWhile(() => props.open)
 const emit = defineEmits<{ (e: 'update:open', value: boolean): void }>()
 
 const router = useRouter()

@@ -148,6 +148,7 @@ import { buildMmrBarSegments, type MmrBarSegment } from '@/composables/ranked/mm
 import { useMmrBarPlayback, MMR_RECAP_TIMING } from '@/composables/ranked/useMmrBarPlayback'
 import { useCountUp } from '@/composables/ui/useCountUp'
 import { useServerLabels } from '@/i18n/serverLabels'
+import { holdScreen } from '@/composables/useScreenTakeover'
 
 const { t } = useI18n()
 const { tierName } = useServerLabels()
@@ -254,6 +255,9 @@ const summaryText = computed(() => {
 function formatMatchDate(date: Date) {
   return format(date, 'dd/MM HH:mm')
 }
+
+// A full-screen moment: secondary messages wait for it to close.
+holdScreen()
 
 onMounted(() => {
   if (segments.value.length) playback.play()
