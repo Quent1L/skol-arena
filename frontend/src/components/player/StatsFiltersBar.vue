@@ -12,23 +12,23 @@
         <i :class="showControls ? 'fa fa-chevron-up' : 'fa fa-chevron-down'" class="text-xs" />
       </button>
       <div v-if="activeFilterCount > 0 && !showControls" class="flex items-center gap-2 flex-wrap">
-        <Tag
+        <UBadge
           v-for="chip in activeFilterChips"
           :key="chip.key"
-          :value="chip.label"
-          severity="info"
-          class="text-xs"
+          :label="chip.label"
+          color="info"
+          variant="soft"
         />
       </div>
-      <Button
+      <UButton
         v-if="activeFilterCount > 0"
+        color="neutral"
+        variant="ghost"
         class="ml-auto"
         :label="t('statsFiltersBar.reset')"
-        severity="secondary"
-        icon="fa fa-rotate-left"
-        size="small"
-        text
+        icon="i-fa7-solid:rotate-left"
         @click="resetAll"
+        size="md"
       />
     </div>
 
@@ -45,14 +45,15 @@
             class="text-xs font-bold text-gray-400 uppercase tracking-wide"
             >{{ t('statsFiltersBar.discipline') }}</label
           >
-          <Select
+          <USelectMenu
+            id="sfb-discipline"
             v-model="selectedDisciplineId"
-            input-id="sfb-discipline"
-            :options="disciplineOptions"
-            option-label="label"
-            option-value="value"
+            :items="disciplineOptions"
+            value-key="value"
             :placeholder="t('statsFiltersBar.allOption')"
-            show-clear
+            :search-input="false"
+            size="lg"
+            :ui="{ content: 'min-w-fit' }"
             class="w-40"
           />
         </div>
@@ -62,38 +63,41 @@
             class="text-xs font-bold text-gray-400 uppercase tracking-wide"
             >{{ t('statsFiltersBar.tournament') }}</label
           >
-          <Select
+          <USelectMenu
+            id="sfb-tournament"
             v-model="selectedTournamentId"
-            input-id="sfb-tournament"
-            :options="tournamentOptions"
-            option-label="label"
-            option-value="value"
+            :items="tournamentOptions"
+            value-key="value"
             :placeholder="t('statsFiltersBar.allOption')"
-            show-clear
+            :search-input="false"
+            size="lg"
+            :ui="{ content: 'min-w-fit' }"
             class="max-w-240"
           >
-            <template #option="{ option }">
+            <template #item-label="{ item }">
               <div class="flex items-center justify-between w-full gap-2">
-                <span class="truncate">{{ option.label }}</span>
-                <Tag
-                  v-if="option.mode"
-                  :value="modeLabel(option.mode)"
-                  :severity="modeSeverity(option.mode)"
-                  class="shrink-0 text-xs"
+                <span class="truncate">{{ item.label }}</span>
+                <UBadge
+                  v-if="item.mode"
+                  :label="modeLabel(item.mode)"
+                  :color="modeColor(item.mode)"
+                  variant="soft"
+                  class="shrink-0"
                 />
               </div>
             </template>
-          </Select>
+          </USelectMenu>
         </div>
         <div class="flex flex-col gap-1">
           <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">{{
             t('statsFiltersBar.mode')
           }}</span>
-          <SelectButton
-            v-model="selectedMode"
-            :options="modeOptions"
-            option-label="label"
-            option-value="value"
+          <UTabs
+            v-model="selectedModeTab"
+            :items="tabItems(modeOptions)"
+            :content="false"
+            color="neutral"
+            :ui="TABS_UI"
           />
         </div>
       </template>
@@ -114,10 +118,11 @@
           >
             {{ selectedTournamentFull.disciplineName }}
           </span>
-          <Tag
+          <UBadge
             v-if="selectedTournamentFull?.mode"
-            :value="modeLabel(selectedTournamentFull.mode)"
-            :severity="modeSeverity(selectedTournamentFull.mode)"
+            :label="modeLabel(selectedTournamentFull.mode)"
+            :color="modeColor(selectedTournamentFull.mode)"
+            variant="soft"
           />
         </div>
       </template>
@@ -125,12 +130,8 @@
   </div>
 
   <!-- Mobile: drawer -->
-  <Drawer
-    v-model:visible="drawerVisible"
-    position="bottom"
-    :style="{ height: 'auto', maxHeight: '85vh', borderRadius: '1rem 1rem 0 0' }"
-    :header="t('statsFiltersBar.filters')"
-  >
+  <UDrawer v-model:open="drawerVisible" :title="t('statsFiltersBar.filters')" :ui="{ content: 'max-h-[85vh]' }">
+    <template #body>
     <div class="flex flex-col gap-5 pb-2">
       <!-- Mode A: editable draft controls -->
       <template v-if="!isDraftLocked">
@@ -138,52 +139,56 @@
           <label for="sfb-draft-discipline" class="text-sm font-medium">{{
             t('statsFiltersBar.discipline')
           }}</label>
-          <Select
+          <USelectMenu
+            id="sfb-draft-discipline"
             v-model="draftDisciplineId"
-            input-id="sfb-draft-discipline"
-            :options="disciplineOptions"
-            option-label="label"
-            option-value="value"
+            :items="disciplineOptions"
+            value-key="value"
             :placeholder="t('statsFiltersBar.allOption')"
+            :search-input="false"
+            size="lg"
+            :ui="{ content: 'min-w-fit' }"
             class="w-full"
-            show-clear
           />
         </div>
         <div class="flex flex-col gap-1">
           <label for="sfb-draft-tournament" class="text-sm font-medium">{{
             t('statsFiltersBar.tournament')
           }}</label>
-          <Select
+          <USelectMenu
+            id="sfb-draft-tournament"
             v-model="draftTournamentId"
-            input-id="sfb-draft-tournament"
-            :options="mobileTournamentOptions"
-            option-label="label"
-            option-value="value"
+            :items="mobileTournamentOptions"
+            value-key="value"
             :placeholder="t('statsFiltersBar.allOption')"
+            :search-input="false"
+            size="lg"
+            :ui="{ content: 'min-w-fit' }"
             class="w-full"
-            show-clear
           >
-            <template #option="{ option }">
+            <template #item-label="{ item }">
               <div class="flex items-center justify-between w-full gap-2">
-                <span class="truncate">{{ option.label }}</span>
-                <Tag
-                  v-if="option.mode"
-                  :value="modeLabel(option.mode)"
-                  :severity="modeSeverity(option.mode)"
-                  class="shrink-0 text-xs"
+                <span class="truncate">{{ item.label }}</span>
+                <UBadge
+                  v-if="item.mode"
+                  :label="modeLabel(item.mode)"
+                  :color="modeColor(item.mode)"
+                  variant="soft"
+                  class="shrink-0"
                 />
               </div>
             </template>
-          </Select>
+          </USelectMenu>
         </div>
         <div class="flex flex-col gap-1">
           <span class="text-sm font-medium">{{ t('statsFiltersBar.mode') }}</span>
-          <SelectButton
-            v-model="draftMode"
-            :options="mobileModeOptions"
-            option-label="label"
-            option-value="value"
+          <UTabs
+            v-model="draftModeTab"
+            :items="tabItems(mobileModeOptions)"
+            :content="false"
+            color="neutral"
             class="w-full"
+            :ui="TABS_UI"
           />
         </div>
       </template>
@@ -204,44 +209,44 @@
           >
             {{ draftTournamentFull.disciplineName }}
           </span>
-          <Tag
+          <UBadge
             v-if="draftTournamentFull?.mode"
-            :value="modeLabel(draftTournamentFull.mode)"
-            :severity="modeSeverity(draftTournamentFull.mode)"
+            :label="modeLabel(draftTournamentFull.mode)"
+            :color="modeColor(draftTournamentFull.mode)"
+            variant="soft"
           />
         </div>
       </template>
     </div>
+    </template>
 
     <template #footer>
       <div class="flex gap-3 pt-2">
-        <Button
+        <UButton
+          color="neutral"
+          variant="soft"
           :label="t('statsFiltersBar.reset')"
-          severity="secondary"
-          icon="fa fa-rotate-left"
-          class="flex-1"
+          icon="i-fa7-solid:rotate-left"
+          class="flex-1 justify-center"
           @click="resetDraft"
+          size="lg"
         />
-        <Button
+        <UButton
           :label="t('statsFiltersBar.apply')"
-          icon="fa fa-check"
-          class="flex-1"
+          icon="i-fa7-solid:check"
+          class="flex-1 justify-center"
           @click="applyDraft"
+          size="lg"
         />
       </div>
     </template>
-  </Drawer>
+  </UDrawer>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { PlayerTournamentOption, PlayerStatsFilters } from '@skol-arena/shared'
-import Select from 'primevue/select'
-import SelectButton from 'primevue/selectbutton'
-import Tag from 'primevue/tag'
-import Button from 'primevue/button'
-import Drawer from 'primevue/drawer'
 
 const props = defineProps<{
   availableTournaments: PlayerTournamentOption[]
@@ -347,12 +352,36 @@ function modeLabel(mode: string): string {
   return mode
 }
 
-function modeSeverity(mode: string): string {
+function modeColor(mode: string): 'info' | 'warning' | 'success' | 'neutral' {
   if (mode === 'championship') return 'info'
   if (mode === 'bracket') return 'warning'
   if (mode === 'ranked') return 'success'
-  return 'secondary'
+  return 'neutral'
 }
+
+/** Tabs need a string value: "all" stands for the undefined mode of the filters. */
+const ALL_MODES = 'all'
+const TABS_UI = {
+  list: 'bg-slate-950',
+  indicator: 'bg-slate-700',
+  trigger: 'data-[state=active]:text-highlighted',
+}
+
+function tabItems(options: { label: string; value: string | undefined }[]) {
+  return options.map((o) => ({ label: o.label, value: o.value ?? ALL_MODES }))
+}
+
+function modeTab(mode: { value: string | undefined }) {
+  return computed({
+    get: () => mode.value ?? ALL_MODES,
+    set: (value: string | number) => {
+      mode.value = value === ALL_MODES ? undefined : String(value)
+    },
+  })
+}
+
+const selectedModeTab = modeTab(selectedMode)
+const draftModeTab = modeTab(draftMode)
 
 const activeFilterCount = computed(
   () =>

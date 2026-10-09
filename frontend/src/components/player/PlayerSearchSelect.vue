@@ -1,36 +1,32 @@
 <template>
-  <AutoComplete
+  <UInputMenu
+    :id="inputId"
     v-model="selected"
-    :inputId="inputId"
-    :suggestions="suggestions"
-    option-label="displayName"
+    v-model:search-term="searchTerm"
+    :items="suggestions"
+    label-key="displayName"
+    by="id"
+    ignore-filter
     :placeholder="placeholder"
-    :delay="300"
-    force-selection
-    dropdown-mode="current"
+    size="xl"
     class="w-full"
-    @complete="onComplete"
-    @item-select="onSelect"
-    @clear="onClear"
+    @update:model-value="onSelect"
   >
-    <template #option="{ option }">
+    <template #item="{ item }">
       <div class="flex items-center gap-2">
-        <PlayerAvatar :name="option.displayName" :player-id="option.id" size="sm" shape="square" />
+        <PlayerAvatar :name="item.displayName" :player-id="item.id" size="sm" shape="square" />
         <div class="min-w-0">
-          <div class="font-medium text-white truncate">{{ option.displayName }}</div>
-          <div v-if="option.shortName" class="text-xs text-gray-400">{{ option.shortName }}</div>
+          <div class="font-medium text-white truncate">{{ item.displayName }}</div>
+          <div v-if="item.shortName" class="text-xs text-gray-400">{{ item.shortName }}</div>
         </div>
       </div>
     </template>
-  </AutoComplete>
+  </UInputMenu>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import AutoComplete, {
-  type AutoCompleteCompleteEvent,
-  type AutoCompleteItemSelectEvent,
-} from 'primevue/autocomplete'
+import { watchDebounced } from '@vueuse/core'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import { usePlayerComparisonService } from '@/composables/player/player.comparison.service'
 import type { PlayerProfile } from '@skol-arena/shared/types/index'
@@ -47,30 +43,33 @@ const emit = defineEmits<{
 
 const { searchPlayers } = usePlayerComparisonService()
 
-const selected = ref<PlayerProfile | null>(props.modelValue)
+const selected = ref<PlayerProfile | undefined>(props.modelValue ?? undefined)
+const searchTerm = ref('')
 const suggestions = ref<PlayerProfile[]>([])
 
 watch(
   () => props.modelValue,
   (value) => {
-    selected.value = value
+    selected.value = value ?? undefined
   },
 )
 
-async function onComplete(event: AutoCompleteCompleteEvent) {
-  const query = event.query.trim()
-  if (!query) {
-    suggestions.value = []
-    return
-  }
-  suggestions.value = await searchPlayers(query)
-}
+/** Server-side search, debounced like the former 300 ms autocomplete delay. */
+watchDebounced(
+  searchTerm,
+  async (term) => {
+    const query = term.trim()
+    // The menu writes the picked player's name back into the input: not a new search.
+    if (!query || query === selected.value?.displayName) {
+      suggestions.value = selected.value ? [selected.value] : []
+      return
+    }
+    suggestions.value = await searchPlayers(query)
+  },
+  { debounce: 300 },
+)
 
-function onSelect(event: AutoCompleteItemSelectEvent) {
-  emit('update:modelValue', event.value as PlayerProfile)
-}
-
-function onClear() {
-  emit('update:modelValue', null)
+function onSelect(value: PlayerProfile | undefined) {
+  emit('update:modelValue', value ?? null)
 }
 </script>

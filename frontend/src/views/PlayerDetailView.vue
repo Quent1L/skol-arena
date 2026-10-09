@@ -3,12 +3,14 @@
     <!-- Error state -->
     <div v-if="error && !player" class="text-center py-8">
       <p class="text-red-400">{{ error }}</p>
-      <Button
+      <UButton
+        color="neutral"
+        variant="soft"
         :label="t('playerDetailView.back')"
-        icon="fa fa-arrow-left"
-        severity="secondary"
+        icon="i-fa7-solid:arrow-left"
         class="mt-4"
         @click="router.back()"
+        size="lg"
       />
     </div>
 
@@ -17,12 +19,13 @@
       <div
         class="rounded-2xl bg-gray-800 px-3 py-4 md:px-6 md:py-5 flex items-center gap-2 md:gap-4"
       >
-        <Button
-          icon="fa fa-arrow-left"
-          severity="secondary"
-          text
+        <UButton
+          color="neutral"
+          variant="ghost"
+          icon="i-fa7-solid:arrow-left"
           @click="router.back()"
           class="shrink-0"
+          size="lg"
         />
         <button
           v-if="player && hasPhoto"
@@ -63,25 +66,35 @@
         </div>
         <div class="ml-auto shrink-0 flex items-center gap-2">
           <div v-if="canCompare" class="hidden md:block">
-            <Button
+            <UButton
+              color="info"
+              variant="outline"
               :label="t('playerDetailView.compare')"
-              icon="fa fa-scale-balanced"
-              outlined
-              severity="info"
+              icon="i-fa7-solid:scale-balanced"
               @click="goToCompare"
+              size="lg"
             />
           </div>
           <div v-if="canCompare" class="md:hidden">
-            <Button icon="fa fa-scale-balanced" severity="secondary" @click="goToCompare" />
+            <UButton
+              color="neutral"
+              variant="soft"
+              icon="i-fa7-solid:scale-balanced"
+              @click="goToCompare"
+              size="lg"
+            />
           </div>
           <div class="md:hidden">
-            <Button
-              icon="fa fa-filter"
-              severity="secondary"
-              @click="showFilterDrawer = true"
-              :badge="activeFilterCount > 0 ? String(activeFilterCount) : undefined"
-              badge-severity="info"
-            />
+            <UChip :show="activeFilterCount > 0" :text="activeFilterCount" color="info" size="3xl">
+              <UButton
+                color="neutral"
+                variant="soft"
+                icon="i-fa7-solid:filter"
+                size="lg"
+                :aria-label="t('statsFiltersBar.filters')"
+                @click="showFilterDrawer = true"
+              />
+            </UChip>
           </div>
         </div>
       </div>
@@ -114,7 +127,7 @@
 
       <!-- Loading -->
       <div v-if="loading || rankedLoading" class="flex justify-center py-12">
-        <ProgressSpinner />
+        <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
       </div>
 
       <!-- RANKED TOURNAMENT VIEW -->
@@ -381,8 +394,6 @@ import H2HRivalries from '@/components/player/H2HRivalries.vue'
 import PlayerBadges from '@/components/player/PlayerBadges.vue'
 import StatsFiltersBar from '@/components/player/StatsFiltersBar.vue'
 import { groupTournamentHistory } from '@/composables/player/stats-grouping'
-import Button from 'primevue/button'
-import ProgressSpinner from 'primevue/progressspinner'
 
 const { t } = useI18n()
 const route = useRoute()
