@@ -3,18 +3,18 @@
     <div class="flex-1">
       <div class="flex justify-between items-center mb-2">
         <div class="flex items-center gap-3">
-          <Badge :value="statusLabels[status]" :severity="statusSeverities[status]" />
-          <Badge :value="modeLabels[mode]" severity="info" class="bg-blue-100 text-blue-800" />
+          <UBadge :label="statusLabels[status]" :color="statusColors[status]" variant="solid" />
+          <UBadge :label="modeLabels[mode]" color="info" variant="solid" />
         </div>
 
         <div class="flex items-center gap-3">
-          <Button
+          <UButton
             v-if="isAuthenticated && !isParticipant && canJoin"
             :label="t('tournamentHeader.participate')"
-            icon="fa fa-user-plus"
-            @click="$emit('join')"
+            icon="i-fa7-solid:user-plus"
+            color="success"
             :loading="joining"
-            class="bg-green-600 hover:bg-green-700"
+            @click="$emit('join')"
           />
 
           <div
@@ -25,12 +25,13 @@
             <span class="font-medium">{{ t('tournamentHeader.alreadyRegistered') }}</span>
           </div>
 
-          <Button
+          <UButton
             v-if="canCreateMatch"
             :label="t('tournamentHeader.createMatch')"
-            icon="fa fa-plus"
+            icon="i-fa7-solid:plus"
+            color="info"
+            class="hidden md:flex"
             @click="emit('create-match')"
-            class="bg-blue-600 hover:bg-blue-700 hidden md:flex"
           />
           <OverflowMenuButton :items="items" />
         </div>
@@ -82,12 +83,12 @@ const statusLabels = computed<Record<string, string>>(() => ({
   cancelled: t('tournamentHeader.statusCancelled'),
 }))
 
-const statusSeverities: Record<string, 'secondary' | 'success' | 'warn' | 'info' | 'danger'> = {
-  draft: 'secondary',
+const statusColors: Record<string, 'neutral' | 'success' | 'warning' | 'info' | 'error'> = {
+  draft: 'neutral',
   open: 'success',
-  ongoing: 'warn',
+  ongoing: 'warning',
   finished: 'info',
-  cancelled: 'danger',
+  cancelled: 'error',
 }
 
 const modeLabels = computed<Record<TournamentMode, string>>(() => ({

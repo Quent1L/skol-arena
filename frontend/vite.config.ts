@@ -56,7 +56,12 @@ export default defineConfig({
       // The app is dark-only: main.ts sets the `dark` class, nothing should toggle it.
       colorMode: false,
       icon: { clientBundle: { scan: true } },
-      ui: { colors: { primary: 'violet', neutral: 'slate' } },
+      ui: {
+        colors: { primary: 'violet', neutral: 'slate' },
+        // Skeletons mostly sit inside slate-800 cards, which is the default bg-elevated:
+        // one step lighter keeps them visible there and on the page background alike.
+        skeleton: { base: 'animate-pulse rounded-md bg-accented/70' },
+      },
     }),
     vueDevTools({ launchEditor: 'webstorm' }),
     VitePWA({

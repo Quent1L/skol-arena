@@ -52,7 +52,7 @@ describe('TournamentDetailSkeleton', () => {
 describe('TournamentTabSkeleton', () => {
   it('gives each tab its own shape', () => {
     // Match cards, not list rows: the two do not stack the same way.
-    expect(mountTab('matches').find('.bg-surface-800').exists()).toBe(true)
+    expect(mountTab('matches').find('.bg-slate-800').exists()).toBe(true)
     expect(mountTab('participants').findAll('.rounded-xl').length).toBe(6)
     expect(mountTab('standings').findAll('.rounded-2xl').length).toBe(2)
     expect(mountTab('bracket').findAll('.min-w-32').length).toBe(3)

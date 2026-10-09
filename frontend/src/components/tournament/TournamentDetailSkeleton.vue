@@ -7,8 +7,8 @@
       <div
         class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-14 flex items-center px-4 shadow-sm gap-3"
       >
-        <Skeleton shape="circle" size="2.5rem" />
-        <Skeleton height="1rem" width="8rem" />
+        <USkeleton class="size-[2.5rem] rounded-full" />
+        <USkeleton class="h-[1rem] w-[8rem]" />
       </div>
       <div class="flex-1 p-4">
         <TournamentTabSkeleton :tab="tab" variant="mobile" />
@@ -22,12 +22,12 @@
           <template v-if="!tab || tab === 'infos'">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <Skeleton height="1.5rem" width="5rem" class="rounded-full!" />
-                <Skeleton height="1.5rem" width="4rem" class="rounded-full!" />
+                <USkeleton class="h-[1.5rem] w-[5rem] rounded-full!" />
+                <USkeleton class="h-[1.5rem] w-[4rem] rounded-full!" />
               </div>
-              <Skeleton shape="circle" size="2.5rem" />
+              <USkeleton class="size-[2.5rem] rounded-full" />
             </div>
-            <Skeleton height="2rem" width="70%" />
+            <USkeleton class="h-[2rem] w-[70%]" />
           </template>
 
           <TournamentTabSkeleton :tab="tab" variant="mobile" />
@@ -37,8 +37,8 @@
       <!-- MobileBottomNav -->
       <div class="fixed bottom-0 left-0 right-0 bg-gray-800 flex items-center px-2 z-50 sk-nav-bar">
         <div v-for="i in 4" :key="i" class="flex-1 flex flex-col items-center gap-1">
-          <Skeleton shape="circle" size="1.5rem" />
-          <Skeleton height="0.5rem" width="2.5rem" />
+          <USkeleton class="size-[1.5rem] rounded-full" />
+          <USkeleton class="h-[0.5rem] w-[2.5rem]" />
         </div>
       </div>
     </template>
@@ -47,15 +47,15 @@
       <div class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-6">
         <div class="max-w-5xl mx-auto">
           <div class="flex items-center gap-3 mb-4">
-            <Skeleton shape="circle" size="2.5rem" />
-            <Skeleton height="2rem" width="40%" />
+            <USkeleton class="size-[2.5rem] rounded-full" />
+            <USkeleton class="h-[2rem] w-[40%]" />
           </div>
-          <Skeleton height="1rem" width="20%" class="mb-1" />
+          <USkeleton class="h-[1rem] w-[20%] mb-1" />
         </div>
       </div>
       <div class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
         <div class="max-w-5xl mx-auto px-6">
-          <Skeleton height="3rem" />
+          <USkeleton class="h-[3rem] w-full" />
         </div>
       </div>
       <div class="max-w-6xl mx-auto px-6 py-6 min-h-[70vh]">

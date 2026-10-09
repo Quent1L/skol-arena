@@ -10,27 +10,35 @@
       >
         {{ greeting }}
       </h1>
-      <Button
-        v-if="canManageTournaments"
-        icon="fa fa-gears"
-        text
-        rounded
-        v-tooltip.top="t('tournamentsView.adminTooltip')"
-        :aria-label="t('tournamentsView.adminTooltip')"
-        @click="router.push('/admin')"
-      />
+      <UTooltip v-if="canManageTournaments" :text="t('tournamentsView.adminTooltip')">
+        <UButton
+          icon="i-fa7-solid:gears"
+          variant="ghost"
+          size="lg"
+          class="rounded-full"
+          :aria-label="t('tournamentsView.adminTooltip')"
+          to="/admin"
+        />
+      </UTooltip>
     </div>
 
     <RewindPromoCard />
 
-    <Message v-if="error" severity="error" :closable="true">{{ error }}</Message>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      :title="error"
+      close
+      @update:open="error = null"
+    />
 
     <!-- Loading skeleton, shaped like the sections it replaces -->
     <template v-if="isLoading">
       <div class="space-y-3">
-        <Skeleton width="12rem" height="1.25rem" />
+        <USkeleton class="h-[1.25rem] w-[12rem]" />
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-          <Skeleton v-for="i in 3" :key="i" height="10.5rem" class="rounded-xl!" />
+          <USkeleton v-for="i in 3" :key="i" class="h-[10.5rem] w-full rounded-xl!" />
         </div>
       </div>
     </template>
@@ -78,7 +86,7 @@
 
         <span
           v-if="modeFilters.length > 0 && disciplineFilters.length > 0"
-          class="h-5 w-px shrink-0 bg-surface-700/40"
+          class="h-5 w-px shrink-0 bg-slate-700/40"
           aria-hidden="true"
         />
 
@@ -100,7 +108,7 @@
         <button
           v-if="hasActiveFilters"
           type="button"
-          class="flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-surface-700/20 bg-surface-800 px-4 py-1.5 text-muted-color transition-all duration-150 active:scale-95"
+          class="flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-slate-700/20 bg-slate-800 px-4 py-1.5 text-muted transition-all duration-150 active:scale-95"
           @click="clearFilters"
         >
           <i class="fa fa-filter-circle-xmark text-xs"></i>
@@ -152,16 +160,16 @@
       <section v-if="archivedEvents.length > 0">
         <button
           type="button"
-          class="flex w-full cursor-pointer items-center gap-2 rounded-xl border border-surface-700/20 bg-surface-800 px-4 py-3 transition-colors hover:bg-surface-700"
+          class="flex w-full cursor-pointer items-center gap-2 rounded-xl border border-slate-700/20 bg-slate-800 px-4 py-3 transition-colors hover:bg-slate-700"
           :aria-expanded="archivesOpen"
           @click="archivesOpen = !archivesOpen"
         >
-          <i class="fa fa-box-archive text-muted-color" aria-hidden="true"></i>
+          <i class="fa fa-box-archive text-muted" aria-hidden="true"></i>
           <span class="text-sm font-semibold text-white">
             {{ t('tournamentsView.archives.toggle', { count: archivedEvents.length }) }}
           </span>
           <i
-            class="fa fa-chevron-down ml-auto text-xs text-muted-color transition-transform duration-200"
+            class="fa fa-chevron-down ml-auto text-xs text-muted transition-transform duration-200"
             :class="{ 'rotate-180': archivesOpen }"
             aria-hidden="true"
           ></i>
@@ -169,7 +177,7 @@
 
         <div
           v-if="archivesOpen"
-          class="mt-2 overflow-hidden rounded-xl border border-surface-700/20 bg-surface-800"
+          class="mt-2 overflow-hidden rounded-xl border border-slate-700/20 bg-slate-800"
         >
           <TournamentRow
             v-for="event in archivedEvents"
@@ -318,7 +326,7 @@ const showDiscover = computed(
 function chipClass(active: boolean): string {
   return active
     ? 'bg-primary border-primary text-primary-contrast'
-    : 'bg-surface-800 border-surface-700/20 text-muted-color'
+    : 'bg-slate-800 border-slate-700/20 text-muted'
 }
 
 function toggle(list: Ref<string[]>, key: string) {

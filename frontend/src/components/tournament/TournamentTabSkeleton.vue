@@ -8,48 +8,48 @@
         class="flex items-center justify-between p-4 sm:p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800"
       >
         <div class="flex items-center gap-3">
-          <Skeleton width="2.5rem" height="2.5rem" class="rounded-lg!" />
+          <USkeleton class="h-[2.5rem] w-[2.5rem] rounded-lg!" />
           <div class="space-y-1.5">
-            <Skeleton height="0.9rem" width="7rem" />
-            <Skeleton height="0.7rem" width="10rem" />
+            <USkeleton class="h-[0.9rem] w-[7rem]" />
+            <USkeleton class="h-[0.7rem] w-[10rem]" />
           </div>
         </div>
-        <Skeleton width="0.6rem" height="0.9rem" />
+        <USkeleton class="h-[0.9rem] w-[0.6rem]" />
       </div>
     </div>
     <div
       class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-6 space-y-2"
     >
-      <Skeleton height="0.85rem" />
-      <Skeleton height="0.85rem" />
-      <Skeleton height="0.85rem" width="60%" />
+      <USkeleton class="h-[0.85rem] w-full" />
+      <USkeleton class="h-[0.85rem] w-full" />
+      <USkeleton class="h-[0.85rem] w-[60%]" />
     </div>
   </div>
 
   <!-- Matches: the filter chips, then the card grid. -->
   <div v-else-if="kind === 'matches'">
     <div class="mb-4 flex gap-2">
-      <Skeleton v-for="i in 3" :key="i" height="2rem" width="6rem" class="rounded-full!" />
+      <USkeleton v-for="i in 3" :key="i" class="h-[2rem] w-[6rem] rounded-full!" />
     </div>
     <div :class="gridClass">
       <div
         v-for="i in cardCount"
         :key="i"
-        class="rounded-xl bg-surface-800 border border-surface-700/10 px-3 pt-2.5 pb-2 space-y-3"
+        class="rounded-xl bg-slate-800 border border-slate-700/10 px-3 pt-2.5 pb-2 space-y-3"
       >
         <div class="flex items-center justify-between">
-          <Skeleton height="0.7rem" width="4rem" />
-          <Skeleton height="0.7rem" width="3rem" />
+          <USkeleton class="h-[0.7rem] w-[4rem]" />
+          <USkeleton class="h-[0.7rem] w-[3rem]" />
         </div>
         <div class="flex items-center gap-2 pt-1">
           <div class="flex-1 flex flex-col items-center gap-1.5">
-            <Skeleton shape="circle" size="2rem" />
-            <Skeleton height="0.7rem" width="4rem" />
+            <USkeleton class="size-[2rem] rounded-full" />
+            <USkeleton class="h-[0.7rem] w-[4rem]" />
           </div>
-          <Skeleton height="1.6rem" width="3rem" />
+          <USkeleton class="h-[1.6rem] w-[3rem]" />
           <div class="flex-1 flex flex-col items-center gap-1.5">
-            <Skeleton shape="circle" size="2rem" />
-            <Skeleton height="0.7rem" width="4rem" />
+            <USkeleton class="size-[2rem] rounded-full" />
+            <USkeleton class="h-[0.7rem] w-[4rem]" />
           </div>
         </div>
       </div>
@@ -63,22 +63,22 @@
     <div
       v-for="group in 2"
       :key="group"
-      class="rounded-2xl overflow-hidden bg-surface-800 border border-surface-700/10"
+      class="rounded-2xl overflow-hidden bg-slate-800 border border-slate-700/10"
     >
       <div class="flex items-center gap-3 px-4 py-3">
-        <Skeleton shape="circle" size="2rem" />
-        <Skeleton height="1rem" width="7rem" />
+        <USkeleton class="size-[2rem] rounded-full" />
+        <USkeleton class="h-[1rem] w-[7rem]" />
       </div>
       <div
         v-for="row in 3"
         :key="row"
         class="flex items-center gap-3 px-4 py-2.5 border-t border-white/5"
       >
-        <Skeleton width="1.2rem" height="1rem" />
-        <Skeleton shape="circle" size="1.75rem" />
-        <Skeleton height="0.9rem" width="40%" />
+        <USkeleton class="h-[1rem] w-[1.2rem]" />
+        <USkeleton class="size-[1.75rem] rounded-full" />
+        <USkeleton class="h-[0.9rem] w-[40%]" />
         <div class="flex-1" />
-        <Skeleton height="0.9rem" width="2.5rem" />
+        <USkeleton class="h-[0.9rem] w-[2.5rem]" />
       </div>
     </div>
   </div>
@@ -90,35 +90,30 @@
       :key="i"
       class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800"
     >
-      <Skeleton shape="circle" size="2.25rem" />
+      <USkeleton class="size-[2.25rem] rounded-full" />
       <div class="space-y-1.5 flex-1">
-        <Skeleton height="0.9rem" width="45%" />
-        <Skeleton height="0.7rem" width="25%" />
+        <USkeleton class="h-[0.9rem] w-[45%]" />
+        <USkeleton class="h-[0.7rem] w-[25%]" />
       </div>
-      <Skeleton height="1.5rem" width="3rem" class="rounded-full!" />
+      <USkeleton class="h-[1.5rem] w-[3rem] rounded-full!" />
     </div>
   </div>
 
   <!-- Stats: the sub-tab switch, then the chart cards. -->
   <div v-else-if="kind === 'stats'" class="space-y-4">
     <div class="flex gap-2">
-      <Skeleton height="2rem" width="8rem" class="rounded-full!" />
-      <Skeleton height="2rem" width="8rem" class="rounded-full!" />
+      <USkeleton class="h-[2rem] w-[8rem] rounded-full!" />
+      <USkeleton class="h-[2rem] w-[8rem] rounded-full!" />
     </div>
     <div :class="gridClass">
-      <Skeleton v-for="i in cardCount" :key="i" height="11rem" class="rounded-xl!" />
+      <USkeleton v-for="i in cardCount" :key="i" class="h-[11rem] w-full rounded-xl!" />
     </div>
   </div>
 
   <!-- Bracket: rounds of match boxes, spaced as columns. -->
   <div v-else class="flex gap-4 overflow-hidden">
     <div v-for="round in 3" :key="round" class="flex-1 flex flex-col justify-around gap-4 min-w-32">
-      <Skeleton
-        v-for="box in 4 - round"
-        :key="box"
-        height="4.5rem"
-        class="rounded-xl!"
-      />
+      <USkeleton v-for="box in 4 - round" :key="box" class="h-[4.5rem] w-full rounded-xl!" />
     </div>
   </div>
 </template>
