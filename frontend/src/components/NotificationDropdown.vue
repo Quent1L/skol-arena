@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import NotificationList from './NotificationList.vue'
-import { useTemplateRef, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useNotificationService } from '@/composables/notification/notification.service'
@@ -8,7 +8,7 @@ import { useAppToast } from '@/composables/useAppToast'
 
 const { t } = useI18n()
 
-const popover = useTemplateRef('popover')
+const open = ref(false)
 const router = useRouter()
 const { notifications, unreadCount, hasDeletable, markAllAsRead, deleteAll } =
   useNotificationService()
@@ -18,12 +18,17 @@ const hasNotifications = computed(() => notifications.value.length > 0)
 const hasDeletableNotifs = hasDeletable
 const hasUnreadNotifs = computed(() => unreadCount.value > 0)
 
-function toggle(event: Event) {
-  popover.value?.toggle(event)
+/** On a phone the list gets a page of its own rather than a cramped popover. */
+function onOpenChange(value: boolean) {
+  if (value && window.innerWidth < 640) {
+    router.push('/notifications')
+    return
+  }
+  open.value = value
 }
 
 function close() {
-  popover.value?.hide()
+  open.value = false
 }
 
 function viewAll() {
@@ -68,50 +73,55 @@ async function handleDeleteAll() {
   }
 }
 
-defineExpose({ toggle })
 </script>
 
 <template>
-  <Popover ref="popover" :dismissable="true">
-    <div class="w-[90vw] sm:w-96">
-      <div class="flex justify-between items-center pb-3 border-b">
-        <h3 class="font-semibold">{{ t('notificationDropdown.title') }}</h3>
-        <div v-if="hasNotifications" class="flex items-center gap-1">
-          <span
-            v-tooltip.bottom="hasUnreadNotifs ? t('notificationDropdown.markAllAsRead') : t('notificationDropdown.allAlreadyRead')"
-            class="inline-flex"
-          >
-            <Button
-              text
-              rounded
-              size="small"
-              :disabled="!hasUnreadNotifs"
-              @click="handleMarkAllAsRead"
-              style="pointer-events: auto"
+  <UPopover :open="open" :content="{ align: 'end', sideOffset: 8 }" @update:open="onOpenChange">
+    <slot />
+
+    <template #content>
+      <div class="w-[90vw] sm:w-96 p-3">
+        <div class="flex justify-between items-center pb-3 border-b border-default">
+          <h3 class="font-semibold">{{ t('notificationDropdown.title') }}</h3>
+          <div v-if="hasNotifications" class="flex items-center gap-1">
+            <UTooltip
+              :text="hasUnreadNotifs ? t('notificationDropdown.markAllAsRead') : t('notificationDropdown.allAlreadyRead')"
             >
-              <i class="fas fa-check-double text-sm"></i>
-            </Button>
-          </span>
-          <span
-            v-tooltip.bottom="hasDeletableNotifs ? t('notificationDropdown.deleteAll') : t('notificationDropdown.actionNotifsCantDelete')"
-            class="inline-flex"
-          >
-            <Button
-              text
-              rounded
-              size="small"
-              :disabled="!hasDeletableNotifs"
-              @click="handleDeleteAll"
-              class="text-red-500 hover:text-red-600"
-              style="pointer-events: auto"
+              <UButton
+                icon="i-fa7-solid:check-double"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                class="rounded-full"
+                :disabled="!hasUnreadNotifs"
+                :aria-label="t('notificationDropdown.markAllAsRead')"
+                @click="handleMarkAllAsRead"
+              />
+            </UTooltip>
+            <UTooltip
+              :text="hasDeletableNotifs ? t('notificationDropdown.deleteAll') : t('notificationDropdown.actionNotifsCantDelete')"
             >
-              <i class="fas fa-trash text-sm"></i>
-            </Button>
-          </span>
-          <Button text size="small" :label="t('notificationDropdown.viewAll')" @click="viewAll" />
+              <UButton
+                icon="i-fa7-solid:trash"
+                color="error"
+                variant="ghost"
+                size="sm"
+                class="rounded-full"
+                :disabled="!hasDeletableNotifs"
+                :aria-label="t('notificationDropdown.deleteAll')"
+                @click="handleDeleteAll"
+              />
+            </UTooltip>
+            <UButton
+              variant="ghost"
+              size="sm"
+              :label="t('notificationDropdown.viewAll')"
+              @click="viewAll"
+            />
+          </div>
         </div>
+        <NotificationList :constrained="true" scroll-mode="container" @close="close" />
       </div>
-      <NotificationList :constrained="true" scroll-mode="container" @close="close" />
-    </div>
-  </Popover>
+    </template>
+  </UPopover>
 </template>

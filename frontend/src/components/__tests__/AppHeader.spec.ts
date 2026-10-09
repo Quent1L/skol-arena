@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, defineComponent, h, ref, type PropType } from 'vue'
-import type { MenuItem } from 'primevue/menuitem'
-import { mountWithPrime } from '@/test-support/mount'
+import type { DropdownMenuItem } from '@nuxt/ui'
+import { mountWithUi } from '@/test-support/mount'
 import { makeAuthMock, type AuthMockState } from '@/test-support/mock-modules'
 import { useAuth } from '@/composables/useAuth'
 import AppHeader from '../AppHeader.vue'
 
 vi.mock('vue-i18n', async () => (await import('@/test-support/mock-modules')).i18nEchoMock())
-vi.mock('vue-router', () => ({
+vi.mock('vue-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('vue-router')>()),
   useRoute: () => ({ name: 'home', path: '/' }),
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }))
@@ -23,23 +24,24 @@ vi.mock('@/composables/whats-new/useWhatsNew', () => ({
   }),
 }))
 
-/** Renders the popup menu's items inline, through the real `itemicon` slot. */
-const MenuStub = defineComponent({
-  props: { model: { type: Array as PropType<MenuItem[]>, required: true } },
-  setup(props, { slots, expose }) {
-    expose({ toggle: vi.fn() })
+/** Renders the menu's items inline, through the real `item-leading` slot, next to its trigger. */
+const DropdownMenuStub = defineComponent({
+  props: { items: { type: Array as PropType<DropdownMenuItem[][]>, required: true } },
+  setup(props, { slots }) {
+    const ui = { itemLeadingIcon: (_: { class?: string } = {}) => '' }
     return () =>
-      h(
-        'ul',
-        props.model
-          .filter((item) => item.visible !== false && !item.separator)
-          .map((item) =>
-            h('li', { 'data-key': item.key, onClick: () => item.command?.({} as never) }, [
-              slots.itemicon?.({ item }),
-              item.label as string,
+      h('div', [
+        slots.default?.({ open: false }),
+        h(
+          'ul',
+          props.items.flat().map((item, index) =>
+            h('li', { 'data-key': item.value, onClick: () => item.onSelect?.(new Event('select')) }, [
+              slots['item-leading']?.({ item, active: false, index, ui }),
+              item.label,
             ]),
           ),
-      )
+        ),
+      ])
   },
 })
 
@@ -50,10 +52,10 @@ function mountHeader(role: AuthMockState['role'] = 'player') {
     initialized: true,
   }
   vi.mocked(useAuth).mockReturnValue(makeAuthMock(state) as unknown as ReturnType<typeof useAuth>)
-  return mountWithPrime(AppHeader, {
+  return mountWithUi(AppHeader, {
     global: {
       stubs: {
-        Menu: MenuStub,
+        DropdownMenu: DropdownMenuStub,
         NotificationBell: true,
         NotificationDropdown: true,
         SkolLogo: true,

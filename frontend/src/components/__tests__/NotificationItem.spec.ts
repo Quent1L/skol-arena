@@ -2,11 +2,12 @@ import { describe, it, expect, vi } from 'vitest'
 import { createI18n } from 'vue-i18n'
 
 import fr from '@/i18n/messages/fr.json'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithUi } from '@/test-support/mount'
 import NotificationItem from '../NotificationItem.vue'
 import type { RawNotification } from '@/composables/notification/notification.api'
 
-vi.mock('vue-router', () => ({
+vi.mock('vue-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('vue-router')>()),
   useRouter: () => ({ push: vi.fn() }),
 }))
 
@@ -46,7 +47,7 @@ function makeNotif(over: Partial<RawNotification> = {}): RawNotification {
 
 function mountItem(notif: RawNotification) {
   const i18n = createI18n({ legacy: false, locale: 'fr', fallbackLocale: 'fr', messages: { fr } })
-  return mountWithPrime(NotificationItem, {
+  return mountWithUi(NotificationItem, {
     props: { notif },
     global: { plugins: [i18n] },
   })

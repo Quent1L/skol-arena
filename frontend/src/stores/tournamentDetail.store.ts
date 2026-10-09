@@ -130,24 +130,24 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
           : `/admin/tournaments/${tournamentId.value}/edit`
       items.push({
         label: 'Modifier',
-        icon: 'fa fa-pencil',
+        icon: 'i-fa7-solid:pencil',
         command: () => router.push(editPath),
       })
       if (tournament.value?.mode) {
         items.push({
           label: 'Recalculer les points',
-          icon: 'fa fa-calculator',
+          icon: 'i-fa7-solid:calculator',
           command: () => recalculatePoints(),
         })
       }
       items.push({
         label: 'Vider le cache',
-        icon: 'fa fa-trash-can',
+        icon: 'i-fa7-solid:trash-can',
         command: () => clearCache(),
       })
     }
     if (isAuthenticated.value && isParticipant.value && canLeaveTournament.value) {
-      items.push({ label: 'Quitter', icon: 'fa fa-user-minus', command: () => leaveTournament() })
+      items.push({ label: 'Quitter', icon: 'i-fa7-solid:user-minus', command: () => leaveTournament() })
     }
     return items
   })

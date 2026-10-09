@@ -1,30 +1,31 @@
 <template>
-  <template v-if="items.length > 0">
-    <Button
-      icon="fa fa-ellipsis-v"
-      severity="secondary"
-      outlined
-      @click="menu!.toggle($event)"
-      aria-haspopup="true"
-      :aria-controls="menuId"
+  <UDropdownMenu v-if="items.length > 0" :items="menuItems" :content="{ align: 'end' }">
+    <UButton
+      icon="i-fa7-solid:ellipsis-vertical"
+      color="neutral"
+      variant="outline"
+      :aria-label="t('common.actions')"
     />
-    <Menu :id="menuId" ref="menu" :model="items" popup />
-  </template>
+  </UDropdownMenu>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import type Menu from 'primevue/menu'
-import type { MenuItem } from 'primevue/menuitem'
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import type { DropdownMenuItem } from '@nuxt/ui'
 
-interface Props {
-  items: MenuItem[]
-  menuId?: string
+export interface OverflowMenuItem {
+  label: string
+  /** Iconify name, e.g. `i-fa7-solid:pen`. */
+  icon: string
+  command: () => void
 }
 
-withDefaults(defineProps<Props>(), {
-  menuId: 'overflow-menu',
-})
+const props = defineProps<{ items: OverflowMenuItem[] }>()
 
-const menu = ref<InstanceType<typeof Menu> | null>(null)
+const { t } = useI18n()
+
+const menuItems = computed<DropdownMenuItem[]>(() =>
+  props.items.map(({ label, icon, command }) => ({ label, icon, onSelect: command })),
+)
 </script>

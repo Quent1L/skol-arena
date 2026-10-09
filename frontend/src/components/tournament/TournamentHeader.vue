@@ -32,7 +32,7 @@
             @click="emit('create-match')"
             class="bg-blue-600 hover:bg-blue-700 hidden md:flex"
           />
-          <OverflowMenuButton :items="items" menu-id="header-menu" />
+          <OverflowMenuButton :items="items" />
         </div>
       </div>
 
@@ -47,7 +47,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TournamentStatus, TournamentMode } from '@skol-arena/shared'
-import type { MenuItem } from 'primevue/menuitem'
+import type { OverflowMenuItem } from '@/components/OverflowMenuButton.vue'
 import OverflowMenuButton from '@/components/OverflowMenuButton.vue'
 
 interface Props {
@@ -59,7 +59,7 @@ interface Props {
   canJoin: boolean
   canLeave: boolean
   canCreateMatch: boolean
-  items?: MenuItem[]
+  items?: OverflowMenuItem[]
   joining?: boolean
   leaving?: boolean
 }

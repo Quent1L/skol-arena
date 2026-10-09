@@ -36,17 +36,17 @@
               <span class="text-[10px] md:text-xs opacity-55 whitespace-nowrap tabular-nums">
                 {{ formatDate(props.notif.createdAt) }}
               </span>
-              <Button
+              <UButton
                 v-if="!blocking"
-                @click="handleDelete"
-                class="notif-close text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                icon="i-fa7-solid:xmark"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                class="notif-close rounded-full text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                 :title="t('notificationItem.deleteTitle')"
-                text
-                rounded
-                size="small"
-              >
-                <i class="fas fa-times text-xs"></i>
-              </Button>
+                :aria-label="t('notificationItem.deleteTitle')"
+                @click="handleDelete"
+              />
             </div>
           </div>
 
@@ -111,18 +111,18 @@ const canSwipe = computed(() => !blocking.value && !reducedMotion)
 
 /** Type families: what the notification is about decides its icon and accent. */
 const TYPE_STYLES: Record<string, { icon: string; accent: string }> = {
-  MATCH_CREATED: { icon: 'fa-user-plus', accent: 'var(--p-primary-400)' },
-  MATCH_SCHEDULED: { icon: 'fa-calendar-day', accent: 'var(--p-primary-400)' },
-  MATCH_VALIDATION: { icon: 'fa-clipboard-check', accent: 'var(--p-amber-400)' },
-  MATCH_SCORE_PROPOSAL: { icon: 'fa-pen-to-square', accent: 'var(--p-amber-400)' },
-  MATCH_POST_DISPUTE: { icon: 'fa-flag', accent: 'var(--p-red-400)' },
-  MATCH_DISPUTE_ESCALATED: { icon: 'fa-gavel', accent: 'var(--p-red-400)' },
-  MATCH_MESSAGE: { icon: 'fa-comment-dots', accent: 'var(--p-sky-400)' },
-  MATCH_RESULT_CORRECTED: { icon: 'fa-pen-to-square', accent: 'var(--p-sky-400)' },
-  BADGE_AWARDED: { icon: 'fa-medal', accent: 'var(--p-yellow-400)' },
-  BADGE_REVOKED: { icon: 'fa-medal', accent: 'var(--p-surface-400)' },
+  MATCH_CREATED: { icon: 'fa-user-plus', accent: 'var(--ui-color-primary-400)' },
+  MATCH_SCHEDULED: { icon: 'fa-calendar-day', accent: 'var(--ui-color-primary-400)' },
+  MATCH_VALIDATION: { icon: 'fa-clipboard-check', accent: 'var(--color-amber-400)' },
+  MATCH_SCORE_PROPOSAL: { icon: 'fa-pen-to-square', accent: 'var(--color-amber-400)' },
+  MATCH_POST_DISPUTE: { icon: 'fa-flag', accent: 'var(--color-red-400)' },
+  MATCH_DISPUTE_ESCALATED: { icon: 'fa-gavel', accent: 'var(--color-red-400)' },
+  MATCH_MESSAGE: { icon: 'fa-comment-dots', accent: 'var(--color-sky-400)' },
+  MATCH_RESULT_CORRECTED: { icon: 'fa-pen-to-square', accent: 'var(--color-sky-400)' },
+  BADGE_AWARDED: { icon: 'fa-medal', accent: 'var(--color-yellow-400)' },
+  BADGE_REVOKED: { icon: 'fa-medal', accent: 'var(--ui-color-neutral-400)' },
 }
-const FALLBACK_STYLE = { icon: 'fa-bell', accent: 'var(--p-primary-400)' }
+const FALLBACK_STYLE = { icon: 'fa-bell', accent: 'var(--ui-color-primary-400)' }
 
 const typeStyle = computed(() => TYPE_STYLES[props.notif.type] ?? FALLBACK_STYLE)
 const icon = computed(() => typeStyle.value.icon)
@@ -146,7 +146,7 @@ const swipeProgress = computed(() =>
 const swipeBackgroundStyle = computed(() => ({
   opacity: String(Math.min(1, swipeProgress.value * 1.3)),
   // Grey while the gesture is undecided, red once releasing would delete
-  background: armed.value ? 'var(--p-red-500)' : 'var(--p-surface-500)',
+  background: armed.value ? 'var(--color-red-500)' : 'var(--ui-color-neutral-500)',
   transition: 'background 0.18s ease',
 }))
 
@@ -319,7 +319,7 @@ const cardClasses = computed(() => [
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  background: color-mix(in srgb, var(--p-amber-400) 18%, transparent);
+  background: color-mix(in srgb, var(--color-amber-400) 18%, transparent);
 }
 
 .notif-close {

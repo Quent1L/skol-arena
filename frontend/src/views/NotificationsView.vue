@@ -51,26 +51,36 @@ async function handleDeleteAll() {
   <div class="max-w-xl mx-auto w-full mt-4">
     <div class="flex items-center justify-between gap-3 mb-4">
       <div class="flex items-center gap-3">
-        <Button
-          icon="fa fa-arrow-left"
-          text
-          rounded
-          severity="secondary"
-          @click="goBack"
+        <UButton
+          icon="i-fa7-solid:arrow-left"
+          color="neutral"
+          variant="ghost"
+          class="sm:hidden rounded-full"
           :aria-label="t('notificationsView.backAriaLabel')"
-          class="sm:hidden"
+          @click="goBack"
         />
         <h2 class="text-lg font-semibold">{{ t('notificationsView.title') }}</h2>
       </div>
       <div v-if="notifications.length > 0" class="flex items-center gap-2">
-        <Button text rounded size="small" :disabled="!hasUnreadNotifs" @click="handleMarkAllAsRead" class="flex items-center gap-1.5">
-          <i class="fas fa-check-double text-sm"></i>
-          <span class="text-xs">{{ t('notificationsView.markAllRead') }}</span>
-        </Button>
-        <Button text rounded size="small" :disabled="!hasDeletableNotifs" @click="handleDeleteAll" class="flex items-center gap-1.5 text-red-500 hover:text-red-600">
-          <i class="fas fa-trash text-sm"></i>
-          <span class="text-xs">{{ t('notificationsView.deleteAll') }}</span>
-        </Button>
+        <UButton
+          icon="i-fa7-solid:check-double"
+          :label="t('notificationsView.markAllRead')"
+          variant="ghost"
+          size="xs"
+          class="rounded-full"
+          :disabled="!hasUnreadNotifs"
+          @click="handleMarkAllAsRead"
+        />
+        <UButton
+          icon="i-fa7-solid:trash"
+          :label="t('notificationsView.deleteAll')"
+          color="error"
+          variant="ghost"
+          size="xs"
+          class="rounded-full"
+          :disabled="!hasDeletableNotifs"
+          @click="handleDeleteAll"
+        />
       </div>
     </div>
     <NotificationList scroll-mode="window" />

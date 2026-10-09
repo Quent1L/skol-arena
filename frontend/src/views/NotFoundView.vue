@@ -33,19 +33,22 @@
         <!-- Actions -->
         <div class="space-y-4">
           <div class="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button
+            <UButton
               :label="t('notFoundView.goHome')"
-              icon="fa fa-home"
+              icon="i-fa7-solid:house"
+              size="lg"
+              class="flex-1 sm:flex-none justify-center"
               @click="goHome"
-              class="flex-1 sm:flex-none"
             />
 
-            <Button
+            <UButton
               :label="t('notFoundView.goBack')"
-              icon="fa fa-arrow-left"
-              severity="secondary"
+              icon="i-fa7-solid:arrow-left"
+              color="neutral"
+              variant="subtle"
+              size="lg"
+              class="flex-1 sm:flex-none justify-center"
               @click="goBack"
-              class="flex-1 sm:flex-none"
             />
           </div>
 
@@ -53,12 +56,12 @@
           <div v-if="isAuthenticated" class="pt-4 border-t border-gray-200 dark:border-gray-700">
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">{{ t('notFoundView.quickLinks') }}</p>
             <div class="flex flex-wrap gap-2 justify-center">
-              <Button :label="t('notFoundView.tournaments')" text size="small" @click="router.push('/')" />
-              <Button
+              <UButton :label="t('notFoundView.tournaments')" variant="ghost" size="sm" @click="router.push('/')" />
+              <UButton
                 v-if="canManageTournaments"
                 :label="t('notFoundView.administration')"
-                text
-                size="small"
+                variant="ghost"
+                size="sm"
                 @click="router.push('/admin/tournaments')"
               />
             </div>
@@ -69,8 +72,8 @@
         <div v-if="!isAuthenticated" class="pt-6 border-t border-gray-200 dark:border-gray-700">
           <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">{{ t('notFoundView.notLoggedIn') }}</p>
           <div class="flex gap-2 justify-center">
-            <Button :label="t('notFoundView.login')" text size="small" @click="router.push('/login')" />
-            <Button :label="t('notFoundView.register')" text size="small" @click="router.push('/register')" />
+            <UButton :label="t('notFoundView.login')" variant="ghost" size="sm" @click="router.push('/login')" />
+            <UButton :label="t('notFoundView.register')" variant="ghost" size="sm" @click="router.push('/register')" />
           </div>
         </div>
       </div>

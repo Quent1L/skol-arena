@@ -45,7 +45,7 @@
           </span>
         </div>
 
-        <OverflowMenuButton v-if="actionItems.length > 0" :items="actionItems" menu-id="match-actions-menu" />
+        <OverflowMenuButton v-if="actionItems.length > 0" :items="actionItems" />
       </div>
 
       <!-- Hero scoreboard -->
@@ -267,7 +267,7 @@ import { useI18n } from 'vue-i18n'
 import { useMatchService } from '@/composables/match/match.service'
 import { useAuth } from '@/composables/useAuth'
 import { useViewport } from '@/composables/useViewport'
-import type { MenuItem } from 'primevue/menuitem'
+import type { OverflowMenuItem } from '@/components/OverflowMenuButton.vue'
 import type {
   ClientMatchDetail,
   MatchDetailSide,
@@ -626,8 +626,8 @@ const canRematchMatch = computed(() => {
  * Three action buttons never fitted next to the back button on a phone. They live in an
  * overflow menu now, which keeps the top bar on one line at every width.
  */
-const actionItems = computed<MenuItem[]>(() => {
-  const items: MenuItem[] = []
+const actionItems = computed<OverflowMenuItem[]>(() => {
+  const items: OverflowMenuItem[] = []
   if (canEditMatch.value) {
     items.push({
       label: t(
@@ -635,21 +635,21 @@ const actionItems = computed<MenuItem[]>(() => {
           ? 'matchDetailView.correctResult'
           : 'matchDetailView.completeMatch',
       ),
-      icon: 'fa fa-pen',
+      icon: 'i-fa7-solid:pen',
       command: completeMatch,
     })
   }
   if (canRematchMatch.value) {
     items.push({
       label: t('matchDetailView.rematchMatch'),
-      icon: 'fa fa-redo',
+      icon: 'i-fa7-solid:rotate-right',
       command: rematchMatch,
     })
   }
   if (canCancelMatch.value) {
     items.push({
       label: t('matchDetailView.cancelMatch'),
-      icon: 'fa fa-ban',
+      icon: 'i-fa7-solid:ban',
       command: () => {
         showCancelDialog.value = true
       },

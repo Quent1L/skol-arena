@@ -3,7 +3,7 @@
     <div
       v-if="shouldShowBanner"
       class="fixed bottom-15 left-0 right-0 z-50 flex items-center justify-between gap-3 px-4 py-3 shadow-lg"
-      style="background: var(--p-surface-700)"
+      style="background: var(--ui-color-neutral-700)"
     >
       <div class="flex items-center gap-3 min-w-0">
         <img src="/icons/icon-192.png" alt="Skol Arena" class="w-10 h-10 rounded-xl shrink-0" />
@@ -14,12 +14,12 @@
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
-        <Button size="small" :label="t('pwaInstallBanner.installButton')" icon="fas fa-download" @click="triggerInstall" />
-        <Button
-          size="small"
-          icon="fas fa-times"
-          text
-          severity="secondary"
+        <UButton size="sm" :label="t('pwaInstallBanner.installButton')" icon="i-fa7-solid:download" @click="triggerInstall" />
+        <UButton
+          size="sm"
+          icon="i-fa7-solid:xmark"
+          color="neutral"
+          variant="ghost"
           :aria-label="t('common.close')"
           @click="handleDismiss"
         />
@@ -31,7 +31,7 @@
     <div
       v-if="showIOSInstructions"
       class="fixed bottom-15 left-0 right-0 z-50 px-4 py-3 shadow-lg"
-      style="background: var(--p-surface-700);"
+      style="background: var(--ui-color-neutral-700);"
     >
       <div class="flex items-start justify-between gap-2">
         <p class="text-sm">
@@ -39,11 +39,11 @@
           <i class="fas fa-share-from-square mx-1"></i>
           {{ t('pwaInstallBanner.iosInstruction.then') }} <strong>{{ t('pwaInstallBanner.iosInstruction.addToHomeScreen') }}</strong>
         </p>
-        <Button
-          size="small"
-          icon="fas fa-times"
-          text
-          severity="secondary"
+        <UButton
+          size="sm"
+          icon="i-fa7-solid:xmark"
+          color="neutral"
+          variant="ghost"
           :aria-label="t('common.close')"
           @click="showIOSInstructions = false"
         />

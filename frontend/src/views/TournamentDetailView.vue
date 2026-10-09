@@ -105,7 +105,7 @@
                   @click="router.push(`/tournaments/${store.tournamentId}/create-match`)"
                   class="bg-blue-600 hover:bg-blue-700"
                 />
-                <OverflowMenuButton :items="store.menuItems" menu-id="desktop-header-menu" />
+                <OverflowMenuButton :items="store.menuItems" />
               </div>
             </div>
           </div>

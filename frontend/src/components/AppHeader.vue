@@ -16,72 +16,70 @@
 
         <div class="flex items-center gap-3">
           <div v-if="!isAuthenticated" class="flex items-center gap-3">
-            <Button :label="t('appHeader.signIn')" text @click="handleLoginTap" />
-            <Button
-              :label="t('appHeader.signUp')"
-              @click="router.push('/signup')"
-              class="text-sm"
-            />
+            <UButton :label="t('appHeader.signIn')" variant="ghost" size="lg" @click="handleLoginTap" />
+            <UButton :label="t('appHeader.signUp')" size="lg" @click="router.push('/signup')" />
           </div>
 
           <div v-else class="flex items-center gap-3">
-            <NotificationBell @toggle="toggleNotifications" />
-            <NotificationDropdown ref="notifDropdown" />
+            <NotificationDropdown>
+              <NotificationBell />
+            </NotificationDropdown>
 
-            <Menu ref="menu" :model="menuItems" :popup="true">
-              <template #start>
-                <div class="px-4 py-3 border-b border-gray-200">
-                  <p class="text-sm font-medium">
-                    {{ appUser?.displayName }}
-                  </p>
-                  <p class="text-xs text-gray-500 mt-0.5">{{ appUser?.betterAuth?.email }}</p>
+            <UDropdownMenu
+              :items="menuItems"
+              :content="{ align: 'end' }"
+              :ui="{ content: 'min-w-56', item: 'py-2 text-base' }"
+            >
+              <UButton
+                color="neutral"
+                variant="ghost"
+                class="flex items-center gap-2 rounded-full text-primary-400"
+                :aria-label="userMenuLabel"
+              >
+                <span class="relative inline-flex">
+                  <PlayerAvatar
+                    v-if="appUser"
+                    :name="appUser.displayName || appUser.betterAuth?.email || '?'"
+                    :player-id="appUser.id"
+                    size="sm"
+                  />
+                  <span
+                    v-if="showWhatsNew && whatsNew.hasUnseen.value"
+                    class="unseen-dot top-0 right-0 ring-2 ring-white dark:ring-gray-900"
+                    data-testid="avatar-whats-new-dot"
+                  ></span>
+                </span>
+                <span class="hidden sm:block text-sm font-medium">
+                  {{ appUser?.displayName }}
+                </span>
+              </UButton>
+
+              <template #content-top>
+                <div class="px-3 py-2.5 border-b border-default">
+                  <p class="text-sm font-medium">{{ appUser?.displayName }}</p>
+                  <p class="text-xs text-muted mt-0.5">{{ appUser?.betterAuth?.email }}</p>
                 </div>
               </template>
-              <template #itemicon="{ item }">
+              <template #item-leading="{ item, ui }">
                 <span class="relative inline-flex">
-                  <i :class="item.icon"></i>
+                  <UIcon :name="item.icon!" :class="ui.itemLeadingIcon({ class: 'text-default' })" />
                   <span
-                    v-if="item.key === 'whats-new' && whatsNew.hasUnseen.value"
+                    v-if="item.value === 'whats-new' && whatsNew.hasUnseen.value"
                     class="unseen-dot -top-1 -right-1.5"
                     data-testid="whats-new-dot"
                   ></span>
                 </span>
               </template>
-              <template #end>
+              <template #content-bottom>
                 <div
-                  class="app-version w-full flex justify-center text-xs text-gray-500 h-7 pt-2 select-none"
+                  class="app-version w-full flex justify-center text-xs text-muted h-7 pt-1 select-none"
                   :class="{ 'is-armed': eggTaps >= EGG_HINT_AT }"
                   @click="tapVersion"
                 >
                   {{ t('appHeader.version', { version: appVersion }) }}
                 </div>
               </template>
-            </Menu>
-
-            <Button
-              text
-              rounded
-              @click="toggleMenu"
-              class="flex items-center gap-2"
-              :aria-label="userMenuLabel"
-            >
-              <span class="relative inline-flex">
-                <PlayerAvatar
-                  v-if="appUser"
-                  :name="appUser.displayName || appUser.betterAuth?.email || '?'"
-                  :player-id="appUser.id"
-                  size="sm"
-                />
-                <span
-                  v-if="showWhatsNew && whatsNew.hasUnseen.value"
-                  class="unseen-dot top-0 right-0 ring-2 ring-white dark:ring-gray-900"
-                  data-testid="avatar-whats-new-dot"
-                ></span>
-              </span>
-              <span class="hidden sm:block text-sm font-medium">
-                {{ appUser?.displayName }}
-              </span>
-            </Button>
+            </UDropdownMenu>
           </div>
         </div>
       </div>
@@ -90,14 +88,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { useEasterEgg } from '@/composables/useEasterEgg'
 import { useSecretTap } from '@/composables/useSecretTap'
 import { useViewport } from '@/composables/useViewport'
-import type { MenuItem } from 'primevue/menuitem'
+import type { DropdownMenuItem } from '@nuxt/ui'
 import NotificationBell from './NotificationBell.vue'
 import NotificationDropdown from './NotificationDropdown.vue'
 import SkolLogo from '@/components/brand/SkolLogo.vue'
@@ -126,8 +124,6 @@ const showBackButton = computed(
     !route.path.includes('/badges') &&
     !route.path.includes('/teams'),
 )
-const menu = ref()
-const notifDropdown = useTemplateRef('notifDropdown')
 
 const whatsNew = useWhatsNew()
 // A kiosk is a shared screen, not a person catching up on the news.
@@ -139,61 +135,47 @@ const userMenuLabel = computed(() =>
     : t('appHeader.userMenuAriaLabel'),
 )
 
-const menuItems = computed<MenuItem[]>(() => [
-  {
-    label: t('appHeader.menu.myStats'),
-    icon: 'fas fa-chart-bar',
-    command: () => {
-      router.push(`/players/${appUser.value?.id}`)
+const menuItems = computed<DropdownMenuItem[][]>(() => {
+  const isKiosk = appUser.value?.role === 'kiosk'
+  const settingsLocked = isKiosk && kioskSettingsLocked.value
+  const navigation: (DropdownMenuItem | false)[] = [
+    !isKiosk && {
+      label: t('appHeader.menu.myStats'),
+      icon: 'i-fa7-solid:chart-bar',
+      onSelect: () => router.push(`/players/${appUser.value?.id}`),
     },
-    visible: appUser.value?.role !== 'kiosk',
-  },
-  {
-    label: t('appHeader.menu.comparePlayers'),
-    icon: 'fas fa-people-arrows',
-    command: () => {
-      router.push({ name: 'player-compare' })
+    !isKiosk && {
+      label: t('appHeader.menu.comparePlayers'),
+      icon: 'i-fa7-solid:people-arrows',
+      onSelect: () => router.push({ name: 'player-compare' }),
     },
-    visible: appUser.value?.role !== 'kiosk',
-  },
-  {
-    label: t('appHeader.menu.rewinds'),
-    icon: 'fas fa-film',
-    command: () => {
-      router.push({ name: 'rewinds' })
+    !isKiosk && {
+      label: t('appHeader.menu.rewinds'),
+      icon: 'i-fa7-solid:film',
+      onSelect: () => router.push({ name: 'rewinds' }),
     },
-    visible: appUser.value?.role !== 'kiosk',
-  },
-  {
-    key: 'whats-new',
-    label: t('appHeader.menu.whatsNew'),
-    icon: 'fas fa-gift',
-    command: () => {
-      whatsNew.open()
+    showWhatsNew.value && {
+      value: 'whats-new',
+      label: t('appHeader.menu.whatsNew'),
+      icon: 'i-fa7-solid:gift',
+      onSelect: () => whatsNew.open(),
     },
-    visible: showWhatsNew.value,
-  },
-  {
-    label: t('appHeader.menu.settings'),
-    icon: 'fas fa-cog',
-    command: () => {
-      router.push('/settings')
+    !settingsLocked && {
+      label: t('appHeader.menu.settings'),
+      icon: 'i-fa7-solid:gear',
+      onSelect: () => router.push('/settings'),
     },
-    visible: !(appUser.value?.role === 'kiosk' && kioskSettingsLocked.value),
-  },
-  {
-    separator: true,
-    visible: !(appUser.value?.role === 'kiosk' && kioskSettingsLocked.value),
-  },
-  {
+  ]
+  const logoutItem: DropdownMenuItem = {
     label: t('appHeader.menu.logout'),
-    icon: 'fas fa-right-from-bracket',
-    command: () => {
-      handleLogout()
-    },
-    class: 'text-red-600',
-  },
-])
+    icon: 'i-fa7-solid:right-from-bracket',
+    color: 'error',
+    onSelect: () => handleLogout(),
+  }
+  const items = navigation.filter((item): item is DropdownMenuItem => item !== false)
+  // The separator only made sense under the settings entry: a locked kiosk keeps one group.
+  return settingsLocked ? [[...items, logoutItem]] : [items, [logoutItem]]
+})
 
 const { tap: tapLogin } = useSecretTap(5, () => router.push('/login?native=true'), {
   windowMs: 3000,
@@ -204,10 +186,6 @@ function handleLoginTap() {
   // native form, which supersedes it.
   if (tapLogin()) return
   router.push('/login')
-}
-
-function toggleMenu(event: Event) {
-  menu.value.toggle(event)
 }
 
 /**
@@ -225,10 +203,6 @@ async function handleLogout() {
   }
   await router.replace('/login')
 }
-
-function toggleNotifications(event: Event) {
-  notifDropdown.value?.toggle(event)
-}
 </script>
 
 <style scoped>
@@ -237,7 +211,7 @@ function toggleNotifications(event: Event) {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 9999px;
-  background-color: var(--p-red-500);
+  background-color: var(--color-red-500);
 }
 
 /* The version line doubles as a hidden trigger. It stays inert-looking until a
