@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { RouterLinkStub } from '@vue/test-utils'
 import type { WeeklyMmrLeader } from '@skol-arena/shared'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import WeeklyMmrLeaders from '../WeeklyMmrLeaders.vue'
 
 // t() echoes the key, plus the interpolated count when there is one, so assertions can
@@ -28,7 +28,7 @@ function mountCard(props: {
   losers?: WeeklyMmrLeader[]
   tournamentId?: string | null
 }) {
-  return mountWithPrime(WeeklyMmrLeaders, {
+  return mountWithPlugins(WeeklyMmrLeaders, {
     props: { gainers: [], losers: [], ...props },
   })
 }

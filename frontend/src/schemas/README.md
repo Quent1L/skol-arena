@@ -1,6 +1,6 @@
 # Schémas de Validation
 
-Ce dossier contient les schémas de validation Zod utilisés avec vee-validate dans l'application.
+Ce dossier contient les schémas de validation Zod des formulaires d'authentification, passés à `<UForm :schema>` (Nuxt UI).
 
 ## auth.schema.ts
 
@@ -20,12 +20,24 @@ Contient les schémas de validation pour l'authentification :
 
 ## Utilisation
 
-```typescript
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
-import { loginSchema } from '@/schemas/auth.schema'
+```vue
+<script setup lang="ts">
+import { reactive } from 'vue'
+import type { FormSubmitEvent } from '@nuxt/ui'
+import { loginSchema, type LoginFormData } from '@/schemas/auth.schema'
 
-const { defineField, handleSubmit, errors } = useForm({
-  validationSchema: toTypedSchema(loginSchema),
-})
+const state = reactive<LoginFormData>({ email: '', password: '' })
+
+function onSubmit({ data }: FormSubmitEvent<LoginFormData>) {
+  // data is validated
+}
+</script>
+
+<template>
+  <UForm :schema="loginSchema" :state="state" @submit="onSubmit">
+    <UFormField name="email" label="Email">
+      <UInput v-model="state.email" />
+    </UFormField>
+  </UForm>
+</template>
 ```

@@ -63,13 +63,16 @@
       <div v-if="props.players && props.players.length > 0">
         <!-- Desktop: AutoComplete with chips -->
         <div v-if="!isMobile" class="flex items-center gap-2">
-          <AutoComplete
+          <UInputMenu
             v-model="selectedPlayers"
-            :suggestions="suggestions"
-            option-label="displayName"
+            :items="props.players"
+            label-key="displayName"
+            by="id"
             multiple
             :placeholder="t('matchList.filterByPlayerPlaceholder')"
-            @complete="onSearch"
+            size="xl"
+            class="min-w-64"
+            :ui="{ tagsInput: 'focus-visible:outline-none' }"
           />
         </div>
 
@@ -141,7 +144,6 @@
 import { ref, computed, defineAsyncComponent, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
-import { matchesSearch } from '@/utils/StringUtils'
 import { useInfiniteScroll } from '@vueuse/core'
 import { matchApi } from '@/composables/match/match.api'
 import type { ClientMatchCard, MatchCardSide } from '@skol-arena/shared/types/index'
@@ -205,7 +207,6 @@ const { myMatchesActive, selectedPlayers, activeOutcomes, disputedOnly } = store
 
 type OutcomeFilter = 'WIN' | 'LOSS' | 'DRAW'
 
-const suggestions = ref<Player[]>([])
 const showMobileDialog = ref(false)
 const mobileDialogMounted = ref(false)
 
@@ -283,17 +284,6 @@ const displayedMatches = computed(() => {
   if ((!myMatchesActive.value && !props.playerMode) || activeOutcomes.value.size === 0) return matches.value
   return matches.value.filter((m) => activeOutcomes.value.has(getOutcome(m)))
 })
-
-function onSearch(event: { query: string }) {
-  const q = event.query
-  suggestions.value = (props.players ?? [])
-    .filter(
-      (p) =>
-        matchesSearch(p.displayName, q) &&
-        !selectedPlayers.value.find((s) => s.id === p.id),
-    )
-    .slice(0, 8)
-}
 
 function onMobileSelection(ids: string[]) {
   selectedPlayers.value = (props.players ?? []).filter((p) => ids.includes(p.id))

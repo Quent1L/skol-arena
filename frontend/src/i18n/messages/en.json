@@ -620,11 +620,6 @@
   "home": {
     "title": "Home"
   },
-  "homeView": {
-    "description": "Create and manage your tournaments in a few clicks. Championship or direct elimination, track rankings in real time.",
-    "tagline": "Luck won't be enough",
-    "viewTournaments": "View tournaments"
-  },
   "invitationService": {
     "errors": {
       "joinFailed": "Error joining"
@@ -2124,32 +2119,6 @@
     "statusFinished": "Finished",
     "statusOngoing": "Ongoing",
     "statusOpen": "Open"
-  },
-  "tournamentInfoGrid": {
-    "allowed": "Allowed",
-    "drawLabel": "Draws:",
-    "drawsAllowedLabel": "Draws allowed:",
-    "durationLabel": "Duration:",
-    "endLabel": "End:",
-    "forbidden": "Forbidden",
-    "generalInfo": "General information",
-    "hideDetails": "Hide details",
-    "lossLabel": "Loss:",
-    "modeBracket": "Bracket",
-    "modeChampionship": "Championship",
-    "modeLabel": "Mode:",
-    "modeRanked": "Ranked",
-    "playersUnit": "players",
-    "pointSystem": "Point system",
-    "ptsUnit": "pts",
-    "schedule": "Schedule",
-    "showDetails": "View details",
-    "startLabel": "Start:",
-    "teamModeFlex": "Flexible",
-    "teamModeLabel": "Team mode:",
-    "teamModeStatic": "Static",
-    "teamSizeLabel": "Team size:",
-    "victoryLabel": "Victory:"
   },
   "tournamentInfosTab": {
     "badges": {

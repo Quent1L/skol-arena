@@ -1,16 +1,16 @@
 <template>
   <div class="flex flex-col gap-2">
     <div class="flex items-baseline justify-between text-xs">
-      <span v-if="!hideTitle" class="font-semibold text-surface-600 dark:text-surface-300">{{
+      <span v-if="!hideTitle" class="font-semibold text-slate-600 dark:text-slate-300">{{
         t('matchBalance.title')
       }}</span>
-      <span class="text-muted-color" :class="{ 'ms-auto': !hideTitle }">{{
+      <span class="text-muted" :class="{ 'ms-auto': !hideTitle }">{{
         t(`matchBalance.verdict.${verdict}`)
       }}</span>
     </div>
 
     <div
-      class="flex h-3 w-full overflow-hidden rounded-full bg-surface-200 dark:bg-surface-700"
+      class="flex h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
       role="img"
       :aria-label="t(ariaLabelKey, { teamA: percents.a, teamB: percents.b })"
     >
@@ -28,20 +28,20 @@
       <span class="flex items-center gap-1.5">
         <span class="inline-block h-2 w-2 rounded-full bg-sky-500" />
         <span class="font-semibold tabular-nums">{{ percents.a }}%</span>
-        <span class="text-muted-color">{{ t('matchBalance.avgMmr', { mmr: balance.avgA }) }}</span>
+        <span class="text-muted">{{ t('matchBalance.avgMmr', { mmr: balance.avgA }) }}</span>
       </span>
       <span class="flex items-center gap-1.5">
-        <span class="text-muted-color">{{ t('matchBalance.avgMmr', { mmr: balance.avgB }) }}</span>
+        <span class="text-muted">{{ t('matchBalance.avgMmr', { mmr: balance.avgB }) }}</span>
         <span class="font-semibold tabular-nums">{{ percents.b }}%</span>
         <span class="inline-block h-2 w-2 rounded-full bg-amber-500" />
       </span>
     </div>
 
-    <p v-if="allowDraw" class="text-xs text-muted-color/70">
+    <p v-if="allowDraw" class="text-xs">
       <i class="fa fa-circle-info mr-1" />{{ t('matchBalance.drawHint') }}
     </p>
 
-    <p v-if="balance.hasProvisional" class="text-xs text-muted-color/70">
+    <p v-if="balance.hasProvisional" class="text-xs">
       <i class="fa fa-circle-info mr-1" />{{ t('matchBalance.provisional') }}
     </p>
   </div>

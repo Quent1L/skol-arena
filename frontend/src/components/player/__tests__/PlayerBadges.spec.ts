@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import type { ClientPlayerBadge } from '@skol-arena/shared'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import PlayerBadges from '../PlayerBadges.vue'
 
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key: string) => key }) }))
@@ -29,7 +29,7 @@ function award(overrides: Partial<ClientPlayerBadge> = {}): ClientPlayerBadge {
 
 async function mountWith(badges: ClientPlayerBadge[]) {
   getPlayerBadges.mockResolvedValue(badges)
-  const wrapper = mountWithPrime(PlayerBadges, { props: { playerId: 'p1' } })
+  const wrapper = mountWithPlugins(PlayerBadges, { props: { playerId: 'p1' } })
   await flushPromises()
   return wrapper
 }

@@ -4,15 +4,13 @@ import ui from '@nuxt/ui/vue-plugin'
 import UApp from '@nuxt/ui/components/App.vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { createPinia } from 'pinia'
-import PrimeVue from 'primevue/config'
-import ToastService from 'primevue/toastservice'
-import ConfirmationService from 'primevue/confirmationservice'
 
 /**
- * Mounts a component with the plugins PrimeVue components need in jsdom
- * (auto-imported PrimeVue components throw without the $primevue config).
+ * Mounts a component as is, with Pinia and a RouterLink stub: the wrapper is the component
+ * itself (`vm`, `emitted`, `setProps`). Enough for components whose Nuxt UI parts need no
+ * provider; prefer `mountWithUi` for overlays, toasts and tooltips.
  */
-export function mountWithPrime<C extends Component>(
+export function mountWithPlugins<C extends Component>(
   component: C,
   options: ComponentMountingOptions<C> = {},
 ) {
@@ -21,13 +19,7 @@ export function mountWithPrime<C extends Component>(
     ...rest,
     global: {
       ...globalOptions,
-      plugins: [
-        PrimeVue,
-        ToastService,
-        ConfirmationService,
-        createPinia(),
-        ...(globalOptions?.plugins ?? []),
-      ],
+      plugins: [createPinia(), ...(globalOptions?.plugins ?? [])],
       stubs: {
         RouterLink: RouterLinkStub,
         ...(globalOptions?.stubs as Record<string, unknown> | undefined),

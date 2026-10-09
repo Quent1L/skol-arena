@@ -325,7 +325,7 @@ const showDiscover = computed(
 
 function chipClass(active: boolean): string {
   return active
-    ? 'bg-primary border-primary text-primary-contrast'
+    ? 'bg-primary border-primary text-inverted'
     : 'bg-slate-800 border-slate-700/20 text-muted'
 }
 

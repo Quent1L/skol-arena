@@ -14,7 +14,7 @@
          count the rest. The hidden names stay reachable on hover. -->
     <div
       v-if="hiddenCount > 0"
-      class="flex shrink-0 items-center justify-center rounded-md border border-surface-900 bg-surface-700 font-bold tabular-nums text-white/80 ring-1 ring-surface-700/20"
+      class="flex shrink-0 items-center justify-center rounded-md border border-slate-900 bg-slate-700 font-bold tabular-nums text-white/80 ring-1 ring-slate-700/20"
       :class="avatarSizeClass(size)"
       :style="{ zIndex: 30 - visiblePlayers.length * 10 }"
       :title="hiddenNames"

@@ -8,7 +8,7 @@
     :title="name"
     loading="lazy"
     decoding="async"
-    class="object-cover flex-shrink-0 bg-surface-700"
+    class="object-cover flex-shrink-0 bg-slate-700"
     :class="[sizeClass, shapeClass]"
     @error="failedVersion = photo.version"
   />
@@ -47,7 +47,7 @@ const sizeClass = computed(() => avatarSizeClass(props.size))
 const shapeClass = computed(() =>
   props.shape === 'circle'
     ? 'rounded-full'
-    : 'rounded-md border border-surface-900 ring-1 ring-surface-700/20',
+    : 'rounded-md border border-slate-900 ring-1 ring-slate-700/20',
 )
 
 const photo = computed(() => {

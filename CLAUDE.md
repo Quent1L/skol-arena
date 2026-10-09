@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Skol is a tournament management application with a Bun monorepo structure:
 
 - **Backend**: Hono + Bun + Drizzle ORM + PostgreSQL + Better Auth
-- **Frontend**: Vue 3 + Vite + Nuxt UI (migrating from PrimeVue) + TailwindCSS
+- **Frontend**: Vue 3 + Vite + Nuxt UI v4 + TailwindCSS
 - **Shared**: TypeScript types and Zod schemas consumed by both
 - **Docs**: Astro static showcase + self-hosting documentation site
 
@@ -72,22 +72,29 @@ skol-arena/
 - **Errors**: Use I18n keys for user-facing error messages
 - **API layer** (`backend/src/api/`): version negotiation, route manifest, OpenAPI — see below
 
-### UI library: PrimeVue → Nuxt UI migration
+### UI library: Nuxt UI
 
-The frontend is migrating from PrimeVue to Nuxt UI v4 (Vue/Vite mode, `@nuxt/ui/vite`).
-Both coexist until every screen is migrated; new or reworked screens use Nuxt UI only.
+The frontend uses Nuxt UI v4 in Vue/Vite mode (`@nuxt/ui/vite`). PrimeVue is gone; do not
+reintroduce it or its `tailwindcss-primeui` utilities (`bg-surface-*`, `text-muted-color`).
 
-- `ui()` in `vite.config.ts` owns Tailwind and component auto-import; PrimeVue's resolver
-  rides in its `components.resolvers`. Composable auto-import is off: import from
-  `@nuxt/ui/composables`. Color mode is off — the app is dark-only (`dark` class on `<html>`)
+- `ui()` in `vite.config.ts` owns Tailwind, the component auto-import and the theme
+  overrides (primary violet, neutral slate, `USkeleton` one step lighter). Composable
+  auto-import is off: import from `@nuxt/ui/composables`. Color mode is off — the app is
+  dark-only (`dark` class on `<html>`)
 - `<UApp>` wraps the app in `App.vue`, its `locale` follows vue-i18n
 - Toasts: `useAppToast()` (Nuxt UI under the hood). Confirmations: `useConfirmDialog()`,
-  which returns a `Promise<boolean>`. Never PrimeVue's `useToast`/`useConfirm` in new code
-- Forms: `<UForm :schema :state>` + `<UFormField name>` with the Zod schemas from
-  `@skol-arena/shared`, not vee-validate
+  which returns a `Promise<boolean>`
+- Forms: `<UForm :schema :state>` + `<UFormField name>` with Zod schemas (`@skol-arena/shared`,
+  `src/schemas/`). Password fields: `components/forms/PasswordInput.vue`
+- Charts: `components/charts/AppChart.vue` (thin Chart.js host). Help bubbles:
+  `InfoTooltip` (a hover popover that also opens on tap — `UTooltip` never opens on touch)
+- Dates: `utils/calendar-date.ts` bridges `Date` and the `CalendarDate`/`CalendarDateTime`
+  values of `UInputDate`
 - Every screen must work at phone width: no fixed widths on modals, secondary table
   columns hidden below `md`, row actions in a `UDropdownMenu` on small screens
-- Component tests: `mountWithUi()` from `src/test-support/mount.ts` (wraps in `UApp`)
+- Component tests: `mountWithUi()` from `src/test-support/mount.ts` (wraps in `UApp`, the
+  wrapper is the host: use `findComponent(X).emitted()`); `mountWithPlugins()` mounts the
+  component itself when a test needs its `vm` or `setProps`
 
 ### Frontend Layer Pattern (Components → Services → API)
 
@@ -183,7 +190,7 @@ SEO and GEO metadata is centralised, not spread across pages:
 - All code in English
 - No `any` type - use proper types or `unknown`
 - Functions should be under 30 lines
-- Use Font Awesome icons for action buttons, not PrimeIcons nor Lucide. In Nuxt UI
+- Use Font Awesome icons for action buttons, not Lucide. In Nuxt UI
   components pass them through Iconify: `icon="i-fa7-solid:pen"` — the colon is required
   because the collection name contains a dash. Icons stored in the database (picker
   values) are runtime names and keep the `<i class="fa …">` webfont rendering

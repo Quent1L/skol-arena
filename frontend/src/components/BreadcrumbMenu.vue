@@ -4,28 +4,28 @@
       <button
         v-if="home"
         @click="() => home?.command?.()"
-        class="text-muted-color hover:text-color transition-colors"
+        class="text-muted hover:text-highlighted transition-colors"
         :aria-label="t('breadcrumbMenu.home')"
       >
         <i :class="home.icon" class="text-sm"></i>
       </button>
 
       <template v-for="(item, index) in allItems" :key="index">
-        <i class="fas fa-chevron-right text-xs text-muted-color"></i>
+        <i class="fas fa-chevron-right text-xs text-muted"></i>
 
         <button
           v-if="item.command && !item.isTitle"
           @click="() => item.command?.()"
-          class="text-sm text-muted-color hover:text-color transition-colors"
+          class="text-sm text-muted hover:text-highlighted transition-colors"
         >
           {{ item.label }}
         </button>
 
-        <span v-else-if="item.isTitle" class="text-sm font-medium text-color">
+        <span v-else-if="item.isTitle" class="text-sm font-medium text-highlighted">
           {{ item.label }}
         </span>
 
-        <span v-else class="text-sm text-muted-color">
+        <span v-else class="text-sm text-muted">
           {{ item.label }}
         </span>
       </template>

@@ -3,7 +3,7 @@ import { createI18n } from 'vue-i18n'
 import { nextTick, ref } from 'vue'
 
 import fr from '@/i18n/messages/fr.json'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import MatchMessageThread from '../MatchMessageThread.vue'
 import type { ClientMatchMessage } from '@skol-arena/shared/types/index'
 
@@ -37,7 +37,7 @@ function makeMessage(over: Partial<ClientMatchMessage> = {}): ClientMatchMessage
 function mountThread(thread: ClientMatchMessage[], canPost = true) {
   messages.value = thread
   const i18n = createI18n({ legacy: false, locale: 'fr', fallbackLocale: 'fr', messages: { fr } })
-  return mountWithPrime(MatchMessageThread, {
+  return mountWithPlugins(MatchMessageThread, {
     props: { matchId: 'm-1', canPost },
     global: { plugins: [i18n] },
   })

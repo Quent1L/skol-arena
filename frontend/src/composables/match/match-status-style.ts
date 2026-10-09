@@ -37,7 +37,7 @@ const DOT_CLASS: Record<MatchStatusTone, string> = {
   pending: 'bg-yellow-400 animate-pulse',
   reported: 'bg-orange-400',
   scheduled: 'bg-blue-200',
-  neutral: 'bg-surface-500',
+  neutral: 'bg-slate-500',
 }
 
 const TEXT_CLASS: Record<MatchStatusTone, string> = {
@@ -46,7 +46,7 @@ const TEXT_CLASS: Record<MatchStatusTone, string> = {
   pending: 'text-yellow-400',
   reported: 'text-orange-400',
   scheduled: 'text-blue-200',
-  neutral: 'text-muted-color',
+  neutral: 'text-muted',
 }
 
 /** Border + tint for a surface that carries the status, e.g. the scoreboard panel. */
@@ -56,7 +56,7 @@ const SURFACE_CLASS: Record<MatchStatusTone, string> = {
   pending: 'border-yellow-400/25',
   reported: 'border-orange-400/25',
   scheduled: 'border-blue-300/20',
-  neutral: 'border-surface-700/40',
+  neutral: 'border-slate-700/40',
 }
 
 /** i18n keys of the shared status vocabulary, keyed by canonical status. */

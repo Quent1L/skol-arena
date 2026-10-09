@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { RouterLinkStub } from '@vue/test-utils'
 import type { WinStreakEntry } from '@skol-arena/shared'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import StreakLeadersCard from '../StreakLeadersCard.vue'
 
 // t() echoes the key, plus the interpolated count when there is one, so assertions can
@@ -29,7 +29,7 @@ function entries(count: number): WinStreakEntry[] {
 }
 
 function mountCard(items: WinStreakEntry[], props: Record<string, unknown> = {}) {
-  return mountWithPrime(StreakLeadersCard, {
+  return mountWithPlugins(StreakLeadersCard, {
     props: {
       title: 'Win streaks',
       icon: 'fa fa-fire',

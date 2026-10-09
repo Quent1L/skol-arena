@@ -33,11 +33,12 @@
           </template>
         </p>
 
-        <Button
+        <UButton
           :label="t('offlineView.retry')"
-          icon="fa fa-rotate-right"
+          icon="i-fa7-solid:rotate-right"
           :disabled="checking"
           @click="probe"
+          size="lg"
         />
       </div>
     </div>

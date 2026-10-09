@@ -17,18 +17,10 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import ui from '@nuxt/ui/vue-plugin'
-import PrimeVue from 'primevue/config'
-import ToastService from 'primevue/toastservice'
-import ConfirmationService from 'primevue/confirmationservice'
-import { FilterService } from '@primevue/core/api'
-import frLocale from 'primelocale/fr.json'
-import enLocale from 'primelocale/en.json'
-import themePreset from './config/PrimevuePreset'
 import { errorService } from './composables/useErrorService'
 import { checkVersion } from './composables/pwa/pwa.update'
 import { markLeaving } from './utils/app-lifecycle'
 import { i18n, getInitialLocale } from './i18n'
-import { matchesSearch } from './utils/StringUtils'
 
 // Deployment detection: these checks only raise a flag, they never reload.
 // Navigation is what applies the update (see router/index.ts), so input in
@@ -58,53 +50,21 @@ window.addEventListener('error', (event) => {
   }
 })
 
-// Force dark mode: `my-app-dark` for PrimeVue's selector, `dark` for Nuxt UI and Tailwind
-document.documentElement.classList.add('my-app-dark', 'dark')
-
-// Initialize the theme from localStorage
-//const savedTheme = localStorage.getItem('theme') || 'dark'
-
-/**if (savedTheme === 'dark') {
-  console.log('Dark mode applied')
-} else {
-  document.documentElement.classList.remove('my-app-dark')
-}**/
+// The app is dark-only: Nuxt UI and Tailwind key their dark styles off this class.
+document.documentElement.classList.add('dark')
 
 // Install the global error interceptors right at startup
 // Errors will be logged to the console until the Toast is available
 errorService.install()
 
-// Apply the initial language (localStorage) to <html> and PrimeVue
-const initialLocale = getInitialLocale()
-document.documentElement.lang = initialLocale
-const primevueLocale = initialLocale === 'en' ? enLocale.en : frLocale.fr
+// Apply the initial language (localStorage) to <html>
+document.documentElement.lang = getInitialLocale()
 
 // Create the Vue application
 const app = createApp(App)
 
-// Configure PrimeVue and the services
-app.use(PrimeVue, {
-  locale: primevueLocale,
-  theme: {
-    preset: themePreset,
-    options: {
-      prefix: 'p',
-      darkModeSelector: '.my-app-dark',
-      cssLayer: false,
-    },
-  },
-})
-
-// Select/MultiSelect `filter` only folds case: register an accent-insensitive mode so
-// "eloise" finds "Éloïse" there too (use with filter-match-mode="accentInsensitive").
-FilterService.register('accentInsensitive', (value: unknown, filter: unknown) =>
-  matchesSearch(value == null ? '' : String(value), filter == null ? '' : String(filter)),
-)
-
 app.use(i18n)
 app.use(createPinia())
-app.use(ToastService)
-app.use(ConfirmationService)
 app.use(router)
 app.use(ui)
 

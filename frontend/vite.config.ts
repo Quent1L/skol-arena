@@ -4,7 +4,6 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
 import ui from '@nuxt/ui/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
-import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 import { existsSync, readFileSync } from 'node:fs'
 const version = readFileSync(new URL('../VERSION', import.meta.url), 'utf-8').trim()
 
@@ -47,10 +46,8 @@ export default defineConfig({
       },
     },
     vue(),
-    // Bundles Tailwind and the component auto-import. PrimeVue's resolver rides along in
-    // the same unplugin-vue-components instance while both libraries coexist.
+    // Bundles Tailwind and the component auto-import.
     ui({
-      components: { resolvers: [PrimeVueResolver()] },
       // Explicit imports from '@nuxt/ui/composables', like every other composable here.
       autoImport: false,
       // The app is dark-only: main.ts sets the `dark` class, nothing should toggle it.

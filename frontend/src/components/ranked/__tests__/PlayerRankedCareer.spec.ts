@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { RouterLinkStub } from '@vue/test-utils'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import { makeCareerSeason, makeTier } from '@/test-support/factories'
 import type { PlayerCareerSeason } from '@skol-arena/shared'
 import PlayerRankedCareer from '../PlayerRankedCareer.vue'
@@ -14,7 +14,7 @@ const babyfoot = { id: 'disc-1', name: 'Babyfoot', icon: 'fa fa-futbol' }
 const pingpong = { id: 'disc-2', name: 'Ping-pong', icon: 'fa fa-table-tennis' }
 
 function mountCareer(seasons: PlayerCareerSeason[], loading = false) {
-  return mountWithPrime(PlayerRankedCareer, {
+  return mountWithPlugins(PlayerRankedCareer, {
     props: { seasons, loading },
     global: { stubs: { RouterLink: RouterLinkStub } },
   })

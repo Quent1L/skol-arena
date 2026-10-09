@@ -11,11 +11,6 @@
       :version="confirmedVersion"
       @dismiss="dismissUpdate"
     />
-    <Toast
-      position="top-right"
-      :breakpoints="{ '640px': { width: 'calc(100vw - 1rem)', right: '0.5rem', left: 'auto' } }"
-    />
-    <ConfirmDialog />
     <SkillOrLuckOverlay
       :visible="easterEggVisible"
       :variant="easterEggVariant"

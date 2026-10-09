@@ -3,7 +3,7 @@ import { createI18n } from 'vue-i18n'
 import { nextTick, ref } from 'vue'
 
 import fr from '@/i18n/messages/fr.json'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import type { ClientMatchDetail, MatchStatus } from '@skol-arena/shared/types/index'
 // Static import: vi.mock calls are hoisted above it, and importing inside each test made
 // the first one pay the module-resolution cost and blow the default timeout.
@@ -90,7 +90,7 @@ function makeMatch(status: MatchStatus, over: Partial<ClientMatchDetail> = {}): 
 async function mountView(detail: ClientMatchDetail) {
   match.value = detail
   const i18n = createI18n({ legacy: false, locale: 'fr', fallbackLocale: 'fr', messages: { fr } })
-  const wrapper = mountWithPrime(MatchDetailView, { global: { plugins: [i18n] } })
+  const wrapper = mountWithPlugins(MatchDetailView, { global: { plugins: [i18n] } })
   await nextTick()
   await nextTick()
   await nextTick()

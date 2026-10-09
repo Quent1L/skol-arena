@@ -5,7 +5,7 @@ import type {
   OutcomeTypeLeader,
   OutcomeTypeLeaderboard,
 } from '@skol-arena/shared'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import InfoTooltip from '@/components/InfoTooltip.vue'
 import OutcomeTypeFunStats from '../OutcomeTypeFunStats.vue'
 
@@ -64,7 +64,7 @@ function funStat(overrides: Partial<OutcomeTypeFunStat> = {}): OutcomeTypeFunSta
 }
 
 /** The rate column's tooltip — the volume column carries the first one. */
-function rateTooltip(wrapper: ReturnType<typeof mountWithPrime>) {
+function rateTooltip(wrapper: ReturnType<typeof mountWithPlugins>) {
   return wrapper.findAllComponents(InfoTooltip)[1]!
 }
 
@@ -80,7 +80,7 @@ describe('OutcomeTypeFunStats', () => {
   })
 
   it('shows volume and efficiency side by side for each outcome type', () => {
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, { props: { stats: [funStat()] } })
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, { props: { stats: [funStat()] } })
 
     const text = wrapper.text()
     expect(text).toContain('tournamentStatsTab.outcomeTypeFunStats.king:Normal end')
@@ -95,7 +95,7 @@ describe('OutcomeTypeFunStats', () => {
   })
 
   it('the card’s button names the view it leads to', () => {
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, { props: { stats: [funStat()] } })
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, { props: { stats: [funStat()] } })
 
     expect(wrapper.find('[data-test="outcome-type-side-toggle"]').text()).toContain(
       'tournamentStatsTab.outcomeTypeFunStats.viewLosers',
@@ -104,7 +104,7 @@ describe('OutcomeTypeFunStats', () => {
 
   it('flips both columns of the card to the losers on click', async () => {
     vi.useFakeTimers()
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, { props: { stats: [funStat()] } })
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, { props: { stats: [funStat()] } })
 
     expect(wrapper.text()).toContain('Thomas')
 
@@ -132,7 +132,7 @@ describe('OutcomeTypeFunStats', () => {
       outcomeTypeName: 'Critical end',
       topWinnersByVolume: board([leader({ playerId: 'p5', displayName: 'Sacha' })]),
     })
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, { props: { stats: [statA, statB] } })
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, { props: { stats: [statA, statB] } })
 
     expect(wrapper.text()).toContain('Thomas')
     expect(wrapper.text()).toContain('Sacha')
@@ -150,7 +150,7 @@ describe('OutcomeTypeFunStats', () => {
 
   it('talks about vulnerability, not efficiency, on the losers’ side', async () => {
     vi.useFakeTimers()
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, { props: { stats: [funStat()] } })
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, { props: { stats: [funStat()] } })
 
     expect(wrapper.text()).toContain('tournamentStatsTab.outcomeTypeFunStats.efficiency')
     expect(rateTooltip(wrapper).props('text')).toBe(
@@ -173,7 +173,7 @@ describe('OutcomeTypeFunStats', () => {
         topWinnersByRate: board([leader({ playerId: 'p2' })], { isLowSample: true }),
       }),
     ]
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, { props: { stats } })
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, { props: { stats } })
 
     expect(wrapper.find('[data-test="low-sample-badge"]').text()).toContain(
       'tournamentStatsTab.lowSample:3',
@@ -182,7 +182,7 @@ describe('OutcomeTypeFunStats', () => {
   })
 
   it('explains the weighting when the threshold is met', () => {
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, { props: { stats: [funStat()] } })
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, { props: { stats: [funStat()] } })
 
     expect(wrapper.find('[data-test="low-sample-badge"]').exists()).toBe(false)
     expect(rateTooltip(wrapper).props('text')).toBe(
@@ -191,7 +191,7 @@ describe('OutcomeTypeFunStats', () => {
   })
 
   it('also explains the volume column’s criterion', () => {
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, { props: { stats: [funStat()] } })
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, { props: { stats: [funStat()] } })
 
     expect(wrapper.findAllComponents(InfoTooltip)[0]!.props('text')).toBe(
       'tournamentStatsTab.outcomeTypeFunStats.volumeTooltip',
@@ -199,7 +199,7 @@ describe('OutcomeTypeFunStats', () => {
   })
 
   it('shows an empty state when no rate can be computed', () => {
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, {
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, {
       props: {
         stats: [funStat({ topWinnersByVolume: board([]), topWinnersByRate: board([]) })],
       },
@@ -216,7 +216,7 @@ describe('OutcomeTypeFunStats', () => {
       leader({ playerId: 'p2', displayName: 'Rémi', rank: 1, tiedCount: 2 }),
       leader({ playerId: 'p3', displayName: 'Matéo', rank: 3, tiedCount: 1, count: 12 }),
     ])
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, {
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, {
       props: { stats: [funStat({ topWinnersByVolume: tied })] },
     })
 
@@ -231,7 +231,7 @@ describe('OutcomeTypeFunStats', () => {
       leader({ playerId: 'p1', rank: 1, tiedCount: 2 }),
       leader({ playerId: 'p2', displayName: 'Rémi', rank: 1, tiedCount: 2 }),
     ])
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, {
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, {
       props: { stats: [funStat({ topWinnersByVolume: tied })] },
     })
 
@@ -242,7 +242,7 @@ describe('OutcomeTypeFunStats', () => {
 
   it('counts the ties left out by the cutoff', () => {
     const cut = board([leader()], { omittedCount: 4, omittedNames: ['A', 'B', 'C', 'D'] })
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, {
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, {
       props: { stats: [funStat({ topWinnersByVolume: cut })] },
     })
 
@@ -260,7 +260,7 @@ describe('OutcomeTypeFunStats', () => {
       ],
       { isFlat: true },
     )
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, {
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, {
       props: { stats: [funStat({ topWinnersByVolume: flat })] },
     })
 
@@ -272,7 +272,7 @@ describe('OutcomeTypeFunStats', () => {
   })
 
   it('links back to the player profile while keeping the tournament context', () => {
-    const wrapper = mountWithPrime(OutcomeTypeFunStats, {
+    const wrapper = mountWithPlugins(OutcomeTypeFunStats, {
       props: { stats: [funStat()], tournamentId: 't1' },
     })
 

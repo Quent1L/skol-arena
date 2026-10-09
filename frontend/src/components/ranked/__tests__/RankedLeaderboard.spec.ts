@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { RouterLinkStub } from '@vue/test-utils'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import { makeTier, makePlayerMmr } from '@/test-support/factories'
 import RankedLeaderboard from '../RankedLeaderboard.vue'
 
@@ -44,7 +44,7 @@ async function selectMode(wrapper: ReturnType<typeof mountBoard>, mode: string) 
 
 function mountBoard(props: Record<string, unknown> = {}) {
   // showModeToggle is an optional Boolean prop: absent, Vue casts it to false
-  return mountWithPrime(RankedLeaderboard, {
+  return mountWithPlugins(RankedLeaderboard, {
     props: { players, tiers, showModeToggle: true, ...props },
   })
 }

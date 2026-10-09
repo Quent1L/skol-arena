@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import { makeTier, makePlayerMmr } from '@/test-support/factories'
 import type { CareerPeak } from '@/composables/ranked/career'
 import type { MmrChartPoint } from '@skol-arena/shared'
@@ -38,7 +38,7 @@ const stubs = {
 }
 
 function mountProfile(props: Record<string, unknown> = {}) {
-  return mountWithPrime(PlayerMmrProfile, {
+  return mountWithPlugins(PlayerMmrProfile, {
     props: {
       mmr: makePlayerMmr({ currentMmr: 1200, matchesPlayed: 10 }),
       tiers,

@@ -175,7 +175,7 @@ const modeConfig: Record<
     iconColorClass: 'text-blue-400',
     iconBgClass: 'bg-blue-500/20',
     progressClass: 'bg-blue-500',
-    featuredClass: 'bg-gradient-to-b from-blue-900/40 to-surface-800',
+    featuredClass: 'bg-gradient-to-b from-blue-900/40 to-slate-800',
   },
   bracket: {
     icon: 'fa fa-sitemap',
@@ -183,7 +183,7 @@ const modeConfig: Record<
     iconColorClass: 'text-gray-400',
     iconBgClass: 'bg-gray-500/20',
     progressClass: 'bg-gray-400',
-    featuredClass: 'bg-gradient-to-b from-gray-700/50 to-surface-800',
+    featuredClass: 'bg-gradient-to-b from-gray-700/50 to-slate-800',
   },
   ranked: {
     icon: 'fa fa-ranking-star',
@@ -191,7 +191,7 @@ const modeConfig: Record<
     iconColorClass: 'text-violet-400',
     iconBgClass: 'bg-violet-500/20',
     progressClass: 'bg-violet-500',
-    featuredClass: 'bg-gradient-to-b from-violet-900/40 to-surface-800',
+    featuredClass: 'bg-gradient-to-b from-violet-900/40 to-slate-800',
   },
 }
 
@@ -227,9 +227,9 @@ const modeProgressClass = computed(() =>
 )
 
 const surfaceClass = computed(() => {
-  if (props.variant !== 'featured') return 'bg-surface-800'
-  if (isFinished.value) return 'bg-gradient-to-b from-gray-700/40 to-surface-800'
-  return modeConfig[props.tournament.mode]?.featuredClass ?? 'bg-surface-800'
+  if (props.variant !== 'featured') return 'bg-slate-800'
+  if (isFinished.value) return 'bg-gradient-to-b from-gray-700/40 to-slate-800'
+  return modeConfig[props.tournament.mode]?.featuredClass ?? 'bg-slate-800'
 })
 
 const showLiveDot = computed(

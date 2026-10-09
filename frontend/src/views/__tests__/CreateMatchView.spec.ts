@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { defineComponent, inject, ref, Fragment } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { useRoute } from 'vue-router'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import { makeAuthMock, type AuthMockState } from '@/test-support/mock-modules'
 import { makeTournament } from '@/test-support/factories'
 import { useAuth } from '@/composables/useAuth'
@@ -207,7 +207,7 @@ async function mountView(
     }) as unknown as ReturnType<typeof useAuth>,
   )
 
-  const wrapper = mountWithPrime(CreateMatchView, {
+  const wrapper = mountWithPlugins(CreateMatchView, {
     global: {
       stubs: { MatchFormStepperMobile: MobileProbe, MatchFormStepperDesktop: DesktopProbe },
     },
@@ -229,7 +229,7 @@ function mountUnresolved() {
       initialized: true,
     }) as unknown as ReturnType<typeof useAuth>,
   )
-  return mountWithPrime(CreateMatchView, {
+  return mountWithPlugins(CreateMatchView, {
     global: {
       stubs: { MatchFormStepperMobile: MobileProbe, MatchFormStepperDesktop: DesktopProbe },
     },

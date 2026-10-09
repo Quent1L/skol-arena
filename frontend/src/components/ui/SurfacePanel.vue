@@ -34,7 +34,7 @@ const toneClass = computed(() => {
     case 'win':
       return 'border-match-win/25 bg-match-win/[0.05]'
     default:
-      return 'border-surface-700/40 bg-surface-800/60'
+      return 'border-slate-700/40 bg-slate-800/60'
   }
 })
 
@@ -47,7 +47,7 @@ const headerBorderClass = computed(() => {
     case 'win':
       return 'border-match-win/20'
     default:
-      return 'border-surface-700/40'
+      return 'border-slate-700/40'
   }
 })
 </script>

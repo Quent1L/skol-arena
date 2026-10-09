@@ -2,13 +2,16 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import type { ClientTournamentSummary } from '@skol-arena/shared'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithUi } from '@/test-support/mount'
 import TournamentsView from '@/views/TournamentsView.vue'
 import { useAuth } from '@/composables/useAuth'
 import { makeAuthMock, type AuthMockState } from '@/test-support/mock-modules'
 
 vi.mock('vue-i18n', async () => (await import('@/test-support/mock-modules')).i18nEchoMock())
-vi.mock('vue-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+vi.mock('vue-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('vue-router')>()),
+  useRouter: () => ({ push: vi.fn() }),
+}))
 vi.mock('@/composables/useAuth', () => ({ useAuth: vi.fn() }))
 
 const tournaments = ref<ClientTournamentSummary[]>([])
@@ -54,7 +57,7 @@ const state: AuthMockState = {
 
 async function mountView() {
   vi.mocked(useAuth).mockReturnValue(makeAuthMock(state) as never)
-  const wrapper = mountWithPrime(TournamentsView)
+  const wrapper = mountWithUi(TournamentsView)
   await flushPromises()
   return wrapper
 }

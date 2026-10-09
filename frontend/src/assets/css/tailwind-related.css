@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
-@import 'tailwindcss-primeui';
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
@@ -8,8 +7,8 @@
   --font-body: 'Manrope', sans-serif;
   --font-label: 'Inter', sans-serif;
 
-  /* Match outcome semantic tokens — reference PrimeVue palette variables */
-  --color-match-win: var(--p-green-400);
-  --color-match-loss: var(--p-red-400);
-  --color-match-neutral: var(--p-surface-400);
+  /* Match outcome semantic tokens */
+  --color-match-win: var(--color-green-400);
+  --color-match-loss: var(--color-red-400);
+  --color-match-neutral: var(--color-slate-400);
 }

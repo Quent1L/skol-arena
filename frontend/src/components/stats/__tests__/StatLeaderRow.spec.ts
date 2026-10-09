@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { RouterLinkStub } from '@vue/test-utils'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import StatLeaderRow from '../StatLeaderRow.vue'
 
 const THOMAS = { id: 'p1', displayName: 'Thomas', shortName: 'THO' }
 const REMI = { id: 'p2', displayName: 'Rémi', shortName: 'REM' }
 
 function mountRow(props: Record<string, unknown> = {}) {
-  return mountWithPrime(StatLeaderRow, {
+  return mountWithPlugins(StatLeaderRow, {
     props: {
       players: [THOMAS],
       value: '82 %',

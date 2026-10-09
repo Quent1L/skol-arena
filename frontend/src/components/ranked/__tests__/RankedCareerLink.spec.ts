@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { RouterLinkStub } from '@vue/test-utils'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import { CAREER_ANCHOR } from '@/composables/ranked/career'
 import RankedCareerLink from '../RankedCareerLink.vue'
 
@@ -10,7 +10,7 @@ vi.mock('vue-i18n', () => ({
 }))
 
 function mountLink(playerId = 'p1') {
-  return mountWithPrime(RankedCareerLink, {
+  return mountWithPlugins(RankedCareerLink, {
     props: { playerId },
     global: { stubs: { RouterLink: RouterLinkStub } },
   })
@@ -42,7 +42,7 @@ describe('RankedCareerLink', () => {
   })
 
   it('carries the discipline when the season has one', () => {
-    const wrapper = mountWithPrime(RankedCareerLink, {
+    const wrapper = mountWithPlugins(RankedCareerLink, {
       props: { playerId: 'p1', disciplineId: 'disc-1' },
       global: { stubs: { RouterLink: RouterLinkStub } },
     })
@@ -70,7 +70,7 @@ describe('RankedCareerLink', () => {
 // does not, and "mon historique" on someone else's page would be a lie.
 describe('RankedCareerLink label', () => {
   function label(props: Record<string, unknown>) {
-    return mountWithPrime(RankedCareerLink, {
+    return mountWithPlugins(RankedCareerLink, {
       props: { playerId: 'p1', ...props },
       global: { stubs: { RouterLink: RouterLinkStub } },
     }).text()

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import TopPlayersCard, { type TopPlayerItem } from '../TopPlayersCard.vue'
 
 vi.mock('vue-i18n', () => ({
@@ -22,7 +22,7 @@ function item(overrides: Partial<TopPlayerItem> = {}): TopPlayerItem {
 }
 
 function mountCard(items: TopPlayerItem[], props: Record<string, unknown> = {}) {
-  return mountWithPrime(TopPlayersCard, {
+  return mountWithPlugins(TopPlayersCard, {
     props: {
       title: 'Best teams',
       icon: 'fa fa-trophy',

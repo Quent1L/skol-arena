@@ -36,7 +36,7 @@
       </VueDraggable>
     </div>
 
-    <div class="text-xs text-surface-400 self-start pt-8 space-y-1">
+    <div class="text-xs text-slate-400 self-start pt-8 space-y-1">
       <div>A: {{ files1.join(', ') || '—' }}</div>
       <div>B: {{ files2.join(', ') || '—' }}</div>
     </div>

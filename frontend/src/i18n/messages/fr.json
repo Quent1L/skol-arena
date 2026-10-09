@@ -620,11 +620,6 @@
   "home": {
     "title": "Home"
   },
-  "homeView": {
-    "description": "Créez et gérez vos tournois en quelques clics. Championnat ou élimination directe, suivez les classements en temps réel.",
-    "tagline": "La chance ne suffira pas",
-    "viewTournaments": "Voir les tournois"
-  },
   "invitationService": {
     "errors": {
       "joinFailed": "Erreur lors de l'adhésion"
@@ -2124,32 +2119,6 @@
     "statusFinished": "Terminé",
     "statusOngoing": "En cours",
     "statusOpen": "Ouvert"
-  },
-  "tournamentInfoGrid": {
-    "allowed": "Autorisés",
-    "drawLabel": "Match nul :",
-    "drawsAllowedLabel": "Match nuls :",
-    "durationLabel": "Durée :",
-    "endLabel": "Fin :",
-    "forbidden": "Interdits",
-    "generalInfo": "Informations générales",
-    "hideDetails": "Masquer les détails",
-    "lossLabel": "Défaite :",
-    "modeBracket": "Bracket",
-    "modeChampionship": "Championnat",
-    "modeLabel": "Mode :",
-    "modeRanked": "Ranked",
-    "playersUnit": "joueurs",
-    "pointSystem": "Système de points",
-    "ptsUnit": "pts",
-    "schedule": "Calendrier",
-    "showDetails": "Voir les détails",
-    "startLabel": "Début :",
-    "teamModeFlex": "Flexible",
-    "teamModeLabel": "Mode équipe :",
-    "teamModeStatic": "Statique",
-    "teamSizeLabel": "Taille équipe :",
-    "victoryLabel": "Victoire :"
   },
   "tournamentInfosTab": {
     "badges": {

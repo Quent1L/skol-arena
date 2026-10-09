@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { PlayerRelationStat } from '@skol-arena/shared'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import InfoTooltip from '@/components/InfoTooltip.vue'
 import PlayerRelationStats from '../PlayerRelationStats.vue'
 
@@ -28,7 +28,7 @@ function relation(overrides: Partial<PlayerRelationStat> = {}): PlayerRelationSt
 
 describe('PlayerRelationStats', () => {
   it('shows the win rate and match count of the best partner', () => {
-    const wrapper = mountWithPrime(PlayerRelationStats, {
+    const wrapper = mountWithPlugins(PlayerRelationStats, {
       props: { bestPartners: [relation()] },
     })
 
@@ -40,7 +40,7 @@ describe('PlayerRelationStats', () => {
   })
 
   it('shows the win rate and matchup count of the nemesis', () => {
-    const wrapper = mountWithPrime(PlayerRelationStats, {
+    const wrapper = mountWithPlugins(PlayerRelationStats, {
       props: {
         nemeses: [
           relation({ playerId: 'p2', displayName: 'Alice', count: 22, wins: 4, losses: 18, winRate: 18, chemistryDelta: undefined }),
@@ -55,7 +55,7 @@ describe('PlayerRelationStats', () => {
   })
 
   it('explains the calculation via a tooltip on each weighted card', () => {
-    const wrapper = mountWithPrime(PlayerRelationStats, {
+    const wrapper = mountWithPlugins(PlayerRelationStats, {
       props: { bestPartners: [relation()], nemeses: [relation({ playerId: 'p2' })] },
     })
 
@@ -67,7 +67,7 @@ describe('PlayerRelationStats', () => {
   })
 
   it('hides the cards when no relation reaches the threshold', () => {
-    const wrapper = mountWithPrime(PlayerRelationStats, {
+    const wrapper = mountWithPlugins(PlayerRelationStats, {
       props: { mostFrequentPartners: [], bestPartners: [], nemeses: [] },
     })
 

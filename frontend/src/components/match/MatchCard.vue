@@ -1,14 +1,14 @@
 <template>
   <div
-    class="group relative overflow-hidden rounded-xl bg-surface-800 border border-surface-700/10 hover:bg-surface-700 transition-all duration-300 cursor-pointer flex flex-col"
+    class="group relative overflow-hidden rounded-xl bg-slate-800 border border-slate-700/10 hover:bg-slate-700 transition-all duration-300 cursor-pointer flex flex-col"
     @click="navigateToMatch(entry.id)"
   >
     <div class="px-3 pt-2.5 pb-2 relative z-10 flex flex-col flex-1">
       <!-- Top row: format badge + outcomeType + result badge + MMR -->
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-1.5">
-          <span class="font-label text-xs text-muted-color">{{ formatBadge }}</span>
-          <span v-if="entry.outcomeType" class="font-label text-xs text-muted-color"
+          <span class="font-label text-xs text-muted">{{ formatBadge }}</span>
+          <span v-if="entry.outcomeType" class="font-label text-xs text-muted"
             >· {{ entry.outcomeType.name }}</span
           >
         </div>
@@ -55,7 +55,7 @@
               v-for="player in (leftSide?.players ?? []).slice(0, 2)"
               :key="player.id"
               class="font-label font-semibold tracking-tight truncate  text-center"
-              :class="player.id === currentPlayerId ? 'text-color/80' : 'text-color/50'"
+              :class="player.id === currentPlayerId ? 'text-highlighted/80' : 'text-highlighted/50'"
             >
               {{ player.displayName }}
             </span>
@@ -69,12 +69,12 @@
           :class="scoreColorClass"
         >
           <span>{{ leftSide?.score ?? 0 }}</span>
-          <span class="text-muted-color/40 text-base">-</span>
+          <span class=" text-base">-</span>
           <span>{{ rightSide?.score ?? 0 }}</span>
         </div>
         <div
           v-else
-          class="font-headline text-2xl text-muted-color/40 tracking-tighter flex items-center gap-1.5 shrink-0"
+          class="font-headline text-2xl tracking-tighter flex items-center gap-1.5 shrink-0"
         >
           {{ t('matchCard.vs') }}
         </div>
@@ -92,7 +92,7 @@
             <span
               v-for="player in (rightSide?.players ?? []).slice(0, 2)"
               :key="player.id"
-              class="font-label font-semibold  tracking-tight truncate  text-center text-color/50"
+              class="font-label font-semibold  tracking-tight truncate  text-center text-highlighted/50"
             >
               {{ player.displayName }}
             </span>
@@ -101,7 +101,7 @@
       </div>
 
       <!-- Footer: date + status + link -->
-      <div class="flex justify-between items-center mt-auto pt-2 border-t border-surface-700/10">
+      <div class="flex justify-between items-center mt-auto pt-2 border-t border-slate-700/10">
         <div class="flex flex-wrap gap-3">
           <div class="flex items-center gap-1.5">
             <span
@@ -115,14 +115,14 @@
               {{ statusLabel(entry.status) }}
             </span>
           </div>
-          <span class="font-label text-xs text-muted-color uppercase">
+          <span class="font-label text-xs text-muted uppercase">
             {{ formatDate(entry.playedAt) }}
           </span>
         </div>
         <RouterLink
           :to="`/matches/${entry.id}`"
           @click.stop
-          class="text-muted-color hover:text-color transition-colors active:scale-90"
+          class="text-muted hover:text-highlighted transition-colors active:scale-90"
         >
           <i class="fa fa-chevron-right text-xs leading-none"></i>
         </RouterLink>
@@ -192,7 +192,7 @@ const outcomeLabel = computed(() => {
 const resultBadgeClass = computed(() => {
   if (outcome.value === 'WIN') return 'bg-match-win/10 border-match-win/30 text-match-win'
   if (outcome.value === 'LOSS') return 'bg-match-loss/10 border-match-loss/30 text-match-loss'
-  return 'bg-surface-700/50 border-surface-600 text-muted-color'
+  return 'bg-slate-700/50 border-slate-600 text-muted'
 })
 
 
@@ -214,7 +214,7 @@ const showScore = computed(() => {
 })
 
 const scoreColorClass = computed(() => {
-  if (!props.currentPlayerId) return 'text-color'
+  if (!props.currentPlayerId) return 'text-highlighted'
   if (outcome.value === 'WIN') return 'text-match-win'
   if (outcome.value === 'LOSS') return 'text-match-loss/80'
   return 'text-match-neutral'

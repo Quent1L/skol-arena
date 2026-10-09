@@ -1,14 +1,6 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { usePrimeVue } from 'primevue/config'
-import frLocale from 'primelocale/fr.json'
-import enLocale from 'primelocale/en.json'
 import { LOCALE_STORAGE_KEY, SUPPORTED_LOCALES, type LocaleCode } from '@/i18n'
-
-const PRIMEVUE_LOCALES: Record<LocaleCode, object> = {
-  fr: frLocale.fr,
-  en: enLocale.en,
-}
 
 const LOCALE_LABELS: Record<LocaleCode, string> = {
   fr: 'Français',
@@ -28,7 +20,6 @@ export interface LocaleOption {
 
 export function useLocale() {
   const { locale } = useI18n()
-  const primevue = usePrimeVue()
 
   const availableLocales: LocaleOption[] = SUPPORTED_LOCALES.map((code) => ({
     code,
@@ -43,7 +34,6 @@ export function useLocale() {
 
   function setLocale(code: LocaleCode) {
     locale.value = code
-    primevue.config.locale = PRIMEVUE_LOCALES[code]
     localStorage.setItem(LOCALE_STORAGE_KEY, code)
     document.documentElement.lang = code
   }

@@ -12,7 +12,7 @@
 
     <div class="min-w-0 flex-1">
       <div class="truncate text-sm font-semibold text-gray-200">{{ tournament.name }}</div>
-      <div class="truncate text-[11px] text-muted-color">
+      <div class="truncate text-[11px] text-muted">
         {{ metaLine }}
       </div>
     </div>

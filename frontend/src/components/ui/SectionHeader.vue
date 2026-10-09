@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center gap-2.5">
     <span class="h-5 w-1 shrink-0 rounded-full" :class="accentClass ?? 'bg-primary'" />
-    <i :class="icon" class="w-4 shrink-0 text-center text-sm text-muted-color" aria-hidden="true" />
+    <i :class="icon" class="w-4 shrink-0 text-center text-sm text-muted" aria-hidden="true" />
     <h2 class="font-headline min-w-0 truncate text-sm font-black uppercase tracking-wider text-white">
       {{ title }}
     </h2>

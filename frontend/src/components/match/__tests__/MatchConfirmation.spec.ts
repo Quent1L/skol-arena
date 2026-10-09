@@ -3,7 +3,7 @@ import { createI18n } from 'vue-i18n'
 import { nextTick } from 'vue'
 
 import fr from '@/i18n/messages/fr.json'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithPlugins } from '@/test-support/mount'
 import MatchConfirmation from '../MatchConfirmation.vue'
 import type { ClientMatchDetail, MatchDetailConfirmation, MatchStatus } from '@skol-arena/shared/types/index'
 
@@ -67,7 +67,7 @@ function makeMatch(status: MatchStatus, confirmations: MatchDetailConfirmation[]
 
 function mountConfirmation(match: ClientMatchDetail, currentUserId = 'p1') {
   const i18n = createI18n({ legacy: false, locale: 'fr', fallbackLocale: 'fr', messages: { fr } })
-  return mountWithPrime(MatchConfirmation, {
+  return mountWithPlugins(MatchConfirmation, {
     props: { match, currentUserId },
     global: { plugins: [i18n] },
   })

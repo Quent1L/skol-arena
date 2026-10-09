@@ -10,11 +10,11 @@
       </p>
 
       <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-        <Button
+        <UButton
           :label="t('publicHomeView.enterApp')"
-          size="large"
           @click="$router.push('/')"
           class="text-lg"
+          size="xl"
         />
       </div>
     </div>
