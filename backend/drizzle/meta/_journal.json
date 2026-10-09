@@ -631,6 +631,13 @@
       "when": 1777526400045,
       "tag": "0089_badge_awarded_at_from_match",
       "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1777526400046,
+      "tag": "0090_rule_firings_created_idx",
+      "breakpoints": true
     }
   ]
 }

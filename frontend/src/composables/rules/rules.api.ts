@@ -4,10 +4,13 @@ import type {
   ClientPlayerBadge,
   ClientRule,
   ClientRuleFiringDetail,
+  ClientRuleFiringFeed,
+  ClientRuleFiringOverview,
   ClientRuleFiringStatsRow,
   CreateRuleData,
   FactDefinition,
   RuleAction,
+  RuleFiringResult,
   RuleConditions,
   TestRuleResult,
   UpdateRuleData,
@@ -20,6 +23,12 @@ export interface RuleListFilters {
   triggerEvent?: string
   scope?: 'global' | 'discipline'
   isActive?: boolean
+}
+
+export interface RuleFiringFeedFilters {
+  type?: 'message' | 'badge'
+  ruleId?: string
+  result?: RuleFiringResult
 }
 
 export interface CatalogFact extends FactDefinition {
@@ -96,6 +105,23 @@ export const rulesApi = {
   async getFiringDetail(id: string, days: number): Promise<ClientRuleFiringDetail> {
     const response = await http.get<ClientRuleFiringDetail>(`${BASE_URL}/${id}/stats`, {
       params: { days },
+    })
+    return response.data
+  },
+
+  async getFiringOverview(days: number): Promise<ClientRuleFiringOverview> {
+    const response = await http.get<ClientRuleFiringOverview>(`${BASE_URL}/overview`, {
+      params: { days },
+    })
+    return response.data
+  },
+
+  async getFiringFeed(
+    filters: RuleFiringFeedFilters,
+    page: { cursor?: string; limit?: number } = {},
+  ): Promise<ClientRuleFiringFeed> {
+    const response = await http.get<ClientRuleFiringFeed>(`${BASE_URL}/feed`, {
+      params: { ...filters, ...page },
     })
     return response.data
   },

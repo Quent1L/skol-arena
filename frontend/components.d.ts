@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AdminPageHeader: typeof import('./src/components/admin/AdminPageHeader.vue')['default']
     AdminTable: typeof import('./src/components/admin/AdminTable.vue')['default']
+    AdminTableCell: typeof import('./src/components/admin/AdminTableCell.vue')['default']
     AppChart: typeof import('./src/components/charts/AppChart.vue')['default']
     AppHeader: typeof import('./src/components/AppHeader.vue')['default']
     AvatarCropDialog: typeof import('./src/components/avatar/AvatarCropDialog.vue')['default']
@@ -111,6 +112,8 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     RowActions: typeof import('./src/components/ui/RowActions.vue')['default']
+    RuleFiringFeed: typeof import('./src/components/rules/RuleFiringFeed.vue')['default']
+    RuleFiringTimeline: typeof import('./src/components/rules/RuleFiringTimeline.vue')['default']
     RulesContent: typeof import('./src/components/rules/RulesContent.vue')['default']
     ScoreConstraintsSection: typeof import('./src/components/forms/sections/ScoreConstraintsSection.vue')['default']
     SeasonRewind: typeof import('./src/components/rewind/SeasonRewind.vue')['default']

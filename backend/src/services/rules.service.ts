@@ -10,6 +10,9 @@ import {
   type RuleAction,
   type RuleConditions,
   type RuleFiringDetail,
+  type RuleFiringFeed,
+  type RuleFiringFeedQuery,
+  type RuleFiringOverview,
   type RuleFiringStatsRow,
   type RuleFiringTotals,
   type TriggerEvent,
@@ -22,6 +25,7 @@ import {
 } from "../repository/rules.repository";
 import {
   ruleFiringRepository,
+  type RuleFiringFeedRow,
   type RuleFiringTotals as RuleFiringTotalsRow,
 } from "../repository/rule-firing.repository";
 import { rulesEvaluationService } from "./rules-evaluation.service";
@@ -47,6 +51,33 @@ function toTotals(row: RuleFiringTotalsRow | undefined): RuleFiringTotals {
     seen: row?.seenCount ?? 0,
     recap: row?.recapCount ?? 0,
     lastFiredAt: row?.lastFiredAt?.toISOString() ?? null,
+  };
+}
+
+/** Postgres timestamptz text, as `created_at::text` renders it: microseconds and offset. */
+const PG_TIMESTAMPTZ = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d{1,6})?[+-]\d{2}(:\d{2})?$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Opaque keyset cursor of the firing feed: the last row's (createdAt, id). */
+export function encodeFeedCursor(row: { cursorAt: string; id: string }): string {
+  return Buffer.from(`${row.cursorAt}|${row.id}`).toString("base64url");
+}
+
+/** Rejects anything that did not come out of `encodeFeedCursor`, before it reaches SQL. */
+export function decodeFeedCursor(raw: string): { createdAt: string; id: string } {
+  const [createdAt, id] = Buffer.from(raw, "base64url").toString().split("|");
+  if (!createdAt || !id || !PG_TIMESTAMPTZ.test(createdAt) || !UUID.test(id)) {
+    throw new BadRequestError(ErrorCode.VALIDATION_ERROR);
+  }
+  return { createdAt, id };
+}
+
+function toFeedItem({ cursorAt: _cursorAt, ...row }: RuleFiringFeedRow) {
+  return {
+    ...row,
+    deliveredAt: row.deliveredAt?.toISOString() ?? null,
+    seenAt: row.seenAt?.toISOString() ?? null,
+    createdAt: row.createdAt.toISOString(),
   };
 }
 
@@ -124,6 +155,45 @@ export class RulesService {
       isActive: rule.isActive,
       ...toTotals(byRule.get(rule.id)),
     }));
+  }
+
+  /** The global stats screen: all-time and windowed totals, timeline, per-rule rows. */
+  async getFiringOverview(days: number): Promise<RuleFiringOverview> {
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const [totals, windowTotals, timeline, rules] = await Promise.all([
+      ruleFiringRepository.globalTotals(),
+      ruleFiringRepository.globalTotals(since),
+      ruleFiringRepository.globalDailyTimeline(days),
+      this.listFiringStats(),
+    ]);
+    return {
+      days,
+      totals: toTotals(totals),
+      windowTotals: toTotals(windowTotals),
+      timeline: timeline.map((d) => ({
+        day: d.day,
+        fired: d.firedCount,
+        seen: d.seenCount,
+        recap: d.recapCount,
+        messages: d.messageCount,
+        badges: d.badgeCount,
+      })),
+      rules,
+    };
+  }
+
+  /** One page of the latest firings across every rule, newest first. */
+  async getFiringFeed(query: RuleFiringFeedQuery): Promise<RuleFiringFeed> {
+    const cursor = query.cursor ? decodeFeedCursor(query.cursor) : undefined;
+    // One row beyond the page: its presence is what says there is more to read.
+    const rows = await ruleFiringRepository.feed({ ...query, cursor, limit: query.limit + 1 });
+    const hasMore = rows.length > query.limit;
+    const page = hasMore ? rows.slice(0, query.limit) : rows;
+    const last = page[page.length - 1];
+    return {
+      items: page.map(toFeedItem),
+      nextCursor: hasMore && last ? encodeFeedCursor(last) : null,
+    };
   }
 
   /** Everything the per-rule panel shows: totals, variants, timeline, recipients. */

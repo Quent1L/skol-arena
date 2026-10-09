@@ -2,6 +2,13 @@
   <div>
     <AdminPageHeader :title="t('rulesEngineList.title')">
       <template #actions>
+        <UButton
+          :label="t('rulesEngineList.statsButton')"
+          icon="i-fa7-solid:chart-pie"
+          color="neutral"
+          variant="outline"
+          to="/admin/rules-engine/stats"
+        />
         <UTooltip :text="t('rulesEngineList.recalculateBadgesTooltip')">
           <UButton
             :label="t('rulesEngineList.recalculateBadges')"

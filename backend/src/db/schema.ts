@@ -1245,6 +1245,7 @@ export const ruleFirings = pgTable(
     index("rule_firings_rule_created_idx").on(table.ruleId, table.createdAt.desc()),
     index("rule_firings_player_created_idx").on(table.playerId, table.createdAt.desc()),
     index("rule_firings_animation_event_idx").on(table.animationEventId),
+    index("rule_firings_created_idx").on(table.createdAt.desc(), table.id.desc()),
   ],
 );
 

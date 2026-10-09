@@ -16,6 +16,9 @@ import {
   badgeReconciliationStateSchema,
   ruleFiringStatsListSchema,
   ruleFiringDetailSchema,
+  ruleFiringOverviewSchema,
+  ruleFiringFeedSchema,
+  ruleFiringFeedQuerySchema,
 } from "@skol-arena/shared";
 import type { RuleScope, RuleType } from "@skol-arena/shared";
 
@@ -144,6 +147,39 @@ adminRules.get(
   }
 );
 
+const windowQuerySchema = z.object({ days: z.coerce.number().int().min(1).max(365).default(30) });
+
+adminRules.get(
+  "/overview",
+  adminRoute({
+    summary: "Firing overview across every rule",
+    description:
+      "All-time and windowed totals, a daily timeline split by rule type, and one row " +
+      "per rule — the global counterpart of `/:id/stats`.",
+    success: { description: "Global firing statistics", schema: ruleFiringOverviewSchema },
+  }),
+  validate("query", windowQuerySchema),
+  async (c) => {
+    const { days } = c.req.valid("query");
+    return c.json(await rulesService.getFiringOverview(days));
+  }
+);
+
+adminRules.get(
+  "/feed",
+  adminRoute({
+    summary: "Latest rule firings",
+    description:
+      "Every rule's firings, newest first, walked with a keyset `cursor` rather than an " +
+      "offset: firings keep arriving while the feed is read.",
+    success: { description: "A page of firings", schema: ruleFiringFeedSchema },
+  }),
+  validate("query", ruleFiringFeedQuerySchema),
+  async (c) => {
+    return c.json(await rulesService.getFiringFeed(c.req.valid("query")));
+  }
+);
+
 adminRules.get(
   "/:id/stats",
   adminRoute({
@@ -152,7 +188,7 @@ adminRules.get(
     notFound: true,
     success: { description: "The rule's firing statistics", schema: ruleFiringDetailSchema },
   }),
-  validate("query", z.object({ days: z.coerce.number().int().min(1).max(365).default(30) })),
+  validate("query", windowQuerySchema),
   async (c) => {
     const { days } = c.req.valid("query");
     const detail = await rulesService.getFiringDetail(c.req.param("id")!, days);

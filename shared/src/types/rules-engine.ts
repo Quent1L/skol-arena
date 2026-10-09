@@ -648,3 +648,87 @@ export interface ClientRuleFiringDetail extends Omit<RuleFiringDetail, "totals" 
   totals: Omit<RuleFiringTotals, "lastFiredAt"> & { lastFiredAt: Date | null };
   recipients: ClientRuleFiringRecipient[];
 }
+
+// ============================================
+// Global firing overview + feed (all rules at once)
+// ============================================
+
+/** A day of the global timeline, split by the kind of rule that fired. */
+export const ruleFiringGlobalDayStatSchema = ruleFiringDayStatSchema
+  .extend({
+    messages: z.number().int(),
+    badges: z.number().int(),
+  })
+  .meta({ id: "RuleFiringGlobalDayStat" });
+
+export type RuleFiringGlobalDayStat = z.infer<typeof ruleFiringGlobalDayStatSchema>;
+
+/**
+ * Everything the global stats screen shows above the feed. `totals` covers all time,
+ * `windowTotals` the trailing `days` the timeline spans; `rules` is the per-rule
+ * breakdown, rules that never fired included.
+ */
+export const ruleFiringOverviewSchema = z
+  .object({
+    days: z.number().int(),
+    totals: ruleFiringTotalsSchema,
+    windowTotals: ruleFiringTotalsSchema,
+    timeline: z.array(ruleFiringGlobalDayStatSchema),
+    rules: z.array(ruleFiringStatsRowSchema),
+  })
+  .meta({ id: "RuleFiringOverview" });
+
+export type RuleFiringOverview = z.infer<typeof ruleFiringOverviewSchema>;
+
+export const ruleFiringFeedItemSchema = ruleFiringRecipientSchema
+  .extend({
+    ruleId: z.string(),
+    ruleName: z.string(),
+    /** The rule's type when it fired, not today's. */
+    ruleType: z.enum(["message", "badge"]),
+  })
+  .meta({ id: "RuleFiringFeedItem" });
+
+export type RuleFiringFeedItem = z.infer<typeof ruleFiringFeedItemSchema>;
+
+export const ruleFiringFeedSchema = z
+  .object({
+    items: z.array(ruleFiringFeedItemSchema),
+    /** Opaque keyset cursor for the next page, null on the last one. */
+    nextCursor: z.string().nullable(),
+  })
+  .meta({ id: "RuleFiringFeed" });
+
+export type RuleFiringFeed = z.infer<typeof ruleFiringFeedSchema>;
+
+export const ruleFiringFeedQuerySchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(30),
+  type: z.enum(["message", "badge"]).optional(),
+  ruleId: z.uuid().optional(),
+  result: z.enum(RULE_FIRING_RESULTS).optional(),
+});
+
+export type RuleFiringFeedQuery = z.infer<typeof ruleFiringFeedQuerySchema>;
+
+type ClientRuleFiringTotals = Omit<RuleFiringTotals, "lastFiredAt"> & { lastFiredAt: Date | null };
+
+export interface ClientRuleFiringOverview
+  extends Omit<RuleFiringOverview, "totals" | "windowTotals" | "rules" | "timeline"> {
+  /** `day` is revived into a local-midnight Date by the frontend interceptor. */
+  timeline: (Omit<RuleFiringGlobalDayStat, "day"> & { day: Date })[];
+  totals: ClientRuleFiringTotals;
+  windowTotals: ClientRuleFiringTotals;
+  rules: ClientRuleFiringStatsRow[];
+}
+
+export interface ClientRuleFiringFeedItem extends Omit<RuleFiringFeedItem, "deliveredAt" | "seenAt" | "createdAt"> {
+  deliveredAt: Date | null;
+  seenAt: Date | null;
+  createdAt: Date;
+}
+
+export interface ClientRuleFiringFeed {
+  items: ClientRuleFiringFeedItem[];
+  nextCursor: string | null;
+}

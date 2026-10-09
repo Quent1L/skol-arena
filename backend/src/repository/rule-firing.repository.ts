@@ -1,6 +1,6 @@
-import { and, count, desc, eq, gte, inArray, isNull, max, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, lt, max, or, sql, type SQL } from "drizzle-orm";
 import { db } from "../config/database";
-import { appUsers, ruleFirings } from "../db/schema";
+import { appUsers, ruleFirings, rules } from "../db/schema";
 import type { RuleFiringResult, RuleFiringSurface, RuleType } from "@skol-arena/shared";
 
 export interface RuleFiringDraft {
@@ -69,6 +69,67 @@ const EMPTY_TOTALS: RuleFiringTotals = {
   recapCount: 0,
   lastFiredAt: null,
 };
+
+/** One firing as a recipient row. Callers join `appUsers` for the player's name. */
+const RECIPIENT_SELECTION = {
+  id: ruleFirings.id,
+  playerId: ruleFirings.playerId,
+  playerName: appUsers.displayName,
+  matchId: ruleFirings.matchId,
+  result: ruleFirings.result,
+  message: ruleFirings.message,
+  deliveredAt: ruleFirings.deliveredAt,
+  seenAt: ruleFirings.seenAt,
+  seenSurface: ruleFirings.seenSurface,
+  createdAt: ruleFirings.createdAt,
+};
+
+export interface RuleFiringFeedQuery {
+  /** `createdAt` is Postgres timestamptz text, see `feed()`. */
+  cursor?: { createdAt: string; id: string };
+  limit: number;
+  type?: RuleType;
+  ruleId?: string;
+  result?: RuleFiringResult;
+}
+
+export interface RuleFiringFeedRow {
+  id: string;
+  playerId: string;
+  playerName: string;
+  matchId: string | null;
+  result: RuleFiringResult;
+  message: string | null;
+  deliveredAt: Date | null;
+  seenAt: Date | null;
+  seenSurface: RuleFiringSurface | null;
+  createdAt: Date;
+  ruleId: string;
+  ruleName: string;
+  ruleType: RuleType;
+  /** The row's `createdAt` at full precision, for the next page's cursor. */
+  cursorAt: string;
+}
+
+/** Daily buckets over the trailing window, optionally narrowed by `scope`. */
+async function dailyBuckets(days: number, scope?: SQL) {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const dayBucket = sql`date_trunc('day', ${ruleFirings.createdAt})`;
+  return await db
+    .select({
+      day: sql<string>`to_char(${dayBucket}, 'YYYY-MM-DD')`,
+      firedCount: count(),
+      seenCount:
+        sql<number>`count(*) filter (where ${ruleFirings.seenSurface} in ('reveal', 'reveal_skipped'))`.mapWith(Number),
+      recapCount: sql<number>`count(*) filter (where ${ruleFirings.seenSurface} = 'recap')`.mapWith(Number),
+      messageCount: sql<number>`count(*) filter (where ${ruleFirings.ruleType} = 'message')`.mapWith(Number),
+      badgeCount: sql<number>`count(*) filter (where ${ruleFirings.ruleType} = 'badge')`.mapWith(Number),
+    })
+    .from(ruleFirings)
+    .where(and(scope, gte(ruleFirings.createdAt, since)))
+    .groupBy(dayBucket)
+    .orderBy(dayBucket);
+}
 
 export class RuleFiringRepository {
   /**
@@ -171,38 +232,73 @@ export class RuleFiringRepository {
 
   /** Daily buckets over the trailing window, for the detail panel's timeline. */
   async dailyTimeline(ruleId: string, days: number) {
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    return await dailyBuckets(days, eq(ruleFirings.ruleId, ruleId));
+  }
+
+  /** Daily buckets across every rule, split by the kind of rule that fired. */
+  async globalDailyTimeline(days: number) {
+    return await dailyBuckets(days);
+  }
+
+  /**
+   * Totals across every rule. `since` narrows them to a trailing window; without it
+   * they cover all time.
+   */
+  async globalTotals(since?: Date): Promise<RuleFiringTotals> {
+    const [row] = await db
+      .select(TOTALS_SELECTION)
+      .from(ruleFirings)
+      .where(since ? gte(ruleFirings.createdAt, since) : undefined);
+    return row ?? { ...EMPTY_TOTALS };
+  }
+
+  /**
+   * The latest firings of every rule, newest first, one page at a time.
+   *
+   * Walked with a keyset on (createdAt, id) rather than an offset: firings keep
+   * arriving while an admin reads, and an offset would shift under them. The cursor
+   * carries `createdAt` as Postgres text so it keeps its microseconds — a JS Date
+   * would round them off and skip the rows sharing the truncated millisecond.
+   */
+  async feed(query: RuleFiringFeedQuery): Promise<RuleFiringFeedRow[]> {
+    const { cursor, limit, type, ruleId, result } = query;
+    const keyset = cursor
+      ? or(
+          lt(ruleFirings.createdAt, sql`${cursor.createdAt}::timestamptz`),
+          and(
+            eq(ruleFirings.createdAt, sql`${cursor.createdAt}::timestamptz`),
+            lt(ruleFirings.id, cursor.id),
+          ),
+        )
+      : undefined;
+
     return await db
       .select({
-        day: sql<string>`to_char(date_trunc('day', ${ruleFirings.createdAt}), 'YYYY-MM-DD')`,
-        firedCount: count(),
-        seenCount:
-          sql<number>`count(*) filter (where ${ruleFirings.seenSurface} in ('reveal', 'reveal_skipped'))`.mapWith(
-            Number,
-          ),
-        recapCount: sql<number>`count(*) filter (where ${ruleFirings.seenSurface} = 'recap')`.mapWith(Number),
+        ...RECIPIENT_SELECTION,
+        ruleId: ruleFirings.ruleId,
+        ruleName: rules.name,
+        ruleType: ruleFirings.ruleType,
+        cursorAt: sql<string>`${ruleFirings.createdAt}::text`,
       })
       .from(ruleFirings)
-      .where(and(eq(ruleFirings.ruleId, ruleId), gte(ruleFirings.createdAt, since)))
-      .groupBy(sql`date_trunc('day', ${ruleFirings.createdAt})`)
-      .orderBy(sql`date_trunc('day', ${ruleFirings.createdAt})`);
+      .innerJoin(rules, eq(rules.id, ruleFirings.ruleId))
+      .innerJoin(appUsers, eq(appUsers.id, ruleFirings.playerId))
+      .where(
+        and(
+          keyset,
+          type ? eq(ruleFirings.ruleType, type) : undefined,
+          ruleId ? eq(ruleFirings.ruleId, ruleId) : undefined,
+          result ? eq(ruleFirings.result, result) : undefined,
+        ),
+      )
+      .orderBy(desc(ruleFirings.createdAt), desc(ruleFirings.id))
+      .limit(limit);
   }
 
   /** Most recent recipients, for the "who got this" table. */
   async recentRecipients(ruleId: string, limit = 20) {
     return await db
-      .select({
-        id: ruleFirings.id,
-        playerId: ruleFirings.playerId,
-        playerName: appUsers.displayName,
-        matchId: ruleFirings.matchId,
-        result: ruleFirings.result,
-        message: ruleFirings.message,
-        deliveredAt: ruleFirings.deliveredAt,
-        seenAt: ruleFirings.seenAt,
-        seenSurface: ruleFirings.seenSurface,
-        createdAt: ruleFirings.createdAt,
-      })
+      .select(RECIPIENT_SELECTION)
       .from(ruleFirings)
       .innerJoin(appUsers, eq(appUsers.id, ruleFirings.playerId))
       .where(eq(ruleFirings.ruleId, ruleId))

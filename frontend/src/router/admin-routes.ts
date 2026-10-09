@@ -81,6 +81,16 @@ const children: RouteRecordRaw[] = [
     },
   },
   {
+    path: 'rules-engine/stats',
+    name: 'admin-rules-engine-overview',
+    component: () => import('@/views/admin/RulesEngineOverviewView.vue'),
+    meta: {
+      breadcrumb: t('routes.adminRulesEngineOverview'),
+      title: t('routes.adminRulesEngineOverview'),
+      parent: 'admin-rules-engine',
+    },
+  },
+  {
     path: 'rules-engine/new',
     name: 'admin-rules-engine-new',
     component: () => import('@/views/admin/RulesEngineFormView.vue'),

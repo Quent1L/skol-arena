@@ -119,7 +119,7 @@
               :color="fateColor(row.original)"
               variant="subtle"
               size="sm"
-              :label="fateLabel(row.original)"
+              :label="fateLabel(t, row.original)"
             />
           </div>
         </template>
@@ -135,7 +135,7 @@
           <UBadge
             :color="fateColor(row.original)"
             variant="subtle"
-            :label="fateLabel(row.original)"
+            :label="fateLabel(t, row.original)"
           />
         </template>
         <template #message-cell="{ row }">
@@ -167,6 +167,7 @@ import AdminTable from '@/components/admin/AdminTable.vue'
 import RowActions from '@/components/ui/RowActions.vue'
 import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/admin/table-columns'
 import { useRulesService } from '@/composables/rules/rules.service'
+import { fateColor, fateLabel, resultColor } from '@/components/rules/firing-fate'
 import type { ClientRuleFiringRecipient, RuleFiringDayStat } from '@skol-arena/shared/types/index'
 
 const route = useRoute()
@@ -271,30 +272,6 @@ function dayTooltip(day: RuleFiringDayStat) {
 
 function formatDate(date: Date) {
   return new Date(date).toLocaleString('fr-FR')
-}
-
-function resultColor(result: string) {
-  return result === 'selected' || result === 'awarded' ? 'success' : 'neutral'
-}
-
-/**
- * What became of this firing. `superseded` never had a chance to be delivered, so
- * it reads as its own outcome rather than as an undelivered message.
- */
-function fateLabel(row: ClientRuleFiringRecipient) {
-  if (row.result === 'superseded') return t('rulesEngineStats.fate.superseded')
-  if (row.result === 'already_held') return t('rulesEngineStats.fate.alreadyHeld')
-  if (!row.deliveredAt) return t('rulesEngineStats.fate.notDelivered')
-  if (row.seenSurface === 'recap') return t('rulesEngineStats.fate.recap')
-  if (row.seenSurface) return t('rulesEngineStats.fate.seen')
-  return t('rulesEngineStats.fate.pending')
-}
-
-function fateColor(row: ClientRuleFiringRecipient) {
-  if (row.seenSurface === 'recap') return 'warning'
-  if (row.seenSurface) return 'success'
-  if (!row.deliveredAt) return 'error'
-  return 'neutral'
 }
 
 function reload() {
