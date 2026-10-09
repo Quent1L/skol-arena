@@ -1,4 +1,10 @@
 {
+  "adminTable": {
+    "sortBy": "Sort by",
+    "ascending": "Ascending order",
+    "descending": "Descending order",
+    "showDetails": "Show details"
+  },
   "adminInvitationsView": {
     "codeCopiedDetail": "Code copied to clipboard",
     "codeCreatedDetail": "Code {code} created successfully",

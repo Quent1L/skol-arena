@@ -2,9 +2,18 @@ import { h } from 'vue'
 import type { Column } from '@tanstack/vue-table'
 import UButton from '@nuxt/ui/components/Button.vue'
 
+/**
+ * Marks a header renderer built by `sortableHeader`: AdminTable reads it back to list the
+ * column in its phone sort menu and to label the column in a row's details.
+ */
+export interface LabelledHeader {
+  label: string
+  sortable: boolean
+}
+
 /** Header cell that toggles the column's sorting, with the current direction as icon. */
 export function sortableHeader<T>(label: string) {
-  return ({ column }: { column: Column<T> }) => {
+  const render = ({ column }: { column: Column<T> }) => {
     const sorted = column.getIsSorted()
     const icon =
       sorted === 'asc'
@@ -21,6 +30,7 @@ export function sortableHeader<T>(label: string) {
       onClick: () => column.toggleSorting(sorted === 'asc'),
     })
   }
+  return Object.assign(render, { label, sortable: true } satisfies LabelledHeader)
 }
 
 // Literal class strings so Tailwind picks them up.

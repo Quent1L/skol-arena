@@ -46,14 +46,14 @@
     />
 
     <!-- Server-side sorting and paging: the list can hold every member of the instance. -->
-    <UTable
+    <AdminTable
       v-model:sorting="sorting"
       :data="users"
       :columns="columns"
       :loading="loading"
       :sorting-options="{ manualSorting: true, enableSortingRemoval: false }"
       :empty="t('adminUsersList.emptyState')"
-      :ui="{ td: 'whitespace-normal' }"
+      :page-size="0"
     >
       <template #displayName-cell="{ row }">
         <div class="flex items-center gap-2">
@@ -122,7 +122,7 @@
       <template #actions-cell="{ row }">
         <RowActions :actions="rowActions(row.original)" />
       </template>
-    </UTable>
+    </AdminTable>
 
     <div
       v-if="total > pageSize"
@@ -254,6 +254,7 @@ import type { TableColumn } from '@nuxt/ui'
 import type { SortingState } from '@tanstack/vue-table'
 import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
 import RowActions, { type RowAction } from '@/components/ui/RowActions.vue'
+import AdminTable from '@/components/admin/AdminTable.vue'
 import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/admin/table-columns'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useAdminUsersService } from '@/composables/admin-users/admin-users.service'

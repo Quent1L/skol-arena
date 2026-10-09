@@ -1,4 +1,10 @@
 {
+  "adminTable": {
+    "sortBy": "Trier par",
+    "ascending": "Ordre croissant",
+    "descending": "Ordre décroissant",
+    "showDetails": "Afficher le détail"
+  },
   "adminInvitationsView": {
     "codeCopiedDetail": "Code copié dans le presse-papier",
     "codeCreatedDetail": "Le code {code} a été créé avec succès",
