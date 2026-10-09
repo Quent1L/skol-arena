@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { flushPromises } from '@vue/test-utils'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithUi } from '@/test-support/mount'
 import AvatarEditor from '../AvatarEditor.vue'
 
 vi.mock('vue-i18n', async () => (await import('@/test-support/mock-modules')).i18nEchoMock())
@@ -29,7 +29,7 @@ const CropStub = defineComponent({
 const USER = '00000000-0000-4000-8000-000000000001'
 
 function mountEditor() {
-  return mountWithPrime(AvatarEditor, {
+  return mountWithUi(AvatarEditor, {
     props: { userId: USER, name: 'John Doe' },
     global: { stubs: { AvatarCropDialog: CropStub } },
   })

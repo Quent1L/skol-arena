@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
 import { flushPromises } from '@vue/test-utils'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithUi } from '@/test-support/mount'
 import { resetAvatarCache, useAvatarService } from '@/composables/avatar/avatar.service'
 import AvatarLightbox from '../AvatarLightbox.vue'
 
@@ -11,7 +11,7 @@ const ID = '00000000-0000-4000-8000-000000000001'
 const VERSION = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 
 async function mountLightbox(visible = true) {
-  const wrapper = mountWithPrime(AvatarLightbox, {
+  const wrapper = mountWithUi(AvatarLightbox, {
     props: { playerId: ID, name: 'John Doe', visible },
     global: { stubs: { teleport: true } },
   })
@@ -42,20 +42,20 @@ describe('AvatarLightbox', () => {
   it('closes from its button', async () => {
     const wrapper = await mountLightbox()
     await wrapper.find('button[aria-label="common.close"]').trigger('click')
-    expect(wrapper.emitted('update:visible')?.[0]).toEqual([false])
+    expect(wrapper.findComponent(AvatarLightbox).emitted('update:visible')?.[0]).toEqual([false])
   })
 
   it('closes on Escape and on a click outside the photo, not on the photo itself', async () => {
     const wrapper = await mountLightbox()
     await wrapper.find('[data-testid="avatar-lightbox-image"]').trigger('click')
-    expect(wrapper.emitted('update:visible')).toBeUndefined()
+    expect(wrapper.findComponent(AvatarLightbox).emitted('update:visible')).toBeUndefined()
 
     await wrapper.find('[data-testid="avatar-lightbox"]').trigger('click')
-    expect(wrapper.emitted('update:visible')).toEqual([[false]])
+    expect(wrapper.findComponent(AvatarLightbox).emitted('update:visible')).toEqual([[false]])
 
     const other = await mountLightbox()
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
-    expect(other.emitted('update:visible')).toEqual([[false]])
+    expect(other.findComponent(AvatarLightbox).emitted('update:visible')).toEqual([[false]])
   })
 
   it('locks the page scroll while open', async () => {

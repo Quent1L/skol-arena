@@ -10,25 +10,23 @@
 
     <div class="flex flex-col gap-2 min-w-0">
       <div class="flex flex-wrap gap-2">
-        <Button
+        <UButton
           :label="hasAvatar ? t('avatarEditor.change') : t('avatarEditor.upload')"
-          icon="fa fa-camera"
-          size="small"
+          icon="i-fa7-solid:camera"
           :loading="busy"
           @click="pickFile"
         />
-        <Button
+        <UButton
           v-if="hasAvatar"
           :label="t('avatarEditor.remove')"
-          icon="fa fa-trash"
-          size="small"
-          severity="danger"
-          outlined
+          icon="i-fa7-solid:trash"
+          color="error"
+          variant="outline"
           :disabled="busy"
           @click="confirmRemove"
         />
       </div>
-      <small class="text-gray-500">{{ t('avatarEditor.hint', { max: maxLabel }) }}</small>
+      <small class="text-muted">{{ t('avatarEditor.hint', { max: maxLabel }) }}</small>
       <small v-if="error" class="text-red-500" role="alert">{{ error }}</small>
     </div>
 
@@ -54,12 +52,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useConfirm } from 'primevue/useconfirm'
 import { AVATAR_ACCEPTED_MIME, AVATAR_MAX_UPLOAD_BYTES_DEFAULT } from '@skol-arena/shared'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import AvatarCropDialog from '@/components/avatar/AvatarCropDialog.vue'
 import { useAvatarService } from '@/composables/avatar/avatar.service'
 import { useAppToast } from '@/composables/useAppToast'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 /**
  * Raw files over this are refused before cropping. The crop exports a 512px square,
@@ -75,7 +73,7 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
-const confirm = useConfirm()
+const confirm = useConfirmDialog()
 const toast = useAppToast()
 const avatarService = useAvatarService()
 
@@ -125,14 +123,14 @@ async function upload(blob: Blob) {
   }
 }
 
-function confirmRemove() {
-  confirm.require({
+async function confirmRemove() {
+  const confirmed = await confirm({
+    title: t('avatarEditor.confirmRemoveHeader'),
     message: t('avatarEditor.confirmRemoveMessage'),
-    header: t('avatarEditor.confirmRemoveHeader'),
-    icon: 'fa fa-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: remove,
+    confirmLabel: t('avatarEditor.remove'),
+    color: 'error',
   })
+  if (confirmed) await remove()
 }
 
 async function remove() {

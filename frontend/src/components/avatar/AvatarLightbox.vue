@@ -22,18 +22,19 @@
         <div class="relative w-[min(90vw,90vh)] aspect-square" @click.self="close">
           <div
             v-if="status === 'error'"
-            class="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-surface-800 px-6 text-center"
+            class="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-slate-800 px-6 text-center"
             role="alert"
             data-testid="avatar-lightbox-error"
           >
-            <i class="fa fa-image text-4xl text-surface-500" />
+            <i class="fa fa-image text-4xl text-slate-500" />
             <p class="font-semibold text-white">{{ t('avatarLightbox.loadFailed') }}</p>
-            <p class="text-sm text-surface-400">{{ t('avatarLightbox.loadFailedHint') }}</p>
-            <Button
+            <p class="text-sm text-slate-400">{{ t('avatarLightbox.loadFailedHint') }}</p>
+            <UButton
               :label="t('avatarLightbox.retry')"
-              icon="fa fa-rotate-right"
-              severity="secondary"
-              size="small"
+              icon="i-fa7-solid:rotate-right"
+              color="neutral"
+              variant="subtle"
+              size="sm"
               data-testid="avatar-lightbox-retry"
               @click="retry"
             />
@@ -44,12 +45,12 @@
                  spinner flashing in front of it. -->
             <div
               v-if="spinnerVisible"
-              class="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl bg-surface-800 text-white"
+              class="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl bg-slate-800 text-white"
               role="status"
               data-testid="avatar-lightbox-loading"
             >
               <i class="fa fa-spinner fa-spin text-3xl" />
-              <span class="text-sm text-surface-300">{{ t('avatarLightbox.loading') }}</span>
+              <span class="text-sm text-slate-300">{{ t('avatarLightbox.loading') }}</span>
             </div>
             <img
               :key="attempt"
@@ -86,7 +87,6 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onKeyStroke, useScrollLock, useTimeoutFn } from '@vueuse/core'
 import { AVATAR_SIZES } from '@skol-arena/shared'
-import Button from 'primevue/button'
 import { useAvatarService } from '@/composables/avatar/avatar.service'
 
 /** A player's photo at full screen, from the largest variant the screen calls for. */

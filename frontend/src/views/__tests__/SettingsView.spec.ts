@@ -36,7 +36,7 @@ function mountWith(providers: string[]) {
   const auth = makeAuthMock(state)
   auth.listAuthProviders = vi.fn(async () => providers)
   vi.mocked(useAuth).mockReturnValue(auth as never)
-  return { auth, wrapper: mountWithPrime(SettingsView) }
+  return { auth, wrapper: mountWithPrime(SettingsView, { global: { stubs: { AvatarEditor: true } } }) }
 }
 
 describe('SettingsView account section', () => {
@@ -86,7 +86,7 @@ describe('SettingsView account section', () => {
     })
     vi.mocked(useAuth).mockReturnValue(auth as never)
 
-    const wrapper = mountWithPrime(SettingsView)
+    const wrapper = mountWithPrime(SettingsView, { global: { stubs: { AvatarEditor: true } } })
     await flushPromises()
 
     expect(wrapper.text()).toContain('settings.account.changePassword')

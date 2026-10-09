@@ -1,58 +1,58 @@
 <template>
-  <Dialog
-    v-model:visible="visible"
-    modal
-    :header="t('avatarCropDialog.title')"
-    :style="{ width: '22rem' }"
-    :breakpoints="{ '480px': '95vw' }"
-    @hide="release"
+  <UModal
+    v-model:open="visible"
+    :title="t('avatarCropDialog.title')"
+    :ui="{ content: 'sm:max-w-sm', footer: 'justify-end' }"
+    @after:leave="release"
   >
-    <div class="flex flex-col items-center gap-4">
-      <div
-        class="relative overflow-hidden rounded-lg bg-surface-900 touch-none select-none cursor-grab active:cursor-grabbing"
-        :style="{ width: `${VIEW}px`, height: `${VIEW}px` }"
-        data-testid="avatar-crop-viewport"
-        @pointerdown="onPointerDown"
-        @pointermove="onPointerMove"
-        @pointerup="onPointerUp"
-        @pointercancel="onPointerUp"
-        @wheel.prevent="onWheel"
-      >
-        <canvas ref="canvasEl" class="block w-full h-full" />
-        <!-- Darkens what falls outside the rounded square the avatar is shown in. -->
+    <template #body>
+      <div class="flex flex-col items-center gap-4">
         <div
-          class="pointer-events-none absolute inset-0 rounded-md"
-          style="box-shadow: 0 0 0 9999px rgb(0 0 0 / 0.55)"
-        />
-      </div>
+          class="relative max-w-full overflow-hidden rounded-lg bg-slate-900 touch-none select-none cursor-grab active:cursor-grabbing"
+          :style="{ width: `${VIEW}px`, height: `${VIEW}px` }"
+          data-testid="avatar-crop-viewport"
+          @pointerdown="onPointerDown"
+          @pointermove="onPointerMove"
+          @pointerup="onPointerUp"
+          @pointercancel="onPointerUp"
+          @wheel.prevent="onWheel"
+        >
+          <canvas ref="canvasEl" class="block w-full h-full" />
+          <!-- Darkens what falls outside the rounded square the avatar is shown in. -->
+          <div
+            class="pointer-events-none absolute inset-0 rounded-md"
+            style="box-shadow: 0 0 0 9999px rgb(0 0 0 / 0.55)"
+          />
+        </div>
 
-      <div class="flex w-full items-center gap-3">
-        <i class="fa fa-image text-xs text-gray-400" />
-        <Slider
-          :model-value="zoom"
-          :min="1"
-          :max="MAX_ZOOM"
-          :step="0.01"
-          class="flex-1"
-          :aria-label="t('avatarCropDialog.zoom')"
-          @update:model-value="setZoom(Array.isArray($event) ? $event[0]! : $event)"
-        />
-        <i class="fa fa-image text-gray-400" />
+        <div class="flex w-full items-center gap-3">
+          <i class="fa fa-image text-xs text-gray-400" />
+          <USlider
+            :model-value="zoom"
+            :min="1"
+            :max="MAX_ZOOM"
+            :step="0.01"
+            class="flex-1"
+            :aria-label="t('avatarCropDialog.zoom')"
+            @update:model-value="setZoom($event ?? 1)"
+          />
+          <i class="fa fa-image text-gray-400" />
+        </div>
+        <small class="text-muted text-center">{{ t('avatarCropDialog.hint') }}</small>
       </div>
-      <small class="text-gray-500 text-center">{{ t('avatarCropDialog.hint') }}</small>
-    </div>
+    </template>
 
     <template #footer>
-      <Button :label="t('common.cancel')" severity="secondary" text @click="visible = false" />
-      <Button
+      <UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="visible = false" />
+      <UButton
         :label="t('avatarCropDialog.confirm')"
-        icon="fa fa-check"
+        icon="i-fa7-solid:check"
         :loading="busy"
         :disabled="!bitmap"
         @click="confirm"
       />
     </template>
-  </Dialog>
+  </UModal>
 </template>
 
 <script setup lang="ts">
