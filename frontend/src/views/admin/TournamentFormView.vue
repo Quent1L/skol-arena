@@ -27,7 +27,7 @@
           :is-super-admin="isSuperAdmin"
           :discipline-locked="isEditMode"
           :locked-discipline-name="currentDisciplineName"
-          :editability="editability"
+          :editability="sectionEditability"
         >
           <template #after-discipline>
             <UFormField v-if="isEditMode" name="status" :label="t('common.status')">
@@ -123,9 +123,9 @@
           </div>
         </section>
 
-        <ScoreConstraintsSection v-model:state="state" :editability="editability" />
+        <ScoreConstraintsSection v-model:state="state" :editability="sectionEditability" />
 
-        <ValidationModeSection v-model:state="state" :editability="editability" />
+        <ValidationModeSection v-model:state="state" :editability="sectionEditability" />
 
         <template #footer>
           <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -240,6 +240,13 @@ type TournamentFormState = Partial<CreateTournamentFormData & UpdateTournamentFo
 // A ref, not a reactive: the sections bind it with `v-model:state`, which needs
 // a binding it can reassign.
 const state = ref<TournamentFormState>({})
+
+/**
+ * What the shared sections get: `null` while creating, which they read as "everything
+ * open". The ref itself starts as an empty policy, and handing that over made every
+ * section field (name, description, dates…) read-only on a new tournament.
+ */
+const sectionEditability = computed(() => (isEditMode.value ? editability.value : null))
 
 function isFieldEditable(fieldName: string): boolean {
   if (!isEditMode.value) return true
