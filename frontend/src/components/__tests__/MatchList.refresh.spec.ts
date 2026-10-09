@@ -7,7 +7,10 @@ import type { ClientMatchCard } from '@skol-arena/shared/types/index'
 const list = vi.fn()
 
 vi.mock('@/composables/match/match.api', () => ({ matchApi: { list: (...args: unknown[]) => list(...args) } }))
-vi.mock('@vueuse/core', () => ({ useInfiniteScroll: vi.fn() }))
+vi.mock('@vueuse/core', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@vueuse/core')>()),
+  useInfiniteScroll: vi.fn(),
+}))
 
 import MatchList from '../MatchList.vue'
 
@@ -26,7 +29,7 @@ function mountList(refreshKey = 0) {
     props: { tournamentId: 't1', refreshKey, scrollMode: 'none' as const },
     global: {
       plugins: [i18n],
-      stubs: { MatchCard: true, PlayerPickerDialog: true, ProgressSpinner: true, Button: true, Select: true },
+      stubs: { MatchCard: true, PlayerPickerDialog: true, Icon: true, Button: true },
     },
   })
 }

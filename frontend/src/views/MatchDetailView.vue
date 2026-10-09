@@ -2,31 +2,39 @@
   <div class="match-detail-view mx-auto w-full max-w-4xl px-3 py-4 sm:px-6 sm:py-6">
     <!-- Skeleton mirrors the real layout so the page does not jump when data lands -->
     <div v-if="loading" class="space-y-4">
-      <Skeleton height="2.5rem" class="rounded-xl!" />
-      <Skeleton height="15rem" class="rounded-2xl!" />
-      <Skeleton height="7rem" class="rounded-2xl!" />
+      <USkeleton class="h-[2.5rem] w-full rounded-xl!" />
+      <USkeleton class="h-[15rem] w-full rounded-2xl!" />
+      <USkeleton class="h-[7rem] w-full rounded-2xl!" />
     </div>
 
     <SurfacePanel v-else-if="error" tone="danger">
       <div class="flex flex-col items-center gap-4 py-6 text-center">
         <i class="fa fa-triangle-exclamation text-3xl text-match-loss" aria-hidden="true" />
         <p class="text-sm text-white/80">{{ error }}</p>
-        <Button :label="t('matchDetailView.back')" icon="fa fa-arrow-left" severity="secondary" @click="goBack()" />
+        <UButton
+          color="neutral"
+          variant="soft"
+          :label="t('matchDetailView.back')"
+          icon="i-fa7-solid:arrow-left"
+          @click="goBack()"
+          size="lg"
+        />
       </div>
     </SurfacePanel>
 
     <div v-else-if="match" class="space-y-4">
       <!-- Top bar: back, context, status, actions. One line at every width. -->
       <div
-        class="sticky top-0 z-20 -mx-3 flex items-center gap-2 border-b border-surface-700/40 bg-gray-900/85 px-3 py-2 backdrop-blur-md sm:-mx-6 sm:px-6"
+        class="sticky top-0 z-20 -mx-3 flex items-center gap-2 border-b border-slate-700/40 bg-gray-900/85 px-3 py-2 backdrop-blur-md sm:-mx-6 sm:px-6"
       >
-        <Button
-          icon="fa fa-arrow-left"
-          severity="secondary"
-          text
-          rounded
+        <UButton
+          color="neutral"
+          variant="ghost"
+          icon="i-fa7-solid:arrow-left"
           :aria-label="t('matchDetailView.back')"
           @click="goBack()"
+          size="lg"
+          class="rounded-full"
         />
 
         <div class="min-w-0 flex-1">
@@ -61,11 +69,11 @@
             <div class="flex flex-wrap items-center gap-2">
               <span
                 v-if="modeLabel"
-                class="font-label rounded-full border border-surface-600/60 bg-surface-900/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-color"
+                class="font-label rounded-full border border-slate-600/60 bg-slate-900/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted"
               >
                 {{ modeLabel }}
               </span>
-              <span v-if="match.outcomeType" class="font-label text-[11px] text-muted-color">
+              <span v-if="match.outcomeType" class="font-label text-[11px] text-muted">
                 {{ match.outcomeType.name }}
               </span>
             </div>
@@ -100,10 +108,10 @@
                 class="font-headline flex items-center gap-2 text-5xl font-black tabular-nums tracking-tighter sm:gap-4 sm:text-7xl"
               >
                 <span :class="scoreClass(sideA)">{{ displayScoreA }}</span>
-                <span class="h-8 w-px shrink-0 bg-surface-600/60 sm:h-14" aria-hidden="true" />
+                <span class="h-8 w-px shrink-0 bg-slate-600/60 sm:h-14" aria-hidden="true" />
                 <span :class="scoreClass(sideB)">{{ displayScoreB }}</span>
               </div>
-              <div v-else class="font-headline text-2xl font-black tracking-tighter text-muted-color/40 sm:text-3xl">
+              <div v-else class="font-headline text-2xl font-black tracking-tighter sm:text-3xl">
                 {{ t('matchCard.vs') }}
               </div>
             </div>
@@ -138,7 +146,7 @@
       <SurfacePanel v-if="metaItems.length > 0" class="reveal" :style="revealDelay(2)">
         <div class="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
           <div v-for="item in metaItems" :key="item.label" class="min-w-0">
-            <div class="font-label flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-color">
+            <div class="font-label flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted">
               <i :class="item.icon" class="w-3 text-center" aria-hidden="true" />
               {{ item.label }}
             </div>
@@ -189,52 +197,58 @@
         <div class="space-y-3">
           <p class="text-sm text-white/70">{{ t('matchDetailView.adminActionsDescription') }}</p>
           <div class="flex flex-wrap gap-3">
-            <Button
+            <UButton
+              color="success"
               :label="t('matchDetailView.finalizeConsensus')"
-              icon="fa fa-check"
-              severity="success"
+              icon="i-fa7-solid:check"
               @click="() => handleFinalize('consensus')"
+              size="lg"
             />
-            <Button
+            <UButton
+              color="warning"
               :label="t('matchDetailView.finalizeOverride')"
-              icon="fa fa-gavel"
-              severity="warn"
+              icon="i-fa7-solid:gavel"
               @click="() => handleFinalize('admin_override')"
+              size="lg"
             />
           </div>
         </div>
       </SurfacePanel>
 
       <!-- Cancel confirmation dialog -->
-      <Dialog
-        v-model:visible="showCancelDialog"
-        :header="t('matchDetailView.cancelMatch')"
-        modal
-        :closable="!cancelling"
-        :style="{ maxWidth: '600px' }"
+      <UModal
+        v-model:open="showCancelDialog"
+        :title="t('matchDetailView.cancelMatch')"
+        :dismissible="!cancelling"
+        :close="!cancelling"
+        :ui="{ content: 'sm:max-w-xl', footer: 'justify-end' }"
       >
+        <template #body>
         <p v-if="match.status === 'finalized'" class="mb-2 font-semibold text-amber-400">
           <i class="fa fa-triangle-exclamation mr-1" aria-hidden="true" />
           {{ t('matchDetailView.cancelFinalizedWarning') }}
         </p>
         <p class="text-white/70">{{ t('matchDetailView.cancelConfirmation') }}</p>
+        </template>
         <template #footer>
-          <Button
+          <UButton
+            color="neutral"
+            variant="outline"
             :label="t('matchDetailView.keepMatch')"
-            severity="secondary"
-            outlined
             :disabled="cancelling"
             @click="showCancelDialog = false"
+            size="lg"
           />
-          <Button
+          <UButton
+            color="error"
             :label="t('matchDetailView.confirmCancel')"
-            icon="fa fa-ban"
-            severity="danger"
+            icon="i-fa7-solid:ban"
             :loading="cancelling"
             @click="handleCancel"
+            size="lg"
           />
         </template>
-      </Dialog>
+      </UModal>
 
       <!-- MMR Reveal Animation (ranked matches only) -->
       <!-- Recap first: with >=2 queued events show the grouped card, not the

@@ -17,7 +17,7 @@ const ICON: Record<ConfirmationStatus, string> = {
 const TEXT_CLASS: Record<ConfirmationStatus, string> = {
   confirmed: 'text-match-win',
   contested: 'text-match-loss',
-  pending: 'text-muted-color',
+  pending: 'text-muted',
 }
 
 const LABEL_KEY: Record<ConfirmationStatus, string> = {

@@ -9,14 +9,14 @@
     </template>
 
     <div class="space-y-4">
-      <p class="font-label text-[11px] text-muted-color">
+      <p class="font-label text-[11px] text-muted">
         <i class="fa fa-lock mr-1" aria-hidden="true" />
         {{ t('matchMessageThread.hint') }}
       </p>
 
       <div v-if="loading" class="space-y-2">
-        <Skeleton height="2.5rem" class="rounded-xl!" />
-        <Skeleton height="2.5rem" width="70%" class="rounded-xl!" />
+        <USkeleton class="h-[2.5rem] w-full rounded-xl!" />
+        <USkeleton class="h-[2.5rem] w-[70%] rounded-xl!" />
       </div>
 
       <EmptyState
@@ -32,15 +32,15 @@
             v-if="entry.message.kind === 'system'"
             class="flex items-center gap-2 py-1"
           >
-            <span class="h-px flex-1 bg-surface-700/60" aria-hidden="true" />
-            <span class="font-label text-center text-[11px] uppercase tracking-wide text-muted-color">
+            <span class="h-px flex-1 bg-slate-700/60" aria-hidden="true" />
+            <span class="font-label text-center text-[11px] uppercase tracking-wide text-muted">
               {{ renderBody(entry.message) }}
               <!-- An event is only readable against a timeline: say when it happened -->
               <span class="whitespace-nowrap text-white/40">
                 · {{ formatDate(entry.message.createdAt) }}
               </span>
             </span>
-            <span class="h-px flex-1 bg-surface-700/60" aria-hidden="true" />
+            <span class="h-px flex-1 bg-slate-700/60" aria-hidden="true" />
           </div>
 
           <div v-else class="flex items-end gap-2" :class="entry.isOwn ? 'flex-row-reverse' : ''">
@@ -63,7 +63,7 @@
                 <span class="font-bold text-white/70">
                   {{ entry.message.author?.displayName || t('matchMessageThread.unknownAuthor') }}
                 </span>
-                <span class="text-muted-color">{{ formatDate(entry.message.createdAt) }}</span>
+                <span class="text-muted">{{ formatDate(entry.message.createdAt) }}</span>
               </div>
 
               <!-- Bodies are plain text and interpolated, never injected as HTML -->
@@ -72,7 +72,7 @@
                 :class="
                   entry.isOwn
                     ? 'rounded-br-sm bg-primary/15 text-white/90'
-                    : 'rounded-bl-sm bg-surface-700/50 text-white/90'
+                    : 'rounded-bl-sm bg-slate-700/50 text-white/90'
                 "
               >
                 {{ renderBody(entry.message) }}
@@ -88,7 +88,7 @@
         <button
           v-if="!composerOpen"
           type="button"
-          class="composer-trigger group flex w-full items-center gap-2.5 rounded-2xl border border-surface-700/50 bg-surface-900/40 px-3 py-2.5 text-left transition-all duration-200 hover:border-primary/40 hover:bg-surface-900/70 active:scale-[0.99]"
+          class="composer-trigger group flex w-full items-center gap-2.5 rounded-2xl border border-slate-700/50 bg-slate-900/40 px-3 py-2.5 text-left transition-all duration-200 hover:border-primary/40 hover:bg-slate-900/70 active:scale-[0.99]"
           @click="openComposer"
         >
           <PlayerAvatar
@@ -98,27 +98,30 @@
             :player-id="currentUserId"
             size="sm"
           />
-          <span class="flex-1 truncate text-sm text-muted-color">
+          <span class="flex-1 truncate text-sm text-muted">
             {{ t('matchMessageThread.placeholder') }}
           </span>
           <i
-            class="fa fa-paper-plane text-sm text-muted-color transition-colors group-hover:text-primary"
+            class="fa fa-paper-plane text-sm text-muted transition-colors group-hover:text-primary"
             aria-hidden="true"
           />
         </button>
 
         <div
           v-else
-          class="composer-open rounded-2xl border border-primary/40 bg-surface-900/60 p-2 ring-1 ring-primary/10"
+          class="composer-open rounded-2xl border border-primary/40 bg-slate-900/60 p-2 ring-1 ring-primary/10"
         >
-          <Textarea
+          <UTextarea
             id="matchMessageBody"
             ref="composerInput"
             v-model="draft"
-            rows="3"
+            :rows="3"
             :maxlength="MATCH_MESSAGE_MAX_LENGTH"
             :placeholder="t('matchMessageThread.placeholder')"
-            class="w-full resize-none border-0! bg-transparent! shadow-none! focus:ring-0!"
+            variant="none"
+            size="lg"
+            class="w-full"
+            :ui="{ base: 'resize-none' }"
             @keydown.esc="closeComposerIfEmpty"
             @keydown.enter.ctrl.prevent="send"
             @keydown.enter.meta.prevent="send"
@@ -126,27 +129,27 @@
           <div class="mt-1 flex items-center justify-between gap-2 px-1">
             <span
               class="font-label text-[11px] tabular-nums"
-              :class="draft.length > MATCH_MESSAGE_MAX_LENGTH - 50 ? 'text-amber-400' : 'text-muted-color'"
+              :class="draft.length > MATCH_MESSAGE_MAX_LENGTH - 50 ? 'text-amber-400' : 'text-muted'"
             >
               {{ draft.length }} / {{ MATCH_MESSAGE_MAX_LENGTH }}
             </span>
             <div class="flex items-center gap-2">
-              <Button
+              <UButton
+                color="neutral"
+                variant="ghost"
                 :label="t('common.cancel')"
-                severity="secondary"
-                text
-                size="small"
                 :disabled="posting"
                 @click="cancelComposer"
+                size="md"
               />
-              <Button
+              <UButton
                 :label="t('matchMessageThread.sendBtn')"
-                icon="fa fa-paper-plane"
-                size="small"
-                rounded
+                icon="i-fa7-solid:paper-plane"
                 :disabled="draft.trim().length === 0 || posting"
                 :loading="posting"
                 @click="send"
+                size="md"
+                class="rounded-full"
               />
             </div>
           </div>
@@ -183,7 +186,7 @@ const { messages, loading, posting, load, post, subscribe } = useMatchMessageSer
 
 const draft = ref('')
 const composerOpen = ref(false)
-const composerInput = ref<{ $el: HTMLTextAreaElement } | null>(null)
+const composerInput = ref<{ textareaRef: HTMLTextAreaElement | null } | null>(null)
 let unsubscribe: (() => void) | null = null
 
 /** Consecutive messages from one author inside this window share a single header. */
@@ -238,7 +241,7 @@ watch(
 async function openComposer() {
   composerOpen.value = true
   await nextTick()
-  composerInput.value?.$el?.focus()
+  composerInput.value?.textareaRef?.focus()
 }
 
 /** Cancel is the only path that discards a draft, so typing is never lost by accident. */

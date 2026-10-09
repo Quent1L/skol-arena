@@ -21,7 +21,7 @@
              whether someone contests it, and how long they still have to do so. -->
         <span
           v-if="totalPlayers > 0 && !isFinalized"
-          class="font-label inline-flex items-center gap-1.5 rounded-full border border-surface-600 bg-surface-900/50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-muted-color"
+          class="font-label inline-flex items-center gap-1.5 rounded-full border border-slate-600 bg-slate-900/50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-muted"
         >
           <i class="fa fa-user-check" aria-hidden="true" />
           {{ t('matchConfirmation.validatedCount', { confirmed: confirmedCount, total: totalPlayers }) }}
@@ -48,20 +48,20 @@
         <p class="text-sm text-white/70">
           {{ t('matchConfirmation.awaitingArbitrationHint') }}
         </p>
-        <Button
+        <UButton
           v-if="canUserEditResult"
+          color="warning"
+          variant="outline"
           :label="t('matchConfirmation.fixMyEntryBtn')"
-          icon="fa fa-pen"
-          severity="warn"
-          outlined
-          size="small"
+          icon="i-fa7-solid:pen"
           @click="emit('editResult')"
+          size="md"
         />
       </div>
 
       <!-- Deadline -->
       <div v-if="match.confirmationDeadline" class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-        <span class="font-label text-[11px] uppercase tracking-wide text-muted-color">
+        <span class="font-label text-[11px] uppercase tracking-wide text-muted">
           {{ t('matchConfirmation.deadlineLabel') }}
         </span>
         <span class="font-semibold text-white/90">{{ formatDate(match.confirmationDeadline) }}</span>
@@ -80,21 +80,21 @@
 
       <!-- Actions on a settled result: contest it, or take that contestation back. The
            reason and every change of mind are recorded in the thread below. -->
-      <div v-if="isFinalized" class="space-y-3 border-t border-surface-700/40 pt-4">
-        <div v-if="myPostDispute" class="space-y-3 rounded-xl border-l-2 border-match-loss bg-surface-900/40 p-3">
+      <div v-if="isFinalized" class="space-y-3 border-t border-slate-700/40 pt-4">
+        <div v-if="myPostDispute" class="space-y-3 rounded-xl border-l-2 border-match-loss bg-slate-900/40 p-3">
           <div class="flex items-center gap-2">
             <i class="fa fa-flag text-lg text-match-loss" aria-hidden="true" />
             <span class="text-sm text-white/80">{{ t('matchConfirmation.userPostDisputed') }}</span>
           </div>
 
-          <Button
+          <UButton
+            color="success"
             :label="t('matchConfirmation.withdrawPostDisputeBtn')"
-            icon="fa fa-rotate-left"
-            severity="success"
-            size="small"
+            icon="i-fa7-solid:rotate-left"
             :loading="responding"
             :disabled="responding"
             @click="openResponseDialog('agree')"
+            size="md"
           />
         </div>
 
@@ -102,48 +102,51 @@
           <p class="mb-3 text-sm text-white/70">
             {{ t('matchConfirmation.postDisputeQuestion') }}
           </p>
-          <Button
+          <UButton
+            color="error"
+            variant="outline"
             :label="t('matchConfirmation.postDisputeBtn')"
-            icon="fa fa-flag"
-            severity="danger"
-            outlined
+            icon="i-fa7-solid:flag"
             :loading="responding"
             :disabled="responding"
             @click="openResponseDialog('dispute')"
+            size="lg"
           />
         </div>
       </div>
 
       <!-- Actions for the logged-in player -->
-      <div v-else-if="canUserRespond" class="space-y-3 border-t border-surface-700/40 pt-4">
+      <div v-else-if="canUserRespond" class="space-y-3 border-t border-slate-700/40 pt-4">
         <div v-if="!userResponse">
           <p class="mb-3 text-sm text-white/70">
             {{ t('matchConfirmation.questionConfirmResult') }}
           </p>
 
           <div class="flex gap-3">
-            <Button
+            <UButton
+              color="success"
               :label="t('matchConfirmation.acceptBtn')"
-              icon="fa fa-check"
-              severity="success"
+              icon="i-fa7-solid:check"
               :loading="responding && responseIntent === 'agree'"
               :disabled="responding"
               @click="openResponseDialog('agree')"
-              class="flex-1"
+              class="flex-1 justify-center"
+              size="lg"
             />
-            <Button
+            <UButton
+              color="error"
               :label="t('matchConfirmation.disputeBtn')"
-              icon="fa fa-times"
-              severity="danger"
+              icon="i-fa7-solid:xmark"
               :loading="responding && responseIntent === 'dispute'"
               :disabled="responding"
               @click="openResponseDialog('dispute')"
-              class="flex-1"
+              class="flex-1 justify-center"
+              size="lg"
             />
           </div>
         </div>
 
-        <div v-else class="space-y-3 rounded-xl border-l-2 bg-surface-900/40 p-3" :class="userResponse.isConfirmed ? 'border-match-win' : 'border-match-loss'">
+        <div v-else class="space-y-3 rounded-xl border-l-2 bg-slate-900/40 p-3" :class="userResponse.isConfirmed ? 'border-match-win' : 'border-match-loss'">
           <div class="flex items-center gap-2">
             <i
               class="fa text-lg"
@@ -155,15 +158,15 @@
             </span>
           </div>
 
-          <Button
+          <UButton
             v-if="canWithdrawDispute"
+            color="success"
             :label="t('matchConfirmation.withdrawDisputeBtn')"
-            icon="fa fa-check"
-            severity="success"
-            size="small"
+            icon="i-fa7-solid:check"
             :loading="responding"
             :disabled="responding"
             @click="openResponseDialog('agree')"
+            size="md"
           />
         </div>
       </div>
@@ -171,28 +174,29 @@
 
     <!-- Response dialog. Inside the panel root so the component stays single-root: the
          parent applies its reveal animation to it, and a hidden panel leaves no gap. -->
-    <Dialog
-      v-model:visible="responseDialogVisible"
-      :header="responseIntent === 'agree' ? acceptDialogTitle : disputeDialogTitle"
-      :modal="true"
-      :style="{ maxWidth: '480px' }"
+    <UModal
+      v-model:open="responseDialogVisible"
+      :title="responseIntent === 'agree' ? acceptDialogTitle : disputeDialogTitle"
+      :ui="{ content: 'sm:max-w-md', footer: 'justify-end' }"
     >
+    <template #body>
     <div class="space-y-4">
       <div v-if="responseIntent === 'dispute'" class="space-y-4">
         <div>
           <label for="disputeReason" class="block text-sm font-medium mb-2">
             {{ t('matchConfirmation.disputeReasonLabel') }}
           </label>
-          <Textarea
+          <UTextarea
             id="disputeReason"
             v-model="disputeReason"
-            rows="3"
+            :rows="3"
             :placeholder="t('matchConfirmation.disputeReasonPlaceholder')"
+            size="xl"
             class="w-full"
           />
         </div>
 
-        <div class="rounded-xl bg-surface-900/50 p-3 text-sm text-white/70">
+        <div class="rounded-xl bg-slate-900/50 p-3 text-sm text-white/70">
           <i class="fa fa-info-circle mr-2" aria-hidden="true"></i>
           {{ disputeDialogHint }}
         </div>
@@ -203,21 +207,25 @@
       </div>
     </div>
 
+    </template>
     <template #footer>
-      <Button
+      <UButton
+        color="neutral"
+        variant="soft"
         :label="t('common.cancel')"
-        severity="secondary"
         @click="responseDialogVisible = false"
+        size="lg"
       />
-      <Button
+      <UButton
         :label="responseIntent === 'agree' ? t('matchConfirmation.confirmAcceptanceBtn') : t('matchConfirmation.submitDisputeBtn')"
-        :severity="responseIntent === 'agree' ? 'success' : 'danger'"
-        :icon="responseIntent === 'agree' ? 'fa fa-check' : 'fa fa-flag'"
+        :color="responseIntent === 'agree' ? 'success' : 'error'"
+        :icon="responseIntent === 'agree' ? 'i-fa7-solid:check' : 'i-fa7-solid:flag'"
         :loading="responding"
         @click="submitResponse"
+        size="lg"
       />
     </template>
-    </Dialog>
+    </UModal>
   </SurfacePanel>
 </template>
 

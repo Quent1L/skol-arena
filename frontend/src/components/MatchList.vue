@@ -10,8 +10,8 @@
           class="flex items-center gap-1.5 px-4 py-1.5 rounded-full border whitespace-nowrap transition-all duration-150 active:scale-95 shrink-0 cursor-pointer"
           :class="
             myMatchesActive
-              ? 'bg-primary border-primary text-primary-contrast'
-              : 'bg-surface-800 border-surface-700/20 text-muted-color'
+              ? 'bg-primary border-primary text-inverted'
+              : 'bg-slate-800 border-slate-700/20 text-muted'
           "
         >
           <i class="fa fa-user text-xs"></i>
@@ -26,8 +26,8 @@
             class="flex items-center gap-1.5 px-4 py-1.5 rounded-full border whitespace-nowrap transition-all duration-150 active:scale-95 shrink-0 cursor-pointer"
             :class="
               activeOutcomes.has(f.value)
-                ? 'bg-surface-600 border-surface-500 text-color'
-                : 'bg-surface-800 border-surface-700/20 text-muted-color'
+                ? 'bg-slate-600 border-slate-500 text-highlighted'
+                : 'bg-slate-800 border-slate-700/20 text-muted'
             "
           >
             <i :class="f.icon" class="text-xs"></i>
@@ -41,8 +41,8 @@
           class="flex items-center gap-1.5 px-4 py-1.5 rounded-full border whitespace-nowrap transition-all duration-150 active:scale-95 shrink-0 cursor-pointer"
           :class="
             disputedOnly
-              ? 'bg-amber-500 border-amber-500 text-surface-950'
-              : 'bg-surface-800 border-surface-700/20 text-muted-color'
+              ? 'bg-amber-500 border-amber-500 text-slate-950'
+              : 'bg-slate-800 border-slate-700/20 text-muted'
           "
         >
           <i class="fa fa-gavel text-xs"></i>
@@ -52,7 +52,7 @@
         <button
           v-if="isAnyFilterActive"
           @click="resetFilters"
-          class="flex items-center justify-center w-8 h-8 rounded-full border bg-surface-800 border-surface-700/20 text-muted-color hover:text-red-400 transition-all duration-150 active:scale-95 shrink-0 cursor-pointer"
+          class="flex items-center justify-center w-8 h-8 rounded-full border bg-slate-800 border-slate-700/20 text-muted hover:text-red-400 transition-all duration-150 active:scale-95 shrink-0 cursor-pointer"
           :title="t('matchList.resetFilters')"
         >
           <i class="fa fa-filter-circle-xmark text-xs"></i>
@@ -75,16 +75,16 @@
 
         <!-- Mobile: filter button + PlayerPickerDialog -->
         <div v-else>
-          <Button text severity="secondary" size="small" @click="openMobileDialog()">
+          <UButton color="neutral" variant="ghost" @click="openMobileDialog()" size="md">
             <i class="fa fa-filter mr-2" />
             {{ t('matchList.filters') }}
             <span
               v-if="selectedPlayers.length > 0"
-              class="ml-2 bg-primary text-primary-contrast rounded-full text-xs w-5 h-5 flex items-center justify-center"
+              class="ml-2 bg-primary text-inverted rounded-full text-xs w-5 h-5 flex items-center justify-center"
             >
               {{ selectedPlayers.length }}
             </span>
-          </Button>
+          </UButton>
           <!-- Mounted on the first open and kept afterwards, so its chunk is only
                fetched by someone who actually filters. -->
           <PlayerPickerDialog
@@ -101,11 +101,11 @@
 
     <!-- Initial loading -->
     <div v-if="loading && matches.length === 0" class="flex justify-center py-6">
-      <ProgressSpinner />
+      <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
     </div>
 
     <div v-else>
-      <div v-if="displayedMatches.length === 0" class="text-center py-6 text-muted-color">
+      <div v-if="displayedMatches.length === 0" class="text-center py-6 text-muted">
         <i class="fa fa-clock text-4xl mb-4 block"></i>
         <p class="font-label text-sm">{{ t('matchList.noMatchFound') }}</p>
       </div>
@@ -130,7 +130,7 @@
         <!-- Loading more. A background refresh borrows the same lock but is reported
              by the page-level indicator, not by a spinner at the end of the list. -->
         <div v-if="loading && !refreshing" class="flex justify-center py-4">
-          <ProgressSpinner style="width: 28px; height: 28px" />
+          <UIcon name="i-lucide-loader-circle" class="size-7 animate-spin text-muted" />
         </div>
       </div>
     </div>

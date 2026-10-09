@@ -4,7 +4,7 @@
     :class="[
       isWinner
         ? 'bg-match-win/[0.07] ring-1 ring-match-win/30'
-        : 'bg-surface-900/40 ring-1 ring-surface-700/40',
+        : 'bg-slate-900/40 ring-1 ring-slate-700/40',
       dimmed ? 'opacity-70 saturate-[0.55]' : '',
     ]"
   >
@@ -62,7 +62,7 @@
         <template v-if="isFinalized && mode === 'championship' && player.effectivePointsAwarded !== undefined">
           <span
             v-if="player.exceededMatchLimit"
-            class="font-label shrink-0 rounded-full border border-surface-600 bg-surface-700/50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-color"
+            class="font-label shrink-0 rounded-full border border-slate-600 bg-slate-700/50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted"
           >
             {{ t('matchDetailView.overLimit') }}
           </span>
