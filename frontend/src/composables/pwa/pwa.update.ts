@@ -405,6 +405,25 @@ async function prepareWorker(): Promise<boolean> {
   return true
 }
 
+/**
+ * Whether the update detected during the splash should be applied before the app
+ * shows. A mandatory one always is. A routine one only when applying it costs a
+ * single reload: its bundle is already downloaded, or no worker controls the page
+ * and the reload goes straight to the network. Otherwise the user would sit in front
+ * of a progress bar for a release they did not have to take — it downloads in the
+ * background instead and lands at a navigation, like any routine update.
+ */
+export async function shouldApplyAtBoot(): Promise<boolean> {
+  if (!updatePending.value) return false
+  if (updateForced.value) return true
+  if (updateReady.value || controllerTakenOver.value) return true
+  if (!hasServiceWorker() || !navigator.serviceWorker.controller) return true
+  // Read directly: the watcher that sets `updateReady` for a worker already waiting
+  // is attached by the prefetch checkVersion just started, and has not run yet.
+  const registration = await getRegistration()
+  return Boolean(registration?.waiting)
+}
+
 function stopApplying(): void {
   isApplying.value = false
   updatePhase.value = 'idle'
@@ -525,6 +544,7 @@ export function usePWAUpdate() {
     checkVersionThrottled,
     announceUpdate,
     applyUpdate,
+    shouldApplyAtBoot,
     dismissUpdate,
     blockUpdates,
     updatesBlocked,

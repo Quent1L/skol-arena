@@ -56,6 +56,7 @@ const {
   checkVersion,
   announceUpdate,
   applyUpdate,
+  shouldApplyAtBoot,
   dismissUpdate,
 } = usePWAUpdate()
 
@@ -127,10 +128,12 @@ onMounted(async () => {
   // isAuthenticated. Doing it here too fired a second /me/notifications: this call
   // settled before AppWrapper mounted, so the in-flight guard could not dedupe it.
 
-  // Apply before revealing the app: the user never sees the stale version.
-  // A false return means the update could not be applied (download too slow, or
-  // the user chose to keep going): boot as usual, it will land at a navigation.
-  if (await bootUpdateCheck) {
+  // Apply before revealing the app when that is cheap (bundle already there) or
+  // required (mandatory update): the user then never sees the stale version. A routine
+  // update still downloading is left to the background and lands at a navigation.
+  // A false return from applyUpdate means it could not be applied (download too slow,
+  // or the user chose to keep going): boot as usual.
+  if ((await bootUpdateCheck) && (await shouldApplyAtBoot())) {
     const reloading = await applyUpdate()
     if (reloading) return
   }

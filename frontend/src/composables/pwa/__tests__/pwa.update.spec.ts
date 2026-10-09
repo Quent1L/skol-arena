@@ -689,4 +689,51 @@ describe('pwa.update', () => {
       expect(location.href).toBe(`${ORIGIN}/tournaments/7`)
     })
   })
+
+  describe('shouldApplyAtBoot', () => {
+    it('stays out of the way when no update is pending', async () => {
+      stubServiceWorker()
+      stubFetch({ version: __APP_VERSION__ })
+      const { checkVersion, shouldApplyAtBoot } = await loadModule()
+      await checkVersion()
+
+      expect(await shouldApplyAtBoot()).toBe(false)
+    })
+
+    it('applies a mandatory update even while it is still downloading', async () => {
+      stubServiceWorker({ waiting: false, installing: createInstallingWorker() })
+      stubFetch({ version: '99.0.1', minVersion: FORCING_MIN_VERSION })
+      const { checkVersion, shouldApplyAtBoot } = await loadModule()
+      await checkVersion()
+
+      expect(await shouldApplyAtBoot()).toBe(true)
+    })
+
+    it('leaves a routine update still downloading to the background', async () => {
+      stubServiceWorker({ waiting: false, installing: createInstallingWorker() })
+      stubFetch({ version: '99.0.1' })
+      const { checkVersion, shouldApplyAtBoot } = await loadModule()
+      await checkVersion()
+
+      expect(await shouldApplyAtBoot()).toBe(false)
+    })
+
+    it('applies a routine update whose bundle is already waiting', async () => {
+      stubServiceWorker({ waiting: true })
+      stubFetch({ version: '99.0.1' })
+      const { checkVersion, shouldApplyAtBoot } = await loadModule()
+      await checkVersion()
+
+      expect(await shouldApplyAtBoot()).toBe(true)
+    })
+
+    it('applies a routine update when no worker controls the page', async () => {
+      stubServiceWorker({ waiting: false, controlled: false })
+      stubFetch({ version: '99.0.1' })
+      const { checkVersion, shouldApplyAtBoot } = await loadModule()
+      await checkVersion()
+
+      expect(await shouldApplyAtBoot()).toBe(true)
+    })
+  })
 })
