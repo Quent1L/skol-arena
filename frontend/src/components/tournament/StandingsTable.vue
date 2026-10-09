@@ -2,34 +2,41 @@
   <div class="standings-table">
     <div class="mb-4 flex items-center justify-between w-full">
       <div>
-        <SelectButton
+        <UTabs
           v-if="props.showProvisionalToggle !== false"
           v-model="standingsType"
-          :options="standingsTypeOptions"
-          option-label="label"
-          option-value="value"
+          :items="standingsTypeOptions"
+          :content="false"
+          color="neutral"
+          size="sm"
           class="w-full sm:w-auto"
-          size="small"
+          :ui="{
+            list: 'bg-slate-950',
+            indicator: 'bg-slate-700',
+            trigger: 'data-[state=active]:text-highlighted',
+          }"
+          data-testid="standings-type"
         />
       </div>
       <div>
-        <button
-          class="flex items-center gap-2 px-2 py-1 text-gray-400 hover:text-blue-500 transition-colors duration-200 cursor-pointer text-xs"
-          v-tooltip.top="isMobile ? null : t('standingsTable.howRankingTooltip')"
-          @click="infoVisible = true"
-        >
-          <i class="fa fa-circle-question text-sm" />
-        </button>
+        <UTooltip :text="t('standingsTable.howRankingTooltip')" :disabled="isMobile">
+          <button
+            class="flex items-center gap-2 px-2 py-1 text-gray-400 hover:text-blue-500 transition-colors duration-200 cursor-pointer text-xs"
+            :aria-label="t('standingsTable.howRankingTooltip')"
+            @click="infoVisible = true"
+          >
+            <i class="fa fa-circle-question text-sm" />
+          </button>
+        </UTooltip>
       </div>
     </div>
 
-    <Dialog
-      v-model:visible="infoVisible"
-      modal
-      :header="t('standingsTable.howRankingTooltip')"
-      :style="{ width: '90vw', maxWidth: '700px' }"
-      :draggable="false"
+    <UModal
+      v-model:open="infoVisible"
+      :title="t('standingsTable.howRankingTooltip')"
+      :ui="{ content: 'sm:max-w-2xl' }"
     >
+      <template #body>
       <div class="space-y-5 text-sm text-gray-700 dark:text-gray-300">
         <section>
           <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{{ t('standingsTable.pointsAwarded') }}</h3>
@@ -111,11 +118,10 @@
           </ul>
         </section>
       </div>
-    </Dialog>
+      </template>
+    </UModal>
 
-    <Message v-if="error" severity="error" class="mb-4">
-      {{ error }}
-    </Message>
+    <UAlert v-if="error" color="error" variant="subtle" class="mb-4" :title="error" />
 
     <div
       v-if="standings.length === 0 && !loading"
@@ -127,338 +133,152 @@
     <div class="standings-container">
       <Transition :name="`standings-slide-${slideDirection}`" mode="out-in">
         <div v-if="standings.length > 0" :key="`standings-${standingsType}`" class="relative">
-          <DataTable :value="standings" class="p-datatable-sm" striped-rows :loading="loading">
-            <Column field="rank" header="#" style="width: 4rem">
-              <template #body="{ index }">
-                <div class="flex items-center justify-center">
-                  <i v-if="index === 0" class="fa fa-trophy text-yellow-500" :title="t('standingsTable.rankFirst')"></i>
-                  <i v-if="index === 1" class="fa fa-medal text-gray-400" :title="t('standingsTable.rankSecond')"></i>
-                  <i v-if="index === 2" class="fa fa-medal text-orange-600" :title="t('standingsTable.rankThird')"></i>
-                  <span
-                    :class="[
-                      'font-semibold',
-                      {
-                        'text-yellow-500': index === 0,
-                        'text-gray-400': index === 1,
-                        'text-orange-600': index === 2,
-                      },
-                    ]"
-                  >
-                    {{ index + 1 }}
-                  </span>
-                </div>
-              </template>
-            </Column>
-
-            <Column field="name" :header="t('common.name')">
-              <template #body="{ data }">
-                <RouterLink
-                  v-if="teamMode === 'flex'"
-                  :to="{ path: `/players/${data.id}`, query: { tournamentId: props.tournamentId } }"
-                  class="inline-flex items-center gap-2 font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                  :title="data.name"
-                >
-                  <PlayerAvatar
-                    :name="data.name"
-                    :color-key="data.shortName"
-                    :player-id="data.id"
-                    size="xs"
-                    shape="square"
-                  />
-                  <span class="md:hidden">{{ data.shortName }}</span
-                  ><span class="hidden md:inline">{{ data.name }}</span>
-                </RouterLink>
-                <div v-else class="font-medium text-gray-900 dark:text-white" :title="data.name">
-                  <span class="md:hidden">{{ data.shortName }}</span
-                  ><span class="hidden md:inline">{{ data.name }}</span>
-                </div>
-              </template>
-            </Column>
-
-            <Column field="points" :header="t('standingsTable.columnPoints')">
-              <template #body="{ data }">
-                <div class="font-semibold text-blue-600 dark:text-blue-400">
-                  {{ data.points }}
-                </div>
-              </template>
-            </Column>
-
-            <Column field="matchesPlayed" :header="t('standingsTable.columnMatchesPlayed')">
-              <template #body="{ data }">
-                {{ data.matchesPlayed }}
-              </template>
-            </Column>
-
-            <Column field="wins" :header="t('standingsTable.columnWins')">
-              <template #body="{ data }">
-                <span class="text-green-600 dark:text-green-400 font-medium">
-                  {{ data.wins }}
-                </span>
-              </template>
-            </Column>
-
-            <Column v-if="allowDraw" field="draws" :header="t('standingsTable.columnDraws')">
-              <template #body="{ data }">
-                <span class="text-gray-600 dark:text-gray-400 font-medium">
-                  {{ data.draws }}
-                </span>
-              </template>
-            </Column>
-
-            <Column field="losses" :header="t('standingsTable.columnLosses')">
-              <template #body="{ data }">
-                <span class="text-red-600 dark:text-red-400 font-medium">
-                  {{ data.losses }}
-                </span>
-              </template>
-            </Column>
-
-            <Column v-if="scoreEnabled" field="scoreDiff" :header="t('standingsTable.columnDiff')">
-              <template #body="{ data }">
+          <UTable
+            :data="standings"
+            :columns="columns"
+            :loading="loading"
+            :ui="{
+              root: 'overflow-x-auto',
+              thead: '[&>tr]:after:bg-default',
+              tbody: 'divide-y-0',
+              th: 'px-2 py-2 text-base font-bold text-highlighted whitespace-nowrap',
+              td: 'px-2 py-2 text-base whitespace-nowrap text-default',
+              tr: 'even:bg-slate-950',
+            }"
+          >
+            <template #rank-cell="{ row }">
+              <div class="flex items-center justify-center">
+                <i v-if="row.index === 0" class="fa fa-trophy text-yellow-500" :title="t('standingsTable.rankFirst')"></i>
+                <i v-if="row.index === 1" class="fa fa-medal text-gray-400" :title="t('standingsTable.rankSecond')"></i>
+                <i v-if="row.index === 2" class="fa fa-medal text-orange-600" :title="t('standingsTable.rankThird')"></i>
                 <span
                   :class="[
-                    'font-medium',
+                    'font-semibold',
                     {
-                      'text-green-600 dark:text-green-400': data.scoreDiff > 0,
-                      'text-red-600 dark:text-red-400': data.scoreDiff < 0,
-                      'text-gray-600 dark:text-gray-400': data.scoreDiff === 0,
+                      'text-yellow-500': row.index === 0,
+                      'text-gray-400': row.index === 1,
+                      'text-orange-600': row.index === 2,
                     },
                   ]"
                 >
-                  {{ data.scoreDiff > 0 ? '+' : '' }}{{ data.scoreDiff }}
+                  {{ row.index + 1 }}
                 </span>
-              </template>
-            </Column>
+              </div>
+            </template>
 
-            <Column v-if="allowDraw && !isMobile" field="winLossRatio" :header="t('standingsTable.columnWinLossRatio')">
-              <template #body="{ data }">
-                <span class="text-gray-600 dark:text-gray-400">{{
-                  formatRatio(data.winLossRatio)
-                }}</span>
-              </template>
-            </Column>
-
-            <Column
-              field="buchholzScore"
-              class="hidden md:table-cell"
-              header-class="hidden md:table-cell"
-            >
-              <template #header>
-                <span class="flex items-center gap-1">
-                  {{ t('standingsTable.columnBuchholz') }}
-                  <i
-                    class="fa fa-circle-question text-xs text-gray-400 cursor-help"
-                    v-tooltip.top="t('standingsTable.tooltipBuchholz')"
-                  />
-                </span>
-              </template>
-              <template #body="{ data }">
-                <span class="text-gray-600 dark:text-gray-400">{{ data.buchholzScore }}</span>
-              </template>
-            </Column>
-
-            <Column
-              field="victoryQuality"
-              class="hidden md:table-cell"
-              header-class="hidden md:table-cell"
-            >
-              <template #header>
-                <span class="flex items-center gap-1">
-                  {{ t('standingsTable.columnVictoryQuality') }}
-                  <i
-                    class="fa fa-circle-question text-xs text-gray-400 cursor-help"
-                    v-tooltip.top="t('standingsTable.tooltipVictoryQuality')"
-                  />
-                </span>
-              </template>
-              <template #body="{ data }">
-                <span
-                  class="text-gray-600 dark:text-gray-400 cursor-help"
-                  @mouseenter="(e) => openQualityPanel(e, data)"
-                  @mouseleave="qualityDetailPanel?.hide()"
-                  >{{ Math.round(data.victoryQuality) }}</span
-                >
-              </template>
-            </Column>
-
-            <Column
-              field="winRate"
-              :header="t('standingsTable.columnWinRate')"
-              class="hidden md:table-cell"
-              header-class="hidden md:table-cell"
-            >
-              <template #body="{ data }">
-                <span class="text-gray-600 dark:text-gray-400">{{
-                  formatPercent(data.winRate)
-                }}</span>
-              </template>
-            </Column>
-
-            <Column header="" style="width: 3rem" class="md:hidden" header-class="md:hidden">
-              <template #body="{ data }">
-                <Button
-                  icon="fa fa-circle-question"
-                  text
-                  rounded
-                  size="small"
-                  class="text-gray-400 hover:text-blue-500"
-                  :aria-label="t('standingsTable.tiebreakerDetails', { name: data.name })"
-                  @click="(e) => toggleTiebreakerPanel(e, data)"
+            <template #name-cell="{ row: { original: data } }">
+              <RouterLink
+                v-if="teamMode === 'flex'"
+                :to="{ path: `/players/${data.id}`, query: { tournamentId: props.tournamentId } }"
+                class="inline-flex items-center gap-2 font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                :title="data.name"
+              >
+                <PlayerAvatar
+                  :name="data.name"
+                  :color-key="data.shortName"
+                  :player-id="data.id"
+                  size="xs"
+                  shape="square"
                 />
-              </template>
-            </Column>
-          </DataTable>
+                <span class="md:hidden">{{ data.shortName }}</span
+                ><span class="hidden md:inline">{{ data.name }}</span>
+              </RouterLink>
+              <div v-else class="font-medium text-gray-900 dark:text-white" :title="data.name">
+                <span class="md:hidden">{{ data.shortName }}</span
+                ><span class="hidden md:inline">{{ data.name }}</span>
+              </div>
+            </template>
+
+            <template #points-cell="{ row: { original: data } }">
+              <div class="font-semibold text-blue-600 dark:text-blue-400">
+                {{ data.points }}
+              </div>
+            </template>
+
+            <template #wins-cell="{ row: { original: data } }">
+              <span class="text-green-600 dark:text-green-400 font-medium">{{ data.wins }}</span>
+            </template>
+
+            <template #draws-cell="{ row: { original: data } }">
+              <span class="text-gray-600 dark:text-gray-400 font-medium">{{ data.draws }}</span>
+            </template>
+
+            <template #losses-cell="{ row: { original: data } }">
+              <span class="text-red-600 dark:text-red-400 font-medium">{{ data.losses }}</span>
+            </template>
+
+            <template #scoreDiff-cell="{ row: { original: data } }">
+              <span
+                :class="[
+                  'font-medium',
+                  {
+                    'text-green-600 dark:text-green-400': data.scoreDiff > 0,
+                    'text-red-600 dark:text-red-400': data.scoreDiff < 0,
+                    'text-gray-600 dark:text-gray-400': data.scoreDiff === 0,
+                  },
+                ]"
+              >
+                {{ data.scoreDiff > 0 ? '+' : '' }}{{ data.scoreDiff }}
+              </span>
+            </template>
+
+            <template #winLossRatio-cell="{ row: { original: data } }">
+              <span class="text-gray-600 dark:text-gray-400">{{ formatRatio(data.winLossRatio) }}</span>
+            </template>
+
+            <template #buchholzScore-header>
+              <span class="flex items-center gap-1">
+                {{ t('standingsTable.columnBuchholz') }}
+                <UTooltip :text="t('standingsTable.tooltipBuchholz')">
+                  <i class="fa fa-circle-question text-xs text-gray-400 cursor-help" />
+                </UTooltip>
+              </span>
+            </template>
+            <template #buchholzScore-cell="{ row: { original: data } }">
+              <span class="text-gray-600 dark:text-gray-400">{{ data.buchholzScore }}</span>
+            </template>
+
+            <template #victoryQuality-header>
+              <span class="flex items-center gap-1">
+                {{ t('standingsTable.columnVictoryQuality') }}
+                <UTooltip :text="t('standingsTable.tooltipVictoryQuality')">
+                  <i class="fa fa-circle-question text-xs text-gray-400 cursor-help" />
+                </UTooltip>
+              </span>
+            </template>
+            <template #victoryQuality-cell="{ row: { original: data } }">
+              <UPopover mode="hover" :open-delay="100">
+                <span class="text-gray-600 dark:text-gray-400 cursor-help">{{ Math.round(data.victoryQuality) }}</span>
+                <template #content>
+                  <QualityBreakdown :entry="data" />
+                </template>
+              </UPopover>
+            </template>
+
+            <template #winRate-cell="{ row: { original: data } }">
+              <span class="text-gray-600 dark:text-gray-400">{{ formatPercent(data.winRate) }}</span>
+            </template>
+
+            <template #details-cell="{ row: { original: data } }">
+              <UPopover>
+                <UButton
+                  icon="i-fa7-solid:circle-question"
+                  variant="ghost"
+                  size="sm"
+                  class="rounded-full"
+                  :aria-label="t('standingsTable.tiebreakerDetails', { name: data.name })"
+                />
+                <template #content>
+                  <TiebreakerDetails :entry="data" :allow-draw="allowDraw" />
+                </template>
+              </UPopover>
+            </template>
+          </UTable>
         </div>
       </Transition>
     </div>
 
-    <Popover ref="tiebreakerPanel">
-      <div v-if="selectedEntry" class="p-3 min-w-[220px]">
-        <p class="font-semibold text-sm mb-2 text-gray-800 dark:text-gray-100">
-          {{ selectedEntry.name }} — {{ t('standingsTable.tiebreakerCriteria') }}
-        </p>
-        <ul class="text-sm space-y-1 text-gray-700 dark:text-gray-300">
-          <li v-if="allowDraw" class="flex items-center gap-4">
-            <span class="flex-1">{{ t('standingsTable.tiebreakerWinLossRatio') }}</span>
-            <span class="font-medium">{{ formatRatio(selectedEntry.winLossRatio) }}</span>
-            <span class="w-4 shrink-0" />
-          </li>
-          <li class="flex items-center gap-4">
-            <span class="flex-1">{{ t('standingsTable.tiebreakerBuchholz') }}</span>
-            <span class="font-medium">{{ selectedEntry.buchholzScore }} {{ t('standingsTable.ptsUnit') }}</span>
-            <span class="w-4 shrink-0" />
-          </li>
-          <li>
-            <button
-              class="flex items-center gap-4 w-full text-left"
-              @click="qualityExpanded = !qualityExpanded"
-            >
-              <span class="flex-1">{{ t('standingsTable.tiebreakerQuality') }}</span>
-              <span class="font-medium">{{ selectedEntry.victoryQuality.toFixed(1) }} {{ t('standingsTable.ptsUnit') }}</span>
-              <span class="w-4 shrink-0 text-center">
-                <i
-                  class="fa text-xs text-gray-400"
-                  :class="{
-                    'fa-chevron-right': !qualityExpanded,
-                    'fa-chevron-down': qualityExpanded,
-                  }"
-                />
-              </span>
-            </button>
-            <ul
-              v-if="qualityExpanded && selectedEntry.victoryQualityBreakdown.length > 0"
-              class="mt-1 ml-2 space-y-0.5 text-xs text-gray-600 dark:text-gray-400"
-            >
-              <li
-                v-for="detail in selectedEntry.victoryQualityBreakdown"
-                :key="detail.outcomeTypeName"
-                class="flex justify-between gap-3"
-              >
-                <span
-                  >{{ detail.outcomeTypeName }}
-                  <span class="text-gray-400">({{ detail.points }} {{ t('standingsTable.ptPerResult') }})</span></span
-                >
-                <span class="flex gap-1 items-center">
-                  <span v-if="detail.wins > 0" class="text-green-600 dark:text-green-400"
-                    >{{ detail.wins }}{{ t('standingsTable.columnWins') }}</span
-                  >
-                  <span v-if="detail.losses > 0" class="text-red-600 dark:text-red-400"
-                    >{{ detail.losses }}{{ t('standingsTable.columnLosses') }}</span
-                  >
-                  <span
-                    class="font-medium"
-                    :class="
-                      detail.contribution >= 0
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-red-600 dark:text-red-400'
-                    "
-                  >
-                    {{ detail.contribution >= 0 ? '+' : '' }}{{ detail.contribution }}
-                  </span>
-                </span>
-              </li>
-              <li
-                class="flex justify-between gap-3 border-t border-gray-200 dark:border-gray-600 pt-1 font-semibold"
-              >
-                <span>{{ t('standingsTable.total') }}</span>
-                <span
-                  :class="
-                    selectedEntry.victoryQuality >= 0
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-red-600 dark:text-red-400'
-                  "
-                >
-                  {{ selectedEntry.victoryQuality >= 0 ? '+' : ''
-                  }}{{ selectedEntry.victoryQuality.toFixed(1) }}
-                </span>
-              </li>
-            </ul>
-          </li>
-          <li class="flex items-center gap-4">
-            <span class="flex-1">{{ t('standingsTable.tiebreakerWinRate') }}</span>
-            <span class="font-medium">{{ formatPercent(selectedEntry.winRate) }}</span>
-            <span class="w-4 shrink-0" />
-          </li>
-        </ul>
-      </div>
-    </Popover>
 
-    <Popover ref="qualityDetailPanel">
-      <div v-if="selectedQualityEntry" class="p-3 min-w-[260px]">
-        <p class="font-semibold text-sm mb-2 text-gray-800 dark:text-gray-100">
-          {{ selectedQualityEntry.name }} — {{ t('standingsTable.victoryQualityLabel') }}
-        </p>
-        <div
-          v-if="selectedQualityEntry.victoryQualityBreakdown.length > 0"
-          class="text-sm text-gray-700 dark:text-gray-300"
-        >
-          <div
-            v-for="detail in selectedQualityEntry.victoryQualityBreakdown"
-            :key="detail.outcomeTypeName"
-            class="flex items-center justify-between gap-4 py-0.5"
-          >
-            <span class="text-gray-600 dark:text-gray-400">
-              {{ detail.outcomeTypeName }}
-              <span class="text-xs text-gray-400">({{ detail.points }} {{ t('standingsTable.ptPerResult') }})</span>
-            </span>
-            <span class="flex gap-2 items-center">
-              <span v-if="detail.wins > 0" class="text-green-600 dark:text-green-400"
-                >{{ detail.wins }}{{ t('standingsTable.columnWins') }}</span
-              >
-              <span v-if="detail.losses > 0" class="text-red-600 dark:text-red-400"
-                >{{ detail.losses }}{{ t('standingsTable.columnLosses') }}</span
-              >
-              <span
-                class="font-medium"
-                :class="
-                  detail.contribution >= 0
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-red-600 dark:text-red-400'
-                "
-              >
-                {{ detail.contribution >= 0 ? '+' : '' }}{{ detail.contribution }}
-              </span>
-            </span>
-          </div>
-          <div
-            class="border-t border-gray-200 dark:border-gray-600 mt-2 pt-2 flex justify-between font-semibold text-sm"
-          >
-            <span>{{ t('standingsTable.total') }}</span>
-            <span
-              :class="
-                selectedQualityEntry.victoryQuality >= 0
-                  ? 'text-green-600 dark:text-green-400'
-                  : 'text-red-600 dark:text-red-400'
-              "
-            >
-              {{ selectedQualityEntry.victoryQuality >= 0 ? '+' : ''
-              }}{{ selectedQualityEntry.victoryQuality.toFixed(1) }}
-            </span>
-          </div>
-        </div>
-        <p v-else class="text-sm text-gray-500 dark:text-gray-400">{{ t('standingsTable.noMatchesPlayed') }}</p>
-      </div>
-    </Popover>
   </div>
 </template>
 
@@ -466,13 +286,11 @@
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import SelectButton from 'primevue/selectbutton'
-import Message from 'primevue/message'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import Button from 'primevue/button'
-import Popover from 'primevue/popover'
-import Dialog from 'primevue/dialog'
+import type { TableColumn } from '@nuxt/ui'
+import TiebreakerDetails from '@/components/tournament/standings/TiebreakerDetails.vue'
+import QualityBreakdown from '@/components/tournament/standings/QualityBreakdown.vue'
+import { formatPercent, formatRatio } from '@/components/tournament/standings/standings-format'
+import { hiddenBelow } from '@/components/admin/table-columns'
 import { useStandingsService } from '@/composables/standings.service'
 import { outcomeTypeApi } from '@/composables/outcome-type.api'
 import { SCORING_DEFAULTS, type StandingsEntry, type OutcomeType } from '@skol-arena/shared'
@@ -507,11 +325,6 @@ const { isMobile } = useViewport()
 
 const internalStandingsType = ref<'official' | 'provisional'>('official')
 const slideDirection = ref<'left' | 'right'>('left')
-const tiebreakerPanel = ref()
-const qualityDetailPanel = ref()
-const selectedEntry = ref<StandingsEntry | null>(null)
-const qualityExpanded = ref(false)
-const selectedQualityEntry = ref<StandingsEntry | null>(null)
 const infoVisible = ref(false)
 const outcomeTypes = ref<OutcomeType[]>([])
 
@@ -534,25 +347,28 @@ const standingsTypeOptions = computed(() => [
   { label: t('standingsTable.provisional'), value: 'provisional' },
 ])
 
-function toggleTiebreakerPanel(event: Event, entry: StandingsEntry) {
-  selectedEntry.value = entry
-  qualityExpanded.value = false
-  tiebreakerPanel.value?.toggle(event)
-}
+const MOBILE_ONLY = { class: { th: 'md:hidden w-12', td: 'md:hidden w-12' } }
 
-function openQualityPanel(event: MouseEvent, entry: StandingsEntry) {
-  selectedQualityEntry.value = entry
-  qualityDetailPanel.value?.show(event)
-}
-
-function formatRatio(ratio: number): string {
-  if (!isFinite(ratio)) return '∞'
-  return ratio.toFixed(2)
-}
-
-function formatPercent(rate: number): string {
-  return `${Math.round(rate * 100)}%`
-}
+/** Cells are rendered by the `#<id>-cell` slots of the template. */
+const columns = computed<TableColumn<StandingsEntry>[]>(() => {
+  const cols: (TableColumn<StandingsEntry> | false)[] = [
+    { id: 'rank', header: '#', meta: { class: { th: 'w-16 text-center', td: 'w-16' } } },
+    { accessorKey: 'name', header: t('common.name') },
+    { accessorKey: 'points', header: t('standingsTable.columnPoints') },
+    { accessorKey: 'matchesPlayed', header: t('standingsTable.columnMatchesPlayed') },
+    { accessorKey: 'wins', header: t('standingsTable.columnWins') },
+    props.allowDraw && { accessorKey: 'draws', header: t('standingsTable.columnDraws') },
+    { accessorKey: 'losses', header: t('standingsTable.columnLosses') },
+    props.scoreEnabled && { accessorKey: 'scoreDiff', header: t('standingsTable.columnDiff') },
+    props.allowDraw &&
+      !isMobile.value && { accessorKey: 'winLossRatio', header: t('standingsTable.columnWinLossRatio') },
+    { accessorKey: 'buchholzScore', meta: hiddenBelow('md') },
+    { accessorKey: 'victoryQuality', meta: hiddenBelow('md') },
+    { accessorKey: 'winRate', header: t('standingsTable.columnWinRate'), meta: hiddenBelow('md') },
+    { id: 'details', header: '', meta: MOBILE_ONLY },
+  ]
+  return cols.filter((c): c is TableColumn<StandingsEntry> => c !== false)
+})
 
 watch(standingsType, async (newType, oldType) => {
   const order = ['official', 'provisional']

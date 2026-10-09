@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ref } from 'vue'
 import { flushPromises, RouterLinkStub } from '@vue/test-utils'
 import type { StandingsEntry } from '@skol-arena/shared'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithUi } from '@/test-support/mount'
 import { makeStandingRow } from '@/test-support/factories'
 import { useStandingsService } from '@/composables/standings.service'
 import StandingsTable from '../StandingsTable.vue'
@@ -38,9 +38,8 @@ beforeEach(() => {
 
 async function mountTable(props: Record<string, unknown> = {}) {
   // showProvisionalToggle is an optional Boolean prop: absent, Vue casts it to false
-  const wrapper = mountWithPrime(StandingsTable, {
+  const wrapper = mountWithUi(StandingsTable, {
     props: { tournamentId: 't1', showProvisionalToggle: true, ...props },
-    global: { directives: { tooltip: {} } },
   })
   await flushPromises()
   return wrapper
@@ -72,15 +71,15 @@ describe('StandingsTable', () => {
 
   it('provisional toggle: emits update:standingsType and loads the provisional standings', async () => {
     const wrapper = await mountTable()
-    wrapper.findComponent({ name: 'SelectButton' }).vm.$emit('update:modelValue', 'provisional')
+    wrapper.findComponent({ name: 'Tabs' }).vm.$emit('update:modelValue', 'provisional')
     await flushPromises()
-    expect(wrapper.emitted('update:standingsType')).toEqual([['provisional']])
+    expect(wrapper.findComponent(StandingsTable).emitted('update:standingsType')).toEqual([['provisional']])
     expect(loadProvisionalStandings).toHaveBeenCalledWith('t1')
   })
 
   it('showProvisionalToggle=false hides the toggle', async () => {
     const wrapper = await mountTable({ showProvisionalToggle: false })
-    expect(wrapper.findComponent({ name: 'SelectButton' }).exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'Tabs' }).exists()).toBe(false)
   })
 
   it('empty standings: dedicated message', async () => {
