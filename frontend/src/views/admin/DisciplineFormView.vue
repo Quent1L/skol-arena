@@ -388,10 +388,13 @@ async function onSubmit({ data: values }: FormSubmitEvent<CreateDisciplineReques
       await refreshDrift()
       // Leaving now would hide the banner the save may just have raised.
       if (driftingCompetitionCount.value > 0) return
+      router.push('/admin/disciplines')
     } else {
-      await createDiscipline(values)
+      const created = await createDiscipline(values)
+      // A new discipline still needs its outcome types: open it rather than the list.
+      // `replace`, so Back does not return to an empty creation form.
+      router.replace(`/admin/disciplines/${created.id}`)
     }
-    router.push('/admin/disciplines')
   } catch (err) {
     console.error('Erreur lors de la sauvegarde:', err)
   }
