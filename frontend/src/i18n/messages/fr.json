@@ -1304,16 +1304,6 @@
     "unknownPlayer": "Inconnu",
     "you": "Vous"
   },
-  "rankedMatchHistory": {
-    "draw": "Égalité",
-    "emptyState": "Aucun match dans l'historique",
-    "filterDraw": "Nul",
-    "loss": "Défaite",
-    "seeMatch": "Voir le match",
-    "vsLabel": "Contre :",
-    "win": "Victoire",
-    "withLabel": "Avec :"
-  },
   "rankedSeasonFormView": {
     "automationIntro": "Quand elle est active, le serveur termine la saison tout seul : soit il la clôture à sa date de fin, soit il enchaîne sur la suivante avec les réglages reconduits et réinscrit les joueurs.",
     "automationModeChain": "Enchaîner une nouvelle saison",

@@ -1304,16 +1304,6 @@
     "unknownPlayer": "Unknown",
     "you": "You"
   },
-  "rankedMatchHistory": {
-    "draw": "Draw",
-    "emptyState": "No matches in history",
-    "filterDraw": "Draw",
-    "loss": "Loss",
-    "seeMatch": "View match",
-    "vsLabel": "Against:",
-    "win": "Win",
-    "withLabel": "With:"
-  },
   "rankedSeasonFormView": {
     "automationIntro": "When enabled, the server ends the season on its own: either it closes it on its end date, or it chains into the next one with the settings you carry over and re-registers the players.",
     "automationModeChain": "Chain a new season",

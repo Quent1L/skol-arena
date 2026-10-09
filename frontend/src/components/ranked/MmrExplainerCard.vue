@@ -21,9 +21,9 @@
 
     <!-- Skeleton -->
     <div v-if="loading" class="space-y-2">
-      <Skeleton height="2.5rem" class="rounded-lg" />
-      <Skeleton height="2.5rem" class="rounded-lg" />
-      <Skeleton height="2.5rem" class="rounded-lg" />
+      <USkeleton class="h-[2.5rem] w-full rounded-lg" />
+      <USkeleton class="h-[2.5rem] w-full rounded-lg" />
+      <USkeleton class="h-[2.5rem] w-full rounded-lg" />
     </div>
 
     <!-- Content -->

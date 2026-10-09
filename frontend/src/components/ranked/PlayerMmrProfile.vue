@@ -214,17 +214,21 @@
         <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">
           {{ t('playerMmrProfile.mmrProgression') }}
         </div>
-        <SelectButton
+        <UTabs
           v-if="matchCountFilterOptions.length > 1"
           v-model="matchCountFilter"
-          :options="matchCountFilterOptions"
-          option-label="label"
-          option-value="value"
-          :allow-empty="false"
-          size="small"
+          :items="matchCountFilterOptions"
+          :content="false"
+          color="neutral"
+          size="xs"
+          :ui="{
+            list: 'bg-slate-950',
+            indicator: 'bg-slate-700',
+            trigger: 'data-[state=active]:text-highlighted',
+          }"
         />
       </div>
-      <Chart type="line" :data="chartData" :options="chartOptions" class="h-40" />
+      <AppChart type="line" :data="chartData" :options="chartOptions" class="h-40" />
     </div>
 
     <!-- Outcome type distribution -->
@@ -321,8 +325,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Chart from 'primevue/chart'
-import SelectButton from 'primevue/selectbutton'
+import AppChart from '@/components/charts/AppChart.vue'
 import type {
   ClientPlayerMmr,
   MmrChartPoint,

@@ -90,12 +90,12 @@ describe('RankedLeaderboard', () => {
 
   it('first load: full-screen spinner', () => {
     const wrapper = mountBoard({ players: [], loading: true })
-    expect(wrapper.findComponent({ name: 'ProgressSpinner' }).exists()).toBe(true)
+    expect(wrapper.find('[data-testid="leaderboard-spinner"]').exists()).toBe(true)
   })
 
   it('refresh with data: discreet banner, list kept', () => {
     const wrapper = mountBoard({ loading: true })
-    expect(wrapper.findComponent({ name: 'ProgressSpinner' }).exists()).toBe(false)
+    expect(wrapper.find('[data-testid="leaderboard-spinner"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('rankedLeaderboard.refreshing')
     expect(wrapper.text()).toContain('Alice')
   })

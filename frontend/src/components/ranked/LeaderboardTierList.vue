@@ -1,7 +1,11 @@
 <template>
   <!-- Loading (first load only) -->
   <div v-if="showFullSpinner" class="flex justify-center items-center h-40">
-    <ProgressSpinner />
+    <UIcon
+      name="i-lucide-loader-circle"
+      class="size-10 animate-spin text-muted"
+      data-testid="leaderboard-spinner"
+    />
   </div>
 
   <template v-else>

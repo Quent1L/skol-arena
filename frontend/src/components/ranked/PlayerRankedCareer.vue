@@ -1,6 +1,6 @@
 <template>
   <div v-if="loading" class="flex justify-center py-8">
-    <ProgressSpinner style="width: 2.5rem; height: 2.5rem" />
+    <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
   </div>
 
   <div v-else-if="groups.length" class="space-y-4" data-test="ranked-career">
@@ -184,7 +184,6 @@
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import ProgressSpinner from 'primevue/progressspinner'
 import type { ClientRankTier, PlayerCareerSeason } from '@skol-arena/shared/types/index'
 import { careerPeak, groupCareerByDiscipline } from '@/composables/ranked/career'
 import { getTierForMmr } from '@/composables/ranked/tier-math'
