@@ -28,6 +28,8 @@
 **/README.md
 **/docs/**
 !docs/package.json
+# The root tsconfig references ./docs: the frontend build resolves it
+!docs/tsconfig.json
 **/*.md
 
 # Tests
