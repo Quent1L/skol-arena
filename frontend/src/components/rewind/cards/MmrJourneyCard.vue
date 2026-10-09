@@ -38,7 +38,7 @@
            — redraws it without replaying anything. Clipping survives both. -->
       <div class="h-32 rounded-2xl bg-white/5 p-2 [@media(max-height:720px)]:h-24">
         <div ref="revealRef" class="h-full">
-          <Chart type="line" :data="chartData" :options="chartOptions" class="h-full" />
+          <AppChart type="line" :data="chartData" :options="chartOptions" class="h-full" />
         </div>
       </div>
     </div>
@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { computed, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Chart from 'primevue/chart'
+import AppChart from '@/components/charts/AppChart.vue'
 import type { PlayerRewindPayload } from '@skol-arena/shared/types/index'
 import RewindCardShell from '../RewindCardShell.vue'
 import RewindStat from '../RewindStat.vue'

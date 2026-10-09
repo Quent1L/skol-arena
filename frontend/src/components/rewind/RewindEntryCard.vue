@@ -22,12 +22,12 @@
       </p>
     </div>
 
-    <Button
+    <UButton
       :label="t('rewind.entry.action')"
-      icon="fa fa-play"
-      size="small"
+      icon="i-fa7-solid:play"
       class="shrink-0"
       @click="open = true"
+      size="md"
     />
 
     <RewindLauncher v-model:open="open" :season-id="seasonId" />
@@ -37,7 +37,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Button from 'primevue/button'
 import { useRewindService } from '@/composables/ranked/rewind.service'
 import RewindLauncher from './RewindLauncher.vue'
 

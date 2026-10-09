@@ -1,29 +1,23 @@
 <template>
   <div>
     <div v-if="loading" class="flex justify-center py-12">
-      <ProgressSpinner />
+      <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
     </div>
 
-    <Message v-else-if="error" severity="error">
-      {{ error }}
-    </Message>
+    <UAlert v-else-if="error" color="error" variant="subtle" :title="error" />
 
-    <Card v-else-if="rule">
-      <template #content>
+    <UCard v-else-if="rule" variant="soft">
         <article
           class="prose prose-gray dark:prose-invert max-w-none"
           v-html="sanitizeHtml(rule.content)"
         />
-      </template>
-    </Card>
+    </UCard>
 
-    <Card v-else>
-      <template #content>
+    <UCard v-else variant="soft">
         <div class="text-center py-8 text-gray-500 dark:text-gray-400">
           {{ t('rulesContent.noRules') }}
         </div>
-      </template>
-    </Card>
+    </UCard>
   </div>
 </template>
 

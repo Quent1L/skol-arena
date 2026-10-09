@@ -21,12 +21,13 @@
         </p>
       </div>
 
-      <Button
+      <UButton
+        color="neutral"
         :label="t('rewind.promo.action')"
-        icon="fa fa-play"
-        severity="contrast"
+        icon="i-fa7-solid:play"
         class="shrink-0"
         @click="launch(promoted.seasonId)"
+        size="lg"
       />
     </div>
   </div>
@@ -42,7 +43,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Button from 'primevue/button'
 import { useRewindService, daysUntil } from '@/composables/ranked/rewind.service'
 import RewindLauncher from './RewindLauncher.vue'
 

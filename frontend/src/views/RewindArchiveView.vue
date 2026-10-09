@@ -7,10 +7,18 @@
       <p class="text-gray-600 dark:text-gray-400">{{ t('rewind.archive.subtitle') }}</p>
     </div>
 
-    <Message v-if="error" severity="error" :closable="true" class="mb-6">{{ error }}</Message>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      class="mb-6"
+      :title="error"
+      close
+      @update:open="error = null"
+    />
 
     <div v-if="loading" class="flex justify-center py-12">
-      <ProgressSpinner />
+      <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
     </div>
 
     <div v-else-if="groups.length > 0" class="flex flex-col gap-8">
@@ -51,8 +59,7 @@
       </section>
     </div>
 
-    <Card v-else class="py-12 text-center">
-      <template #content>
+    <UCard v-else variant="soft" class="py-12 text-center">
         <div class="space-y-4">
           <i class="fa fa-film block text-4xl text-gray-400" />
           <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300">
@@ -60,8 +67,7 @@
           </h3>
           <p class="text-gray-500 dark:text-gray-400">{{ t('rewind.archive.empty.hint') }}</p>
         </div>
-      </template>
-    </Card>
+    </UCard>
 
     <RewindLauncher v-model:open="open" :season-id="activeSeasonId" />
   </div>
@@ -70,9 +76,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Card from 'primevue/card'
-import Message from 'primevue/message'
-import ProgressSpinner from 'primevue/progressspinner'
 import {
   formatRewindDate,
   groupArchiveByDiscipline,
