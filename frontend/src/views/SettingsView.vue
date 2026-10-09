@@ -4,545 +4,463 @@
       <h1 class="text-2xl font-bold mb-6">{{ t('settings.title') }}</h1>
 
       <div class="space-y-6">
-        <!-- Apparence -->
-        <Card v-if="false">
-          <template #title>
-            <div class="flex items-center gap-2">
-              <i class="fas fa-palette"></i>
-              <span>{{ t('settings.appearance.title') }}</span>
-            </div>
-          </template>
-          <template #content>
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="font-medium">{{ t('settings.appearance.darkMode') }}</p>
-                <p class="text-sm opacity-70">{{ t('settings.appearance.darkModeDesc') }}</p>
-              </div>
-              <ToggleSwitch :value="darkMode" @update:model-value="toggleDarkMode" />
-            </div>
-          </template>
-        </Card>
-
         <!-- Langue -->
-        <Card>
-          <template #title>
-            <div class="flex items-center gap-2">
-              <i class="fas fa-language"></i>
-              <span>{{ t('settings.language.title') }}</span>
+        <SettingsSection :title="t('settings.language.title')" icon="fas fa-language">
+          <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+              <p class="font-medium">{{ t('settings.language.label') }}</p>
+              <p class="text-sm opacity-70">{{ t('settings.language.desc') }}</p>
             </div>
-          </template>
-          <template #content>
-            <div class="flex items-center justify-between gap-4">
-              <div>
-                <p class="font-medium">{{ t('settings.language.label') }}</p>
-                <p class="text-sm opacity-70">{{ t('settings.language.desc') }}</p>
-              </div>
-              <Select
-                v-model="currentLocale"
-                input-id="language-select"
-                :aria-label="t('settings.language.label')"
-                :options="availableLocales"
-                option-label="label"
-                option-value="code"
-                class="w-44"
-              >
-                <template #value="{ value }">
-                  <span v-if="value" class="flex items-center gap-2">
-                    <span>{{ availableLocales.find((l) => l.code === value)?.flag }}</span>
-                    <span>{{ availableLocales.find((l) => l.code === value)?.label }}</span>
-                  </span>
-                </template>
-                <template #option="{ option }">
-                  <span class="flex items-center gap-2">
-                    <span>{{ option.flag }}</span>
-                    <span>{{ option.label }}</span>
-                  </span>
-                </template>
-              </Select>
-            </div>
-          </template>
-        </Card>
+            <USelect
+              v-model="currentLocale"
+              :items="availableLocales"
+              value-key="code"
+              label-key="label"
+              size="xl"
+              :aria-label="t('settings.language.label')"
+              class="w-44 shrink-0"
+              data-testid="language-select"
+            >
+              <template #leading>
+                <span>{{ currentLocaleFlag }}</span>
+              </template>
+              <template #item-leading="{ item }">
+                <span>{{ item.flag }}</span>
+              </template>
+            </USelect>
+          </div>
+        </SettingsSection>
 
         <!-- Profile picture: saved on its own, separately from the profile form -->
-        <Card v-if="appUser">
-          <template #title>
-            <div class="flex items-center gap-2">
-              <i class="fas fa-camera"></i>
-              <span>{{ t('settings.avatar.title') }}</span>
-            </div>
-          </template>
-          <template #content>
-            <p class="text-sm text-gray-500 mb-4">{{ t('settings.avatar.description') }}</p>
-            <AvatarEditor
-              :user-id="appUser.id"
-              :name="appUser.displayName"
-              :color-key="appUser.shortName"
-            />
-          </template>
-        </Card>
+        <SettingsSection v-if="appUser" :title="t('settings.avatar.title')" icon="fas fa-camera">
+          <p class="text-sm text-muted mb-4">{{ t('settings.avatar.description') }}</p>
+          <AvatarEditor
+            :user-id="appUser.id"
+            :name="appUser.displayName"
+            :color-key="appUser.shortName"
+          />
+        </SettingsSection>
 
         <!-- Profil -->
-        <Card>
-          <template #title>
-            <div class="flex items-center gap-2">
-              <i class="fas fa-user-edit"></i>
-              <span>{{ t('settings.profile.title') }}</span>
+        <SettingsSection :title="t('settings.profile.title')" icon="fas fa-user-edit">
+          <UForm
+            :schema="profileSchema"
+            :state="profile"
+            :disabled="profileLoading"
+            class="space-y-4"
+            @submit="onSubmitProfile"
+          >
+            <UAlert
+              v-if="profileSuccess"
+              color="success"
+              variant="subtle"
+              icon="i-fa7-solid:check"
+              :title="t('settings.profile.updateSuccess')"
+            />
+
+            <UFormField name="displayName" :label="t('settings.profile.displayName')" size="xl">
+              <UInput id="display-name" v-model="profile.displayName" maxlength="50" class="w-full" />
+            </UFormField>
+
+            <UFormField
+              name="shortName"
+              :label="t('settings.profile.shortName')"
+              :help="t('settings.profile.shortNameHint')"
+              size="xl"
+              :ui="{ help: 'text-xs' }"
+            >
+              <UInput
+                id="short-name"
+                :model-value="profile.shortName"
+                maxlength="8"
+                class="w-full"
+                @update:model-value="profile.shortName = String($event ?? '').toUpperCase()"
+              />
+            </UFormField>
+
+            <UAlert v-if="profileError" color="error" variant="subtle" :title="profileError" />
+
+            <div class="flex justify-end gap-2 pt-2">
+              <UButton
+                :label="t('common.cancel')"
+                color="neutral"
+                variant="outline"
+                size="lg"
+                @click="$router.back()"
+              />
+              <UButton
+                type="submit"
+                :label="t('common.save')"
+                icon="i-fa7-solid:floppy-disk"
+                size="lg"
+                :loading="profileLoading"
+              />
             </div>
-          </template>
-          <template #content>
-            <form @submit="onSubmitProfile" class="space-y-4">
-              <Message v-if="profileSuccess" severity="success" :closable="false">
-                <i class="fa fa-check mr-2"></i>
-                {{ t('settings.profile.updateSuccess') }}
-              </Message>
-
-              <div class="flex flex-col gap-2">
-                <label for="display-name" class="font-medium">{{ t('settings.profile.displayName') }}</label>
-                <InputText
-                  id="display-name"
-                  v-model="displayName"
-                  :invalid="!!profileErrors.displayName"
-                  :disabled="profileLoading"
-                  class="w-full"
-                  maxlength="50"
-                />
-                <small v-if="profileErrors.displayName" class="text-red-500">
-                  {{ profileErrors.displayName }}
-                </small>
-              </div>
-
-              <div class="flex flex-col gap-2">
-                <label for="short-name" class="font-medium">{{ t('settings.profile.shortName') }}</label>
-                <InputText
-                  id="short-name"
-                  v-model="shortName"
-                  :invalid="!!profileErrors.shortName"
-                  :disabled="profileLoading"
-                  class="w-full"
-                  maxlength="8"
-                  @input="shortName = (shortName ?? '').toUpperCase()"
-                />
-                <small class="opacity-60">
-                  {{ t('settings.profile.shortNameHint') }}
-                </small>
-                <small v-if="profileErrors.shortName" class="text-red-500">
-                  {{ profileErrors.shortName }}
-                </small>
-              </div>
-
-              <Message v-if="profileError" severity="error" :closable="false">
-                {{ profileError }}
-              </Message>
-
-              <div class="flex justify-end gap-2 pt-2">
-                <Button
-                  :label="t('common.cancel')"
-                  severity="secondary"
-                  outlined
-                  type="button"
-                  :disabled="profileLoading"
-                  @click="$router.back()"
-                />
-                <Button
-                  :label="t('common.save')"
-                  type="submit"
-                  icon="fas fa-save"
-                  :loading="profileLoading"
-                  :disabled="profileLoading"
-                />
-              </div>
-            </form>
-          </template>
-        </Card>
+          </UForm>
+        </SettingsSection>
 
         <!-- Application -->
-        <Card>
-          <template #title>
-            <div class="flex items-center gap-2">
-              <i class="fas fa-mobile-alt"></i>
-              <span>{{ t('settings.application.title') }}</span>
-            </div>
-          </template>
-          <template #content>
-            <Message v-if="isInstalled" severity="success" :closable="false">
-              {{ t('settings.application.installed') }}
-            </Message>
+        <SettingsSection :title="t('settings.application.title')" icon="fas fa-mobile-alt">
+          <UAlert
+            v-if="isInstalled"
+            color="success"
+            variant="subtle"
+            :title="t('settings.application.installed')"
+          />
 
-            <div v-else-if="canInstall" class="flex items-center justify-between gap-4">
-              <div>
-                <p class="font-medium">{{ t('settings.application.install') }}</p>
-                <p class="text-sm opacity-70">{{ t('settings.application.installDesc') }}</p>
-              </div>
-              <Button icon="fas fa-download" :label="t('settings.application.installBtn')" @click="triggerInstall" />
+          <div v-else-if="canInstall" class="flex items-center justify-between gap-4">
+            <div>
+              <p class="font-medium">{{ t('settings.application.install') }}</p>
+              <p class="text-sm opacity-70">{{ t('settings.application.installDesc') }}</p>
             </div>
+            <UButton
+              icon="i-fa7-solid:download"
+              :label="t('settings.application.installBtn')"
+              @click="triggerInstall"
+            />
+          </div>
 
-            <Message
-              v-if="isIOS && showIOSInstructions"
-              severity="info"
-              :closable="true"
-              class="mt-3"
-              @close="showIOSInstructions = false"
-            >
+          <UAlert
+            v-if="isIOS && showIOSInstructions"
+            color="info"
+            variant="subtle"
+            class="mt-3"
+            close
+            @update:open="showIOSInstructions = false"
+          >
+            <template #description>
               {{ t('settings.application.iosTap') }} <i class="fas fa-share-from-square mx-1"></i>
               {{ t('settings.application.iosThen') }}
               <strong>"{{ t('settings.application.iosAddToHome') }}"</strong>
-            </Message>
+            </template>
+          </UAlert>
 
-            <Message v-else-if="!isInstalled && !canInstall" severity="secondary" :closable="false">
-              {{ t('settings.application.notAvailable') }}
-            </Message>
-          </template>
-        </Card>
+          <UAlert
+            v-else-if="!isInstalled && !canInstall"
+            color="neutral"
+            variant="outline"
+            :title="t('settings.application.notAvailable')"
+          />
+        </SettingsSection>
 
         <!-- Notifications -->
-        <Card>
-          <template #title>
-            <div class="flex items-center gap-2">
-              <i class="fas fa-bell"></i>
-              <span>{{ t('settings.notifications.title') }}</span>
+        <SettingsSection :title="t('settings.notifications.title')" icon="fas fa-bell">
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="font-medium">{{ t('settings.notifications.push') }}</p>
+              <p class="text-sm opacity-70">{{ t('settings.notifications.pushDesc') }}</p>
             </div>
-          </template>
-          <template #content>
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="font-medium">{{ t('settings.notifications.push') }}</p>
-                <p class="text-sm opacity-70">{{ t('settings.notifications.pushDesc') }}</p>
-              </div>
-              <ToggleSwitch
-                :model-value="pushEnabled"
-                @update:model-value="togglePushNotifications"
-                :disabled="pushLoading"
-              />
-            </div>
-            <Message v-if="!notificationSupported" severity="warn" class="mt-3">
-              {{ t('settings.notifications.unsupported') }}
-            </Message>
-          </template>
-        </Card>
+            <USwitch
+              :model-value="pushEnabled"
+              :disabled="pushLoading"
+              size="lg"
+              :aria-label="t('settings.notifications.push')"
+              @update:model-value="togglePushNotifications"
+            />
+          </div>
+          <UAlert
+            v-if="!notificationSupported"
+            color="warning"
+            variant="subtle"
+            class="mt-3"
+            :title="t('settings.notifications.unsupported')"
+          />
+        </SettingsSection>
 
         <!-- Compte -->
-        <Card>
-          <template #title>
-            <div class="flex items-center gap-2">
-              <i class="fas fa-user"></i>
-              <span>{{ t('settings.account.title') }}</span>
-            </div>
-          </template>
-          <template #content>
-            <!-- An SSO-only account has no password to re-enter, so the change
-                 flow is replaced by the email-based creation flow. -->
-            <div v-if="hasNativePassword" class="space-y-3">
-              <Button
-                :label="t('settings.account.changePassword')"
-                outlined
-                icon="fas fa-key"
-                severity="secondary"
-                class="w-full"
-                @click="openChangePasswordDialog"
-              />
-            </div>
+        <SettingsSection :title="t('settings.account.title')" icon="fas fa-user">
+          <!-- An SSO-only account has no password to re-enter, so the change
+               flow is replaced by the email-based creation flow. -->
+          <UButton
+            v-if="hasNativePassword"
+            :label="t('settings.account.changePassword')"
+            icon="i-fa7-solid:key"
+            color="neutral"
+            variant="outline"
+            size="lg"
+            block
+            @click="openChangePasswordDialog"
+          />
 
-            <div v-else class="space-y-3">
-              <Message severity="info" :closable="false">
-                {{ t('settings.account.ssoOnlyNotice') }}
-              </Message>
+          <div v-else class="space-y-3">
+            <UAlert color="info" variant="subtle" :title="t('settings.account.ssoOnlyNotice')" />
 
-              <Message v-if="setPasswordSent" severity="success" :closable="false">
-                <i class="fa fa-check mr-2"></i>
-                {{ t('settings.account.setPasswordSent') }}
-              </Message>
+            <UAlert
+              v-if="setPasswordSent"
+              color="success"
+              variant="subtle"
+              icon="i-fa7-solid:check"
+              :title="t('settings.account.setPasswordSent')"
+            />
 
-              <Message v-if="setPasswordError" severity="error" :closable="false">
-                {{ setPasswordError }}
-              </Message>
+            <UAlert v-if="setPasswordError" color="error" variant="subtle" :title="setPasswordError" />
 
-              <Button
-                v-if="!setPasswordSent"
-                :label="t('settings.account.setPassword')"
-                outlined
-                icon="fas fa-envelope"
-                severity="secondary"
-                class="w-full"
-                :loading="setPasswordLoading"
-                :disabled="setPasswordLoading || !userEmail"
-                @click="sendSetPasswordLink"
-              />
-            </div>
-          </template>
-        </Card>
+            <UButton
+              v-if="!setPasswordSent"
+              :label="t('settings.account.setPassword')"
+              icon="i-fa7-solid:envelope"
+              color="neutral"
+              variant="outline"
+              size="lg"
+              block
+              :loading="setPasswordLoading"
+              :disabled="setPasswordLoading || !userEmail"
+              @click="sendSetPasswordLink"
+            />
+          </div>
+        </SettingsSection>
 
         <!-- Groupes -->
-        <Card>
-          <template #title>
-            <div class="flex items-center gap-2">
-              <i class="fas fa-users"></i>
-              <span>{{ t('settings.groups.title') }}</span>
+        <SettingsSection :title="t('settings.groups.title')" icon="fas fa-users">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div>
+              <p class="font-medium">{{ t('settings.groups.join') }}</p>
+              <p class="text-sm opacity-70">{{ t('settings.groups.joinDesc') }}</p>
             </div>
-          </template>
-          <template #content>
-            <div class="flex items-center justify-between gap-4">
-              <div>
-                <p class="font-medium">{{ t('settings.groups.join') }}</p>
-                <p class="text-sm opacity-70">{{ t('settings.groups.joinDesc') }}</p>
-              </div>
-              <Button
-                icon="fas fa-user-plus"
-                :label="t('common.join')"
-                outlined
-                severity="secondary"
-                @click="openJoinOrgDialog"
-              />
-            </div>
-          </template>
-        </Card>
+            <UButton
+              icon="i-fa7-solid:user-plus"
+              :label="t('common.join')"
+              color="neutral"
+              variant="outline"
+              size="lg"
+              class="shrink-0 justify-center"
+              @click="openJoinOrgDialog"
+            />
+          </div>
+        </SettingsSection>
 
         <!-- Mode kiosque -->
-        <Card v-if="userRole === 'kiosk'">
-          <template #title>
-            <div class="flex items-center gap-2">
-              <i class="fas fa-lock"></i>
-              <span>{{ t('settings.kiosk.title') }}</span>
-            </div>
-          </template>
-          <template #content>
-            <div class="space-y-3">
-              <Message severity="warn" :closable="false">
-                {{ t('settings.kiosk.warning') }}
-              </Message>
-              <Button
-                :label="t('settings.kiosk.lock')"
-                icon="fas fa-lock"
-                severity="danger"
-                outlined
-                class="w-full"
-                @click="showKioskLockDialog = true"
-              />
-            </div>
-          </template>
-        </Card>
+        <SettingsSection v-if="userRole === 'kiosk'" :title="t('settings.kiosk.title')" icon="fas fa-lock">
+          <div class="space-y-3">
+            <UAlert color="warning" variant="subtle" :title="t('settings.kiosk.warning')" />
+            <UButton
+              :label="t('settings.kiosk.lock')"
+              icon="i-fa7-solid:lock"
+              color="error"
+              variant="outline"
+              size="lg"
+              block
+              @click="showKioskLockDialog = true"
+            />
+          </div>
+        </SettingsSection>
       </div>
     </div>
 
     <!-- Dialog rejoindre un groupe -->
-    <Dialog
-      v-model:visible="showJoinOrgDialog"
-      :header="t('settings.groups.join')"
-      modal
-      :style="{ width: '28rem' }"
-      @hide="resetJoinOrgDialog"
+    <UModal
+      v-model:open="showJoinOrgDialog"
+      :title="t('settings.groups.join')"
+      :ui="{ footer: 'justify-end' }"
+      @after:leave="resetJoinOrgDialog"
     >
-      <div class="space-y-4">
-        <Message v-if="joinOrgSuccess" severity="success" :closable="false">
-          <i class="fa fa-check mr-2"></i>
-          {{ t('settings.groups.joinedPrefix') }} <strong>{{ joinOrgSuccessName }}</strong>.
-        </Message>
+      <template #body>
+        <div class="space-y-4">
+          <UAlert v-if="joinOrgSuccess" color="success" variant="subtle" icon="i-fa7-solid:check">
+            <template #title>
+              {{ t('settings.groups.joinedPrefix') }} <strong>{{ joinOrgSuccessName }}</strong>.
+            </template>
+          </UAlert>
 
-        <template v-if="!joinOrgSuccess">
-          <div class="flex flex-col gap-2">
-            <label for="org-code" class="font-medium">{{ t('settings.groups.invitationCode') }}</label>
-            <InputText
-              id="org-code"
-              v-model="joinOrgCode"
-              :placeholder="t('settings.groups.codePlaceholder')"
-              :disabled="joinOrgIsValidating || joinOrgLoading"
-              class="w-full"
-              @input="debouncedValidateOrgCode"
+          <template v-else>
+            <UFormField :label="t('settings.groups.invitationCode')" size="xl">
+              <UInput
+                id="org-code"
+                v-model="joinOrgCode"
+                :placeholder="t('settings.groups.codePlaceholder')"
+                :disabled="joinOrgIsValidating || joinOrgLoading"
+                class="w-full"
+                @input="debouncedValidateOrgCode"
+              />
+
+              <template #help>
+                <div v-if="joinOrgIsValidating" class="flex items-center gap-2 text-info">
+                  <i class="fa fa-spinner fa-spin"></i>
+                  <span class="text-sm">{{ t('settings.groups.validating') }}</span>
+                </div>
+
+                <UAlert
+                  v-else-if="joinOrgCodeError"
+                  color="error"
+                  variant="subtle"
+                  icon="i-fa7-solid:circle-xmark"
+                  :title="joinOrgCodeError"
+                />
+
+                <UAlert
+                  v-else-if="joinOrgCodeValid && joinOrgOrganizationName"
+                  color="success"
+                  variant="subtle"
+                  icon="i-fa7-solid:circle-check"
+                >
+                  <template #title>
+                    {{ t('settings.groups.codeValidPrefix') }} <strong>{{ joinOrgOrganizationName }}</strong>
+                  </template>
+                </UAlert>
+              </template>
+            </UFormField>
+
+            <UAlert
+              v-if="joinOrgError"
+              color="error"
+              variant="subtle"
+              icon="i-fa7-solid:circle-xmark"
+              :title="joinOrgError"
             />
-
-            <div v-if="joinOrgIsValidating" class="flex items-center gap-2 text-blue-600">
-              <i class="fa fa-spinner fa-spin"></i>
-              <span class="text-sm">{{ t('settings.groups.validating') }}</span>
-            </div>
-
-            <Message v-else-if="joinOrgCodeError" severity="error" :closable="false">
-              <i class="fa fa-times-circle mr-2"></i>
-              {{ joinOrgCodeError }}
-            </Message>
-
-            <Message v-else-if="joinOrgCodeValid && joinOrgOrganizationName" severity="success" :closable="false">
-              <i class="fa fa-check-circle mr-2"></i>
-              {{ t('settings.groups.codeValidPrefix') }} <strong>{{ joinOrgOrganizationName }}</strong>
-            </Message>
-          </div>
-
-          <Message v-if="joinOrgError" severity="error" :closable="false">
-            <i class="fa fa-times-circle mr-2"></i>
-            {{ joinOrgError }}
-          </Message>
-
-          <div class="flex justify-end gap-2 pt-2">
-            <Button
-              :label="t('common.cancel')"
-              severity="secondary"
-              outlined
-              type="button"
-              :disabled="joinOrgLoading"
-              @click="showJoinOrgDialog = false"
-            />
-            <Button
-              :label="t('common.join')"
-              icon="fas fa-user-plus"
-              :loading="joinOrgLoading"
-              :disabled="!joinOrgCodeValid || !joinOrgOrganizationName || joinOrgLoading"
-              @click="submitJoinOrg"
-            />
-          </div>
-        </template>
-
-        <div v-else class="flex justify-end pt-2">
-          <Button :label="t('common.close')" type="button" @click="showJoinOrgDialog = false" />
+          </template>
         </div>
-      </div>
-    </Dialog>
+      </template>
+
+      <template #footer>
+        <template v-if="!joinOrgSuccess">
+          <UButton
+            :label="t('common.cancel')"
+            color="neutral"
+            variant="outline"
+            :disabled="joinOrgLoading"
+            @click="showJoinOrgDialog = false"
+          />
+          <UButton
+            :label="t('common.join')"
+            icon="i-fa7-solid:user-plus"
+            :loading="joinOrgLoading"
+            :disabled="!joinOrgCodeValid || !joinOrgOrganizationName || joinOrgLoading"
+            @click="submitJoinOrg"
+          />
+        </template>
+        <UButton v-else :label="t('common.close')" @click="showJoinOrgDialog = false" />
+      </template>
+    </UModal>
 
     <!-- Dialog confirmation verrouillage kiosque -->
-    <Dialog
-      v-model:visible="showKioskLockDialog"
-      :header="t('settings.kiosk.dialogTitle')"
-      modal
-      :style="{ width: '24rem' }"
+    <UModal
+      v-model:open="showKioskLockDialog"
+      :title="t('settings.kiosk.dialogTitle')"
+      :ui="{ content: 'sm:max-w-sm', footer: 'justify-end' }"
     >
-      <div class="space-y-4">
-        <Message severity="warn" :closable="false">
-          <strong>{{ t('settings.kiosk.attention') }}</strong> {{ t('settings.kiosk.dialogWarningBody') }}
-        </Message>
-        <p class="text-sm opacity-70">
-          {{ t('settings.kiosk.dialogNote') }}
-        </p>
-        <div class="flex justify-end gap-2 pt-2">
-          <Button
-            :label="t('common.cancel')"
-            severity="secondary"
-            outlined
-            @click="showKioskLockDialog = false"
-          />
-          <Button :label="t('settings.kiosk.lockShort')" icon="fas fa-lock" severity="danger" @click="activateKioskLock" />
+      <template #body>
+        <div class="space-y-4">
+          <UAlert color="warning" variant="subtle">
+            <template #description>
+              <strong>{{ t('settings.kiosk.attention') }}</strong> {{ t('settings.kiosk.dialogWarningBody') }}
+            </template>
+          </UAlert>
+          <p class="text-sm opacity-70">
+            {{ t('settings.kiosk.dialogNote') }}
+          </p>
         </div>
-      </div>
-    </Dialog>
+      </template>
+
+      <template #footer>
+        <UButton
+          :label="t('common.cancel')"
+          color="neutral"
+          variant="outline"
+          @click="showKioskLockDialog = false"
+        />
+        <UButton
+          :label="t('settings.kiosk.lockShort')"
+          icon="i-fa7-solid:lock"
+          color="error"
+          @click="activateKioskLock"
+        />
+      </template>
+    </UModal>
 
     <!-- Dialog changement de mot de passe -->
-    <Dialog
-      v-model:visible="showChangePasswordDialog"
-      :header="t('settings.password.title')"
-      modal
-      :style="{ width: '28rem' }"
-      :closable="!authLoading"
+    <UModal
+      v-model:open="showChangePasswordDialog"
+      :title="t('settings.password.title')"
+      :dismissible="!authLoading"
+      :close="!authLoading"
     >
-      <form @submit="onChangePassword" class="space-y-4">
-        <Message v-if="changePasswordSuccess" severity="success" :closable="false">
-          <i class="fa fa-check mr-2"></i>
-          {{ t('settings.password.success') }}
-        </Message>
+      <template #body>
+        <UAlert
+          v-if="changePasswordSuccess"
+          color="success"
+          variant="subtle"
+          icon="i-fa7-solid:check"
+          :title="t('settings.password.success')"
+        />
 
-        <template v-if="!changePasswordSuccess">
-          <div class="flex flex-col gap-2">
-            <label for="current-password" class="font-medium">{{ t('settings.password.current') }}</label>
-            <Password
-              input-id="current-password"
-              v-model="currentPassword"
-              :feedback="false"
-              toggle-mask
-              :disabled="authLoading"
-              :invalid="!!errors.currentPassword"
-              class="w-full"
-              input-class="w-full"
+        <UForm
+          v-else
+          :schema="changePasswordSchema"
+          :state="passwordForm"
+          :disabled="authLoading"
+          class="space-y-4"
+          @submit="onChangePassword"
+        >
+          <UFormField name="currentPassword" :label="t('settings.password.current')" size="xl">
+            <PasswordInput id="current-password" v-model="passwordForm.currentPassword" />
+          </UFormField>
+
+          <UFormField name="newPassword" :label="t('settings.password.new')" size="xl">
+            <PasswordInput id="new-password" v-model="passwordForm.newPassword" autocomplete="new-password" />
+          </UFormField>
+
+          <UFormField name="passwordConfirm" :label="t('settings.password.confirm')" size="xl">
+            <PasswordInput
+              id="password-confirm"
+              v-model="passwordForm.passwordConfirm"
+              autocomplete="new-password"
             />
-            <small v-if="errors.currentPassword" class="text-red-500">
-              {{ errors.currentPassword }}
-            </small>
-          </div>
+          </UFormField>
 
-          <div class="flex flex-col gap-2">
-            <label for="new-password" class="font-medium">{{ t('settings.password.new') }}</label>
-            <Password
-              input-id="new-password"
-              v-model="newPassword"
-              toggle-mask
-              :disabled="authLoading"
-              :invalid="!!errors.newPassword"
-              class="w-full"
-              input-class="w-full"
-            />
-            <small v-if="errors.newPassword" class="text-red-500">
-              {{ errors.newPassword }}
-            </small>
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="password-confirm" class="font-medium">{{
-              t('settings.password.confirm')
-            }}</label>
-            <Password
-              input-id="password-confirm"
-              v-model="passwordConfirm"
-              :feedback="false"
-              toggle-mask
-              :disabled="authLoading"
-              :invalid="!!errors.passwordConfirm"
-              class="w-full"
-              input-class="w-full"
-            />
-            <small v-if="errors.passwordConfirm" class="text-red-500">
-              {{ errors.passwordConfirm }}
-            </small>
-          </div>
-
-          <Message v-if="authError" severity="error" :closable="false">
-            {{ authError }}
-          </Message>
+          <UAlert v-if="authError" color="error" variant="subtle" :title="authError" />
 
           <div class="flex justify-end gap-2 pt-2">
-            <Button
+            <UButton
               :label="t('common.cancel')"
-              severity="secondary"
-              outlined
-              type="button"
+              color="neutral"
+              variant="outline"
               :disabled="authLoading"
               @click="showChangePasswordDialog = false"
             />
-            <Button
-              :label="t('common.confirm')"
+            <UButton
               type="submit"
-              icon="fas fa-check"
+              :label="t('common.confirm')"
+              icon="i-fa7-solid:check"
               :loading="authLoading"
-              :disabled="authLoading"
             />
           </div>
-        </template>
+        </UForm>
 
-        <div v-else class="flex justify-end pt-2">
-          <Button :label="t('common.close')" type="button" @click="showChangePasswordDialog = false" />
+        <div v-if="changePasswordSuccess" class="flex justify-end pt-4">
+          <UButton :label="t('common.close')" @click="showChangePasswordDialog = false" />
         </div>
-      </form>
-    </Dialog>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import { useI18n } from 'vue-i18n'
 import { useLocale } from '@/composables/useLocale'
 import { useRouter } from 'vue-router'
 import { useNotificationPush } from '@/composables/notification/notification.push'
 import { usePWAInstall } from '@/composables/pwa/pwa.install'
 import { useAuth } from '@/composables/useAuth'
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
-import { changePasswordSchema } from '@/schemas/auth.schema'
+import { changePasswordSchema, type ChangePasswordFormData } from '@/schemas/auth.schema'
 import { displayNameRegex } from '@skol-arena/shared'
 import { userApi } from '@/composables/user/user.api'
 import { useInvitationService } from '@/composables/invitation/invitation.service'
 import { useDebounceFn } from '@vueuse/core'
 import AvatarEditor from '@/components/avatar/AvatarEditor.vue'
+import PasswordInput from '@/components/forms/PasswordInput.vue'
+import SettingsSection from '@/components/settings/SettingsSection.vue'
 
 const { t } = useI18n()
 const { currentLocale, availableLocales } = useLocale()
+const currentLocaleFlag = computed(
+  () => availableLocales.find((l) => l.code === currentLocale.value)?.flag,
+)
 
 const { isInstalled, isIOS, canInstall, showIOSInstructions, triggerInstall } = usePWAInstall()
 
-const darkMode = ref(false)
 const pushEnabled = ref(false)
 const pushLoading = ref(false)
 
@@ -574,43 +492,31 @@ function activateKioskLock() {
 }
 
 // Profile form — schema is reactive so validation messages follow the locale
-const profileValidationSchema = computed(() =>
-  toTypedSchema(
-    z.object({
-      displayName: z
-        .string()
-        .trim()
-        .min(3, t('settings.validation.min3'))
-        .max(50, t('settings.validation.displayNameMax'))
-        .regex(displayNameRegex, t('settings.validation.nameRegex')),
-      shortName: z
-        .string()
-        .trim()
-        .min(3, t('settings.validation.min3'))
-        .max(8, t('settings.validation.shortNameMax'))
-        .regex(displayNameRegex, t('settings.validation.nameRegex'))
-        .transform((v) => v.toUpperCase()),
-    }),
-  ),
+const profileSchema = computed(() =>
+  z.object({
+    displayName: z
+      .string()
+      .trim()
+      .min(3, t('settings.validation.min3'))
+      .max(50, t('settings.validation.displayNameMax'))
+      .regex(displayNameRegex, t('settings.validation.nameRegex')),
+    shortName: z
+      .string()
+      .trim()
+      .min(3, t('settings.validation.min3'))
+      .max(8, t('settings.validation.shortNameMax'))
+      .regex(displayNameRegex, t('settings.validation.nameRegex'))
+      .transform((v) => v.toUpperCase()),
+  }),
 )
+type ProfileFormData = z.output<typeof profileSchema.value>
 
 const profileLoading = ref(false)
 const profileSuccess = ref(false)
 const profileError = ref<string | null>(null)
+const profile = reactive({ displayName: '', shortName: '' })
 
-const {
-  defineField: defineProfileField,
-  handleSubmit: handleProfileSubmit,
-  errors: profileErrors,
-  setValues: setProfileValues,
-} = useForm({
-  validationSchema: profileValidationSchema,
-})
-
-const [displayName] = defineProfileField('displayName')
-const [shortName] = defineProfileField('shortName')
-
-const onSubmitProfile = handleProfileSubmit(async (values) => {
+async function onSubmitProfile({ data: values }: FormSubmitEvent<ProfileFormData>) {
   profileLoading.value = true
   profileSuccess.value = false
   profileError.value = null
@@ -625,7 +531,7 @@ const onSubmitProfile = handleProfileSubmit(async (values) => {
   } finally {
     profileLoading.value = false
   }
-})
+}
 
 // Change password form
 const showChangePasswordDialog = ref(false)
@@ -658,30 +564,32 @@ async function sendSetPasswordLink() {
   }
 }
 
-const { defineField, handleSubmit, errors, resetForm } = useForm({
-  validationSchema: toTypedSchema(changePasswordSchema),
+const passwordForm = reactive<ChangePasswordFormData>({
+  currentPassword: '',
+  newPassword: '',
+  passwordConfirm: '',
 })
 
-const [currentPassword] = defineField('currentPassword')
-const [newPassword] = defineField('newPassword')
-const [passwordConfirm] = defineField('passwordConfirm')
+function resetPasswordForm() {
+  Object.assign(passwordForm, { currentPassword: '', newPassword: '', passwordConfirm: '' })
+}
 
 function openChangePasswordDialog() {
   changePasswordSuccess.value = false
   authError.value = null
-  resetForm()
+  resetPasswordForm()
   showChangePasswordDialog.value = true
 }
 
-const onChangePassword = handleSubmit(async (values) => {
+async function onChangePassword({ data: values }: FormSubmitEvent<ChangePasswordFormData>) {
   try {
     await changePassword(values.currentPassword, values.newPassword)
     changePasswordSuccess.value = true
-    resetForm()
+    resetPasswordForm()
   } catch {
     // error displayed via authError
   }
-})
+}
 
 // Join organization dialog
 const { joinOrganization, validateCode: validateInvitationCode } = useInvitationService()
@@ -755,16 +663,13 @@ async function submitJoinOrg() {
 }
 
 onMounted(async () => {
-  const theme = localStorage.getItem('theme')
-  darkMode.value = theme === 'dark'
-
   if ('Notification' in window) {
     pushEnabled.value = Notification.permission === 'granted'
   }
 
   try {
     const user = await userApi.me()
-    setProfileValues({ displayName: user.displayName, shortName: user.shortName })
+    Object.assign(profile, { displayName: user.displayName, shortName: user.shortName })
     userEmail.value = user.betterAuth.email
   } catch {
     profileError.value = t('settings.profile.loadError')
@@ -776,12 +681,6 @@ onMounted(async () => {
     // Keep the default: showing the change-password flow is the safe failure mode.
   }
 })
-
-function toggleDarkMode(newValue: boolean) {
-  darkMode.value = newValue
-  document.documentElement.classList.toggle('my-app-dark', darkMode.value)
-  localStorage.setItem('theme', darkMode.value ? 'dark' : 'light')
-}
 
 async function togglePushNotifications(newValue: boolean) {
   console.log('[Settings] Toggle push notifications:', newValue, 'current:', pushEnabled.value)

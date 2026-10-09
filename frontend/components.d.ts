@@ -136,6 +136,7 @@ declare module 'vue' {
     SectionHeader: typeof import('./src/components/ui/SectionHeader.vue')['default']
     Select: typeof import('primevue/select')['default']
     SelectButton: typeof import('primevue/selectbutton')['default']
+    SettingsSection: typeof import('./src/components/settings/SettingsSection.vue')['default']
     Skeleton: typeof import('primevue/skeleton')['default']
     SkillOrLuckOverlay: typeof import('./src/components/brand/SkillOrLuckOverlay.vue')['default']
     SkolLogo: typeof import('./src/components/brand/SkolLogo.vue')['default']

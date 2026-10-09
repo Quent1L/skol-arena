@@ -1,14 +1,27 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
-import { mountWithPrime } from '@/test-support/mount'
+import { mountWithUi } from '@/test-support/mount'
 import SettingsView from '@/views/SettingsView.vue'
 import { useAuth } from '@/composables/useAuth'
 import { userApi } from '@/composables/user/user.api'
 import { makeAuthMock, type AuthMockState } from '@/test-support/mock-modules'
 
 vi.mock('vue-i18n', async () => (await import('@/test-support/mock-modules')).i18nEchoMock())
-vi.mock('vue-router', () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }))
+vi.mock('vue-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('vue-router')>()),
+  useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
+}))
 vi.mock('@/composables/useAuth', () => ({ useAuth: vi.fn() }))
+vi.mock('@/composables/useLocale', async () => {
+  const { ref } = await import('vue')
+  return {
+    useLocale: () => ({
+      currentLocale: ref('fr'),
+      availableLocales: [{ code: 'fr', label: 'Français', flag: '🇫🇷' }],
+      setLocale: vi.fn(),
+    }),
+  }
+})
 vi.mock('@/composables/user/user.api', () => ({ userApi: { me: vi.fn(), updateProfile: vi.fn() } }))
 vi.mock('@/composables/notification/notification.push', () => ({
   useNotificationPush: () => ({ enablePush: vi.fn(), disablePush: vi.fn() }),
@@ -36,7 +49,7 @@ function mountWith(providers: string[]) {
   const auth = makeAuthMock(state)
   auth.listAuthProviders = vi.fn(async () => providers)
   vi.mocked(useAuth).mockReturnValue(auth as never)
-  return { auth, wrapper: mountWithPrime(SettingsView, { global: { stubs: { AvatarEditor: true } } }) }
+  return { auth, wrapper: mountWithUi(SettingsView, { global: { stubs: { AvatarEditor: true } } }) }
 }
 
 describe('SettingsView account section', () => {
@@ -86,7 +99,7 @@ describe('SettingsView account section', () => {
     })
     vi.mocked(useAuth).mockReturnValue(auth as never)
 
-    const wrapper = mountWithPrime(SettingsView, { global: { stubs: { AvatarEditor: true } } })
+    const wrapper = mountWithUi(SettingsView, { global: { stubs: { AvatarEditor: true } } })
     await flushPromises()
 
     expect(wrapper.text()).toContain('settings.account.changePassword')
