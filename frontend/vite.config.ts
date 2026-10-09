@@ -5,6 +5,7 @@ import { fileURLToPath, URL } from 'node:url'
 import ui from '@nuxt/ui/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { existsSync, readFileSync } from 'node:fs'
+import { adminPrecacheScope } from './build/admin-precache-scope.ts'
 const version = readFileSync(new URL('../VERSION', import.meta.url), 'utf-8').trim()
 
 // Lowest version a client is allowed to keep running. Written by the release
@@ -22,6 +23,8 @@ const notesVersionPath = new URL('../NOTES_VERSION', import.meta.url)
 const notesVersion = existsSync(notesVersionPath)
   ? readFileSync(notesVersionPath, 'utf-8').trim()
   : ''
+
+const adminScope = adminPrecacheScope()
 
 export default defineConfig({
   define: {
@@ -70,6 +73,7 @@ export default defineConfig({
       },
     }),
     vueDevTools({ launchEditor: 'webstorm' }),
+    adminScope.plugin,
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
@@ -85,6 +89,8 @@ export default defineConfig({
         // browser able to run a service worker reads woff2, so the woff files are never
         // requested — precaching them would only download them for nothing.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // The admin screens are fetched on demand, see build/admin-precache-scope.ts.
+        manifestTransforms: [adminScope.manifestTransform],
       },
       devOptions: {
         // Disabled during e2e runs: the dev service worker caches bundles and

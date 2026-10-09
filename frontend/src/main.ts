@@ -25,7 +25,7 @@ import router from './router'
 import ui from '@nuxt/ui/vue-plugin'
 import { errorService } from './composables/useErrorService'
 import { checkVersion } from './composables/pwa/pwa.update'
-import { markLeaving } from './utils/app-lifecycle'
+import { isStaleChunkError, recoverFromStaleChunk } from './composables/pwa/stale-chunk'
 import { i18n, getInitialLocale } from './i18n'
 
 // Deployment detection: these checks only raise a flag, they never reload.
@@ -41,19 +41,13 @@ if ('serviceWorker' in navigator) {
   })
 }
 
+// A chunk that no longer exists on the server: a deployment happened, reload onto it.
 window.addEventListener('vite:preloadError', () => {
-  markLeaving()
-  window.location.reload()
+  void recoverFromStaleChunk()
 })
 
 window.addEventListener('error', (event) => {
-  if (
-    event.message?.includes('Failed to fetch dynamically imported module') ||
-    event.message?.includes('Importing a module script failed')
-  ) {
-    markLeaving()
-    window.location.reload()
-  }
+  if (isStaleChunkError(event.message)) void recoverFromStaleChunk()
 })
 
 // The app is dark-only: Nuxt UI and Tailwind key their dark styles off this class.

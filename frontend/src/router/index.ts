@@ -11,7 +11,7 @@ import {
   isUpdateReady,
   updatesBlocked,
 } from '@/composables/pwa/pwa.update'
-import { markLeaving } from '@/utils/app-lifecycle'
+import { isStaleChunkError, recoverFromStaleChunk } from '@/composables/pwa/stale-chunk'
 import { i18n } from '@/i18n'
 import { adminRoute } from './admin-routes'
 
@@ -291,14 +291,7 @@ router.beforeEach((to) => {
 // (prod redeploy, vite dev server dep re-optimization):
 // we reload the page directly to the destination.
 router.onError((error, to) => {
-  const message = error instanceof Error ? error.message : String(error)
-  if (
-    message.includes('Failed to fetch dynamically imported module') ||
-    message.includes('error loading dynamically imported module')
-  ) {
-    markLeaving()
-    window.location.href = to.fullPath
-  }
+  if (isStaleChunkError(error)) void recoverFromStaleChunk(to.fullPath)
 })
 
 export default router
