@@ -6,104 +6,84 @@
         <p class="mt-2">{{ t('forgotPasswordView.subtitle') }}</p>
       </div>
 
-      <Card>
-        <template #content>
-          <div v-if="!submitted">
-            <p class="text-white mb-6">
-              {{ t('forgotPasswordView.instructions') }}
-            </p>
+      <UCard variant="soft">
+        <div v-if="!submitted">
+          <p class="text-white mb-6">
+            {{ t('forgotPasswordView.instructions') }}
+          </p>
 
-            <form @submit="onSubmit" class="space-y-6">
-              <div class="flex flex-col gap-2">
-                <label for="email" class="font-medium">{{
-                  t('forgotPasswordView.emailLabel')
-                }}</label>
-                <InputText
-                  id="email"
-                  v-model="email"
-                  type="email"
-                  :placeholder="t('forgotPasswordView.emailPlaceholder')"
-                  :disabled="loading"
-                  :invalid="!!errors.email"
-                  class="w-full"
-                />
-                <small v-if="errors.email" class="text-red-500">
-                  {{ errors.email }}
-                </small>
+          <UForm
+            :schema="forgotPasswordSchema"
+            :state="state"
+            :disabled="loading"
+            class="space-y-6"
+            @submit="onSubmit"
+          >
+            <UFormField name="email" :label="t('forgotPasswordView.emailLabel')" size="xl">
+              <UInput
+                id="email"
+                v-model="state.email"
+                type="email"
+                autocomplete="email"
+                :placeholder="t('forgotPasswordView.emailPlaceholder')"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UAlert v-if="error" color="error" variant="subtle" :title="error" />
+
+            <div class="space-y-3">
+              <UButton
+                type="submit"
+                size="xl"
+                block
+                :loading="loading"
+                :label="t('forgotPasswordView.submitButton')"
+              />
+
+              <div class="text-center text-sm">
+                <ULink to="/login" class="text-primary">{{ t('forgotPasswordView.backToLoginLink') }}</ULink>
               </div>
+            </div>
+          </UForm>
+        </div>
 
-              <Message v-if="error" severity="error" :closable="false">
-                {{ error }}
-              </Message>
-
-              <div class="space-y-3">
-                <Button
-                  type="submit"
-                  :loading="loading"
-                  :label="t('forgotPasswordView.submitButton')"
-                  class="w-full"
-                  :disabled="loading"
-                />
-
-                <div class="text-center text-sm">
-                  <Button
-                    link
-                    :label="t('forgotPasswordView.backToLoginLink')"
-                    @click="router.push('/login')"
-                    class="text-gray-600"
-                  />
-                </div>
-              </div>
-            </form>
-          </div>
-
-          <div v-else class="text-center py-4">
-            <i class="fa fa-check-circle text-green-500 text-5xl mb-4"></i>
-            <h3 class="text-xl font-semibold mb-2">{{ t('forgotPasswordView.successTitle') }}</h3>
-            <p class="text-white mb-6">
-              {{ t('forgotPasswordView.successMessage') }}
-            </p>
-            <p class="text-sm text-white mb-6">
-              {{ t('forgotPasswordView.spamNote') }}
-            </p>
-            <Button
-              :label="t('forgotPasswordView.backToLoginButton')"
-              @click="router.push('/login')"
-            />
-          </div>
-        </template>
-      </Card>
+        <div v-else class="text-center py-4">
+          <i class="fa fa-check-circle text-green-500 text-5xl mb-4"></i>
+          <h3 class="text-xl font-semibold mb-2">{{ t('forgotPasswordView.successTitle') }}</h3>
+          <p class="text-white mb-6">
+            {{ t('forgotPasswordView.successMessage') }}
+          </p>
+          <p class="text-sm text-white mb-6">
+            {{ t('forgotPasswordView.spamNote') }}
+          </p>
+          <UButton size="xl" :label="t('forgotPasswordView.backToLoginButton')" to="/login" />
+        </div>
+      </UCard>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import SkolLogo from '@/components/brand/SkolLogo.vue'
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { reactive, ref } from 'vue'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
-import { forgotPasswordSchema } from '@/schemas/auth.schema'
+import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/schemas/auth.schema'
 
 const { t } = useI18n()
-const router = useRouter()
 const { requestPasswordReset, loading, error } = useAuth()
 const submitted = ref(false)
 
-const { defineField, handleSubmit, errors } = useForm({
-  validationSchema: toTypedSchema(forgotPasswordSchema),
-})
+const state = reactive<ForgotPasswordFormData>({ email: '' })
 
-const [email] = defineField('email')
-
-const onSubmit = handleSubmit(async (values) => {
+async function onSubmit({ data: values }: FormSubmitEvent<ForgotPasswordFormData>) {
   try {
     await requestPasswordReset(values.email)
     submitted.value = true
   } catch (err) {
     console.error('Erreur de demande de réinitialisation:', err)
   }
-})
+}
 </script>

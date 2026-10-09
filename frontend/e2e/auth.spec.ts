@@ -12,7 +12,7 @@ test.describe('anonymous', () => {
   test('login via the email/password form', async ({ page }) => {
     await page.goto('/login?native=true')
     await page.locator('#email').fill(USERS.player1.email)
-    await page.locator('#password input').fill(USERS.player1.password)
+    await page.locator('#password').fill(USERS.player1.password)
     await page.locator('form button[type="submit"]').click()
 
     // Lands on the tournament list, authenticated shell
@@ -23,7 +23,7 @@ test.describe('anonymous', () => {
   test('invalid login stays on /login', async ({ page }) => {
     await page.goto('/login?native=true')
     await page.locator('#email').fill(USERS.player1.email)
-    await page.locator('#password input').fill('wrong-password')
+    await page.locator('#password').fill('wrong-password')
     await page.locator('form button[type="submit"]').click()
     await expect(page).toHaveURL(/\/login/)
   })

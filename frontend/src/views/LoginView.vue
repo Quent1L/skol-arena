@@ -6,144 +6,105 @@
         <p class="mt-2">{{ t('loginView.subtitle') }}</p>
       </div>
 
-      <Card>
-        <template #content>
-          <!-- Error message if no authentication method is available -->
-          <Message v-if="noAuthMethodAvailable" severity="error" :closable="false" class="mb-6">
-            <div class="space-y-2">
-              <p class="font-semibold">
-                <i class="fa fa-exclamation-triangle mr-2"></i>
-                {{ t('loginView.noAuthTitle') }}
-              </p>
-              <p class="text-sm">
-                {{ t('loginView.noAuthDescription') }}
-              </p>
-            </div>
-          </Message>
+      <UCard variant="soft">
+        <!-- Error message if no authentication method is available -->
+        <UAlert
+          v-if="noAuthMethodAvailable"
+          color="error"
+          variant="subtle"
+          icon="i-fa7-solid:triangle-exclamation"
+          :title="t('loginView.noAuthTitle')"
+          :description="t('loginView.noAuthDescription')"
+        />
 
-          <form v-if="!noAuthMethodAvailable" @submit="onSubmit" class="space-y-6">
-            <!-- Email/Password form (only if enabled or ?native=true) -->
-            <template v-if="showEmailPassword">
-              <div class="flex flex-col gap-2">
-                <label for="email" class="font-medium">{{ t('loginView.emailLabel') }}</label>
-                <InputText
-                  id="email"
-                  v-model="email"
-                  type="email"
-                  :placeholder="t('loginView.emailPlaceholder')"
-                  :disabled="loading"
-                  :invalid="!!errors.email"
-                  class="w-full"
-                />
-                <small v-if="errors.email" class="text-red-500">
-                  {{ errors.email }}
-                </small>
-              </div>
-
-              <div class="flex flex-col gap-2">
-                <label for="password" class="font-medium">{{ t('loginView.passwordLabel') }}</label>
-                <Password
-                  id="password"
-                  v-model="password"
-                  :feedback="false"
-                  toggle-mask
-                  :disabled="loading"
-                  :invalid="!!errors.password"
-                  class="w-full"
-                  input-class="w-full"
-                />
-                <small v-if="errors.password" class="text-red-500">
-                  {{ errors.password }}
-                </small>
-                <div class="text-right">
-                  <Button
-                    link
-                    :label="t('loginView.forgotPassword')"
-                    @click="router.push('/forgot-password')"
-                    class="text-sm text-blue-600 hover:text-blue-700 p-0"
-                    type="button"
-                  />
-                </div>
-              </div>
-
-              <Message v-if="error" severity="error" :closable="false">
-                {{ error }}
-              </Message>
-
-              <Button
-                type="submit"
-                :loading="loading"
-                :label="t('loginView.loginButton')"
+        <UForm
+          v-else
+          :schema="loginSchema"
+          :state="state"
+          :disabled="loading"
+          class="space-y-6"
+          @submit="onSubmit"
+        >
+          <!-- Email/Password form (only if enabled or ?native=true) -->
+          <template v-if="showEmailPassword">
+            <UFormField name="email" :label="t('loginView.emailLabel')" size="xl">
+              <UInput
+                id="email"
+                v-model="state.email"
+                type="email"
+                autocomplete="email"
+                :placeholder="t('loginView.emailPlaceholder')"
                 class="w-full"
-                :disabled="loading"
               />
+            </UFormField>
 
-              <!-- "Or" separator only if both methods are shown -->
-              <div v-if="keycloakEnabled && showEmailPassword" class="relative">
-                <div class="absolute inset-0 flex items-center">
-                  <div class="w-full border-t border-gray-300"></div>
+            <UFormField name="password" :label="t('loginView.passwordLabel')" size="xl">
+              <PasswordInput id="password" v-model="state.password" />
+              <template #help>
+                <div class="text-right">
+                  <ULink to="/forgot-password" class="text-sm text-primary">
+                    {{ t('loginView.forgotPassword') }}
+                  </ULink>
                 </div>
-                <div class="relative flex justify-center text-sm">
-                  <span class="px-2 bg-white text-gray-500">{{ t('loginView.or') }}</span>
-                </div>
-              </div>
-            </template>
+              </template>
+            </UFormField>
 
-            <!-- Keycloak button (shown if enabled) -->
-            <Button
-              v-if="keycloakEnabled"
-              @click="loginWithKeycloak"
-              :loading="isKeycloakLoading"
-              :disabled="isKeycloakLoading || loading"
-              class="w-full"
-              outlined
-              severity="secondary"
-              type="button"
-            >
-              <i class="fa fa-building mr-2"></i>
-              {{ isKeycloakLoading ? t('loginView.keycloakLoading') : keycloakLoginLabel }}
-            </Button>
+            <UAlert v-if="error" color="error" variant="subtle" :title="error" />
 
-            <!-- Sign-up link -->
-            <div class="text-center text-sm">
-              <span class="text-gray-600">{{ t('loginView.noAccount') }}</span>
-              <Button
-                link
-                :label="t('loginView.register')"
-                @click="router.push('/signup')"
-                class="ml-1 p-0"
-                type="button"
-              />
-            </div>
+            <UButton
+              type="submit"
+              size="xl"
+              block
+              :loading="loading"
+              :label="t('loginView.loginButton')"
+            />
 
-            <!-- Back to home -->
-            <div class="text-center">
-              <Button
-                link
-                :label="t('loginView.backToHome')"
-                @click="router.push('/public')"
-                class="text-sm text-gray-600"
-                type="button"
-              />
-            </div>
-          </form>
-        </template>
-      </Card>
+            <!-- "Or" separator only if both methods are shown -->
+            <USeparator v-if="keycloakEnabled" :label="t('loginView.or')" />
+          </template>
+
+          <!-- Keycloak button (shown if enabled) -->
+          <UButton
+            v-if="keycloakEnabled"
+            type="button"
+            size="xl"
+            block
+            color="neutral"
+            variant="outline"
+            icon="i-fa7-solid:building"
+            :loading="isKeycloakLoading"
+            :disabled="isKeycloakLoading || loading"
+            :label="isKeycloakLoading ? t('loginView.keycloakLoading') : keycloakLoginLabel"
+            @click="loginWithKeycloak"
+          />
+
+          <!-- Sign-up link -->
+          <div class="text-center text-sm">
+            <span class="text-muted">{{ t('loginView.noAccount') }}</span>
+            <ULink to="/signup" class="ml-1 text-primary">{{ t('loginView.register') }}</ULink>
+          </div>
+
+          <!-- Back to home -->
+          <div class="text-center">
+            <ULink to="/public" class="text-sm text-primary">{{ t('loginView.backToHome') }}</ULink>
+          </div>
+        </UForm>
+      </UCard>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import SkolLogo from '@/components/brand/SkolLogo.vue'
-import { ref, computed } from 'vue'
+import { ref, reactive, computed } from 'vue'
+import type { FormSubmitEvent } from '@nuxt/ui'
+import PasswordInput from '@/components/forms/PasswordInput.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { useConfigService } from '@/composables/config/config.service'
 import { authClient } from '@/lib/auth-client'
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
-import { loginSchema } from '@/schemas/auth.schema'
+import { loginSchema, type LoginFormData } from '@/schemas/auth.schema'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -170,14 +131,9 @@ if (route.query.error) {
   router.replace({ query: {} })
 }
 
-const { defineField, handleSubmit, errors } = useForm({
-  validationSchema: toTypedSchema(loginSchema),
-})
+const state = reactive<LoginFormData>({ email: '', password: '' })
 
-const [email] = defineField('email')
-const [password] = defineField('password')
-
-const onSubmit = handleSubmit(async (values) => {
+async function onSubmit({ data: values }: FormSubmitEvent<LoginFormData>) {
   try {
     await login({
       email: values.email,
@@ -194,7 +150,7 @@ const onSubmit = handleSubmit(async (values) => {
     }
     console.error('Erreur de connexion:', err)
   }
-})
+}
 
 async function loginWithKeycloak() {
   isKeycloakLoading.value = true

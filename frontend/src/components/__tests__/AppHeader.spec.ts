@@ -28,7 +28,7 @@ vi.mock('@/composables/whats-new/useWhatsNew', () => ({
 const DropdownMenuStub = defineComponent({
   props: { items: { type: Array as PropType<DropdownMenuItem[][]>, required: true } },
   setup(props, { slots }) {
-    const ui = { itemLeadingIcon: (_: { class?: string } = {}) => '' }
+    const ui = { itemLeadingIcon: () => '' }
     return () =>
       h('div', [
         slots.default?.({ open: false }),

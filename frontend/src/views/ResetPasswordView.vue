@@ -6,95 +6,68 @@
         <p class="mt-2">{{ t('resetPasswordView.subtitle') }}</p>
       </div>
 
-      <Card>
-        <template #content>
-          <div v-if="!tokenValid">
-            <Message severity="error" :closable="false">
-              {{ t('resetPasswordView.invalidLink') }}
-            </Message>
-            <div class="text-center mt-4">
-              <Button :label="t('resetPasswordView.requestNewLink')" @click="router.push('/forgot-password')" />
-            </div>
+      <UCard variant="soft">
+        <div v-if="!tokenValid">
+          <UAlert color="error" variant="subtle" :title="t('resetPasswordView.invalidLink')" />
+          <div class="text-center mt-4">
+            <UButton size="xl" :label="t('resetPasswordView.requestNewLink')" to="/forgot-password" />
           </div>
+        </div>
 
-          <div v-else-if="!resetSuccess">
-            <p class="mb-6">{{ t('resetPasswordView.instructions') }}</p>
+        <div v-else-if="!resetSuccess">
+          <p class="mb-6">{{ t('resetPasswordView.instructions') }}</p>
 
-            <form @submit="onSubmit" class="space-y-6">
-              <div class="flex flex-col gap-2">
-                <label for="password" class="font-medium">{{ t('resetPasswordView.newPasswordLabel') }}</label>
-                <Password
-                  id="password"
-                  v-model="password"
-                  :feedback="true"
-                  toggle-mask
-                  :disabled="loading"
-                  :invalid="!!errors.password"
-                  class="w-full"
-                  input-class="w-full"
-                />
-                <small v-if="errors.password" class="text-red-500">
-                  {{ errors.password }}
-                </small>
-              </div>
+          <UForm
+            :schema="resetPasswordSchema"
+            :state="state"
+            :disabled="loading"
+            class="space-y-6"
+            @submit="onSubmit"
+          >
+            <UFormField name="password" :label="t('resetPasswordView.newPasswordLabel')" size="xl">
+              <PasswordInput id="password" v-model="state.password" autocomplete="new-password" />
+            </UFormField>
 
-              <div class="flex flex-col gap-2">
-                <label for="passwordConfirm" class="font-medium"> {{ t('resetPasswordView.confirmPasswordLabel') }} </label>
-                <Password
-                  id="passwordConfirm"
-                  v-model="passwordConfirm"
-                  :feedback="false"
-                  toggle-mask
-                  :disabled="loading"
-                  :invalid="!!errors.passwordConfirm"
-                  class="w-full"
-                  input-class="w-full"
-                />
-                <small v-if="errors.passwordConfirm" class="text-red-500">
-                  {{ errors.passwordConfirm }}
-                </small>
-              </div>
+            <UFormField name="passwordConfirm" :label="t('resetPasswordView.confirmPasswordLabel')" size="xl">
+              <PasswordInput id="passwordConfirm" v-model="state.passwordConfirm" autocomplete="new-password" />
+            </UFormField>
 
-              <Message v-if="error" severity="error" :closable="false">
-                {{ error }}
-              </Message>
+            <UAlert v-if="error" color="error" variant="subtle" :title="error" />
 
-              <Button
-                type="submit"
-                :loading="loading"
-                :label="t('resetPasswordView.resetButton')"
-                class="w-full"
-                :disabled="loading"
-              />
-            </form>
-          </div>
+            <UButton
+              type="submit"
+              size="xl"
+              block
+              :loading="loading"
+              :label="t('resetPasswordView.resetButton')"
+            />
+          </UForm>
+        </div>
 
-          <div v-else class="text-center py-4">
-            <i class="fa fa-check-circle text-green-500 text-5xl mb-4"></i>
-            <h3 class="text-xl font-semibold mb-2">{{ t('resetPasswordView.successTitle') }}</h3>
-            <p class="mb-6">
-              {{ t('resetPasswordView.successMessage') }}
-            </p>
-            <Button :label="t('resetPasswordView.login')" @click="router.push('/login')" />
-          </div>
-        </template>
-      </Card>
+        <div v-else class="text-center py-4">
+          <i class="fa fa-check-circle text-green-500 text-5xl mb-4"></i>
+          <h3 class="text-xl font-semibold mb-2">{{ t('resetPasswordView.successTitle') }}</h3>
+          <p class="mb-6">
+            {{ t('resetPasswordView.successMessage') }}
+          </p>
+          <UButton size="xl" :label="t('resetPasswordView.login')" to="/login" />
+        </div>
+      </UCard>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import SkolLogo from '@/components/brand/SkolLogo.vue'
-import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { reactive, ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import type { FormSubmitEvent } from '@nuxt/ui'
+import PasswordInput from '@/components/forms/PasswordInput.vue'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
-import { resetPasswordSchema } from '@/schemas/auth.schema'
+import { resetPasswordSchema, type ResetPasswordFormData } from '@/schemas/auth.schema'
 
 const { t } = useI18n()
-const router = useRouter()
 const route = useRoute()
 const { resetPassword, loading, error } = useAuth()
 
@@ -102,12 +75,7 @@ const token = ref<string>('')
 const tokenValid = ref(true)
 const resetSuccess = ref(false)
 
-const { defineField, handleSubmit, errors } = useForm({
-  validationSchema: toTypedSchema(resetPasswordSchema),
-})
-
-const [password] = defineField('password')
-const [passwordConfirm] = defineField('passwordConfirm')
+const state = reactive<ResetPasswordFormData>({ password: '', passwordConfirm: '' })
 
 onMounted(() => {
   // Extract token from URL query parameter
@@ -118,7 +86,7 @@ onMounted(() => {
   }
 })
 
-const onSubmit = handleSubmit(async (values) => {
+async function onSubmit({ data: values }: FormSubmitEvent<ResetPasswordFormData>) {
   try {
     await resetPassword(token.value, values.password)
     resetSuccess.value = true
@@ -129,5 +97,5 @@ const onSubmit = handleSubmit(async (values) => {
       tokenValid.value = false
     }
   }
-})
+}
 </script>

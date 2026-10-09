@@ -7,83 +7,89 @@
         <p class="mt-1 text-sm text-gray-300">{{ t('submitInvitationView.hint') }}</p>
       </div>
 
-      <Card>
-        <template #content>
-          <div class="space-y-6">
-            <Message severity="info" :closable="false">
-              <div class="space-y-2">
-                <p class="font-semibold">
-                  <i class="fa fa-info-circle mr-2"></i>
-                  {{ t('submitInvitationView.infoTitle') }}
-                </p>
-                <p class="text-sm">
-                  {{ t('submitInvitationView.infoDesc') }}
-                </p>
-              </div>
-            </Message>
+      <UCard variant="soft">
+        <div class="space-y-6">
+          <UAlert
+            color="info"
+            variant="subtle"
+            icon="i-fa7-solid:circle-info"
+            :title="t('submitInvitationView.infoTitle')"
+            :description="t('submitInvitationView.infoDesc')"
+          />
 
-            <div class="flex flex-col gap-2">
-              <label for="code" class="font-medium">{{ t('submitInvitationView.codeLabel') }}</label>
-              <InputText
-                id="code"
-                v-model="invitationCode"
-                :placeholder="t('submitInvitationView.codePlaceholder')"
-                :disabled="isValidating || codeValid || isSubmitting"
-                class="w-full"
-                @input="debouncedValidate"
-              />
+          <UFormField :label="t('submitInvitationView.codeLabel')" size="xl">
+            <UInput
+              id="code"
+              v-model="invitationCode"
+              :placeholder="t('submitInvitationView.codePlaceholder')"
+              :disabled="isValidating || codeValid || isSubmitting"
+              class="w-full"
+              @input="debouncedValidate"
+            />
 
-              <div v-if="isValidating" class="flex items-center gap-2 text-blue-600">
+            <template #help>
+              <div v-if="isValidating" class="flex items-center gap-2 text-info">
                 <i class="fa fa-spinner fa-spin"></i>
                 <span class="text-sm">{{ t('submitInvitationView.validating') }}</span>
               </div>
 
-              <Message v-else-if="codeError" severity="error" :closable="false">
-                <i class="fa fa-times-circle mr-2"></i>
-                {{ codeError }}
-              </Message>
+              <UAlert
+                v-else-if="codeError"
+                color="error"
+                variant="subtle"
+                icon="i-fa7-solid:circle-xmark"
+                :title="codeError"
+              />
 
-              <Message v-else-if="codeValid" severity="success" :closable="false">
-                <i class="fa fa-check-circle mr-2"></i>
-                {{ t('submitInvitationView.codeValid', { count: remainingUses }) }}
-              </Message>
-            </div>
+              <UAlert
+                v-else-if="codeValid"
+                color="success"
+                variant="subtle"
+                icon="i-fa7-solid:circle-check"
+                :title="t('submitInvitationView.codeValid', { count: remainingUses })"
+              />
+            </template>
+          </UFormField>
 
-            <Message v-if="submitError" severity="error" :closable="false">
-              <i class="fa fa-times-circle mr-2"></i>
-              {{ submitError }}
-            </Message>
+          <UAlert
+            v-if="submitError"
+            color="error"
+            variant="subtle"
+            icon="i-fa7-solid:circle-xmark"
+            :title="submitError"
+          />
 
-            <div class="flex gap-2">
-              <Button
-                @click="submitCode"
-                :disabled="!codeValid || isSubmitting"
-                :loading="isSubmitting"
-                class="flex-1"
-                size="large"
-              >
-                <i class="fa fa-check mr-2"></i>
-                {{ isSubmitting ? t('submitInvitationView.submitting') : t('submitInvitationView.submit') }}
-              </Button>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <UButton
+              size="xl"
+              icon="i-fa7-solid:check"
+              class="flex-1 justify-center"
+              :disabled="!codeValid || isSubmitting"
+              :loading="isSubmitting"
+              :label="isSubmitting ? t('submitInvitationView.submitting') : t('submitInvitationView.submit')"
+              @click="submitCode"
+            />
 
-              <Button
-                @click="logout"
-                :disabled="isSubmitting"
-                severity="secondary"
-                outlined
-                size="large"
-              >
-                <i class="fa fa-sign-out mr-2"></i>
-                {{ t('submitInvitationView.logout') }}
-              </Button>
-            </div>
-
-            <Message v-if="!codeError && !codeValid" severity="info" :closable="false">
-              {{ t('submitInvitationView.enterCodePrompt') }}
-            </Message>
+            <UButton
+              size="xl"
+              color="neutral"
+              variant="outline"
+              icon="i-fa7-solid:right-from-bracket"
+              class="justify-center"
+              :disabled="isSubmitting"
+              :label="t('submitInvitationView.logout')"
+              @click="logout"
+            />
           </div>
-        </template>
-      </Card>
+
+          <UAlert
+            v-if="!codeError && !codeValid"
+            color="info"
+            variant="subtle"
+            :title="t('submitInvitationView.enterCodePrompt')"
+          />
+        </div>
+      </UCard>
     </div>
   </div>
 </template>
@@ -94,10 +100,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useDebounceFn } from '@vueuse/core'
-import Card from 'primevue/card'
-import InputText from 'primevue/inputtext'
-import Button from 'primevue/button'
-import Message from 'primevue/message'
 import { useInvitationService } from '@/composables/invitation/invitation.service'
 import { useAuth } from '@/composables/useAuth'
 

@@ -6,109 +6,61 @@
         <p class="mt-2">{{ t('registerView.subtitle') }}</p>
       </div>
 
-      <Card>
-        <template #content>
-          <form @submit="onSubmit" class="space-y-6">
-            <div class="flex flex-col gap-2">
-              <label for="email" class="font-medium">{{ t('registerView.emailLabel') }}</label>
-              <InputText
-                id="email"
-                v-model="email"
-                type="email"
-                :placeholder="t('registerView.emailPlaceholder')"
-                :disabled="loading"
-                :invalid="!!errors.email"
-                class="w-full"
-              />
-              <small v-if="errors.email" class="text-red-500">
-                {{ errors.email }}
-              </small>
+      <UCard variant="soft">
+        <UForm
+          :schema="registerSchema"
+          :state="state"
+          :disabled="loading"
+          class="space-y-6"
+          @submit="onSubmit"
+        >
+          <UFormField name="email" :label="t('registerView.emailLabel')" size="xl">
+            <UInput
+              id="email"
+              v-model="state.email"
+              type="email"
+              autocomplete="email"
+              :placeholder="t('registerView.emailPlaceholder')"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField name="name" :label="t('registerView.nameLabel')" size="xl">
+            <UInput id="name" v-model="state.name" autocomplete="name" placeholder="John Doe" class="w-full" />
+          </UFormField>
+
+          <UFormField name="password" :label="t('registerView.passwordLabel')" size="xl">
+            <PasswordInput id="password" v-model="state.password" autocomplete="new-password" />
+          </UFormField>
+
+          <UFormField name="passwordConfirm" :label="t('registerView.passwordConfirmLabel')" size="xl">
+            <PasswordInput id="passwordConfirm" v-model="state.passwordConfirm" autocomplete="new-password" />
+          </UFormField>
+
+          <UAlert v-if="error" color="error" variant="subtle" :title="error" />
+
+          <UAlert color="info" variant="subtle" :title="t('registerView.infoMessage')" />
+
+          <div class="space-y-3">
+            <UButton
+              type="submit"
+              size="xl"
+              block
+              :loading="loading"
+              :label="t('registerView.createAccount')"
+            />
+
+            <div class="text-center text-sm">
+              <span class="text-muted">{{ t('registerView.alreadyHaveAccount') }}</span>
+              <ULink to="/login" class="ml-1 text-primary">{{ t('registerView.login') }}</ULink>
             </div>
 
-            <div class="flex flex-col gap-2">
-              <label for="name" class="font-medium">{{ t('registerView.nameLabel') }}</label>
-              <InputText
-                id="name"
-                v-model="name"
-                type="text"
-                placeholder="John Doe"
-                :disabled="loading"
-                :invalid="!!errors.name"
-                class="w-full"
-              />
-              <small v-if="errors.name" class="text-red-500">
-                {{ errors.name }}
-              </small>
+            <div class="text-center">
+              <ULink to="/" class="text-sm text-primary">{{ t('registerView.backToHome') }}</ULink>
             </div>
-
-            <div class="flex flex-col gap-2">
-              <label for="password" class="font-medium">{{ t('registerView.passwordLabel') }}</label>
-              <Password
-                id="password"
-                v-model="password"
-                :feedback="false"
-                toggle-mask
-                :disabled="loading"
-                :invalid="!!errors.password"
-                class="w-full"
-                input-class="w-full"
-              />
-              <small v-if="errors.password" class="text-red-500">
-                {{ errors.password }}
-              </small>
-            </div>
-
-            <div class="flex flex-col gap-2">
-              <label for="passwordConfirm" class="font-medium"> {{ t('registerView.passwordConfirmLabel') }} </label>
-              <Password
-                id="passwordConfirm"
-                v-model="passwordConfirm"
-                :feedback="false"
-                toggle-mask
-                :disabled="loading"
-                :invalid="!!errors.passwordConfirm"
-                class="w-full"
-                input-class="w-full"
-              />
-              <small v-if="errors.passwordConfirm" class="text-red-500">
-                {{ errors.passwordConfirm }}
-              </small>
-            </div>
-
-            <Message v-if="error" severity="error" :closable="false">
-              {{ error }}
-            </Message>
-
-            <Message severity="info" :closable="false">
-              {{ t('registerView.infoMessage') }}
-            </Message>
-
-            <div class="space-y-3">
-              <Button
-                type="submit"
-                :loading="loading"
-                :disabled="loading"
-                :label="t('registerView.createAccount')"
-                class="w-full"
-              />
-
-              <div class="text-center text-sm">
-                <span class="text-gray-600">{{ t('registerView.alreadyHaveAccount') }}</span>
-                <Button link :label="t('registerView.login')" @click="router.push('/login')" class="ml-1 p-0" />
-              </div>
-
-              <div class="text-center">
-                <Button
-                  link
-                  :label="t('registerView.backToHome')"
-                  @click="router.push('/')"
-                  class="text-sm text-gray-600"
-                />
-              </div>
-            </div>
-          </form>
-        </template>
-      </Card>
+          </div>
+        </UForm>
+      </UCard>
     </div>
   </div>
 </template>
@@ -118,9 +70,10 @@ import SkolLogo from '@/components/brand/SkolLogo.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
-import { registerSchema } from '@/schemas/auth.schema'
+import { reactive } from 'vue'
+import type { FormSubmitEvent } from '@nuxt/ui'
+import PasswordInput from '@/components/forms/PasswordInput.vue'
+import { registerSchema, type RegisterFormData } from '@/schemas/auth.schema'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -130,20 +83,14 @@ const { register, loading, error } = useAuth()
 // Note: Invitation code verification is handled by the backend hook
 // during sign-up. No need to check the cookie on the frontend side.
 
-const { defineField, handleSubmit, errors } = useForm({
-  validationSchema: toTypedSchema(registerSchema),
-})
+const state = reactive<RegisterFormData>({ email: '', name: '', password: '', passwordConfirm: '' })
 
-const [email] = defineField('email')
-const [name] = defineField('name')
-const [password] = defineField('password')
-const [passwordConfirm] = defineField('passwordConfirm')
-
-const onSubmit = handleSubmit(async (values) => {
+async function onSubmit({ data: values }: FormSubmitEvent<RegisterFormData>) {
   try {
     await register({
       email: values.email,
-      name: values.name,
+      // An empty field must fall back to the email prefix, not register a blank name.
+      name: values.name?.trim() || undefined,
       password: values.password,
       passwordConfirm: values.passwordConfirm,
     })
@@ -153,5 +100,5 @@ const onSubmit = handleSubmit(async (values) => {
   } catch (err) {
     console.error("Erreur d'inscription:", err)
   }
-})
+}
 </script>

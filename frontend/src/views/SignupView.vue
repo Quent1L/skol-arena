@@ -7,96 +7,92 @@
         <p class="mt-1 text-sm text-gray-300">{{ t('signupView.invitationRequired') }}</p>
       </div>
 
-      <Card>
-        <template #content>
-          <!-- Error message if no authentication method is available -->
-          <Message v-if="noAuthMethodAvailable" severity="error" :closable="false" class="mb-6">
-            <div class="space-y-2">
-              <p class="font-semibold">
-                <i class="fa fa-exclamation-triangle mr-2"></i>
-                {{ t('signupView.noAuthMethodTitle') }}
-              </p>
-              <p class="text-sm">
-                {{ t('signupView.noAuthMethodDesc') }}
-              </p>
-            </div>
-          </Message>
+      <UCard variant="soft">
+        <!-- Error message if no authentication method is available -->
+        <UAlert
+          v-if="noAuthMethodAvailable"
+          color="error"
+          variant="subtle"
+          icon="i-fa7-solid:triangle-exclamation"
+          :title="t('signupView.noAuthMethodTitle')"
+          :description="t('signupView.noAuthMethodDesc')"
+        />
 
-          <div v-if="!noAuthMethodAvailable" class="space-y-6">
-            <div class="flex flex-col gap-2">
-              <label for="code" class="font-medium">{{ t('signupView.invitationCodeLabel') }}</label>
-              <InputText
-                id="code"
-                v-model="invitationCode"
-                :placeholder="t('signupView.invitationCodePlaceholder')"
-                :disabled="isValidating || codeValid"
-                class="w-full"
-                @input="debouncedValidate"
-              />
+        <div v-else class="space-y-6">
+          <UFormField :label="t('signupView.invitationCodeLabel')" size="xl">
+            <UInput
+              id="code"
+              v-model="invitationCode"
+              :placeholder="t('signupView.invitationCodePlaceholder')"
+              :disabled="isValidating || codeValid"
+              class="w-full"
+              @input="debouncedValidate"
+            />
 
-              <div v-if="isValidating" class="flex items-center gap-2 text-blue-600">
+            <template #help>
+              <div v-if="isValidating" class="flex items-center gap-2 text-info">
                 <i class="fa fa-spinner fa-spin"></i>
                 <span class="text-sm">{{ t('signupView.validating') }}</span>
               </div>
 
-              <Message v-else-if="codeError" severity="error" :closable="false">
-                <i class="fa fa-times-circle mr-2"></i>
-                {{ codeError }}
-              </Message>
-
-              <Message v-else-if="codeValid" severity="success" :closable="false">
-                <i class="fa fa-check-circle mr-2"></i>
-                {{ t('signupView.codeValidMessage', { count: remainingUses }) }}
-              </Message>
-            </div>
-
-            <div v-if="codeValid" class="space-y-4">
-              <div class="text-center">
-                <p class="text-sm text-gray-600 font-medium">
-                  {{ t('signupView.chooseMethod') }}
-                </p>
-              </div>
-
-              <Button
-                v-if="emailPasswordEnabled"
-                @click="proceedToEmailPasswordRegistration"
-                class="w-full"
-                size="large"
-                outlined
-              >
-                <i class="fa fa-envelope mr-2"></i>
-                {{ t('signupView.emailPasswordButton') }}
-              </Button>
-
-              <Button
-                v-if="keycloakEnabled"
-                @click="proceedToKeycloakRegistration"
-                :loading="isSigningIn"
-                class="w-full"
-                size="large"
-                severity="secondary"
-              >
-                <i class="fa fa-building mr-2"></i>
-                {{ isSigningIn ? t('signupView.signingIn') : keycloakLoginLabel }}
-              </Button>
-            </div>
-
-            <Message v-else-if="!codeError" severity="info" :closable="false">
-              {{ t('signupView.enterCodePrompt') }}
-            </Message>
-
-            <div class="text-center">
-              <Button
-                link
-                :label="t('signupView.backToLogin')"
-                @click="router.push('/login')"
-                class="text-sm text-gray-600"
-                type="button"
+              <UAlert
+                v-else-if="codeError"
+                color="error"
+                variant="subtle"
+                icon="i-fa7-solid:circle-xmark"
+                :title="codeError"
               />
-            </div>
+
+              <UAlert
+                v-else-if="codeValid"
+                color="success"
+                variant="subtle"
+                icon="i-fa7-solid:circle-check"
+                :title="t('signupView.codeValidMessage', { count: remainingUses })"
+              />
+            </template>
+          </UFormField>
+
+          <div v-if="codeValid" class="space-y-4">
+            <p class="text-center text-sm text-muted font-medium">
+              {{ t('signupView.chooseMethod') }}
+            </p>
+
+            <UButton
+              v-if="emailPasswordEnabled"
+              size="xl"
+              block
+              variant="outline"
+              icon="i-fa7-solid:envelope"
+              :label="t('signupView.emailPasswordButton')"
+              @click="proceedToEmailPasswordRegistration"
+            />
+
+            <UButton
+              v-if="keycloakEnabled"
+              size="xl"
+              block
+              color="neutral"
+              variant="subtle"
+              icon="i-fa7-solid:building"
+              :loading="isSigningIn"
+              :label="isSigningIn ? t('signupView.signingIn') : keycloakLoginLabel"
+              @click="proceedToKeycloakRegistration"
+            />
           </div>
-        </template>
-      </Card>
+
+          <UAlert
+            v-else-if="!codeError"
+            color="info"
+            variant="subtle"
+            :title="t('signupView.enterCodePrompt')"
+          />
+
+          <div class="text-center">
+            <ULink to="/login" class="text-sm text-primary">{{ t('signupView.backToLogin') }}</ULink>
+          </div>
+        </div>
+      </UCard>
     </div>
   </div>
 </template>
