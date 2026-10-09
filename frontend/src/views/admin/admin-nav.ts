@@ -18,8 +18,8 @@ export const ADMIN_SECTION_GROUPS: AdminSectionGroup[] = [
   {
     key: 'competition',
     sections: [
-      { to: '/admin/tournaments', navKey: 'tournaments', icon: 'i-fa7-solid:trophy' },
       { to: '/admin/disciplines', navKey: 'disciplines', icon: 'i-fa7-solid:gamepad' },
+      { to: '/admin/tournaments', navKey: 'tournaments', icon: 'i-fa7-solid:trophy' },
       { to: '/admin/ranked', navKey: 'ranked', icon: 'i-fa7-solid:ranking-star' },
       { to: '/admin/rules', navKey: 'rules', icon: 'i-fa7-solid:scroll' },
       { to: '/admin/rules-engine', navKey: 'rulesEngine', icon: 'i-fa7-solid:wand-magic-sparkles' },

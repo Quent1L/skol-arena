@@ -52,7 +52,16 @@ export default defineConfig({
       autoImport: false,
       // The app is dark-only: main.ts sets the `dark` class, nothing should toggle it.
       colorMode: false,
-      icon: { clientBundle: { scan: true } },
+      icon: {
+        clientBundle: {
+          // The default globs skip .ts files, where nav items and menu entries declare
+          // their icons: those were left out of the bundle and rendered blank.
+          scan: {
+            globInclude: ['src/**/*.{vue,ts}'],
+            globExclude: ['node_modules', 'dist', 'dist-e2e', 'dev-dist', 'coverage', '**/__tests__/**'],
+          },
+        },
+      },
       ui: {
         colors: { primary: 'violet', neutral: 'slate' },
         // Skeletons mostly sit inside slate-800 cards, which is the default bg-elevated:
