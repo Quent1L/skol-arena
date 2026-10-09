@@ -1,29 +1,29 @@
 <template>
   <div class="p-4 space-y-4">
-    <Message v-if="isLocked" severity="warn" :closable="false">
-      {{ t('teamManagementPanel.teamsLocked') }}
-    </Message>
+    <UAlert v-if="isLocked" color="warning" variant="subtle" :title="t('teamManagementPanel.teamsLocked')" />
 
-    <Message
+    <UAlert
       v-if="!isLocked && props.isParticipant && isAlreadyInTeam"
-      severity="info"
-      :closable="false"
-    >
-      {{ t('teamManagementPanel.alreadyInTeam') }}
-    </Message>
+      color="info"
+      variant="subtle"
+      :title="t('teamManagementPanel.alreadyInTeam')"
+    />
 
     <!-- Create team form -->
     <div v-if="canCreate && !isLocked" class="flex gap-2">
-      <InputText
+      <UInput
         v-model="newTeamName"
         :placeholder="t('teamManagementPanel.teamNamePlaceholder')"
-        class="flex-1"
+        size="xl"
+        class="flex-1 min-w-0"
         maxlength="50"
         @keyup.enter="handleCreate"
       />
-      <Button
+      <UButton
         :label="t('common.create')"
-        icon="fa fa-plus"
+        icon="i-fa7-solid:plus"
+        size="xl"
+        class="shrink-0"
         :loading="loading"
         :disabled="!newTeamName.trim()"
         @click="handleCreate"
@@ -31,7 +31,7 @@
     </div>
 
     <div v-if="loading && !teams.length" class="flex justify-center py-8">
-      <ProgressSpinner />
+      <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
     </div>
 
     <div v-else-if="!teams.length" class="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -39,124 +39,113 @@
     </div>
 
     <div v-else class="space-y-3">
-      <Card
-        v-for="team in teams"
-        :key="team.id"
-        class="border border-gray-200 dark:border-gray-700"
-      >
-        <template #content>
-          <div class="flex items-start justify-between gap-2">
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="font-semibold text-gray-900 dark:text-gray-100">{{ team.name }}</span>
-                <Badge :value="team.members.length" severity="info" size="small" />
-                <i
-                  v-if="team.hasMatch"
-                  class="fa fa-lock text-xs text-gray-400"
-                  :title="t('teamManagementPanel.teamLockedTitle')"
-                />
-              </div>
-              <div class="flex flex-wrap gap-1">
-                <Tag
-                  v-for="member in team.members"
-                  :key="member.id"
-                  :value="member.user.displayName"
-                  severity="secondary"
-                  class="text-xs"
-                />
-                <span v-if="!team.members.length" class="text-xs text-gray-400 italic"
-                  >{{ t('teamManagementPanel.noMembers') }}</span
-                >
-              </div>
+      <UCard v-for="team in teams" :key="team.id" variant="soft">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="font-semibold text-gray-900 dark:text-gray-100">{{ team.name }}</span>
+              <UBadge :label="team.members.length" color="info" size="sm" />
+              <i
+                v-if="team.hasMatch"
+                class="fa fa-lock text-xs text-gray-400"
+                :title="t('teamManagementPanel.teamLockedTitle')"
+              />
             </div>
-            <div class="flex gap-1 shrink-0">
-              <!-- Admin: add player button -->
-              <Button
-                v-if="props.canManage && !isTeamLocked(team)"
-                icon="fa fa-user-plus"
-                size="small"
-                severity="info"
-                outlined
-                :loading="loading"
-                @click="openAddPlayerDialog(team)"
+            <div class="flex flex-wrap gap-1">
+              <UBadge
+                v-for="member in team.members"
+                :key="member.id"
+                :label="member.user.displayName"
+                color="neutral"
+                variant="soft"
               />
-              <!-- Join button -->
-              <Button
-                v-if="canJoinTeam(team) && !isTeamLocked(team)"
-                :label="t('teamManagementPanel.joinButton')"
-                icon="fa fa-sign-in"
-                size="small"
-                severity="success"
-                outlined
-                :loading="loading"
-                @click="handleJoin(team.id)"
-              />
-              <!-- Leave button -->
-              <Button
-                v-if="isMemberOf(team) && !isTeamLocked(team)"
-                :label="t('teamManagementPanel.leaveButton')"
-                icon="fa fa-sign-out"
-                size="small"
-                severity="warning"
-                outlined
-                :loading="loading"
-                @click="handleLeave(team.id)"
-              />
-              <!-- Delete button -->
-              <Button
-                v-if="canDelete(team)"
-                icon="fa fa-trash"
-                size="small"
-                severity="danger"
-                outlined
-                :loading="loading"
-                @click="handleDelete(team.id)"
-              />
+              <span v-if="!team.members.length" class="text-xs text-gray-400 italic">{{
+                t('teamManagementPanel.noMembers')
+              }}</span>
             </div>
           </div>
-        </template>
-      </Card>
+          <div class="flex flex-wrap gap-1 shrink-0">
+            <!-- Admin: add player button -->
+            <UButton
+              v-if="props.canManage && !isTeamLocked(team)"
+              icon="i-fa7-solid:user-plus"
+              color="info"
+              variant="outline"
+              :aria-label="t('teamManagementPanel.addPlayerTitle')"
+              :loading="loading"
+              @click="openAddPlayerDialog(team)"
+            />
+            <UButton
+              v-if="canJoinTeam(team) && !isTeamLocked(team)"
+              :label="t('teamManagementPanel.joinButton')"
+              icon="i-fa7-solid:right-to-bracket"
+              color="success"
+              variant="outline"
+              :loading="loading"
+              @click="handleJoin(team.id)"
+            />
+            <UButton
+              v-if="isMemberOf(team) && !isTeamLocked(team)"
+              :label="t('teamManagementPanel.leaveButton')"
+              icon="i-fa7-solid:right-from-bracket"
+              color="warning"
+              variant="outline"
+              :loading="loading"
+              @click="handleLeave(team.id)"
+            />
+            <UButton
+              v-if="canDelete(team)"
+              icon="i-fa7-solid:trash"
+              color="error"
+              variant="outline"
+              :aria-label="t('common.delete')"
+              :loading="loading"
+              @click="handleDelete(team.id)"
+            />
+          </div>
+        </div>
+      </UCard>
     </div>
 
     <!-- Admin: add player dialog -->
-    <Dialog
-      v-model:visible="addPlayerDialogVisible"
-      modal
-      :header="t('teamManagementPanel.addPlayerTitle')"
-      :style="{ width: '24rem' }"
+    <UModal
+      v-model:open="addPlayerDialogVisible"
+      :title="t('teamManagementPanel.addPlayerTitle')"
+      :ui="{ content: 'sm:max-w-sm', footer: 'justify-end' }"
     >
-      <div class="flex flex-col gap-4">
-        <span class="text-sm text-gray-500 dark:text-gray-400">
-          {{ t('teamManagementPanel.addPlayerDescription') }}
-          <strong>{{ targetTeam?.name }}</strong
-          >.
-        </span>
-        <Select
-          v-model="selectedUserId"
-          :options="availableParticipants"
-          option-label="label"
-          option-value="value"
-          :placeholder="t('teamManagementPanel.choosePlayerPlaceholder')"
-          class="w-full"
-          filter
-        />
-      </div>
+      <template #body>
+        <div class="flex flex-col gap-4">
+          <span class="text-sm text-gray-500 dark:text-gray-400">
+            {{ t('teamManagementPanel.addPlayerDescription') }}
+            <strong>{{ targetTeam?.name }}</strong
+            >.
+          </span>
+          <USelectMenu
+            v-model="selectedUserId"
+            :items="availableParticipants"
+            value-key="value"
+            :placeholder="t('teamManagementPanel.choosePlayerPlaceholder')"
+            size="xl"
+            class="w-full"
+          />
+        </div>
+      </template>
       <template #footer>
-        <Button
+        <UButton
           :label="t('common.cancel')"
-          severity="secondary"
-          outlined
+          color="neutral"
+          variant="outline"
           @click="addPlayerDialogVisible = false"
         />
-        <Button
+        <UButton
           :label="t('teamManagementPanel.addButton')"
-          icon="fa fa-user-plus"
+          icon="i-fa7-solid:user-plus"
           :disabled="!selectedUserId"
           :loading="loading"
           @click="handleAdminAddPlayer"
         />
       </template>
-    </Dialog>
+    </UModal>
   </div>
 </template>
 

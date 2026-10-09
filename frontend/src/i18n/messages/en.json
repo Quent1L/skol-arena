@@ -2013,11 +2013,6 @@
     "teamA": "Team A",
     "teamB": "Team B"
   },
-  "teamSelector": {
-    "playerFallback": "Player {playerId}",
-    "searchPlaceholder": "Search a player...",
-    "selectedPlayers": "Selected players"
-  },
   "teamService": {
     "errors": {
       "createFailed": "Error creating team",
