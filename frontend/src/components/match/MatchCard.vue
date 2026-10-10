@@ -54,8 +54,7 @@
             <span
               v-for="player in (leftSide?.players ?? []).slice(0, 2)"
               :key="player.id"
-              class="font-label font-semibold tracking-tight truncate  text-center"
-              :class="player.id === currentPlayerId ? 'text-highlighted/80' : 'text-highlighted/50'"
+              class="font-label font-semibold tracking-tight truncate  text-center text-highlighted"
             >
               {{ player.displayName }}
             </span>
@@ -92,7 +91,7 @@
             <span
               v-for="player in (rightSide?.players ?? []).slice(0, 2)"
               :key="player.id"
-              class="font-label font-semibold  tracking-tight truncate  text-center text-highlighted/50"
+              class="font-label font-semibold  tracking-tight truncate  text-center text-highlighted"
             >
               {{ player.displayName }}
             </span>
