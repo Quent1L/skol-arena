@@ -2386,7 +2386,9 @@
     "minus5": "Il y a 5 min",
     "next": "Suivant",
     "now": "Maintenant",
-    "title": "Date du match"
+    "title": "Date du match",
+    "tooEarly": "Choisissez une date à partir du {date}.",
+    "tooLate": "Choisissez une date jusqu'au {date} inclus."
   },
   "rewind": {
     "promo": {

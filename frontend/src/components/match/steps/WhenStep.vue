@@ -73,12 +73,17 @@
       </div>
     </div>
 
+    <!-- Outside the custom block: "now" can fall outside a tournament that has ended. -->
+    <p v-if="rangeMessage" role="alert" class="text-sm text-error" data-testid="when-range-error">
+      <i class="fa fa-circle-exclamation mr-1" />{{ rangeMessage }}
+    </p>
+
     <div v-if="!hideNavigation" class="flex justify-end pt-2">
       <UButton
         :label="t('whenStep.next')"
         trailing-icon="i-fa7-solid:arrow-right"
         size="lg"
-        :disabled="!playedAtModel"
+        :disabled="!playedAtModel || !!rangeIssue"
         @click="emit('next')"
       />
     </div>
@@ -94,6 +99,8 @@ import {
   toCalendarDate,
   toCalendarDateTime,
 } from '@/utils/calendar-date'
+import { dateToStringDDMMYYYY, dateToStringDDMMYYYYHHMM } from '@/utils/DateUtils'
+import { dateRangeIssue } from '@/composables/match/useMatchDateBounds'
 
 type QuickKey = 'now' | 'minus5' | 'minus10' | 'custom'
 
@@ -169,8 +176,23 @@ const customDay = computed({
   },
 })
 
+const rangeIssue = computed(() =>
+  dateRangeIssue(playedAtModel.value, props.minDate, props.maxDate),
+)
+
+/** The red field alone said nothing about why, nor which dates would do. */
+const rangeMessage = computed(() => {
+  if (rangeIssue.value === 'tooEarly') {
+    return t('whenStep.tooEarly', { date: dateToStringDDMMYYYYHHMM(props.minDate ?? undefined) })
+  }
+  if (rangeIssue.value === 'tooLate') {
+    return t('whenStep.tooLate', { date: dateToStringDDMMYYYY(props.maxDate) })
+  }
+  return null
+})
+
 function triggerNext() {
-  if (playedAtModel.value) emit('next')
+  if (playedAtModel.value && !rangeIssue.value) emit('next')
 }
 
 defineExpose({ triggerNext })

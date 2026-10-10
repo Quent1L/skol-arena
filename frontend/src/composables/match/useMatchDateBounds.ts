@@ -6,6 +6,34 @@ import { useConfigService } from '@/composables/config/config.service'
 const FALLBACK_MATCH_MAX_AGE_HOURS = 48
 
 /**
+ * A tournament's start and end dates are calendar days (`2026-12-07`), which the HTTP
+ * interceptor revives as local midnight. The season closes at the end of its last day
+ * (`closeInstant` server-side), so the picker must accept the whole of that day: taken
+ * as is, the end date would turn every time on the last day red.
+ */
+function endOfDay(day: Date): Date {
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate(), 23, 59, 59, 999)
+}
+
+export type DateRangeIssue = 'tooEarly' | 'tooLate' | null
+
+/**
+ * Whether a match date falls outside the picker's range. The floor is compared to the
+ * minute, like the picker itself: a reporting window ending at 18:42:37 must not reject
+ * the 18:42 the input shows as allowed.
+ */
+export function dateRangeIssue(
+  date: Date | null | undefined,
+  min: Date | null | undefined,
+  max: Date | null | undefined,
+): DateRangeIssue {
+  if (!date) return null
+  if (min && date.getTime() < Math.floor(min.getTime() / 60_000) * 60_000) return 'tooEarly'
+  if (max && date > max) return 'tooLate'
+  return null
+}
+
+/**
  * Date range the match form's picker accepts.
  *
  * A ranked match can only be reported for a limited time after it was played, so the
@@ -24,16 +52,19 @@ export function useMatchDateBounds(tournament: Ref<ClientBaseTournament | null>)
   )
 
   const minDate = computed<Date | undefined>(() => {
-    if (tournament.value?.mode !== 'ranked') return tournament.value?.startDate ?? undefined
+    const startDate = tournament.value?.startDate ?? undefined
+    if (tournament.value?.mode !== 'ranked') return startDate
 
-    const startDate = tournament.value.startDate ?? undefined
     if (rankedMaxAgeHours.value === 0) return startDate
 
     const windowStart = new Date(Date.now() - rankedMaxAgeHours.value * 60 * 60 * 1000)
     return startDate && startDate > windowStart ? startDate : windowStart
   })
 
-  const maxDate = computed<Date | undefined>(() => tournament.value?.endDate ?? undefined)
+  const maxDate = computed<Date | undefined>(() => {
+    const day = tournament.value?.endDate
+    return day ? endOfDay(day) : undefined
+  })
 
   return { minDate, maxDate }
 }

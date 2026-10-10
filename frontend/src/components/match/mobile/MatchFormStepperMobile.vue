@@ -198,7 +198,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { MATCH_FORM_KEY } from '@/composables/match/match-form.context'
 import { useMatchService } from '@/composables/match/match.service'
-import { useMatchDateBounds } from '@/composables/match/useMatchDateBounds'
+import { dateRangeIssue, useMatchDateBounds } from '@/composables/match/useMatchDateBounds'
 import { useHeaderBackOverride } from '@/composables/ui/useHeaderBack'
 import WhenStep from '@/components/match/steps/WhenStep.vue'
 import ParticipantsStep from '@/components/match/steps/ParticipantsStep.vue'
@@ -294,7 +294,10 @@ const isLastStepBeforeResult = computed(() => {
 const canProceedStep = computed(() => {
   switch (activeStep.value) {
     case 'when':
-      return !!formState.value.playedAt
+      return (
+        !!formState.value.playedAt &&
+        !dateRangeIssue(formState.value.playedAt, tournamentMinDate.value, tournamentMaxDate.value)
+      )
     case 'participants':
       return formState.value.allPlayerIds.length >= 2
     case 'teams':

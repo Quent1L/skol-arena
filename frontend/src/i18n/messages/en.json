@@ -2386,7 +2386,9 @@
     "minus5": "5 min ago",
     "next": "Next",
     "now": "Now",
-    "title": "When"
+    "title": "When",
+    "tooEarly": "Pick a date from {date} onwards.",
+    "tooLate": "Pick a date up to {date} included."
   },
   "rewind": {
     "promo": {
