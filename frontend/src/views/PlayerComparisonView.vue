@@ -3,7 +3,9 @@
     <!-- Header / pickers -->
     <div class="rounded-2xl bg-gray-800 px-4 py-4">
       <div class="flex items-center gap-2 mb-3">
+        <!-- On mobile the header's back button does this job. -->
         <UButton
+          v-if="!isMobile"
           color="neutral"
           variant="ghost"
           icon="i-fa7-solid:arrow-left"

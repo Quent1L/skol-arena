@@ -2,17 +2,28 @@
   <header class="shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
-        <RouterLink to="/" class="flex items-center gap-2 cursor-pointer">
-          <!-- No manual nudge: the row already centres both children. The old
-               logo carried uneven internal padding and `mt-2` compensated for
-               it, which now just pushes the chevron off the line. -->
-          <i v-if="showBackButton" class="fa fa-chevron-left text-lg text-gray-400"></i>
-          <!-- ARENA and its two rules land at ~7px of cap height and ~1.4px of
-               rule here: noise that shimmers with DPI rather than anything
-               legible. The header keeps the monogram and SKOL at every width,
-               just narrower on phones. -->
-          <SkolLogo :variant="'compact'" :width="isMobile ? 104 : 132" />
-        </RouterLink>
+        <div class="flex items-center">
+          <!-- The one back button of the mobile layout: every screen goes back through
+               it, so none carries its own. The logo stays a plain link home. -->
+          <UButton
+            v-if="showBackButton"
+            icon="i-fa7-solid:chevron-left"
+            color="neutral"
+            variant="ghost"
+            size="lg"
+            class="-ml-2 mr-1 rounded-full text-gray-400"
+            :aria-label="t('common.back')"
+            data-testid="header-back"
+            @click="goBack"
+          />
+          <RouterLink to="/" class="flex items-center cursor-pointer">
+            <!-- ARENA and its two rules land at ~7px of cap height and ~1.4px of
+                 rule here: noise that shimmers with DPI rather than anything
+                 legible. The header keeps the monogram and SKOL at every width,
+                 just narrower on phones. -->
+            <SkolLogo :variant="'compact'" :width="isMobile ? 104 : 132" />
+          </RouterLink>
+        </div>
 
         <div class="flex items-center gap-3">
           <div v-if="!isAuthenticated" class="flex items-center gap-3">
@@ -91,12 +102,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { useEasterEgg } from '@/composables/useEasterEgg'
 import { useSecretTap } from '@/composables/useSecretTap'
 import { useViewport } from '@/composables/useViewport'
+import { useHeaderBack } from '@/composables/ui/useHeaderBack'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import NotificationBell from './NotificationBell.vue'
 import NotificationDropdown from './NotificationDropdown.vue'
@@ -116,17 +128,12 @@ const EGG_HINT_AT = 3
 const { play: playEasterEgg } = useEasterEgg()
 const { tap: tapVersion, count: eggTaps } = useSecretTap(EGG_TAPS, playEasterEgg)
 
-const route = useRoute()
 const router = useRouter()
 const { appUser, isAuthenticated, logout, kioskSettingsLocked } = useAuth()
 const { isMobile } = useViewport()
-const showBackButton = computed(
-  () =>
-    isMobile.value &&
-    (route.name === 'tournament-detail' || route.name === 'tournament-tab') &&
-    !route.path.includes('/badges') &&
-    !route.path.includes('/teams'),
-)
+const { canGoBack, goBack } = useHeaderBack()
+// Desktop keeps the in-page back buttons and the breadcrumb.
+const showBackButton = computed(() => isMobile.value && canGoBack.value)
 
 const whatsNew = useWhatsNew()
 const dotFlight = useWhatsNewDotFlight()

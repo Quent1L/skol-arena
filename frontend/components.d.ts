@@ -80,6 +80,7 @@ declare module 'vue' {
     OutcomeTypeLeaderColumn: typeof import('./src/components/stats/OutcomeTypeLeaderColumn.vue')['default']
     OutcomeTypeStats: typeof import('./src/components/player/OutcomeTypeStats.vue')['default']
     OverflowMenuButton: typeof import('./src/components/OverflowMenuButton.vue')['default']
+    PageTitleBar: typeof import('./src/components/ui/PageTitleBar.vue')['default']
     ParticipantsStep: typeof import('./src/components/match/steps/ParticipantsStep.vue')['default']
     PasswordInput: typeof import('./src/components/forms/PasswordInput.vue')['default']
     PeakCard: typeof import('./src/components/rewind/cards/PeakCard.vue')['default']

@@ -4,14 +4,6 @@
     <div
       class="sticky top-0 z-10 bg-white dark:bg-slate-800 border-b dark:border-slate-700 px-4 py-3 flex items-center shadow-sm"
     >
-      <UButton
-        icon="i-fa7-solid:arrow-left"
-        variant="ghost"
-        size="lg"
-        class="mr-2 rounded-full"
-        :aria-label="t('common.back')"
-        @click="goBack"
-      />
       <h1 class="text-lg font-bold">
         {{
           props.resultOnly
@@ -207,6 +199,7 @@ import { useI18n } from 'vue-i18n'
 import { MATCH_FORM_KEY } from '@/composables/match/match-form.context'
 import { useMatchService } from '@/composables/match/match.service'
 import { useMatchDateBounds } from '@/composables/match/useMatchDateBounds'
+import { useHeaderBackOverride } from '@/composables/ui/useHeaderBack'
 import WhenStep from '@/components/match/steps/WhenStep.vue'
 import ParticipantsStep from '@/components/match/steps/ParticipantsStep.vue'
 import TeamsStep from '@/components/match/steps/TeamsStep.vue'
@@ -409,13 +402,12 @@ async function currentStepNext() {
   }
 }
 
-function goBack() {
-  if (activeStep.value === 'when') {
-    router.back()
-  } else {
-    currentStepBack()
-  }
-}
+// The header's back button steps back through the form before leaving it.
+useHeaderBackOverride(() => {
+  if (activeStep.value === 'when' || props.resultOnly) return false
+  currentStepBack()
+  return true
+})
 
 async function submitMatch() {
   const isScheduled = isFutureDate.value

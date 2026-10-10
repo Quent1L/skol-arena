@@ -1006,7 +1006,6 @@
     "UNKNOWN_PLAYER": "Unknown player"
   },
   "notificationsView": {
-    "backAriaLabel": "Back",
     "deleteAll": "Delete all",
     "deleteAllError": "Unable to delete all notifications",
     "deleteAllKept": "1 notification kept — its action is still pending | {count} notifications kept — their actions are still pending",

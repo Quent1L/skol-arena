@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import NotificationList from '@/components/NotificationList.vue'
 import { useNotificationService } from '@/composables/notification/notification.service'
-import { useRouter } from 'vue-router'
 import { computed, onMounted } from 'vue'
 import { useAppToast } from '@/composables/useAppToast'
 import { useI18n } from 'vue-i18n'
@@ -9,7 +8,6 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const { load, notifications, unreadCount, hasDeletable, markAllAsRead, deleteAll } =
   useNotificationService()
-const router = useRouter()
 const toast = useAppToast()
 
 const hasDeletableNotifs = hasDeletable
@@ -18,10 +16,6 @@ const hasUnreadNotifs = computed(() => unreadCount.value > 0)
 onMounted(() => {
   void load()
 })
-
-function goBack() {
-  router.back()
-}
 
 async function handleMarkAllAsRead() {
   try {
@@ -51,14 +45,6 @@ async function handleDeleteAll() {
   <div class="max-w-xl mx-auto w-full mt-4">
     <div class="flex items-center justify-between gap-3 mb-4">
       <div class="flex items-center gap-3">
-        <UButton
-          icon="i-fa7-solid:arrow-left"
-          color="neutral"
-          variant="ghost"
-          class="sm:hidden rounded-full"
-          :aria-label="t('notificationsView.backAriaLabel')"
-          @click="goBack"
-        />
         <h2 class="text-lg font-semibold">{{ t('notificationsView.title') }}</h2>
       </div>
       <div v-if="notifications.length > 0" class="flex items-center gap-2">

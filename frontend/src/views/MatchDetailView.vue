@@ -27,7 +27,9 @@
       <div
         class="sticky top-0 z-20 -mx-3 flex items-center gap-2 border-b border-slate-700/40 bg-gray-900/85 px-3 py-2 backdrop-blur-md sm:-mx-6 sm:px-6"
       >
+        <!-- On mobile the header's back button does this job. -->
         <UButton
+          v-if="!isMobile"
           color="neutral"
           variant="ghost"
           icon="i-fa7-solid:arrow-left"
@@ -281,6 +283,7 @@ import { useI18n } from 'vue-i18n'
 import { useMatchService } from '@/composables/match/match.service'
 import { useAuth } from '@/composables/useAuth'
 import { useViewport } from '@/composables/useViewport'
+import { useHeaderBackOverride } from '@/composables/ui/useHeaderBack'
 import type { OverflowMenuItem } from '@/components/OverflowMenuButton.vue'
 import type {
   ClientMatchDetail,
@@ -330,6 +333,11 @@ function goBack() {
     router.push('/')
   }
 }
+// A match opened cold (a notification, a shared link) falls back to its tournament.
+useHeaderBackOverride(() => {
+  goBack()
+  return true
+})
 const { getMatch, respondToMatch, finalizeMatch, cancelMatch, subscribeToMatchUpdates } =
   useMatchService()
 const { appUser } = useAuth()

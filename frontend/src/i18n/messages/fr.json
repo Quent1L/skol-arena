@@ -1006,7 +1006,6 @@
     "UNKNOWN_PLAYER": "Joueur inconnu"
   },
   "notificationsView": {
-    "backAriaLabel": "Retour",
     "deleteAll": "Tout supprimer",
     "deleteAllError": "Impossible de supprimer toutes les notifications",
     "deleteAllKept": "1 notification en attente d'action conservée | {count} notifications en attente d'action conservées",

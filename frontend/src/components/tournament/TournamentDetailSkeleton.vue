@@ -2,12 +2,11 @@
   <!-- Mirrors the chrome the tournament will render, down to the tab actually being
        opened, so the page settles rather than being rebuilt when the data lands. -->
   <div class="sk-shimmer" :class="variant === 'mobile' ? '' : 'min-h-screen bg-gray-50 dark:bg-gray-900'">
-    <!-- Mobile sub-page (teams, badges): its own back bar, no bottom nav. -->
+    <!-- Mobile sub-page (teams, badges): its own title bar, no bottom nav. -->
     <div v-if="isMobileSubPage" class="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       <div
         class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-14 flex items-center px-4 shadow-sm gap-3"
       >
-        <USkeleton class="size-[2.5rem] rounded-full" />
         <USkeleton class="h-[1rem] w-[8rem]" />
       </div>
       <div class="flex-1 p-4">
@@ -75,7 +74,7 @@ const props = defineProps<{
   tab?: string
 }>()
 
-/** Same list as MOBILE_SUB_TABS in TournamentDetailView: these get the back bar. */
+/** Same list as MOBILE_SUB_TABS in TournamentDetailView: these get the title bar. */
 const MOBILE_SUB_TABS = ['teams', 'badges']
 
 const isMobileSubPage = computed(

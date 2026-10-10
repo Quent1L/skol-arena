@@ -19,7 +19,9 @@
       <div
         class="rounded-2xl bg-gray-800 px-3 py-4 md:px-6 md:py-5 flex items-center gap-2 md:gap-4"
       >
+        <!-- On mobile the header's back button does this job. -->
         <UButton
+          v-if="!hasHeaderBack"
           color="neutral"
           variant="ghost"
           icon="i-fa7-solid:arrow-left"
@@ -368,6 +370,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useMediaQuery } from '@vueuse/core'
+import { useViewport } from '@/composables/useViewport'
 import { usePlayerService } from '@/composables/player/player.service'
 import { useAuth } from '@/composables/useAuth'
 import { useAvatarService } from '@/composables/avatar/avatar.service'
@@ -399,6 +402,8 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const isMobile = useMediaQuery('(max-width: 767px)')
+// Same test as the header, which shows its own back button exactly then.
+const { isMobile: hasHeaderBack } = useViewport()
 const avatarSize = computed(() => (isMobile.value ? 'md' : 'lg'))
 const { appUser } = useAuth()
 const { versionFor } = useAvatarService()

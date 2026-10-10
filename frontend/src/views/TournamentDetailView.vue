@@ -20,22 +20,7 @@
       <div v-if="isMobile" class="h-full">
         <!-- Sub-tabs (participants, teams, stats): accessible via cards, not in the bottom nav -->
         <div v-if="isMobileSubTab" class="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
-          <div
-            class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-14 flex items-center px-4 shadow-sm"
-          >
-            <UButton
-              icon="i-fa7-solid:arrow-left"
-              color="neutral"
-              variant="ghost"
-              size="lg"
-              class="mr-2 rounded-full"
-              :aria-label="t('common.back')"
-              @click="router.back()"
-            />
-            <h1 class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
-              {{ t('tournamentDetailView.tabs.' + (activeTabName ?? '')) }}
-            </h1>
-          </div>
+          <PageTitleBar :title="t('tournamentDetailView.tabs.' + (activeTabName ?? ''))" />
           <div class="flex-1 overflow-y-auto p-4">
             <RouterView />
           </div>
@@ -221,6 +206,7 @@ const TournamentDetailMobile = defineAsyncComponent(
 )
 import TournamentDetailSkeleton from '@/components/tournament/TournamentDetailSkeleton.vue'
 import BackgroundRefreshIndicator from '@/components/ui/BackgroundRefreshIndicator.vue'
+import PageTitleBar from '@/components/ui/PageTitleBar.vue'
 import type { MmrAnimationWsPayload, BadgeAnimationWsPayload, MmrRecapReadyPayload } from '@skol-arena/shared'
 import OverflowMenuButton from '@/components/OverflowMenuButton.vue'
 import { onWsEvent, onWsOpen, sendWsMessage, useNotificationSocket } from '@/composables/notification/notification.socket'
