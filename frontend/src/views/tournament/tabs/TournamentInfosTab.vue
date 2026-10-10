@@ -1,5 +1,25 @@
 <template>
   <div class="space-y-4 sm:space-y-6">
+    <!-- Dates: same card chrome as the links below, but nothing to open. -->
+    <div
+      class="flex items-center gap-3 p-4 sm:p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800"
+      data-testid="tournament-dates"
+    >
+      <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center shrink-0">
+        <i class="fa fa-calendar-days text-sky-600 dark:text-sky-400 text-sm sm:text-base" />
+      </div>
+      <div class="grid grid-cols-2 gap-3 flex-1 min-w-0">
+        <div class="min-w-0">
+          <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ t('tournamentInfosTab.dates.start') }}</div>
+          <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">{{ formatDay(store.tournament!.startDate) }}</div>
+        </div>
+        <div class="min-w-0">
+          <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ t('tournamentInfosTab.dates.end') }}</div>
+          <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">{{ formatDay(store.tournament!.endDate) }}</div>
+        </div>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4" :class="store.tournament!.teamMode === 'static' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'">
       <!-- Participants -->
       <button
@@ -102,7 +122,13 @@ const store = useTournamentDetailStore()
 const safeDescription = computed(() => sanitizeHtml(store.tournament?.description))
 const router = useRouter()
 const route = useRoute()
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+/** Tournament dates are whole days: no time, and the month spelled out to be unambiguous. */
+function formatDay(date: Date | string): string {
+  const day = date instanceof Date ? date : new Date(date)
+  return day.toLocaleDateString(locale.value, { day: 'numeric', month: 'long', year: 'numeric' })
+}
 
 function navigateTo(tab: string) {
   router.push({ name: 'tournament-tab', params: { id: route.params.id, tab } })

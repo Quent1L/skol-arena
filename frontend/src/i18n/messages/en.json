@@ -2149,6 +2149,10 @@
       "subtitle": "Unlockable badges",
       "title": "Badges"
     },
+    "dates": {
+      "end": "Ends",
+      "start": "Starts"
+    },
     "participants": {
       "subtitle": "View registered players",
       "title": "Participants"

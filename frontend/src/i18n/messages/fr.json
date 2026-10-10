@@ -2149,6 +2149,10 @@
       "subtitle": "Badges à débloquer",
       "title": "Badges"
     },
+    "dates": {
+      "end": "Fin",
+      "start": "Début"
+    },
     "participants": {
       "subtitle": "Voir les joueurs inscrits",
       "title": "Participants"
