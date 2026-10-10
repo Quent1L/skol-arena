@@ -1,34 +1,39 @@
 <template>
-  <div class="standings-table">
-    <div class="mb-4 flex items-center justify-between w-full">
-      <div>
-        <UTabs
-          v-if="props.showProvisionalToggle !== false"
-          v-model="standingsType"
-          :items="standingsTypeOptions"
-          :content="false"
-          color="neutral"
-          size="sm"
-          class="w-full sm:w-auto"
-          :ui="{
-            list: 'bg-slate-950',
-            indicator: 'bg-slate-700',
-            trigger: 'data-[state=active]:text-highlighted',
-          }"
-          data-testid="standings-type"
-        />
+  <div class="standings-table flex flex-col text-white">
+    <!-- Mobile: the views sit side by side in a draggable track, as on a ranked season. -->
+    <SubTabTrack
+      v-if="isMobile && modeOptions.length > 1"
+      class="flex-1"
+      :options="modeOptions"
+      :model-value="mode"
+      :label="t('rankedLeaderboard.modeLabel')"
+      @update:model-value="setMode"
+      @visible-values="prefetchModes"
+    >
+      <template v-for="option in modeOptions" :key="option.value" #[option.value]>
+        <div class="leaderboard mx-auto">
+          <StandingsList v-bind="listPropsFor(option.value)" @show-info="infoVisible = true" />
+        </div>
+      </template>
+    </SubTabTrack>
+
+    <!-- Desktop: a sidebar picks the view, only the active one is rendered. -->
+    <div v-else-if="modeOptions.length > 1" class="flex justify-center gap-6">
+      <SubTabSidebar
+        :options="modeOptions"
+        :model-value="mode"
+        :label="t('rankedLeaderboard.modeLabel')"
+        @update:model-value="setMode"
+      />
+      <div class="leaderboard w-full min-w-0">
+        <StandingsList v-bind="listPropsFor(mode)" @show-info="infoVisible = true" />
       </div>
-      <div>
-        <UTooltip :text="t('standingsTable.howRankingTooltip')" :disabled="isMobile">
-          <button
-            class="flex items-center gap-2 px-2 py-1 text-gray-400 hover:text-blue-500 transition-colors duration-200 cursor-pointer text-xs"
-            :aria-label="t('standingsTable.howRankingTooltip')"
-            @click="infoVisible = true"
-          >
-            <i class="fa fa-circle-question text-sm" />
-          </button>
-        </UTooltip>
-      </div>
+    </div>
+
+    <!-- Without match validation there is only the official view: no switcher. -->
+    <!-- `w-full`: in this flex column an auto margin would shrink the list to its content. -->
+    <div v-else class="leaderboard w-full mx-auto" :class="{ 'p-2': isMobile }">
+      <StandingsList v-bind="listPropsFor('official')" @show-info="infoVisible = true" />
     </div>
 
     <UModal
@@ -120,191 +125,33 @@
       </div>
       </template>
     </UModal>
-
-    <UAlert v-if="error" color="error" variant="subtle" class="mb-4" :title="error" />
-
-    <div
-      v-if="standings.length === 0 && !loading"
-      class="text-center py-8 text-gray-500 dark:text-gray-400"
-    >
-      {{ t('standingsTable.noStandings') }}
-    </div>
-
-    <div class="standings-container">
-      <Transition :name="`standings-slide-${slideDirection}`" mode="out-in">
-        <div v-if="standings.length > 0" :key="`standings-${standingsType}`" class="relative">
-          <UTable
-            :data="standings"
-            :columns="columns"
-            :loading="loading"
-            :ui="{
-              root: 'overflow-x-auto',
-              thead: '[&>tr]:after:bg-default',
-              tbody: 'divide-y-0',
-              th: 'px-2 py-2 text-base font-bold text-highlighted whitespace-nowrap',
-              td: 'px-2 py-2 text-base whitespace-nowrap text-default',
-              tr: 'even:bg-slate-950',
-            }"
-          >
-            <template #rank-cell="{ row }">
-              <div class="flex items-center justify-center">
-                <i v-if="row.index === 0" class="fa fa-trophy text-yellow-500" :title="t('standingsTable.rankFirst')"></i>
-                <i v-if="row.index === 1" class="fa fa-medal text-gray-400" :title="t('standingsTable.rankSecond')"></i>
-                <i v-if="row.index === 2" class="fa fa-medal text-orange-600" :title="t('standingsTable.rankThird')"></i>
-                <span
-                  :class="[
-                    'font-semibold',
-                    {
-                      'text-yellow-500': row.index === 0,
-                      'text-gray-400': row.index === 1,
-                      'text-orange-600': row.index === 2,
-                    },
-                  ]"
-                >
-                  {{ row.index + 1 }}
-                </span>
-              </div>
-            </template>
-
-            <template #name-cell="{ row: { original: data } }">
-              <RouterLink
-                v-if="teamMode === 'flex'"
-                :to="{ path: `/players/${data.id}`, query: { tournamentId: props.tournamentId } }"
-                class="inline-flex items-center gap-2 font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                :title="data.name"
-              >
-                <PlayerAvatar
-                  :name="data.name"
-                  :color-key="data.shortName"
-                  :player-id="data.id"
-                  size="xs"
-                  shape="square"
-                />
-                <span class="md:hidden">{{ data.shortName }}</span
-                ><span class="hidden md:inline">{{ data.name }}</span>
-              </RouterLink>
-              <div v-else class="font-medium text-gray-900 dark:text-white" :title="data.name">
-                <span class="md:hidden">{{ data.shortName }}</span
-                ><span class="hidden md:inline">{{ data.name }}</span>
-              </div>
-            </template>
-
-            <template #points-cell="{ row: { original: data } }">
-              <div class="font-semibold text-blue-600 dark:text-blue-400">
-                {{ data.points }}
-              </div>
-            </template>
-
-            <template #wins-cell="{ row: { original: data } }">
-              <span class="text-green-600 dark:text-green-400 font-medium">{{ data.wins }}</span>
-            </template>
-
-            <template #draws-cell="{ row: { original: data } }">
-              <span class="text-gray-600 dark:text-gray-400 font-medium">{{ data.draws }}</span>
-            </template>
-
-            <template #losses-cell="{ row: { original: data } }">
-              <span class="text-red-600 dark:text-red-400 font-medium">{{ data.losses }}</span>
-            </template>
-
-            <template #scoreDiff-cell="{ row: { original: data } }">
-              <span
-                :class="[
-                  'font-medium',
-                  {
-                    'text-green-600 dark:text-green-400': data.scoreDiff > 0,
-                    'text-red-600 dark:text-red-400': data.scoreDiff < 0,
-                    'text-gray-600 dark:text-gray-400': data.scoreDiff === 0,
-                  },
-                ]"
-              >
-                {{ data.scoreDiff > 0 ? '+' : '' }}{{ data.scoreDiff }}
-              </span>
-            </template>
-
-            <template #winLossRatio-cell="{ row: { original: data } }">
-              <span class="text-gray-600 dark:text-gray-400">{{ formatRatio(data.winLossRatio) }}</span>
-            </template>
-
-            <template #buchholzScore-header>
-              <span class="flex items-center gap-1">
-                {{ t('standingsTable.columnBuchholz') }}
-                <UTooltip :text="t('standingsTable.tooltipBuchholz')">
-                  <i class="fa fa-circle-question text-xs text-gray-400 cursor-help" />
-                </UTooltip>
-              </span>
-            </template>
-            <template #buchholzScore-cell="{ row: { original: data } }">
-              <span class="text-gray-600 dark:text-gray-400">{{ data.buchholzScore }}</span>
-            </template>
-
-            <template #victoryQuality-header>
-              <span class="flex items-center gap-1">
-                {{ t('standingsTable.columnVictoryQuality') }}
-                <UTooltip :text="t('standingsTable.tooltipVictoryQuality')">
-                  <i class="fa fa-circle-question text-xs text-gray-400 cursor-help" />
-                </UTooltip>
-              </span>
-            </template>
-            <template #victoryQuality-cell="{ row: { original: data } }">
-              <UPopover mode="hover" :open-delay="100">
-                <span class="text-gray-600 dark:text-gray-400 cursor-help">{{ Math.round(data.victoryQuality) }}</span>
-                <template #content>
-                  <QualityBreakdown :entry="data" />
-                </template>
-              </UPopover>
-            </template>
-
-            <template #winRate-cell="{ row: { original: data } }">
-              <span class="text-gray-600 dark:text-gray-400">{{ formatPercent(data.winRate) }}</span>
-            </template>
-
-            <template #details-cell="{ row: { original: data } }">
-              <UPopover>
-                <UButton
-                  icon="i-fa7-solid:circle-question"
-                  variant="ghost"
-                  size="sm"
-                  class="rounded-full"
-                  :aria-label="t('standingsTable.tiebreakerDetails', { name: data.name })"
-                />
-                <template #content>
-                  <TiebreakerDetails :entry="data" :allow-draw="allowDraw" />
-                </template>
-              </UPopover>
-            </template>
-          </UTable>
-        </div>
-      </Transition>
-    </div>
-
-
   </div>
 </template>
 
 <script setup lang="ts">
-import PlayerAvatar from '@/components/PlayerAvatar.vue'
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { TableColumn } from '@nuxt/ui'
-import TiebreakerDetails from '@/components/tournament/standings/TiebreakerDetails.vue'
-import QualityBreakdown from '@/components/tournament/standings/QualityBreakdown.vue'
-import { formatPercent, formatRatio } from '@/components/tournament/standings/standings-format'
-import { hiddenBelow } from '@/components/admin/table-columns'
+import StandingsList from '@/components/tournament/standings/StandingsList.vue'
+import SubTabSidebar from '@/components/ui/SubTabSidebar.vue'
+import SubTabTrack from '@/components/ui/SubTabTrack.vue'
 import { useStandingsService } from '@/composables/standings.service'
+import { useSubTabs } from '@/composables/ui/useSubTabs'
 import { outcomeTypeApi } from '@/composables/outcome-type.api'
-import { SCORING_DEFAULTS, type StandingsEntry, type OutcomeType } from '@skol-arena/shared'
+import { SCORING_DEFAULTS, type OutcomeType } from '@skol-arena/shared'
 import { useViewport } from '@/composables/useViewport.ts'
 import type { StandingsTournamentConfig } from '@/utils/standings-config'
+
+type StandingsMode = 'official' | 'provisional'
 
 interface Props {
   tournamentId: string
   allowDraw?: boolean
   scoreEnabled?: boolean
   teamMode?: 'static' | 'flex'
-  standingsType?: 'official' | 'provisional'
   tournamentConfig?: StandingsTournamentConfig
+  /** False when matches need no validation: every result is official at once. */
   showProvisionalToggle?: boolean
+  currentUserId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -313,18 +160,9 @@ const props = withDefaults(defineProps<Props>(), {
   teamMode: 'flex',
 })
 
-const emit = defineEmits<{
-  (e: 'update:standingsType', value: 'official' | 'provisional'): void
-}>()
-
 const { t } = useI18n()
-
-const { standings, loading, error, loadOfficialStandings, loadProvisionalStandings } =
-  useStandingsService()
 const { isMobile } = useViewport()
 
-const internalStandingsType = ref<'official' | 'provisional'>('official')
-const slideDirection = ref<'left' | 'right'>('left')
 const infoVisible = ref(false)
 const outcomeTypes = ref<OutcomeType[]>([])
 
@@ -334,59 +172,60 @@ watch(infoVisible, async (visible) => {
   }
 })
 
-const standingsType = computed({
-  get: () => props.standingsType ?? internalStandingsType.value,
-  set: (val) => {
-    internalStandingsType.value = val
-    emit('update:standingsType', val)
-  },
-})
-
-const standingsTypeOptions = computed(() => [
-  { label: t('standingsTable.official'), value: 'official' },
-  { label: t('standingsTable.provisional'), value: 'provisional' },
+const modeOptions = computed(() => [
+  { label: t('standingsTable.official'), value: 'official' as const },
+  ...(props.showProvisionalToggle
+    ? [{ label: t('standingsTable.provisional'), value: 'provisional' as const }]
+    : []),
 ])
 
-const MOBILE_ONLY = { class: { th: 'md:hidden w-12', td: 'md:hidden w-12' } }
-
-/** Cells are rendered by the `#<id>-cell` slots of the template. */
-const columns = computed<TableColumn<StandingsEntry>[]>(() => {
-  const cols: (TableColumn<StandingsEntry> | false)[] = [
-    { id: 'rank', header: '#', meta: { class: { th: 'w-16 text-center', td: 'w-16' } } },
-    { accessorKey: 'name', header: t('common.name') },
-    { accessorKey: 'points', header: t('standingsTable.columnPoints') },
-    { accessorKey: 'matchesPlayed', header: t('standingsTable.columnMatchesPlayed') },
-    { accessorKey: 'wins', header: t('standingsTable.columnWins') },
-    props.allowDraw && { accessorKey: 'draws', header: t('standingsTable.columnDraws') },
-    { accessorKey: 'losses', header: t('standingsTable.columnLosses') },
-    props.scoreEnabled && { accessorKey: 'scoreDiff', header: t('standingsTable.columnDiff') },
-    props.allowDraw &&
-      !isMobile.value && { accessorKey: 'winLossRatio', header: t('standingsTable.columnWinLossRatio') },
-    { accessorKey: 'buchholzScore', meta: hiddenBelow('md') },
-    { accessorKey: 'victoryQuality', meta: hiddenBelow('md') },
-    { accessorKey: 'winRate', header: t('standingsTable.columnWinRate'), meta: hiddenBelow('md') },
-    { id: 'details', header: '', meta: MOBILE_ONLY },
-  ]
-  return cols.filter((c): c is TableColumn<StandingsEntry> => c !== false)
+const { active: mode, setActive: setMode } = useSubTabs<StandingsMode>({
+  options: modeOptions,
+  queryKey: 'lbMode',
+  defaultValue: 'official',
 })
 
-watch(standingsType, async (newType, oldType) => {
-  const order = ['official', 'provisional']
-  slideDirection.value = order.indexOf(newType) > order.indexOf(oldType) ? 'left' : 'right'
-  await loadStandings(newType)
-})
+// One dataset per view: on mobile both panes are mounted side by side.
+const sources = {
+  official: useStandingsService(),
+  provisional: useStandingsService(),
+}
+const loaded = new Set<StandingsMode>()
 
-async function loadStandings(type: 'official' | 'provisional') {
-  if (type === 'official') {
-    await loadOfficialStandings(props.tournamentId)
-  } else {
-    await loadProvisionalStandings(props.tournamentId)
-  }
+/** Each view is fetched once, the first time it is rendered. */
+function ensureModeData(value: StandingsMode) {
+  if (loaded.has(value)) return
+  loaded.add(value)
+  const load =
+    value === 'official'
+      ? sources.official.loadOfficialStandings
+      : sources.provisional.loadProvisionalStandings
+  // The service already turns a failure into the `error` the list displays.
+  load(props.tournamentId).catch(() => {})
 }
 
-onMounted(async () => {
-  await loadStandings(standingsType.value)
-})
+/** Mobile mounts the neighbouring view too: it must not be empty mid-drag. */
+function prefetchModes(values: string[]) {
+  values.forEach((value) => ensureModeData(value as StandingsMode))
+}
+
+// Immediate, because the view can be restored from the URL rather than picked here.
+watch(mode, ensureModeData, { immediate: true })
+
+function listPropsFor(value: StandingsMode) {
+  const source = sources[value]
+  return {
+    entries: source.standings.value,
+    loading: source.loading.value,
+    error: source.error.value,
+    title: t('tournamentDetailView.tabs.standings'),
+    tournamentId: props.tournamentId,
+    teamMode: props.teamMode,
+    allowDraw: props.allowDraw,
+    scoreEnabled: props.scoreEnabled,
+    currentUserId: props.currentUserId,
+  }
+}
 </script>
 
 <style scoped>
@@ -394,44 +233,14 @@ onMounted(async () => {
   width: 100%;
 }
 
-.standings-container {
-  position: relative;
-  min-height: 200px;
+.leaderboard {
+  max-width: 640px;
 }
 
-.standings-slide-left-enter-active,
-.standings-slide-left-leave-active,
-.standings-slide-right-enter-active,
-.standings-slide-right-leave-active {
-  transition:
-    transform 0.28s ease-out,
-    opacity 0.28s ease-out;
-}
-
-.standings-slide-left-leave-active,
-.standings-slide-right-leave-active {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-}
-
-.standings-slide-left-enter-from {
-  transform: translateX(40px);
-  opacity: 0;
-}
-.standings-slide-left-leave-to {
-  transform: translateX(-40px);
-  opacity: 0;
-}
-
-.standings-slide-right-enter-from {
-  transform: translateX(-40px);
-  opacity: 0;
-}
-.standings-slide-right-leave-to {
-  transform: translateX(40px);
-  opacity: 0;
+/* Room for the tiebreaker columns the list adds from `md` up. */
+@media (min-width: 768px) {
+  .leaderboard {
+    max-width: 880px;
+  }
 }
 </style>

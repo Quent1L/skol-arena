@@ -8,6 +8,7 @@
       :team-mode="store.tournament!.teamMode"
       :show-provisional-toggle="store.tournament!.validationMode !== 'none'"
       :tournament-config="toStandingsConfig(store.tournament!)"
+      :current-user-id="store.appUser?.id"
     />
     <RankedLeaderboard
       v-else-if="store.tournament!.mode === 'ranked'"

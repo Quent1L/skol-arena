@@ -33,7 +33,9 @@
 
   <!-- A single view needs no switcher at all. It carries the padding the track puts on
        each of its panes, so both forms sit the same distance from the screen edge. -->
-  <div v-else class="leaderboard mx-auto text-white" :class="{ 'p-2': isMobile }">
+  <!-- `w-full`: the parent can be a flex column, where an auto margin would otherwise
+       shrink the list to its content instead of letting it reach its max width. -->
+  <div v-else class="leaderboard w-full mx-auto text-white" :class="{ 'p-2': isMobile }">
     <LeaderboardTierList v-bind="listPropsFor(mode)" />
   </div>
 </template>

@@ -123,6 +123,7 @@ declare module 'vue' {
     SkillOrLuckOverlay: typeof import('./src/components/brand/SkillOrLuckOverlay.vue')['default']
     SkolLogo: typeof import('./src/components/brand/SkolLogo.vue')['default']
     SplashLoader: typeof import('./src/components/SplashLoader.vue')['default']
+    StandingsList: typeof import('./src/components/tournament/standings/StandingsList.vue')['default']
     StandingsTable: typeof import('./src/components/tournament/StandingsTable.vue')['default']
     StatLeaderRow: typeof import('./src/components/stats/StatLeaderRow.vue')['default']
     StatsFiltersBar: typeof import('./src/components/player/StatsFiltersBar.vue')['default']

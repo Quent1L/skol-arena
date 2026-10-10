@@ -4,7 +4,12 @@
     style="min-height: calc(100vh - 7rem)"
   >
     <!-- Content Area -->
-    <div ref="contentAreaRef" class="flex-1 pb-16">
+    <!--
+      A column, so the tabs holding a swipeable track can stretch down to the bottom nav:
+      the track only reacts to gestures inside its own box, and a short list must not
+      leave the rest of the screen dead to a swipe.
+    -->
+    <div ref="contentAreaRef" class="flex-1 flex flex-col pb-16">
       <!-- Tab: Detail & Navigation cards -->
       <div v-show="activeTab === 'infos'" class="space-y-4 p-4">
         <TournamentHeader
@@ -35,10 +40,11 @@
         Tab: Stats. No `h-full` here: a sticky child only sticks within its parent's box,
         and a height capped to the viewport would drop the switcher after one screen.
       -->
-      <div v-if="isVisited('stats')" v-show="activeTab === 'stats'">
+      <div v-if="isVisited('stats')" v-show="activeTab === 'stats'" class="flex-1 flex flex-col">
         <!-- Sub-tabs: ranked + authenticated only. Mounted from the first visit onwards. -->
         <template v-if="hasStatsSubTabs">
           <SubTabTrack
+            class="flex-1"
             :options="statsSubTabs"
             :model-value="statsSubTab"
             :enabled="statsDragEnabled"
@@ -61,20 +67,21 @@
       </div>
 
       <!-- Tab: Standings (championship only) -->
+      <!-- No padding here: like the ranked leaderboard, the panes carry their own. -->
       <div
         v-if="store.tournament!.mode === 'championship' && isVisited('standings')"
         v-show="activeTab === 'standings'"
-        class="h-full p-2"
+        class="flex-1 flex flex-col"
       >
         <StandingsTable
-          class="h-full"
+          class="flex-1"
           :tournament-id="store.tournamentId"
           :allow-draw="store.tournament!.allowDraw"
           :score-enabled="store.tournament!.scoreEnabled ?? true"
           :team-mode="store.tournament!.teamMode"
           :show-provisional-toggle="store.tournament!.validationMode !== 'none'"
           :tournament-config="toStandingsConfig(store.tournament!)"
-          v-model:standings-type="standingsType"
+          :current-user-id="store.appUser?.id"
         />
       </div>
 
@@ -112,8 +119,10 @@
       <div
         v-if="store.tournament!.mode === 'ranked' && isVisited('standings')"
         v-show="activeTab === 'standings'"
+        class="flex-1 flex flex-col"
       >
         <RankedLeaderboard
+          class="flex-1"
           :players="store.rankedLeaderboard"
           :provisional-players="store.rankedProvisionalLeaderboard"
           :season-mmr-players="store.rankedSeasonMmrLeaderboard"
@@ -149,7 +158,6 @@
 <script setup lang="ts">
 import { ref, computed, defineAsyncComponent, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useSwipe } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useTournamentDetailStore } from '@/stores/tournamentDetail.store'
 import { useSubTabs } from '@/composables/ui/useSubTabs'
@@ -177,10 +185,6 @@ const router = useRouter()
 const store = useTournamentDetailStore()
 
 const contentAreaRef = ref<HTMLElement | null>(null)
-const standingsType = ref<'official' | 'provisional'>('official')
-const standingsTypeValues = ['official', 'provisional'] as const
-/** Standings has no live drag, so it requires a deliberate swipe. */
-const STANDINGS_SWIPE_PX = 50
 
 const activeTab = computed(() => (route.params.tab as string) || 'infos')
 
@@ -227,30 +231,6 @@ function isVisited(tab: string): boolean {
 
 // The track stays mounted under the other tabs, where its gestures mean nothing.
 const statsDragEnabled = computed(() => activeTab.value === 'stats')
-
-/**
- * Standings is the only tab left with a swipe of its own: it toggles between the official
- * and provisional tables. The stats sub-tabs handle their own gestures inside `SubTabTrack`.
- */
-function swipeDirection(): 'left' | 'right' | null {
-  const dx = lengthX.value
-  if (Math.abs(dx) < STANDINGS_SWIPE_PX || Math.abs(dx) <= Math.abs(lengthY.value)) return null
-  return dx > 0 ? 'left' : 'right'
-}
-
-const { lengthX, lengthY } = useSwipe(contentAreaRef, {
-  onSwipeEnd() {
-    // A ranked season also lives on the `standings` tab, with its own switchable views.
-    if (activeTab.value !== 'standings' || store.tournament?.mode !== 'championship') return
-
-    const direction = swipeDirection()
-    const currentIndex = standingsTypeValues.indexOf(standingsType.value)
-    const next = standingsTypeValues[currentIndex + 1]
-    const prev = standingsTypeValues[currentIndex - 1]
-    if (direction === 'left' && next) standingsType.value = next
-    else if (direction === 'right' && prev) standingsType.value = prev
-  },
-})
 
 function navigate(tab: string) {
   router.push({ name: 'tournament-tab', params: { id: store.tournamentId, tab } })
