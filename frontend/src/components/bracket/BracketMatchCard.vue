@@ -23,7 +23,11 @@
           class="fa fa-trophy text-yellow-500 text-[10px] absolute -top-3.5 left-1/2 -translate-x-1/2"
         ></i>
         <template v-if="sideA">
-          <PlayerAvatar :name="getEntryName(sideA.entryId)" size="xs" />
+          <PlayerAvatar
+            :name="getEntryName(sideA.entryId)"
+            :player-id="getEntryPlayerId(sideA.entryId)"
+            size="xs"
+          />
           <abbr
             class="bracket-code text-center"
             :title="getEntryName(sideA.entryId)"
@@ -77,7 +81,11 @@
           class="fa fa-trophy text-yellow-500 text-[10px] absolute -top-3.5 left-1/2 -translate-x-1/2"
         ></i>
         <template v-if="sideB">
-          <PlayerAvatar :name="getEntryName(sideB.entryId)" size="xs" />
+          <PlayerAvatar
+            :name="getEntryName(sideB.entryId)"
+            :player-id="getEntryPlayerId(sideB.entryId)"
+            size="xs"
+          />
           <abbr
             class="bracket-code text-center"
             :title="getEntryName(sideB.entryId)"
@@ -133,6 +141,13 @@ function getEntryName(entryId: string): string {
   }
 
   return t('bracketMatchCard.unknown')
+}
+
+/** A team has no avatar of its own: only a single-player entry resolves to one. */
+function getEntryPlayerId(entryId: string): string | null {
+  const entry = props.seeds.find((s) => s.entryId === entryId)?.entry
+  if (entry?.entryType !== 'PLAYER') return null
+  return entry.players[0]?.playerId ?? null
 }
 
 function getEntryCode(entryId: string): string {
