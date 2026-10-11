@@ -23,16 +23,21 @@ export function useRuleFiringOverview() {
   const error = ref<string | null>(null)
   /** Bumped per feed request, so a page answering after a filter change is dropped. */
   let feedRequest = 0
+  /** Same for the overview: a slow answer for the previous range must not win. */
+  let overviewRequest = 0
 
   async function loadOverview(days: number) {
+    const request = ++overviewRequest
     overviewLoading.value = true
     error.value = null
     try {
-      overview.value = await rulesApi.getFiringOverview(days)
+      const result = await rulesApi.getFiringOverview(days)
+      if (request === overviewRequest) overview.value = result
     } catch (err) {
+      if (request !== overviewRequest) return
       error.value = err instanceof Error ? err.message : t('rulesService.errors.statsFailed')
     } finally {
-      overviewLoading.value = false
+      if (request === overviewRequest) overviewLoading.value = false
     }
   }
 

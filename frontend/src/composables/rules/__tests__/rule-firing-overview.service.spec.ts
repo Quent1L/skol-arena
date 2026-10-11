@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import type { ClientRuleFiringFeed, ClientRuleFiringFeedItem } from '@skol-arena/shared/types/index'
+import type {
+  ClientRuleFiringFeed,
+  ClientRuleFiringFeedItem,
+  ClientRuleFiringOverview,
+} from '@skol-arena/shared/types/index'
 import { rulesApi } from '../rules.api'
 import { useRuleFiringOverview } from '../rule-firing-overview.service'
 
@@ -77,5 +81,26 @@ describe('useRuleFiringOverview — feed', () => {
     expect(service.feed.value.map((i) => i.id)).toEqual(['badge'])
     expect(service.feedCursor.value).toBeNull()
     expect(service.feedLoading.value).toBe(false)
+  })
+})
+
+describe('useRuleFiringOverview — overview', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('drops an overview that answers after the range changed', async () => {
+    let resolveStale!: (value: ClientRuleFiringOverview) => void
+    const latest = { days: 7 } as ClientRuleFiringOverview
+    vi.mocked(rulesApi.getFiringOverview)
+      .mockReturnValueOnce(new Promise((resolve) => (resolveStale = resolve)))
+      .mockResolvedValueOnce(latest)
+    const service = useRuleFiringOverview()
+
+    const stale = service.loadOverview(90)
+    await service.loadOverview(7)
+    resolveStale({ days: 90 } as ClientRuleFiringOverview)
+    await stale
+
+    expect(service.overview.value).toEqual({ days: 7 })
+    expect(service.overviewLoading.value).toBe(false)
   })
 })
