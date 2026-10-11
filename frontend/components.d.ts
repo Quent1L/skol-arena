@@ -115,6 +115,7 @@ declare module 'vue' {
     QualityBreakdown: typeof import('./src/components/tournament/standings/QualityBreakdown.vue')['default']
     RankedCareerLink: typeof import('./src/components/ranked/RankedCareerLink.vue')['default']
     RankedLeaderboard: typeof import('./src/components/ranked/RankedLeaderboard.vue')['default']
+    RankingInput: typeof import('./src/components/match/steps/RankingInput.vue')['default']
     RecentFormBadges: typeof import('./src/components/player/RecentFormBadges.vue')['default']
     RecentFormSection: typeof import('./src/components/player/RecentFormSection.vue')['default']
     RelationRow: typeof import('./src/components/rewind/RelationRow.vue')['default']

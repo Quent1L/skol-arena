@@ -364,6 +364,21 @@ describe('CreateMatchView', () => {
     ])
   })
 
+  it('matchId present: hydrates the placement of every side of an N-way match', async () => {
+    const base = makeMatchDetail()
+    getMatchMock.mockResolvedValue(
+      makeMatchDetail({
+        sides: [
+          { ...base.sides[0], rank: 2, isWinner: false },
+          { ...base.sides[1], rank: 1, isWinner: true },
+          { ...base.sides[1], position: 3, rank: 3, isWinner: false, entryId: 'e3', players: [] },
+        ],
+      }),
+    )
+    const wrapper = await mountView({ matchId: 'm1' })
+    expect(getProbe(wrapper).vm.formState.rankPerSide).toEqual({ 1: 2, 2: 1, 3: 3 })
+  })
+
   it.each(['reported', 'pending_confirmation'] as const)(
     'status %s: activeStep switches to "result"',
     async (status) => {

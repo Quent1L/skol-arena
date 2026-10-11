@@ -51,67 +51,67 @@
       <p v-else class="text-sm text-slate-500">{{ t('compositionStep.instruction') }}</p>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
-      <div class="flex flex-col gap-2">
-        <div class="text-sm font-semibold">{{ t('compositionStep.teamA') }}</div>
-        <div
-          class="relative min-h-20 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 p-3"
-        >
-          <span
-            v-if="playersA.length === 0"
-            class="absolute inset-0 flex items-center justify-center text-xs text-slate-400 pointer-events-none"
-            >{{ t('compositionStep.empty') }}</span
-          >
-          <VueDraggable
-            v-model="playersA"
-            tag="div"
-            class="flex flex-col gap-2 min-h-14"
-            :group="{ name: 'match-composition', pull: true, put: true }"
-          >
-            <div
-              v-for="player in playersA"
-              :key="player.id"
-              class="flex items-center gap-2 rounded-md bg-slate-100 dark:bg-slate-800 px-3 py-2 cursor-grab select-none touch-none text-sm hover:bg-slate-200 dark:hover:bg-slate-700 hover:shadow-sm transition-colors duration-150"
-              @contextmenu.prevent
-            >
-              <i class="fas fa-grip-vertical text-slate-400 text-xs" />
-              <PlayerAvatar :name="player.displayName" :player-id="player.id" size="xs" />
-              {{ player.displayName }}
-            </div>
-          </VueDraggable>
+    <div class="grid gap-4" :class="columnsGridClass">
+      <div
+        v-for="(column, index) in columns"
+        :key="index"
+        class="flex flex-col gap-2"
+        data-testid="compose-side"
+      >
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-sm font-semibold">{{
+            t('compositionStep.team', { number: index + 1 })
+          }}</span>
+          <UButton
+            v-if="canRemoveSide"
+            icon="i-fa7-solid:xmark"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('compositionStep.removeSide', { number: index + 1 })"
+            data-testid="compose-remove-side"
+            @click="removeSide(index)"
+          />
         </div>
-      </div>
-
-      <div class="flex flex-col gap-2">
-        <div class="text-sm font-semibold">{{ t('compositionStep.teamB') }}</div>
         <div
           class="relative min-h-20 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 p-3"
         >
           <span
-            v-if="playersB.length === 0"
+            v-if="column.length === 0"
             class="absolute inset-0 flex items-center justify-center text-xs text-slate-400 pointer-events-none"
             >{{ t('compositionStep.empty') }}</span
           >
           <VueDraggable
-            v-model="playersB"
+            v-model="columns[index]"
             tag="div"
             class="flex flex-col gap-2 min-h-14"
             :group="{ name: 'match-composition', pull: true, put: true }"
           >
             <div
-              v-for="player in playersB"
+              v-for="player in column"
               :key="player.id"
               class="flex items-center gap-2 rounded-md bg-slate-100 dark:bg-slate-800 px-3 py-2 cursor-grab select-none touch-none text-sm hover:bg-slate-200 dark:hover:bg-slate-700 hover:shadow-sm transition-colors duration-150"
               @contextmenu.prevent
             >
               <i class="fas fa-grip-vertical text-slate-400 text-xs" />
               <PlayerAvatar :name="player.displayName" :player-id="player.id" size="xs" />
-              {{ player.displayName }}
+              <span class="truncate">{{ player.displayName }}</span>
             </div>
           </VueDraggable>
         </div>
       </div>
     </div>
+
+    <UButton
+      v-if="canAddSide"
+      :label="t('compositionStep.addSide')"
+      icon="i-fa7-solid:plus"
+      color="neutral"
+      variant="outline"
+      class="self-start"
+      data-testid="compose-add-side"
+      @click="addSide"
+    />
 
     <MatchBalanceBar v-if="balance" :balance="balance" :allow-draw="allowDraw" />
 
@@ -164,7 +164,13 @@ import { VueDraggable } from 'vue-draggable-plus'
 import MatchBalanceBar from '@/components/match/MatchBalanceBar.vue'
 import { useMatchService } from '@/composables/match/match.service'
 import { computeMatchBalance } from '@/composables/match/match-balance'
-import { balanceTeams, isOnlyFairSplit, shuffleTeams } from '@/composables/match/team-composition'
+import {
+  balanceTeams,
+  isOnlyFairSplit,
+  shuffleIntoSides,
+  shuffleTeams,
+  snakeDraftSides,
+} from '@/composables/match/team-composition'
 import type { TeamSplit } from '@/composables/match/team-composition'
 import type { ComposeKind } from '@/composables/match/useComposeEasterEggs'
 import { useComposeEasterEggs } from '@/composables/match/useComposeEasterEggs'
@@ -190,8 +196,11 @@ interface Props {
   allowDraw?: boolean
   /** Offers the MMR-balanced line-up next to the random one. */
   isRanked?: boolean
+  /** Most sides the competition allows in one match; above 2, sides can be added. */
+  maxSides?: number
   /** Players per side allowed by the tournament; absent = no live check. */
   minTeamSize?: number
+  /** Largest team allowed: at 1, a roster starts as one side per player. */
   maxTeamSize?: number
 }
 
@@ -200,7 +209,11 @@ interface Emits {
   (e: 'next'): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  maxSides: 2,
+  minTeamSize: undefined,
+  maxTeamSize: undefined,
+})
 const emit = defineEmits<Emits>()
 const { t } = useI18n()
 
@@ -211,48 +224,88 @@ const errors = ref<string[]>([])
 const sidesModel = defineModel<MatchSideInput[]>('sides', { required: true })
 const allPlayerIdsModel = defineModel<string[]>('allPlayerIds', { required: true })
 
-const playersA = ref<Player[]>([])
-const playersB = ref<Player[]>([])
+/** One column per side, in position order. */
+const columns = ref<Player[][]>([[], []])
 
 function toPlayer(id: string): Player {
   return { id, displayName: props.playerNames[id] ?? id }
+}
+
+/** Sides a fresh roster starts with: one per player in a solo format, else two. */
+function initialSideCount(playerCount: number): number {
+  if (props.maxTeamSize !== 1) return 2
+  return Math.max(2, Math.min(playerCount, props.maxSides))
 }
 
 function buildAndInit() {
   const existing = sidesModel.value.filter((s) => s.playerIds && s.playerIds.length > 0)
 
   if (existing.length >= 2) {
-    playersA.value = existing[0].playerIds!.map(toPlayer)
-    playersB.value = existing[1].playerIds!.map(toPlayer)
+    columns.value = existing.map((side) => side.playerIds!.map(toPlayer))
     return
   }
 
   const ids = allPlayerIdsModel.value
-  const half = Math.ceil(ids.length / 2)
-  playersA.value = ids.slice(0, half).map(toPlayer)
-  playersB.value = ids.slice(half).map(toPlayer)
+  const sideCount = initialSideCount(ids.length)
+  if (sideCount === 2) {
+    const half = Math.ceil(ids.length / 2)
+    columns.value = [ids.slice(0, half).map(toPlayer), ids.slice(half).map(toPlayer)]
+    return
+  }
+  columns.value = Array.from({ length: sideCount }, (_, i) =>
+    ids.filter((_, index) => index % sideCount === i).map(toPlayer),
+  )
 }
 
 function syncSidesToModel() {
-  sidesModel.value = [
-    { position: 1, playerIds: playersA.value.map((p) => p.id) },
-    { position: 2, playerIds: playersB.value.map((p) => p.id) },
-  ]
+  sidesModel.value = columns.value.map((column, index) => ({
+    position: index + 1,
+    playerIds: column.map((p) => p.id),
+  }))
 }
 
-const emptySide = computed(() => playersA.value.length === 0 || playersB.value.length === 0)
+const emptySide = computed(() => columns.value.some((column) => column.length === 0))
 
 /** A side outside the tournament's per-side limits, flagged while dragging. */
 const sideSizeErrors = computed(() => {
   const { minTeamSize: min, maxTeamSize: max } = props
   if (!min || !max || emptySide.value) return []
-  return [
-    { side: t('compositionStep.teamA'), count: playersA.value.length },
-    { side: t('compositionStep.teamB'), count: playersB.value.length },
-  ]
+  return columns.value
+    .map((column, index) => ({
+      side: t('compositionStep.team', { number: index + 1 }),
+      count: column.length,
+    }))
     .filter(({ count }) => count < min || count > max)
     .map(({ side, count }) => t('compositionStep.sideSizeError', { side, count, min, max }))
 })
+
+const columnsGridClass = computed(() =>
+  columns.value.length === 2 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+)
+
+// --- Sides -----------------------------------------------------------------
+// Never more sides than players: an empty side could not be submitted anyway.
+const canAddSide = computed(
+  () =>
+    columns.value.length < props.maxSides && columns.value.length < allPlayerIdsModel.value.length,
+)
+const canRemoveSide = computed(() => columns.value.length > 2)
+
+function addSide() {
+  columns.value = [...columns.value, []]
+}
+
+/** The players of a removed side join the smallest remaining one. */
+function removeSide(index: number) {
+  const removed = columns.value[index]
+  const remaining = columns.value.filter((_, i) => i !== index)
+  const smallest = remaining.reduce(
+    (min, column, i) => (column.length < remaining[min].length ? i : min),
+    0,
+  )
+  remaining[smallest] = [...remaining[smallest], ...removed]
+  columns.value = remaining
+}
 
 // `sidesModel` is kept in sync by the watchEffect below, so the balance follows
 // every drag & drop without a watcher or a request of its own.
@@ -278,9 +331,11 @@ const randomLabel = computed(() =>
   canBalance.value ? t('compositionStep.random') : t('compositionStep.randomOnly'),
 )
 
+const isDuel = computed(() => columns.value.length === 2)
+
 const currentSplit = computed<TeamSplit>(() => [
-  playersA.value.map((p) => p.id),
-  playersB.value.map((p) => p.id),
+  (columns.value[0] ?? []).map((p) => p.id),
+  (columns.value[1] ?? []).map((p) => p.id),
 ])
 
 // The line-up already is the single fairest one: another tap leaves it as is.
@@ -288,14 +343,16 @@ const currentSplit = computed<TeamSplit>(() => [
 // random ↔ balanced duel whenever a shuffle happens to land on that line-up.
 const balanceSettled = computed(() => {
   const standings = props.standings
-  if (!canBalance.value || !standings) return false
+  if (!canBalance.value || !standings || !isDuel.value) return false
   return isOnlyFairSplit(allPlayerIdsModel.value, standings, currentSplit.value)
 })
 
-function computeSplit(kind: ComposeKind) {
+function computeSplit(kind: ComposeKind): string[][] | null {
   const ids = allPlayerIdsModel.value
-  if (kind === 'random') return shuffleTeams(ids)
+  const sideCount = columns.value.length
+  if (kind === 'random') return isDuel.value ? shuffleTeams(ids) : shuffleIntoSides(ids, sideCount)
   if (!props.standings) return null
+  if (!isDuel.value) return snakeDraftSides(ids, props.standings, sideCount)
   return balanceTeams(ids, props.standings, currentSplit.value)
 }
 
@@ -304,8 +361,7 @@ function applyComposition(kind: ComposeKind) {
   if (kind === 'random') spinDice()
   const split = computeSplit(kind)
   if (!split) return
-  playersA.value = split[0].map(toPlayer)
-  playersB.value = split[1].map(toPlayer)
+  columns.value = split.map((ids) => ids.map(toPlayer))
 }
 
 defineExpose({ triggerNext: () => onNext() })
@@ -333,37 +389,37 @@ async function onNext() {
 
 watchEffect(syncSidesToModel)
 
-watch([playersA, playersB], () => {
-  errors.value = []
-})
+watch(
+  columns,
+  () => {
+    errors.value = []
+  },
+  { deep: true },
+)
 
+/** Drops players removed from the roster and seats new ones on the smallest side. */
 watch(allPlayerIdsModel, () => {
   const idsSet = new Set(allPlayerIdsModel.value)
-  playersA.value = playersA.value.filter((p) => idsSet.has(p.id))
-  playersB.value = playersB.value.filter((p) => idsSet.has(p.id))
-
-  const assignedIds = new Set([
-    ...playersA.value.map((p) => p.id),
-    ...playersB.value.map((p) => p.id),
-  ])
+  const next = columns.value.map((column) => column.filter((p) => idsSet.has(p.id)))
+  const assignedIds = new Set(next.flat().map((p) => p.id))
   for (const id of allPlayerIdsModel.value) {
-    if (!assignedIds.has(id)) {
-      const player = toPlayer(id)
-      if (playersA.value.length <= playersB.value.length) {
-        playersA.value = [...playersA.value, player]
-      } else {
-        playersB.value = [...playersB.value, player]
-      }
-      assignedIds.add(id)
-    }
+    if (assignedIds.has(id)) continue
+    const smallest = next.reduce(
+      (min, column, i) => (column.length < next[min].length ? i : min),
+      0,
+    )
+    next[smallest] = [...next[smallest], toPlayer(id)]
+    assignedIds.add(id)
   }
+  columns.value = next
 })
 
 watch(
   () => props.playerNames,
   (names) => {
-    playersA.value = playersA.value.map((p) => ({ ...p, displayName: names[p.id] ?? p.id }))
-    playersB.value = playersB.value.map((p) => ({ ...p, displayName: names[p.id] ?? p.id }))
+    columns.value = columns.value.map((column) =>
+      column.map((p) => ({ ...p, displayName: names[p.id] ?? p.id })),
+    )
   },
 )
 

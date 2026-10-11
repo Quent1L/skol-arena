@@ -118,6 +118,8 @@ interface Props {
   matchId?: string
   hideNavigation?: boolean
   nextLabel?: string
+  /** Most sides the competition allows in one match: as many teams can be picked. */
+  maxSides?: number
 }
 
 interface Emits {
@@ -125,7 +127,7 @@ interface Emits {
   (e: 'next'): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), { maxSides: 2 })
 const emit = defineEmits<Emits>()
 const { t } = useI18n()
 
@@ -164,7 +166,7 @@ const selectedTeams = computed(() =>
   selectedTeamIds.value.flatMap((id) => teamItems.value.filter((t) => t.id === id)),
 )
 
-const isFull = computed(() => selectedTeamIds.value.length >= sidesModel.value.length)
+const isFull = computed(() => selectedTeamIds.value.length >= props.maxSides)
 
 const filteredTeams = computed(() =>
   teamItems.value.filter(
@@ -179,10 +181,14 @@ function membersPreview(team: ClientTeam): string {
   return names.slice(0, PREVIEW_SIZE).join(', ') + (extra > 0 ? ` +${extra}` : '')
 }
 
-/** Picked teams fill the sides in pick order; a pick beyond the last side is ignored. */
+/**
+ * Each picked team is a side, in pick order (positions 1..N); a duel keeps its two
+ * slots while unfilled. A pick beyond the competition's cap is ignored.
+ */
 function assignTeams(ids: string[]) {
-  if (ids.length > sidesModel.value.length) return
-  sidesModel.value = sidesModel.value.map((s, i) => ({ ...s, teamId: ids[i] }))
+  if (ids.length > props.maxSides) return
+  const count = Math.max(2, ids.length)
+  sidesModel.value = Array.from({ length: count }, (_, i) => ({ position: i + 1, teamId: ids[i] }))
 }
 
 function addTeam(team: TeamItem | undefined) {
@@ -203,6 +209,7 @@ function removeTeam(id: string) {
 const canProceed = computed(() => {
   const filled = sidesModel.value.filter((s) => s.teamId)
   return (
+    filled.length >= 2 &&
     filled.length === sidesModel.value.length &&
     new Set(filled.map((s) => s.teamId)).size === filled.length
   )

@@ -40,6 +40,7 @@ export type RankedSeason = {
   endDate: string
   minTeamSize: number
   maxTeamSize: number
+  maxSidesPerMatch?: number
   allowDraw?: boolean
   scoreEnabled?: boolean
   minScore?: number | null

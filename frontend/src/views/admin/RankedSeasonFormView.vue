@@ -461,6 +461,7 @@ const fieldLabels: Record<string, string> = {
   endDate: t('rankedSeasonFormView.fieldEndDate'),
   minTeamSize: t('rankedSeasonFormView.fieldMinTeamSize'),
   maxTeamSize: t('rankedSeasonFormView.fieldMaxTeamSize'),
+  maxSidesPerMatch: t('generalInfoSection.fields.maxSidesPerMatch'),
   baseMmr: t('rankedSeasonFormView.labelBaseMmr'),
   kFactor: t('rankedSeasonFormView.labelKFactor'),
   placementMatches: t('rankedSeasonFormView.labelPlacementMatches'),
@@ -529,6 +530,7 @@ onMounted(async () => {
         endDate: s.endDate ? new Date(s.endDate) : undefined,
         minTeamSize: s.minTeamSize,
         maxTeamSize: s.maxTeamSize,
+        maxSidesPerMatch: s.maxSidesPerMatch ?? 2,
         rulesId: s.rulesId ?? null,
         scoreEnabled: s.scoreEnabled ?? true,
         minScore: s.minScore ?? null,
@@ -570,6 +572,7 @@ onMounted(async () => {
     Object.assign(state.value, {
       minTeamSize: 1,
       maxTeamSize: 2,
+      maxSidesPerMatch: 2,
       baseMmr: 1000,
       kFactor: 32,
       placementMatches: 5,

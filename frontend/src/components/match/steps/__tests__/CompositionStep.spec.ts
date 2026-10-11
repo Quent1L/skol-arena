@@ -140,3 +140,50 @@ describe('CompositionStep side sizes', () => {
     expect(wrapper.find('[data-testid="side-size-error"]').exists()).toBe(false)
   })
 })
+
+describe('CompositionStep sides', () => {
+  it('keeps two sides and no add button in a duel-only competition', () => {
+    const wrapper = mountStep()
+
+    expect(wrapper.findAll('[data-testid="compose-side"]')).toHaveLength(2)
+    expect(wrapper.find('[data-testid="compose-add-side"]').exists()).toBe(false)
+  })
+
+  it('adds a side up to the competition cap', async () => {
+    const wrapper = mountStep({ maxSides: 3 })
+
+    await wrapper.find('[data-testid="compose-add-side"]').trigger('click')
+
+    expect(wrapper.findAll('[data-testid="compose-side"]')).toHaveLength(3)
+    expect(wrapper.find('[data-testid="compose-add-side"]').exists()).toBe(false)
+    expect(lastSides(wrapper).map((s) => s.position)).toEqual([1, 2, 3])
+  })
+
+  it('moves the players of a removed side to the smallest one left', async () => {
+    const wrapper = mountStep({ maxSides: 3 })
+    await wrapper.find('[data-testid="compose-add-side"]').trigger('click')
+
+    await wrapper.findAll('[data-testid="compose-remove-side"]')[0].trigger('click')
+
+    const sides = lastSides(wrapper)
+    expect(sides).toHaveLength(2)
+    expect(sides.flatMap((s) => s.playerIds ?? []).sort()).toEqual(ids)
+  })
+
+  it('starts a solo roster as one side per player', async () => {
+    const wrapper = mountStep({ maxSides: 4, maxTeamSize: 1, allPlayerIds: ['p1', 'p2', 'p3'] })
+    await nextTick()
+
+    expect(lastSides(wrapper).map((s) => s.playerIds)).toEqual([['p1'], ['p2'], ['p3']])
+  })
+
+  it('deals a random line-up over every side', async () => {
+    const wrapper = mountStep({ maxSides: 4, maxTeamSize: 1 })
+
+    await wrapper.find('[data-testid="compose-random"]').trigger('click')
+
+    const sides = lastSides(wrapper)
+    expect(sides).toHaveLength(4)
+    expect(sides.every((s) => s.playerIds?.length === 1)).toBe(true)
+  })
+})

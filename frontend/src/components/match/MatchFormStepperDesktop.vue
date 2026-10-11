@@ -82,6 +82,7 @@
             v-model:sides="formState.sides"
             :tournament-id="props.tournamentId"
             :teams="teams"
+            :max-sides="tournament?.maxSidesPerMatch ?? 2"
             :played-at="formState.playedAt"
             :match-id="props.matchId"
             :next-label="isFutureDate ? t('matchFormStepperMobile.scheduleMatch') : undefined"
@@ -103,6 +104,7 @@
             :standings="standings"
             :allow-draw="tournament?.allowDraw ?? false"
             :is-ranked="tournament?.mode === 'ranked'"
+            :max-sides="tournament?.maxSidesPerMatch ?? 2"
             :min-team-size="tournament?.minTeamSize"
             :max-team-size="tournament?.maxTeamSize"
             @previous="activeStep = 'participants'"
@@ -118,6 +120,7 @@
             v-model:outcome-type-id="formState.outcomeTypeId"
             v-model:outcome-reason-id="formState.outcomeReasonId"
             v-model:score-per-side="formState.scorePerSide"
+            v-model:rank-per-side="formState.rankPerSide"
             :tournament-id="props.tournamentId"
             :player-names="playersMap"
             :teams="teams"
@@ -153,10 +156,7 @@ import ParticipantsStep from '@/components/match/steps/ParticipantsStep.vue'
 import TeamsStep from '@/components/match/steps/TeamsStep.vue'
 import CompositionStep from '@/components/match/steps/CompositionStep.vue'
 import ResultStep from '@/components/match/steps/ResultStep.vue'
-import type {
-  ClientCreateMatchRequest,
-  ClientUpdateMatchRequest,
-} from '@skol-arena/shared/types/index'
+import { buildCreateMatchRequest, buildUpdateMatchRequest } from '@/composables/match/match-payload'
 
 interface Props {
   tournamentId: string
@@ -278,39 +278,25 @@ function goBackFromResult() {
 }
 
 async function submitMatch() {
-  const isScheduled = isFutureDate.value
-
-  const payload: ClientCreateMatchRequest = {
+  const options = {
     tournamentId: props.tournamentId,
-    sides: formState.value.sides,
-    playedAt: formState.value.playedAt ?? new Date(),
-    status: isScheduled ? 'scheduled' : 'reported',
-    scoreA: isScheduled ? 0 : (formState.value.scorePerSide[1] ?? 0),
-    scoreB: isScheduled ? 0 : (formState.value.scorePerSide[2] ?? 0),
-    winnerPosition:
-      isScheduled || formState.value.winnerPosition === 0 ? null : formState.value.winnerPosition,
-    outcomeTypeId: isScheduled ? undefined : (formState.value.outcomeTypeId ?? undefined),
-    outcomeReasonId: isScheduled ? undefined : (formState.value.outcomeReasonId ?? undefined),
+    isScheduled: isFutureDate.value,
+    scoreEnabled: tournament.value?.scoreEnabled ?? true,
   }
 
   if (isEditMode.value && props.matchId) {
-    const updatePayload: ClientUpdateMatchRequest = {
-      playedAt: payload.playedAt,
-      status: payload.status,
-      scoreA: payload.scoreA,
-      scoreB: payload.scoreB,
-      winnerPosition: payload.winnerPosition,
-      outcomeTypeId: payload.outcomeTypeId,
-      outcomeReasonId: payload.outcomeReasonId,
-    }
     await updateMatchWithNavigation(
       props.matchId,
-      updatePayload,
+      buildUpdateMatchRequest(formState.value, options),
       props.tournamentId,
       tournament.value?.mode,
     )
   } else {
-    await createMatchWithNavigation(payload, props.tournamentId, tournament.value?.mode)
+    await createMatchWithNavigation(
+      buildCreateMatchRequest(formState.value, options),
+      props.tournamentId,
+      tournament.value?.mode,
+    )
   }
 }
 </script>

@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 
-import { balanceTeams, isOnlyFairSplit, shuffleTeams, type TeamSplit } from '../team-composition'
+import {
+  balanceTeams,
+  isOnlyFairSplit,
+  shuffleIntoSides,
+  shuffleTeams,
+  snakeDraftSides,
+  type TeamSplit,
+} from '../team-composition'
 import type { PlayerStandings } from '../match-balance'
 
 function standings(entries: Record<string, number>): PlayerStandings {
@@ -152,5 +159,33 @@ describe('isOnlyFairSplit', () => {
         ['c', 'd'],
       ]),
     ).toBe(false)
+  })
+})
+
+describe('shuffleIntoSides', () => {
+  it('deals every player once over the requested number of sides', () => {
+    const sides = shuffleIntoSides(['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7'], 3)
+
+    expect(sides.map((side) => side.length)).toEqual([3, 2, 2])
+    expect(sides.flat().sort()).toEqual(['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7'])
+  })
+})
+
+describe('snakeDraftSides', () => {
+  it('evens out three sides by alternating the order of picks', () => {
+    const ratings = standings({ a: 1600, b: 1500, c: 1400, d: 1300, e: 1200, f: 1100 })
+
+    const sides = snakeDraftSides(Object.keys(ratings), ratings, 3)
+
+    // 1-2-3 then 3-2-1: the strongest pick pairs with the weakest of the next round
+    expect(sides).toEqual([
+      ['a', 'f'],
+      ['b', 'e'],
+      ['c', 'd'],
+    ])
+  })
+
+  it('refuses to guess when a player has no standing', () => {
+    expect(snakeDraftSides(['a', 'b', 'c'], standings({ a: 1000, b: 1000 }), 3)).toBeNull()
   })
 })

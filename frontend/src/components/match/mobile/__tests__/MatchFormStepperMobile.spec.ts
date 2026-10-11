@@ -47,6 +47,7 @@ function makeContext(
       allPlayerIds: ['a', 'b'],
       winnerPosition: 1,
       scorePerSide: { 1: 3, 2: 1 },
+      rankPerSide: {},
       outcomeTypeId: 'ot',
       outcomeReasonId: 'or',
       ...overrides,

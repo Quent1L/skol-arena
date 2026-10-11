@@ -405,10 +405,11 @@
     "previous": "Précédent",
     "random": "Aléatoire",
     "randomOnly": "Composer au hasard",
-    "teamA": "Équipe 1",
-    "teamB": "Équipe 2",
     "title": "Composition",
-    "sideSizeError": "{side} : {count} joueur(s), il en faut entre {min} et {max}"
+    "sideSizeError": "{side} : {count} joueur(s), il en faut entre {min} et {max}",
+    "addSide": "Ajouter une équipe",
+    "removeSide": "Retirer l'équipe {number}",
+    "team": "Équipe {number}"
   },
   "conditionCount": {
     "comparison": "Ce nombre doit être",
@@ -636,14 +637,18 @@
       "name": "Nom",
       "organization": "Organisation (optionnel)",
       "rules": "Règles du jeu",
-      "startDate": "Date de début"
+      "startDate": "Date de début",
+      "maxSidesPerMatch": "Camps max par match"
     },
     "placeholders": {
       "discipline": "Sélectionner une discipline",
       "noOrganization": "Accès général (aucun groupe)",
       "noRules": "Aucun règlement"
     },
-    "title": "Informations générales"
+    "title": "Informations générales",
+    "help": {
+      "maxSidesPerMatch": "2 pour des duels ; au-delà, un match peut opposer plusieurs camps (1v1v1, 2v2v2…)"
+    }
   },
   "generateBracketDialog": {
     "bracketTypeLabel": "Type de bracket",
@@ -2225,7 +2230,16 @@
     "statusOpen": "Ouvert aux inscriptions",
     "teamModeFlex": "Flexible",
     "teamModeStatic": "Statique",
-    "undefinedDiscipline": "Non définie"
+    "undefinedDiscipline": "Non définie",
+    "labelPointsSource": "Points attribués selon",
+    "labelRankPoints": "Points par place",
+    "pointsSourceMatchResult": "Victoire / nul / défaite",
+    "pointsSourceMatchResultHelp": "Seul le premier gagne ; des premiers à égalité font match nul, tous les autres perdent.",
+    "pointsSourceRank": "Place obtenue",
+    "pointsSourceRankHelp": "Chaque place rapporte les points du barème ci-dessous.",
+    "pointsSourceScore": "Score marqué",
+    "pointsSourceScoreHelp": "Chaque camp marque autant de points que son score dans le match.",
+    "rankPlace": "Place {place}"
   },
   "tournamentHeader": {
     "alreadyRegistered": "Déjà inscrit",
@@ -3128,5 +3142,15 @@
       "mvpSpectators": "Dans les matchs en équipe, les joueurs et les spectateurs élisent le MVP.",
       "noEffect": "Ces votes ne changent ni le résultat ni le classement."
     }
+  },
+  "rankingInput": {
+    "drag": "Déplacer",
+    "drawNotAllowed": "Les égalités à la première place ne sont pas autorisées dans cette compétition.",
+    "instruction": "Faites glisser les équipes dans l'ordre d'arrivée. « = » place une équipe à égalité avec celle du dessus.",
+    "instructionScores": "Saisissez les scores : le classement suit, ajustable en faisant glisser les équipes. « = » place une équipe à égalité avec celle du dessus.",
+    "score": "Score de l'équipe {number}",
+    "side": "Équipe {number}",
+    "tie": "À égalité avec l'équipe du dessus",
+    "title": "Classement"
   }
 }

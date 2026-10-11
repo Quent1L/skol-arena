@@ -6,7 +6,7 @@ import type {
   PlayerCareerSeason,
   StandingsEntry,
 } from '@skol-arena/shared'
-import { CHAMPIONSHIP_DEFAULTS, SCORING_DEFAULTS } from '@skol-arena/shared'
+import { CHAMPIONSHIP_DEFAULTS, resolveScoringConfig } from '@skol-arena/shared'
 
 let seq = 0
 function nextId(prefix: string): string {
@@ -108,7 +108,8 @@ export function makeTournament(over: Partial<BaseTournament> = {}): BaseTourname
     teamMode: 'flex',
     minTeamSize: 1,
     maxTeamSize: 1,
-    scoringConfig: { ...SCORING_DEFAULTS },
+    maxSidesPerMatch: 2,
+    scoringConfig: resolveScoringConfig(),
     championshipConfig: { ...CHAMPIONSHIP_DEFAULTS },
     allowDraw: true,
     scoreEnabled: true,

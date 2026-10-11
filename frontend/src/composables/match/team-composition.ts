@@ -121,3 +121,44 @@ export function balanceTeams(
   // so they are not stuck in Team 1. An odd roster keeps the extra player in A.
   return a.length === b.length && rng() < 0.5 ? [b, a] : [a, b]
 }
+
+// ── Three sides or more ─────────────────────────────────────────────────────
+// The exhaustive search above only exists for duels: the number of ways to cut a
+// roster into N sides explodes, and the balance bar does not read N-way matches.
+
+/** Deals `ids` round-robin into `sideCount` sides: sizes differ by one at most. */
+function deal(ids: string[], sideCount: number): string[][] {
+  const sides: string[][] = Array.from({ length: sideCount }, () => [])
+  ids.forEach((id, index) => sides[index % sideCount].push(id))
+  return sides
+}
+
+/** A random line-up over `sideCount` sides. */
+export function shuffleIntoSides(
+  ids: string[],
+  sideCount: number,
+  rng: Rng = Math.random,
+): string[][] {
+  return deal(shuffle(ids, rng), sideCount)
+}
+
+/**
+ * An even line-up over `sideCount` sides by snake draft: strongest first, the
+ * order of picks reversing every round (1-2-3, 3-2-1…). `null` when a player has
+ * no standing.
+ */
+export function snakeDraftSides(
+  ids: string[],
+  standings: PlayerStandings,
+  sideCount: number,
+): string[][] | null {
+  if (ids.some((id) => !standings[id])) return null
+  const ranked = [...ids].sort((a, b) => standings[b].mmr - standings[a].mmr || a.localeCompare(b))
+  const sides: string[][] = Array.from({ length: sideCount }, () => [])
+  ranked.forEach((id, index) => {
+    const round = Math.floor(index / sideCount)
+    const slot = index % sideCount
+    sides[round % 2 === 0 ? slot : sideCount - 1 - slot].push(id)
+  })
+  return sides
+}

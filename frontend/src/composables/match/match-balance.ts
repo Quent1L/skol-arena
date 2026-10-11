@@ -41,7 +41,8 @@ export function computeMatchBalance(
   standings: PlayerStandings | null | undefined,
 ): MatchBalance | null {
   if (!standings) return null
-  if (sides.length < 2) return null
+  // A win probability only reads as a duel: a match of three sides has no bar.
+  if (sides.length !== 2) return null
 
   const [sideA, sideB] = sides
   const idsA = sideA.playerIds ?? []

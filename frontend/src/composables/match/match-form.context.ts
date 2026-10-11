@@ -14,6 +14,8 @@ export interface MatchFormState {
   allPlayerIds: string[]
   winnerPosition: number | null
   scorePerSide: Record<number, number>
+  /** Placement per side position (1 = first, ties shared); read with 3+ sides only. */
+  rankPerSide: Record<number, number>
   outcomeTypeId: string | null
   outcomeReasonId: string | null
 }

@@ -77,6 +77,7 @@
           v-model:sides="formState.sides"
           :tournament-id="tournamentId"
           :teams="teams"
+          :max-sides="tournament?.maxSidesPerMatch ?? 2"
           :played-at="formState.playedAt"
           :match-id="matchId"
           hide-navigation
@@ -98,6 +99,7 @@
           :standings="standings"
           :allow-draw="tournament?.allowDraw ?? false"
           :is-ranked="tournament?.mode === 'ranked'"
+          :max-sides="tournament?.maxSidesPerMatch ?? 2"
           :min-team-size="tournament?.minTeamSize"
           :max-team-size="tournament?.maxTeamSize"
           @previous="activeStep = 'participants'"
@@ -112,6 +114,7 @@
           v-model:outcome-type-id="formState.outcomeTypeId"
           v-model:outcome-reason-id="formState.outcomeReasonId"
           v-model:score-per-side="formState.scorePerSide"
+          v-model:rank-per-side="formState.rankPerSide"
           :tournament-id="tournamentId"
           :player-names="playersMap"
           :teams="teams"
@@ -210,10 +213,11 @@ import ParticipantsStep from '@/components/match/steps/ParticipantsStep.vue'
 import TeamsStep from '@/components/match/steps/TeamsStep.vue'
 import CompositionStep from '@/components/match/steps/CompositionStep.vue'
 import ResultStep from '@/components/match/steps/ResultStep.vue'
-import type {
-  ClientCreateMatchRequest,
-  ClientUpdateMatchRequest,
-} from '@skol-arena/shared/types/index'
+import {
+  buildCreateMatchRequest,
+  buildUpdateMatchRequest,
+  isResultReady,
+} from '@/composables/match/match-payload'
 
 interface Props {
   tournamentId: string
@@ -316,14 +320,7 @@ const canProceedStep = computed(() => {
   }
 })
 
-const canSubmit = computed(() => {
-  if (formState.value.winnerPosition === null) return false
-  if (tournament.value?.scoreEnabled === false) return true
-  const inRange = (v: number) =>
-    (tournament.value?.minScore == null || v >= tournament.value.minScore) &&
-    (tournament.value?.maxScore == null || v <= tournament.value.maxScore)
-  return formState.value.sides.every((s) => inRange(formState.value.scorePerSide[s.position] ?? 0))
-})
+const canSubmit = computed(() => isResultReady(formState.value, tournament.value ?? {}))
 
 // Step component refs for programmatic triggerNext
 const whenStepRef = ref<InstanceType<typeof WhenStep>>()
@@ -420,38 +417,25 @@ useHeaderBackOverride(() => {
 })
 
 async function submitMatch() {
-  const isScheduled = isFutureDate.value
-  const payload: ClientCreateMatchRequest = {
+  const options = {
     tournamentId: props.tournamentId,
-    sides: formState.value.sides,
-    playedAt: formState.value.playedAt ?? new Date(),
-    status: isScheduled ? 'scheduled' : 'reported',
-    scoreA: isScheduled ? 0 : (formState.value.scorePerSide[1] ?? 0),
-    scoreB: isScheduled ? 0 : (formState.value.scorePerSide[2] ?? 0),
-    winnerPosition:
-      isScheduled || formState.value.winnerPosition === 0 ? null : formState.value.winnerPosition,
-    outcomeTypeId: isScheduled ? undefined : (formState.value.outcomeTypeId ?? undefined),
-    outcomeReasonId: isScheduled ? undefined : (formState.value.outcomeReasonId ?? undefined),
+    isScheduled: isFutureDate.value,
+    scoreEnabled: tournament.value?.scoreEnabled ?? true,
   }
 
   if (isEditMode.value && props.matchId) {
-    const updatePayload: ClientUpdateMatchRequest = {
-      playedAt: payload.playedAt,
-      status: payload.status,
-      scoreA: payload.scoreA,
-      scoreB: payload.scoreB,
-      winnerPosition: payload.winnerPosition,
-      outcomeTypeId: payload.outcomeTypeId,
-      outcomeReasonId: payload.outcomeReasonId,
-    }
     await updateMatchWithNavigation(
       props.matchId,
-      updatePayload,
+      buildUpdateMatchRequest(formState.value, options),
       props.tournamentId,
       tournament.value?.mode,
     )
   } else {
-    await createMatchWithNavigation(payload, props.tournamentId, tournament.value?.mode)
+    await createMatchWithNavigation(
+      buildCreateMatchRequest(formState.value, options),
+      props.tournamentId,
+      tournament.value?.mode,
+    )
   }
 }
 </script>

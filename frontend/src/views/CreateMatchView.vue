@@ -106,6 +106,7 @@ const formState = ref<MatchFormState>({
   allPlayerIds: [],
   winnerPosition: null,
   scorePerSide: { 1: 0, 2: 0 },
+  rankPerSide: {},
   outcomeTypeId: null,
   outcomeReasonId: null,
 })
@@ -158,6 +159,7 @@ watch(
     if (date > new Date()) {
       formState.value.winnerPosition = null
       formState.value.scorePerSide = { 1: 0, 2: 0 }
+      formState.value.rankPerSide = {}
       formState.value.outcomeTypeId = null
       formState.value.outcomeReasonId = null
     }
@@ -176,8 +178,10 @@ function applyExistingMatch(match: ClientMatchDetail) {
   formState.value.allPlayerIds = sides.flatMap((s) => s.playerIds ?? [])
 
   formState.value.scorePerSide = {}
+  formState.value.rankPerSide = {}
   for (const s of match.sides) {
     formState.value.scorePerSide[s.position] = s.score ?? 0
+    if (s.rank != null) formState.value.rankPerSide[s.position] = s.rank
   }
 
   if (match.outcomeTypeId) formState.value.outcomeTypeId = match.outcomeTypeId

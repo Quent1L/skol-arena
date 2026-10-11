@@ -2,8 +2,30 @@
   <div class="flex flex-col gap-6 pt-4">
     <h3 class="text-base font-semibold">{{ t('resultStep.title') }}</h3>
 
+    <!-- Three sides or more: a finishing order, scores included -->
+    <div v-if="isNway" class="flex flex-col gap-2">
+      <span class="text-sm font-medium"
+        >{{ t('rankingInput.title') }} <span class="text-red-500">*</span></span
+      >
+      <UAlert
+        v-if="scoreEnabled !== false && scoreInstructions"
+        color="info"
+        variant="subtle"
+        :title="scoreInstructions"
+      />
+      <RankingInput
+        v-model:ranks="rankPerSideModel"
+        v-model:scores="scorePerSideModel"
+        :sides="sidesModel"
+        :player-names="playerNames"
+        :score-enabled="scoreEnabled !== false"
+        :min-score="minScore"
+        :max-score="maxScore"
+      />
+    </div>
+
     <!-- Side previews — click to pick winner -->
-    <div class="flex flex-col gap-2">
+    <div v-else class="flex flex-col gap-2">
       <span class="text-sm font-medium"
         >{{ t('resultStep.selectWinner') }} <span class="text-red-500">*</span></span
       >
@@ -123,7 +145,7 @@
     </div>
 
     <!-- Score -->
-    <div v-if="scoreEnabled !== false" class="flex flex-col gap-2">
+    <div v-if="scoreEnabled !== false && !isNway" class="flex flex-col gap-2">
       <span class="text-sm font-medium"
         >{{ t('resultStep.score') }} <span class="text-red-500">*</span></span
       >
@@ -184,6 +206,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
+import RankingInput from '@/components/match/steps/RankingInput.vue'
+import { firstPlaceCount, isCompleteRanking, type RankMap } from '@/composables/match/match-ranking'
 import { outcomeTypeApi } from '@/composables/outcome-type.api'
 import { outcomeReasonApi } from '@/composables/outcome-reason.api'
 import { tournamentApi } from '@/composables/tournament/tournament.api'
@@ -236,6 +260,10 @@ const winnerModel = defineModel<number | null>('winner', { default: null })
 const outcomeTypeIdModel = defineModel<string | null>('outcomeTypeId', { default: null })
 const outcomeReasonIdModel = defineModel<string | null>('outcomeReasonId', { default: null })
 const scorePerSideModel = defineModel<Record<number, number>>('scorePerSide', { required: true })
+/** Placement of each side; only read with three sides or more. */
+const rankPerSideModel = defineModel<RankMap>('rankPerSide', { default: () => ({}) })
+
+const isNway = computed(() => sidesModel.value.length > 2)
 
 const outcomeTypes = ref<OutcomeType[]>(props.initialOutcomeTypes ?? [])
 const outcomeReasons = ref<OutcomeReason[]>(props.initialOutcomeReasons ?? [])
@@ -291,8 +319,19 @@ function setScore(position: number, value: number) {
   scorePerSideModel.value = { ...scorePerSideModel.value, [position]: value }
 }
 
+const positions = computed(() => sidesModel.value.map((s) => s.position))
+const isRankingComplete = computed(() => isCompleteRanking(positions.value, rankPerSideModel.value))
+// A shared first place is a draw, whatever the number of sides.
+const isForbiddenDraw = computed(
+  () => isNway.value && !props.allowDraw && firstPlaceCount(rankPerSideModel.value) > 1,
+)
+
 const canCreate = computed(() => {
-  if (winnerModel.value === null) return false
+  if (isNway.value) {
+    if (!isRankingComplete.value || isForbiddenDraw.value) return false
+  } else if (winnerModel.value === null) {
+    return false
+  }
   if (props.scoreEnabled === false) return true
   const inRange = (v: number) =>
     (props.minScore == null || v >= props.minScore) &&
@@ -302,6 +341,10 @@ const canCreate = computed(() => {
 
 const validationMessages = computed<string[]>(() => {
   const msgs: string[] = []
+  if (isNway.value) {
+    if (isForbiddenDraw.value) msgs.push(t('rankingInput.drawNotAllowed'))
+    return msgs
+  }
   if (winnerModel.value === null)
     msgs.push(
       props.allowDraw ? t('resultStep.selectWinnerOrDraw') : t('resultStep.selectWinnerOnly'),

@@ -13,6 +13,7 @@ export interface GeneralInfoState {
   organizationId?: string | null
   minTeamSize?: number
   maxTeamSize?: number
+  maxSidesPerMatch?: number
   startDate?: Date
   endDate?: Date
   allowDraw?: boolean

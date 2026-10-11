@@ -28,6 +28,7 @@
           :discipline-locked="isEditMode"
           :locked-discipline-name="currentDisciplineName"
           :editability="sectionEditability"
+          :show-max-sides="state.mode !== 'bracket'"
         >
           <template #after-discipline>
             <UFormField v-if="isEditMode" name="status" :label="t('common.status')">
@@ -113,35 +114,75 @@
               />
             </UFormField>
             <UFormField
-              name="pointPerVictory"
-              :label="t('tournamentFormView.labelPointPerVictory')"
+              name="pointsSource"
+              :label="t('tournamentFormView.labelPointsSource')"
+              :help="pointsSourceHelp"
+              class="sm:col-span-2 lg:col-span-3"
             >
-              <UInputNumber
-                v-model="state.pointPerVictory"
-                :min="0"
-                :disabled="!isFieldEditable('pointPerVictory')"
-                class="w-full"
+              <USelect
+                v-model="state.pointsSource"
+                :items="pointsSourceOptions"
+                :disabled="!isFieldEditable('pointsSource')"
+                class="w-full sm:w-80"
               />
-              <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('pointPerVictory')" />
+              <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('pointsSource')" />
             </UFormField>
-            <UFormField name="pointPerDraw" :label="t('tournamentFormView.labelPointPerDraw')">
-              <UInputNumber
-                v-model="state.pointPerDraw"
-                :min="0"
-                :disabled="!isFieldEditable('pointPerDraw')"
-                class="w-full"
-              />
-              <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('pointPerDraw')" />
+            <UFormField
+              v-if="state.pointsSource === 'rank'"
+              name="rankPoints"
+              :label="t('tournamentFormView.labelRankPoints')"
+              class="sm:col-span-2 lg:col-span-3"
+            >
+              <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <UFormField
+                  v-for="(_, index) in rankPointsModel"
+                  :key="index"
+                  :label="t('tournamentFormView.rankPlace', { place: index + 1 })"
+                  size="sm"
+                >
+                  <UInputNumber
+                    v-model="rankPointsModel[index]"
+                    :min="0"
+                    :disabled="!isFieldEditable('rankPoints')"
+                    class="w-full"
+                  />
+                </UFormField>
+              </div>
             </UFormField>
-            <UFormField name="pointPerLoss" :label="t('tournamentFormView.labelPointPerLoss')">
-              <UInputNumber
-                v-model="state.pointPerLoss"
-                :min="0"
-                :disabled="!isFieldEditable('pointPerLoss')"
-                class="w-full"
-              />
-              <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('pointPerLoss')" />
-            </UFormField>
+            <template v-if="(state.pointsSource ?? 'match_result') === 'match_result'">
+              <UFormField
+                name="pointPerVictory"
+                :label="t('tournamentFormView.labelPointPerVictory')"
+              >
+                <UInputNumber
+                  v-model="state.pointPerVictory"
+                  :min="0"
+                  :disabled="!isFieldEditable('pointPerVictory')"
+                  class="w-full"
+                />
+                <FieldEditabilityNote
+                  :recalculates="fieldTriggersRecalculation('pointPerVictory')"
+                />
+              </UFormField>
+              <UFormField name="pointPerDraw" :label="t('tournamentFormView.labelPointPerDraw')">
+                <UInputNumber
+                  v-model="state.pointPerDraw"
+                  :min="0"
+                  :disabled="!isFieldEditable('pointPerDraw')"
+                  class="w-full"
+                />
+                <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('pointPerDraw')" />
+              </UFormField>
+              <UFormField name="pointPerLoss" :label="t('tournamentFormView.labelPointPerLoss')">
+                <UInputNumber
+                  v-model="state.pointPerLoss"
+                  :min="0"
+                  :disabled="!isFieldEditable('pointPerLoss')"
+                  class="w-full"
+                />
+                <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('pointPerLoss')" />
+              </UFormField>
+            </template>
           </div>
         </section>
 
@@ -176,7 +217,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useI18n } from 'vue-i18n'
@@ -188,6 +229,8 @@ import {
   baseTournamentUpdateFormSchema,
   CHAMPIONSHIP_DEFAULTS,
   CHAMPIONSHIP_LIMITS,
+  DEFAULT_POINTS_SOURCE,
+  MIN_SIDES_PER_MATCH,
   SCORING_DEFAULTS,
   resolveChampionshipConfig,
   resolveScoringConfig,
@@ -251,6 +294,18 @@ const teamModeOptions = [
   { label: t('tournamentFormView.teamModeFlex'), value: 'flex' },
 ]
 
+const pointsSourceOptions = [
+  { label: t('tournamentFormView.pointsSourceMatchResult'), value: 'match_result' },
+  { label: t('tournamentFormView.pointsSourceRank'), value: 'rank' },
+  { label: t('tournamentFormView.pointsSourceScore'), value: 'score' },
+]
+
+const pointsSourceHelp = computed(() => {
+  if (state.value.pointsSource === 'rank') return t('tournamentFormView.pointsSourceRankHelp')
+  if (state.value.pointsSource === 'score') return t('tournamentFormView.pointsSourceScoreHelp')
+  return t('tournamentFormView.pointsSourceMatchResultHelp')
+})
+
 const statusOptions = [
   { label: t('tournamentFormView.statusDraft'), value: 'draft' },
   { label: t('tournamentFormView.statusOpen'), value: 'open' },
@@ -279,6 +334,31 @@ function onTeamModeChange(mode: string) {
  * section field (name, description, dates…) read-only on a new tournament.
  */
 const sectionEditability = computed(() => (isEditMode.value ? editability.value : null))
+
+/** A first-to-last default: 3 places give 2 / 1 / 0, the first always ahead. */
+function defaultRankPoints(places: number): number[] {
+  return Array.from({ length: places }, (_, i) => places - 1 - i)
+}
+
+/**
+ * One input per place a match can hold. The table follows `maxSidesPerMatch`: a
+ * larger cap adds places at 0 point, a smaller one drops the extra places.
+ */
+const rankPointsModel = computed<number[]>(() => state.value.rankPoints ?? [])
+
+watch(
+  () => [state.value.pointsSource, state.value.maxSidesPerMatch] as const,
+  ([source, maxSides]) => {
+    if (source !== 'rank') return
+    const places = Math.max(MIN_SIDES_PER_MATCH, maxSides ?? MIN_SIDES_PER_MATCH)
+    const current = state.value.rankPoints ?? []
+    if (current.length === 0) {
+      state.value.rankPoints = defaultRankPoints(places)
+    } else if (current.length !== places) {
+      state.value.rankPoints = Array.from({ length: places }, (_, i) => current[i] ?? 0)
+    }
+  },
+)
 
 function isFieldEditable(fieldName: string): boolean {
   if (!isEditMode.value) return true
@@ -346,6 +426,7 @@ onMounted(async () => {
         status: currentTournament.value.status,
         minTeamSize: currentTournament.value.minTeamSize,
         maxTeamSize: currentTournament.value.maxTeamSize,
+        maxSidesPerMatch: currentTournament.value.maxSidesPerMatch ?? MIN_SIDES_PER_MATCH,
         ...resolveChampionshipConfig(currentTournament.value.championshipConfig),
         ...resolveScoringConfig(currentTournament.value.scoringConfig),
         allowDraw: currentTournament.value.allowDraw ?? true,
@@ -369,8 +450,10 @@ onMounted(async () => {
       status: 'draft',
       minTeamSize: 1,
       maxTeamSize: 2,
+      maxSidesPerMatch: MIN_SIDES_PER_MATCH,
       ...CHAMPIONSHIP_DEFAULTS,
       ...SCORING_DEFAULTS,
+      pointsSource: DEFAULT_POINTS_SOURCE,
       allowDraw: true,
       scoreEnabled: true,
       validationMode: 'strict',

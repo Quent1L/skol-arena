@@ -405,10 +405,11 @@
     "previous": "Previous",
     "random": "Random",
     "randomOnly": "Shuffle teams",
-    "teamA": "Team A",
-    "teamB": "Team B",
     "title": "Composition",
-    "sideSizeError": "{side}: {count} player(s), it needs between {min} and {max}"
+    "sideSizeError": "{side}: {count} player(s), it needs between {min} and {max}",
+    "addSide": "Add a team",
+    "removeSide": "Remove team {number}",
+    "team": "Team {number}"
   },
   "conditionCount": {
     "comparison": "This number must be",
@@ -636,14 +637,18 @@
       "name": "Tournament name",
       "organization": "Organization (optional)",
       "rules": "Ruleset",
-      "startDate": "Start date"
+      "startDate": "Start date",
+      "maxSidesPerMatch": "Max sides per match"
     },
     "placeholders": {
       "discipline": "Select a discipline",
       "noOrganization": "General access (no group)",
       "noRules": "No ruleset"
     },
-    "title": "General information"
+    "title": "General information",
+    "help": {
+      "maxSidesPerMatch": "2 for duels; above that, a match can oppose several sides (1v1v1, 2v2v2…)"
+    }
   },
   "generateBracketDialog": {
     "bracketTypeLabel": "Bracket type",
@@ -2225,7 +2230,16 @@
     "statusOpen": "Open for registration",
     "teamModeFlex": "Flexible",
     "teamModeStatic": "Static",
-    "undefinedDiscipline": "Undefined"
+    "undefinedDiscipline": "Undefined",
+    "labelPointsSource": "Points awarded by",
+    "labelRankPoints": "Points per place",
+    "pointsSourceMatchResult": "Win / draw / loss",
+    "pointsSourceMatchResultHelp": "Only the first wins; sides tied for first draw, every other side loses.",
+    "pointsSourceRank": "Placement",
+    "pointsSourceRankHelp": "Each place earns the points set below.",
+    "pointsSourceScore": "Score",
+    "pointsSourceScoreHelp": "Each side earns as many points as its score in the match.",
+    "rankPlace": "Place {place}"
   },
   "tournamentHeader": {
     "alreadyRegistered": "Already registered",
@@ -3128,5 +3142,15 @@
       "mvpSpectators": "In team matches, players and spectators elect the MVP.",
       "noEffect": "These votes change neither the result nor the standings."
     }
+  },
+  "rankingInput": {
+    "drag": "Move",
+    "drawNotAllowed": "Ties for first place are not allowed in this competition.",
+    "instruction": "Drag the teams into finishing order. \"=\" ties a team with the one above it.",
+    "instructionScores": "Enter the scores: the ranking follows, and dragging the teams adjusts it. \"=\" ties a team with the one above it.",
+    "score": "Team {number} score",
+    "side": "Team {number}",
+    "tie": "Tied with the team above",
+    "title": "Ranking"
   }
 }

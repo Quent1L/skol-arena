@@ -12,6 +12,7 @@ function mountPanel(over: Record<string, unknown> = {}) {
   const side: MatchDetailSide = {
     position: 1,
     score: 3,
+    rank: 1,
     pointsAwarded: 0,
     isWinner: true,
     entryId: 'e-1',

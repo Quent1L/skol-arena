@@ -98,6 +98,21 @@
         />
       </UFormField>
 
+      <UFormField
+        v-if="showMaxSides"
+        name="maxSidesPerMatch"
+        :label="t('generalInfoSection.fields.maxSidesPerMatch')"
+        :help="t('generalInfoSection.help.maxSidesPerMatch')"
+      >
+        <UInputNumber
+          v-model="state.maxSidesPerMatch"
+          :min="MIN_SIDES_PER_MATCH"
+          :max="MAX_SIDES_PER_MATCH"
+          :disabled="!canEdit('maxSidesPerMatch')"
+          class="w-full"
+        />
+      </UFormField>
+
       <UFormField name="startDate" :label="t('generalInfoSection.fields.startDate')" required>
         <UInputDate v-model="startDate" :disabled="!canEdit('startDate')" class="w-full" />
       </UFormField>
@@ -122,7 +137,12 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import type { OrganizationWithMemberCount, TournamentEditability } from '@skol-arena/shared'
+import {
+  MAX_SIDES_PER_MATCH,
+  MIN_SIDES_PER_MATCH,
+  type OrganizationWithMemberCount,
+  type TournamentEditability,
+} from '@skol-arena/shared'
 import { useFieldEditability } from '@/composables/useFieldEditability'
 import { useCalendarDateModel } from '@/utils/calendar-date'
 import FieldEditabilityNote from '../FieldEditabilityNote.vue'
@@ -147,6 +167,8 @@ const props = withDefaults(
     namePlaceholder?: string
     editability?: TournamentEditability | null
     showAllowDraw?: boolean
+    /** Brackets pair their own matches, always as duels. */
+    showMaxSides?: boolean
   }>(),
   {
     disciplineLocked: false,
@@ -154,6 +176,7 @@ const props = withDefaults(
     namePlaceholder: '',
     editability: null,
     showAllowDraw: true,
+    showMaxSides: true,
   },
 )
 
