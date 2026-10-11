@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { standingsPointsSourceSchema, type StandingsPointsSource } from "./enums";
+import { MAX_SIDES_PER_MATCH } from "./match-ranking";
 
 // ============================================
 // Per-mode tournament configuration
@@ -22,6 +24,12 @@ export const SCORING_DEFAULTS = {
   pointPerDraw: 1,
   pointPerLoss: 0,
 } as const;
+
+/**
+ * Where points come from by default: the win/draw/loss points above. The placement table
+ * (`rankPoints`) only applies with the `rank` source and has no default.
+ */
+export const DEFAULT_POINTS_SOURCE: StandingsPointsSource = "match_result";
 
 export const CHAMPIONSHIP_DEFAULTS = {
   maxMatchesPerPlayer: 10,
@@ -50,6 +58,10 @@ export const tournamentScoringConfigSchema = z
     pointPerVictory: points(),
     pointPerDraw: points(),
     pointPerLoss: points(),
+    /** Where a side's points come from: result, placement table or raw score. */
+    pointsSource: standingsPointsSourceSchema,
+    /** Points per placement (index 0 = first), read with the `rank` source. */
+    rankPoints: z.array(points()).min(1).max(MAX_SIDES_PER_MATCH).nullable(),
   })
   .meta({ id: "TournamentScoringConfig" });
 
@@ -89,6 +101,8 @@ export function resolveScoringConfig(config?: Partial<TournamentScoringConfig> |
     pointPerVictory: config?.pointPerVictory ?? SCORING_DEFAULTS.pointPerVictory,
     pointPerDraw: config?.pointPerDraw ?? SCORING_DEFAULTS.pointPerDraw,
     pointPerLoss: config?.pointPerLoss ?? SCORING_DEFAULTS.pointPerLoss,
+    pointsSource: config?.pointsSource ?? DEFAULT_POINTS_SOURCE,
+    rankPoints: config?.rankPoints ?? null,
   };
 }
 

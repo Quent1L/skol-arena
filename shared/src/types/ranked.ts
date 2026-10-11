@@ -11,6 +11,7 @@ import {
   teamSizeError,
   scoreRangePredicate,
   scoreRangeError,
+  maxSidesPerMatchSchema,
 } from "./season-form";
 
 // ============================================
@@ -262,6 +263,8 @@ export type HistoryMatchSidePlayer = z.infer<typeof historyMatchSidePlayerSchema
 export const historyMatchSideSchema = z
   .object({
     position: z.number().int(),
+    /** Placement (1 = first, ties share a rank); null while the match has no result. */
+    rank: z.number().int().nullish(),
     players: z.array(historyMatchSidePlayerSchema),
   })
   .meta({ id: "HistoryMatchSide" });
@@ -517,6 +520,7 @@ export const createRankedSeasonSchema = z
     endDate: z.iso.datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
     minTeamSize: z.number(vmsg("validation.minTeamSizeRequired")).int().min(1, vmsg("validation.teamSizeMin1")),
     maxTeamSize: z.number(vmsg("validation.maxTeamSizeRequired")).int().min(1, vmsg("validation.teamSizeMin1")),
+    maxSidesPerMatch: maxSidesPerMatchSchema.optional(),
     rulesId: z.uuid().nullable().optional(),
     organizationId: z.uuid().nullable().optional(),
     allowDraw: z.boolean().default(true).optional(),
@@ -548,6 +552,7 @@ export const updateRankedSeasonSchema = z
       .optional(),
     minTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
     maxTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
+    maxSidesPerMatch: maxSidesPerMatchSchema.optional(),
     rulesId: z.uuid().nullable().optional(),
     organizationId: z.uuid().nullable().optional(),
     allowDraw: z.boolean().optional(),

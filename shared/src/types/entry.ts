@@ -60,9 +60,11 @@ export const matchSideSchema = z
     id: z.string(),
     matchId: z.string(),
     entryId: z.string(),
-    /** 1, 2, 3… (supports N-way matches in future) */
+    /** 1, 2, 3… — the side's identity within the match */
     position: z.number().int(),
     score: z.number(),
+    /** Placement (1 = first, ties share a rank); null while the match has no result. */
+    rank: z.number().int().nullish(),
     pointsAwarded: z.number(),
   })
   .meta({ id: "MatchSide" });

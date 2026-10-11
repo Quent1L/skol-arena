@@ -11,6 +11,8 @@ export const SCORING_CONFIG_COLUMNS = {
   pointPerVictory: true,
   pointPerDraw: true,
   pointPerLoss: true,
+  pointsSource: true,
+  rankPoints: true,
 } as const;
 
 export const CHAMPIONSHIP_CONFIG_COLUMNS = {

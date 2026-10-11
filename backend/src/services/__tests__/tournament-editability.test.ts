@@ -52,6 +52,18 @@ describe("tournament editability", () => {
     expect(resolveFieldEditability("scoreEnabled", ctx({ enteredMatchCount: 1 }))).toBe("locked");
   });
 
+  it("keeps the number of sides per match open all along, except on a bracket", () => {
+    const late = ctx({ status: "ongoing", enteredMatchCount: 50 });
+    expect(resolveFieldEditability("maxSidesPerMatch", late)).toBe("always");
+    expect(resolveFieldEditability("maxSidesPerMatch", { ...late, mode: "ranked" })).toBe("always");
+    expect(resolveFieldEditability("maxSidesPerMatch", { ...late, mode: "bracket" })).toBe("locked");
+  });
+
+  it("routes the points source and placement table through the scoring config", () => {
+    expect(policyFieldFor("pointsSource")).toBe("scoringConfig");
+    expect(policyFieldFor("rankPoints")).toBe("scoringConfig");
+  });
+
   it("keeps the points scale editable, at the price of a recalculation", () => {
     // The one knob `recalculatePointsInternal` was built for.
     expect(resolveFieldEditability("scoringConfig", ctx({ enteredMatchCount: 50 }))).toBe("recalculates");

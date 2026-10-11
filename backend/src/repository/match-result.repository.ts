@@ -21,8 +21,8 @@ export class MatchResultRepository {
   /**
    * Get match result by match ID
    */
-  async getByMatchId(matchId: string) {
-    return await db.query.matchResults.findFirst({
+  async getByMatchId(matchId: string, tx?: DbTransaction) {
+    return await (tx || db).query.matchResults.findFirst({
       where: eq(matchResults.matchId, matchId),
       with: {
         reporter: true,
@@ -56,8 +56,8 @@ export class MatchResultRepository {
   /**
    * Update an existing match result
    */
-  async update(matchId: string, data: UpdateResultData) {
-    const [updated] = await db
+  async update(matchId: string, data: UpdateResultData, tx?: DbTransaction) {
+    const [updated] = await (tx || db)
       .update(matchResults)
       .set({
         reportedBy: data.reportedBy,

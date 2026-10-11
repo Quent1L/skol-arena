@@ -479,8 +479,8 @@ describe("MatchService - basic flows", () => {
     repo.update = async (_id: string, data: UpdateMatchData) => ({ id: "m-1", ...data }) as any;
     repo.getParticipationsByMatchId = async () =>
       [
-        { playerId: "u-rep", teamSide: "A" },
-        { playerId: "u-conf", teamSide: "B" },
+        { playerId: "u-rep", sidePosition: 1 },
+        { playerId: "u-conf", sidePosition: 2 },
       ] as any;
     confRepo.getByMatchId = async () =>
       [
@@ -508,8 +508,8 @@ describe("MatchService - basic flows", () => {
     repo.update = async (_id: string, data: UpdateMatchData) => ({ id: "m-2", ...data }) as any;
     repo.getParticipationsByMatchId = async () =>
       [
-        { playerId: "u-rep", teamSide: "A" },
-        { playerId: "u-conf", teamSide: "B" },
+        { playerId: "u-rep", sidePosition: 1 },
+        { playerId: "u-conf", sidePosition: 2 },
       ] as any;
     confRepo.getByMatchId = async () =>
       [
@@ -772,7 +772,7 @@ describe("MatchService - basic flows", () => {
       }) as any;
     repo.isUserInMatch = async () => true;
     repo.update = async (_id: string, data: UpdateMatchData) => ({ id: "m-1", ...data }) as any;
-    repo.getParticipationsByMatchId = async () => [{ playerId: "u-rep", teamSide: "A" }] as any;
+    repo.getParticipationsByMatchId = async () => [{ playerId: "u-rep", sidePosition: 1 }] as any;
     confRepo.getByMatchId = async () => [{ playerId: "u-rep", isConfirmed: true, isContested: false }] as any;
 
     const res = await matchService.confirmMatch("m-1", {} as ConfirmMatchRequestData, "u-rep");
@@ -1363,10 +1363,10 @@ describe("MatchService - Finalization Logic", () => {
     repo.isUserInMatch = async () => true; // p3 is a participant
     repo.getParticipationsByMatchId = async () =>
       [
-        { playerId: "p1", teamSide: "A" },
-        { playerId: "p2", teamSide: "A" },
-        { playerId: "p3", teamSide: "B" },
-        { playerId: "p4", teamSide: "B" },
+        { playerId: "p1", sidePosition: 1 },
+        { playerId: "p2", sidePosition: 1 },
+        { playerId: "p3", sidePosition: 2 },
+        { playerId: "p4", sidePosition: 2 },
       ] as any;
     confRepo.getByMatchId = async () =>
       [
@@ -1394,8 +1394,8 @@ describe("MatchService - Finalization Logic", () => {
     repo.isUserInMatch = async () => true; // p1 is a participant
     repo.getParticipationsByMatchId = async () =>
       [
-        { playerId: "p1", teamSide: "A" },
-        { playerId: "p2", teamSide: "B" },
+        { playerId: "p1", sidePosition: 1 },
+        { playerId: "p2", sidePosition: 2 },
       ] as any;
     confRepo.getByMatchId = async () =>
       [
@@ -1825,8 +1825,8 @@ describe("MatchService - Dispute handling", () => {
     repo.isUserInMatch = async () => true;
     repo.getParticipationsByMatchId = async () =>
       [
-        { playerId: "p1", teamSide: "A" },
-        { playerId: "p2", teamSide: "B" },
+        { playerId: "p1", sidePosition: 1 },
+        { playerId: "p2", sidePosition: 2 },
       ] as any;
     tourRepo.getAdminUserIds = async () => ["admin-1"];
 
@@ -1862,8 +1862,8 @@ describe("MatchService - Dispute handling", () => {
     repo.isUserInMatch = async () => true;
     repo.getParticipationsByMatchId = async () =>
       [
-        { playerId: "p1", teamSide: "A" },
-        { playerId: "p2", teamSide: "B" },
+        { playerId: "p1", sidePosition: 1 },
+        { playerId: "p2", sidePosition: 2 },
       ] as any;
 
     const upserted: any[] = [];
@@ -1907,8 +1907,8 @@ describe("MatchService - Dispute handling", () => {
     repo.isUserInMatch = async () => true;
     repo.getParticipationsByMatchId = async () =>
       [
-        { playerId: "p1", teamSide: "A" },
-        { playerId: "p2", teamSide: "B" },
+        { playerId: "p1", sidePosition: 1 },
+        { playerId: "p2", sidePosition: 2 },
       ] as any;
     // p1 drops their contestation, nobody else contests
     confRepo.getByMatchId = async () =>
@@ -1959,8 +1959,8 @@ describe("MatchService - Dispute handling", () => {
     repo.isUserInMatch = async () => true;
     repo.getParticipationsByMatchId = async () =>
       [
-        { playerId: "p1", teamSide: "A" },
-        { playerId: "p2", teamSide: "B" },
+        { playerId: "p1", sidePosition: 1 },
+        { playerId: "p2", sidePosition: 2 },
       ] as any;
     confRepo.getByMatchId = async () =>
       [{ playerId: "p1", isConfirmed: true, isContested: false, isPostFinalization: false }] as any;
@@ -1993,9 +1993,9 @@ describe("MatchService - Dispute handling", () => {
     repo.isUserInMatch = async () => true;
     repo.getParticipationsByMatchId = async () =>
       [
-        { playerId: "p1", teamSide: "A" },
-        { playerId: "p2", teamSide: "A" },
-        { playerId: "p3", teamSide: "B" },
+        { playerId: "p1", sidePosition: 1 },
+        { playerId: "p2", sidePosition: 1 },
+        { playerId: "p3", sidePosition: 2 },
       ] as any;
     confRepo.getByMatchId = async () =>
       [
@@ -2042,8 +2042,8 @@ describe("MatchService - Post-finalization contestation", () => {
     repo.isUserInMatch = async () => true;
     repo.getParticipationsByMatchId = async () =>
       [
-        { playerId: "p1", teamSide: "A" },
-        { playerId: "p2", teamSide: "B" },
+        { playerId: "p1", sidePosition: 1 },
+        { playerId: "p2", sidePosition: 2 },
       ] as any;
     confRepo.hasPlayerDisputedPostFinalization = async () => false;
     confRepo.upsert = async (data: any) => ({ id: "conf-1", ...data }) as any;
@@ -2699,8 +2699,8 @@ describe("MatchService - lifecycle guards", () => {
     repo.isUserInMatch = async () => true;
     repo.getParticipationsByMatchId = async () =>
       [
-        { playerId: "u-a", teamSide: "A" },
-        { playerId: "u-b", teamSide: "B" },
+        { playerId: "u-a", sidePosition: 1 },
+        { playerId: "u-b", sidePosition: 2 },
       ] as any;
     repo.update = async (_id: string, data: UpdateMatchData) => {
       if (data.status === "finalized") finalized.push(_id);
@@ -2718,6 +2718,47 @@ describe("MatchService - lifecycle guards", () => {
       ] as any;
     await matchService.confirmMatch("m-s", {}, "u-b");
     expect(finalized).toEqual(["m-s"]);
+  });
+
+  describe("a result with three sides or more needs a majority of the sides", () => {
+    const run = async (sideCount: number, confirmingSides: number[], reportedBy = "u-1") => {
+      const finalized: string[] = [];
+      repo.getById = async () => scheduled({ status: "reported", result: { reportedBy } });
+      repo.getTournament = async () => ({ id: "t-1", validationMode: "strict" }) as any;
+      repo.isUserInMatch = async () => true;
+      repo.getParticipationsByMatchId = async () =>
+        Array.from({ length: sideCount }, (_, i) => ({
+          playerId: `u-${i + 1}`,
+          sidePosition: i + 1,
+        })) as any;
+      repo.update = async (_id: string, data: UpdateMatchData) => {
+        if (data.status === "finalized") finalized.push(_id);
+        return { id: _id } as any;
+      };
+      confRepo.getByMatchId = async () =>
+        confirmingSides.map((side) => ({
+          playerId: `u-${side}`,
+          isConfirmed: true,
+          isContested: false,
+        })) as any;
+      await matchService.confirmMatch("m-s", {}, `u-${confirmingSides.at(-1) ?? 2}`);
+      return finalized.length > 0;
+    };
+
+    it("settles a 1v1v1 once one other side agrees with the reporter", async () => {
+      expect(await run(3, [1])).toBe(false);
+      expect(await run(3, [1, 3])).toBe(true);
+    });
+
+    it("waits for two other sides out of four", async () => {
+      expect(await run(4, [1, 2])).toBe(false);
+      expect(await run(4, [1, 2, 4])).toBe(true);
+    });
+
+    it("needs a majority of confirmations when an outsider entered it", async () => {
+      expect(await run(3, [1], "u-kiosk")).toBe(false);
+      expect(await run(3, [1, 2], "u-kiosk")).toBe(true);
+    });
   });
 });
 

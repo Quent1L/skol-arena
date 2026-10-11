@@ -9,6 +9,8 @@ import {
   teamModeSchema,
   tournamentStatusSchema,
   validationModeSchema,
+  standingsPointsSourceSchema,
+  type StandingsPointsSource,
 } from "./enums";
 import {
   baseSeasonFormSchema,
@@ -19,6 +21,7 @@ import {
   teamSizeError,
   scoreRangePredicate,
   scoreRangeError,
+  maxSidesPerMatchSchema,
 } from "./season-form";
 import {
   CHAMPIONSHIP_LIMITS,
@@ -44,6 +47,8 @@ export const baseTournamentSchema = z
     teamMode: teamModeSchema,
     minTeamSize: z.number().int(),
     maxTeamSize: z.number().int(),
+    /** Most sides a single match may oppose (2 = classic duel). */
+    maxSidesPerMatch: z.number().int(),
     /** Present on every point-scored mode (championship, bracket), null on ranked. */
     scoringConfig: tournamentScoringConfigSchema.nullish(),
     /** Championship-only pairing caps, null on every other mode. */
@@ -79,6 +84,7 @@ export interface CreateTournamentInput {
   teamMode: TeamMode;
   minTeamSize: number;
   maxTeamSize: number;
+  maxSidesPerMatch?: number;
   scoringConfig?: TournamentScoringConfigInput;
   championshipConfig?: ChampionshipConfigInput;
   voteConfig?: VoteConfigInput;
@@ -161,6 +167,8 @@ const flatChampionshipFormFields = {
   pointPerVictory: optionalPoints(),
   pointPerDraw: optionalPoints(),
   pointPerLoss: optionalPoints(),
+  pointsSource: standingsPointsSourceSchema.optional(),
+  rankPoints: z.array(z.number().int().min(0)).nullable().optional(),
 };
 
 // Base schema without cross-field validations for forms
@@ -201,6 +209,7 @@ const baseTournamentDataSchema = z.object({
   teamMode: teamModeSchema,
   minTeamSize: z.number(vmsg("validation.minTeamSizeRequired")).int().min(1, vmsg("validation.teamSizeMin1")),
   maxTeamSize: z.number(vmsg("validation.maxTeamSizeRequired")).int().min(1, vmsg("validation.teamSizeMin1")),
+  maxSidesPerMatch: maxSidesPerMatchSchema.optional(),
   scoringConfig: tournamentScoringConfigInputSchema.optional(),
   championshipConfig: championshipConfigInputSchema.optional(),
   voteConfig: voteConfigInputSchema.optional(),
@@ -244,6 +253,7 @@ export const updateTournamentSchema = z
     teamMode: teamModeSchema.optional(),
     minTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
     maxTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
+    maxSidesPerMatch: maxSidesPerMatchSchema.optional(),
     scoringConfig: tournamentScoringConfigInputSchema.optional(),
     championshipConfig: championshipConfigInputSchema.optional(),
     voteConfig: voteConfigInputSchema.optional(),
@@ -327,6 +337,8 @@ export interface FlatTournamentConfigFields {
   pointPerVictory?: number;
   pointPerDraw?: number;
   pointPerLoss?: number;
+  pointsSource?: StandingsPointsSource;
+  rankPoints?: number[] | null;
 }
 
 function compact<T extends object>(values: T): Partial<T> | undefined {
@@ -353,10 +365,18 @@ export function nestTournamentConfigs<T extends FlatTournamentConfigFields>(
     pointPerVictory,
     pointPerDraw,
     pointPerLoss,
+    pointsSource,
+    rankPoints,
     ...rest
   } = payload;
 
-  const scoringConfig = compact({ pointPerVictory, pointPerDraw, pointPerLoss });
+  const scoringConfig = compact({
+    pointPerVictory,
+    pointPerDraw,
+    pointPerLoss,
+    pointsSource,
+    rankPoints,
+  });
   const championshipConfig = compact({
     maxMatchesPerPlayer,
     maxTimesWithSamePartner,

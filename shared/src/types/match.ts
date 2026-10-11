@@ -9,6 +9,12 @@ import {
   matchTeamSideSchema,
 } from "./enums";
 import { matchSideModelSchema, matchResultModelSchema } from "./entry";
+import {
+  MAX_SIDES_PER_MATCH,
+  MIN_SIDES_PER_MATCH,
+  hasContiguousPositions,
+  isCompetitionRanking,
+} from "./match-ranking";
 import type { HistoryMatchSide } from "./ranked";
 
 // ============================================
@@ -153,6 +159,17 @@ export interface MatchSideInput {
   position: number;
   playerIds?: string[];
   teamId?: string;
+  /** Final placement (1 = first, ties share a rank). Source of truth for 3+ sides. */
+  rank?: number;
+  /** Per-side score, when the competition keeps scores. */
+  score?: number | null;
+}
+
+/** Result of one side, sent when reporting or correcting a match of any size. */
+export interface MatchSideResultInput {
+  position: number;
+  rank: number;
+  score?: number | null;
 }
 
 export interface CreateMatchInput {
@@ -177,11 +194,13 @@ export interface UpdateMatchInput {
   outcomeTypeId?: string;
   outcomeReasonId?: string;
   winnerPosition?: number | null;
+  sideResults?: MatchSideResultInput[];
 }
 
 export interface ReportMatchResultInput {
-  scoreA: number;
-  scoreB: number;
+  scoreA?: number;
+  scoreB?: number;
+  sideResults?: MatchSideResultInput[];
   reportProof?: string;
   winnerPosition?: number | null;
   outcomeTypeId?: string;
@@ -205,21 +224,53 @@ export interface FinalizeMatchInput {
 // Zod schemas for validation
 // ============================================
 
+const sidePositionSchema = z.number().int().min(1).max(MAX_SIDES_PER_MATCH);
+const sideRankSchema = z.number().int().min(1).max(MAX_SIDES_PER_MATCH);
+const sideScoreSchema = z.number().int().min(0).nullable().optional();
+
 export const matchSideInputSchema = z.object({
-  position: z.number().int().min(1).max(2),
+  position: sidePositionSchema,
   playerIds: z.array(z.uuid()).optional(),
   teamId: z.uuid().optional(),
+  rank: sideRankSchema.optional(),
+  score: sideScoreSchema,
 });
 
 /**
- * A match has exactly one side A (position 1) and one side B (position 2): every
- * stat, standing and point computation reads those two positions and nothing else.
+ * A match holds 2..MAX_SIDES_PER_MATCH sides, each at its own position, numbered 1..N
+ * without gaps: every stat, standing and point computation keys on those positions. The
+ * per-tournament cap (`maxSidesPerMatch`) is enforced by the backend.
  */
 const matchSidesSchema = z
   .array(matchSideInputSchema)
-  .length(2)
-  .refine((sides) => sides[0].position !== sides[1].position, {
+  .min(MIN_SIDES_PER_MATCH)
+  .max(MAX_SIDES_PER_MATCH)
+  .refine((sides) => hasContiguousPositions(sides.map((s) => s.position)), {
     ...vmsg("validation.sidesPositions"),
+  })
+  .refine(
+    (sides) =>
+      sides.every((s) => s.rank == null) ||
+      (sides.every((s) => s.rank != null) && isCompetitionRanking(sides.map((s) => s.rank as number))),
+    { ...vmsg("validation.sidesRanking") },
+  );
+
+export const matchSideResultSchema = z.object({
+  position: sidePositionSchema,
+  rank: sideRankSchema,
+  score: sideScoreSchema,
+});
+
+/** Per-side results of a match of any size: one entry per side, a valid ranking. */
+const matchSideResultsSchema = z
+  .array(matchSideResultSchema)
+  .min(MIN_SIDES_PER_MATCH)
+  .max(MAX_SIDES_PER_MATCH)
+  .refine((results) => hasContiguousPositions(results.map((r) => r.position)), {
+    ...vmsg("validation.sidesPositions"),
+  })
+  .refine((results) => isCompetitionRanking(results.map((r) => r.rank)), {
+    ...vmsg("validation.sidesRanking"),
   });
 
 /**
@@ -230,6 +281,7 @@ const matchSidesSchema = z
 export const writableMatchStatusSchema = z.enum(["scheduled", "reported"]);
 export type WritableMatchStatus = z.infer<typeof writableMatchStatusSchema>;
 
+/** Two-side winner pick; a match of 3+ sides reports per-side ranks instead. */
 const winnerPositionSchema = z.number().int().min(1).max(2).nullable().optional();
 
 export const createMatchSchema = z.object({
@@ -256,16 +308,22 @@ export const updateMatchSchema = z.object({
   outcomeTypeId: z.uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
   outcomeReasonId: z.uuid(vmsg("validation.invalidOutcomeReasonId")).optional(),
   winnerPosition: winnerPositionSchema,
+  sideResults: matchSideResultsSchema.optional(),
 });
 
-export const reportMatchResultSchema = z.object({
-  scoreA: z.number().int().min(0, vmsg("validation.scoreNonNegative")),
-  scoreB: z.number().int().min(0, vmsg("validation.scoreNonNegative")),
-  reportProof: z.string().optional(),
-  winnerPosition: winnerPositionSchema,
-  outcomeTypeId: z.uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
-  outcomeReasonId: z.uuid(vmsg("validation.invalidOutcomeReasonId")).optional(),
-});
+export const reportMatchResultSchema = z
+  .object({
+    scoreA: z.number().int().min(0, vmsg("validation.scoreNonNegative")).optional(),
+    scoreB: z.number().int().min(0, vmsg("validation.scoreNonNegative")).optional(),
+    sideResults: matchSideResultsSchema.optional(),
+    reportProof: z.string().optional(),
+    winnerPosition: winnerPositionSchema,
+    outcomeTypeId: z.uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
+    outcomeReasonId: z.uuid(vmsg("validation.invalidOutcomeReasonId")).optional(),
+  })
+  .refine((data) => data.sideResults != null || (data.scoreA != null && data.scoreB != null), {
+    ...vmsg("validation.matchResultRequired"),
+  });
 
 export const confirmMatchSchema = z.object({
   // Empty - just confirms the match result
@@ -615,6 +673,8 @@ export const matchCardSideSchema = z
   .object({
     position: z.number().int(),
     score: z.number().nullable(),
+    /** Placement (1 = first, ties share a rank); null while the match has no result. */
+    rank: z.number().int().nullable(),
     isWinner: z.boolean(),
     /** Static team mode only: the fixed team that played this side. */
     teamName: z.string().nullish(),
@@ -675,6 +735,8 @@ export interface MatchDetailPlayer {
 export interface MatchDetailSide {
   position: number;
   score: number | null;
+  /** Placement (1 = first, ties share a rank); null while the match has no result. */
+  rank: number | null;
   pointsAwarded: number;
   isWinner: boolean;
   entryId: string;

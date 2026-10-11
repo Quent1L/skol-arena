@@ -264,11 +264,8 @@ export class MatchNotificationBuilder {
     const self = participants.find((p) => p.playerId === forPlayerId);
     if (!self) return null;
 
-    const teamA = participants.filter((p) => p.teamSide === "A");
-    const teamB = participants.filter((p) => p.teamSide === "B");
-    const isTeamA = self.teamSide === "A";
-    const teammates = (isTeamA ? teamA : teamB).filter((p) => p.playerId !== forPlayerId);
-    const opponents = isTeamA ? teamB : teamA;
+    const teammates = participants.filter((p) => p.sidePosition === self.sidePosition && p.playerId !== forPlayerId);
+    const opponents = participants.filter((p) => p.sidePosition !== self.sidePosition);
 
     const teammateNames = await Promise.all(
       teammates.map(async (p) => {
@@ -287,8 +284,16 @@ export class MatchNotificationBuilder {
     return {
       teammates: teammateNames.filter(Boolean).join(", "),
       opponents: opponentNames.filter(Boolean).join(", "),
-      matchFormat: `${teammates.length + 1}v${opponents.length}`,
+      matchFormat: this.matchFormat(participants, self.sidePosition),
     };
+  }
+
+  /** "2v2", "1v1v1"… seen from the recipient: their own side first, then the others. */
+  private matchFormat(participants: Participation[], ownPosition: number): string {
+    const sizes = new Map<number, number>();
+    for (const p of participants) sizes.set(p.sidePosition, (sizes.get(p.sidePosition) ?? 0) + 1);
+    const others = [...sizes.keys()].filter((pos) => pos !== ownPosition).sort((a, b) => a - b);
+    return [ownPosition, ...others].map((pos) => sizes.get(pos) ?? 0).join("v");
   }
 }
 

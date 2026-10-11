@@ -32,8 +32,8 @@ beforeEach(() => {
   (matchRepository as any).getById = async () => reportedMatch();
   (matchRepository as any).isUserInMatch = async () => true;
   (matchRepository as any).getParticipationsByMatchId = async () => [
-    { playerId: "p1", teamSide: "A" },
-    { playerId: "p2", teamSide: "B" },
+    { playerId: "p1", sidePosition: 1 },
+    { playerId: "p2", sidePosition: 2 },
   ];
   (tournamentRepository as any).getAdminUserIds = async () => ["admin-1"];
   (tournamentRepository as any).isUserTournamentAdmin = async () => false;

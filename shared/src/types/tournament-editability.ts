@@ -89,6 +89,11 @@ export const TOURNAMENT_FIELD_POLICY: Record<string, FieldPolicy> = {
   minTeamSize: { tier: "always", onlyTeamModes: ["flex"] },
   maxTeamSize: { tier: "always", onlyTeamModes: ["flex"] },
 
+  // ── Sides per match: only bounds the matches created from now on ───────
+  // A stored match keeps the sides it was played with, so lowering the cap never
+  // invalidates one. Brackets are generated duels and never read it.
+  maxSidesPerMatch: { tier: "always", onlyModes: ["championship", "ranked"] },
+
   // ── Structural ───────────────────────────────────────────────────────
   mode: { tier: "locked" },
   teamMode: { tier: "locked" },
@@ -105,6 +110,8 @@ const FLAT_FIELD_TO_POLICY: Record<string, string> = {
   pointPerVictory: "scoringConfig",
   pointPerDraw: "scoringConfig",
   pointPerLoss: "scoringConfig",
+  pointsSource: "scoringConfig",
+  rankPoints: "scoringConfig",
   maxMatchesPerPlayer: "championshipConfig",
   maxTimesWithSamePartner: "championshipConfig",
   maxTimesWithSameOpponent: "championshipConfig",

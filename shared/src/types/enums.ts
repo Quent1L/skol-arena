@@ -65,6 +65,13 @@ export type ValidationMode = (typeof validationModeEnum)[number];
 export const matchTeamSideEnum = ["A", "B"] as const;
 export type MatchTeamSide = (typeof matchTeamSideEnum)[number];
 
+/**
+ * Where a side's championship points come from: the win/draw/loss points, a table of
+ * points per placement, or the side's raw score.
+ */
+export const standingsPointsSourceEnum = ["match_result", "rank", "score"] as const;
+export type StandingsPointsSource = (typeof standingsPointsSourceEnum)[number];
+
 export const outcomeTypeNameEnum = {
   NORMAL: "Normal",
 } as const;
@@ -92,6 +99,7 @@ export const matchStatusSchema = z.enum(matchStatusEnum);
 export const matchFinalizationReasonSchema = z.enum(matchFinalizationReasonEnum);
 export const validationModeSchema = z.enum(validationModeEnum);
 export const matchTeamSideSchema = z.enum(matchTeamSideEnum);
+export const standingsPointsSourceSchema = z.enum(standingsPointsSourceEnum);
 export const bracketTypeSchema = z.enum(bracketTypeEnum);
 export const seedingTypeSchema = z.enum(seedingTypeEnum);
 export const bracketRoundTypeSchema = z.enum(bracketRoundTypeEnum);

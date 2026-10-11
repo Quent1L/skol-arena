@@ -3,7 +3,13 @@ import { userRepository } from "../../repository/user.repository";
 import { teamRepository } from "../../repository/team.repository";
 import { AppError, BadRequestError, ErrorCode } from "../../types/errors";
 import { participantRepository } from "../../repository/participant.repository";
-import type { CreateMatchRequestData as CreateMatchInput, MatchSideInput } from "@skol-arena/shared/types/index";
+import {
+  countFirstPlaces,
+  resolveRanks,
+  type CreateMatchRequestData as CreateMatchInput,
+  type MatchSideInput,
+  type RankableSide,
+} from "@skol-arena/shared/types/index";
 import { t } from "../../utils/i18n-context";
 import { rankedMatchMaxAgeHours } from "../../config/ranked";
 
@@ -18,10 +24,46 @@ export class MatchInputValidator {
       );
     }
 
+    this.validateSideCount(sides.length, tournament.maxSidesPerMatch);
+
     if (tournament.teamMode === "static") {
       await this.validateStaticSides(sides, tournament);
     } else {
       await this.validateFlexSides(sides, tournament);
+    }
+  }
+
+  validateSideCount(sideCount: number, maxSidesPerMatch: number): void {
+    if (sideCount > maxSidesPerMatch) {
+      throw new BadRequestError(ErrorCode.MATCH_TOO_MANY_SIDES, { max: maxSidesPerMatch });
+    }
+  }
+
+  /**
+   * Checks the per-side result of a match of any size. The placement comes from the
+   * ranks, or from the scores when the competition keeps them; a shared first place
+   * is a draw and needs `allowDraw`.
+   */
+  validateSideResults(
+    results: RankableSide[],
+    tournament: {
+      scoreEnabled: boolean;
+      minScore: number | null;
+      maxScore: number | null;
+      allowDraw: boolean | null;
+    },
+  ): void {
+    if (tournament.scoreEnabled) {
+      for (const { score } of results) {
+        if (score == null || score < 0) throw new BadRequestError(ErrorCode.MATCH_INVALID_SCORE);
+        this.validateScoreRange(score, score, tournament.minScore, tournament.maxScore);
+      }
+    } else if (results.some((r) => r.rank == null)) {
+      throw new BadRequestError(ErrorCode.MATCH_RANKING_REQUIRED);
+    }
+
+    if (countFirstPlaces(resolveRanks(results)) > 1 && !tournament.allowDraw) {
+      throw new BadRequestError(ErrorCode.MATCH_DRAW_NOT_ALLOWED);
     }
   }
 
@@ -193,6 +235,11 @@ export class MatchInputValidator {
     const sides = input.sides ?? [];
     if (sides.length === 0) return;
 
+    if (sides.length > tournament.maxSidesPerMatch) {
+      errors.push(t("errors.MATCH_TOO_MANY_SIDES", { max: tournament.maxSidesPerMatch }));
+      return;
+    }
+
     if (tournament.teamMode === "static") {
       await this.validateStaticSidesForValidation(sides, tournament, errors);
     } else {
@@ -206,14 +253,20 @@ export class MatchInputValidator {
     errors: string[],
   ): Promise<void> {
     const min = tournament.minTeamSize * 2;
-    const max = tournament.maxTeamSize * 2;
+    const max = tournament.maxTeamSize * tournament.maxSidesPerMatch;
     if (allPlayerIds.length < min || allPlayerIds.length > max) {
       // A fixed format (1v1) reads better as "exactly 2" than "between 2 and 2".
-      const key = min === max ? `${ErrorCode.MATCH_PLAYER_COUNT_INVALID}_EXACT` : ErrorCode.MATCH_PLAYER_COUNT_INVALID;
+      const key =
+        tournament.maxSidesPerMatch > 2
+          ? `${ErrorCode.MATCH_PLAYER_COUNT_INVALID}_NWAY`
+          : min === max
+            ? `${ErrorCode.MATCH_PLAYER_COUNT_INVALID}_EXACT`
+            : ErrorCode.MATCH_PLAYER_COUNT_INVALID;
       errors.push(
         t(`errors.${key}`, {
           min,
           max,
+          maxSides: tournament.maxSidesPerMatch,
           minTeamSize: tournament.minTeamSize,
           maxTeamSize: tournament.maxTeamSize,
           count: allPlayerIds.length,

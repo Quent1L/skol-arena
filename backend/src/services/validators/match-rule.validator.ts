@@ -68,14 +68,7 @@ export class MatchRuleValidator {
     await this.validateAtLeastOnePlayerUnderLimit(tournament, allPlayerIds, excludeMatchId);
 
     // No partner cap here: a fixed team always plays with the same teammates.
-    await this.validateTeamOpponentConstraints(
-      input.tournamentId,
-      sidePlayerIds[0],
-      sidePlayerIds[1],
-      tournament,
-      excludeMatchId,
-      [teamNames[0], teamNames[1]],
-    );
+    await this.validateOpponentPairs(input.tournamentId, sidePlayerIds, tournament, excludeMatchId, teamNames);
   }
 
   private async validateFlexTeamRules(
@@ -85,10 +78,11 @@ export class MatchRuleValidator {
     const sides = input.sides ?? [];
     const sideSizes = sides.map((s) => s.playerIds?.length ?? 0);
 
-    if (!sideSizes.every((n) => n === sideSizes[0])) {
+    const mismatch = sideSizes.find((n) => n !== sideSizes[0]);
+    if (mismatch !== undefined) {
       throw new BadRequestError(ErrorCode.MATCH_TEAM_SIZE_MISMATCH, {
         teamASize: sideSizes[0],
-        teamBSize: sideSizes[1],
+        teamBSize: mismatch,
       });
     }
 
@@ -103,14 +97,29 @@ export class MatchRuleValidator {
       }
     }
 
-    if (sides.length >= 2 && sides[0].playerIds && sides[1].playerIds) {
-      await this.validateTeamOpponentConstraints(
-        input.tournamentId,
-        sides[0].playerIds,
-        sides[1].playerIds,
-        tournament,
-        excludeMatchId,
-      );
+    const sidePlayerIds = sides.map((s) => s.playerIds ?? []).filter((ids) => ids.length > 0);
+    await this.validateOpponentPairs(input.tournamentId, sidePlayerIds, tournament, excludeMatchId);
+  }
+
+  /** The opponent cap holds for every pair of sides: in a 1v1v1, each duel within it. */
+  private async validateOpponentPairs(
+    tournamentId: string,
+    sidePlayerIds: string[][],
+    tournament: CappedTournament,
+    excludeMatchId?: string,
+    teamNames?: string[],
+  ): Promise<void> {
+    for (let i = 0; i < sidePlayerIds.length; i++) {
+      for (let j = i + 1; j < sidePlayerIds.length; j++) {
+        await this.validateTeamOpponentConstraints(
+          tournamentId,
+          sidePlayerIds[i],
+          sidePlayerIds[j],
+          tournament,
+          excludeMatchId,
+          teamNames ? [teamNames[i], teamNames[j]] : undefined,
+        );
+      }
     }
   }
 

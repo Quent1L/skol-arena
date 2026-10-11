@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { translateValidation, vmsg } from "./validation-messages";
 import { validationModeSchema } from "./enums";
+import { MAX_SIDES_PER_MATCH, MIN_SIDES_PER_MATCH } from "./match-ranking";
 import { voteConfigInputSchema } from "./votes";
+
+/** Bounds of a competition's `maxSidesPerMatch`, shared by every form and API schema. */
+export const maxSidesPerMatchSchema = z.number().int().min(MIN_SIDES_PER_MATCH).max(MAX_SIDES_PER_MATCH);
 
 // ============================================
 // Base schema shared between tournaments and ranked seasons
@@ -27,6 +31,8 @@ export const baseSeasonFormSchema = z.object({
   endDate: z.date(vmsg("validation.endDateRequired")),
   minTeamSize: z.number(vmsg("validation.minTeamSizeRequired")).int().min(1, vmsg("validation.teamSizeMin1")),
   maxTeamSize: z.number(vmsg("validation.maxTeamSizeRequired")).int().min(1, vmsg("validation.teamSizeMin1")),
+  /** Most sides a single match may oppose (2 = classic duel). */
+  maxSidesPerMatch: maxSidesPerMatchSchema.optional(),
   rulesId: z.uuid().nullable().optional(),
   organizationId: z.uuid().nullable().optional(),
   scoreEnabled: z.boolean().optional(),

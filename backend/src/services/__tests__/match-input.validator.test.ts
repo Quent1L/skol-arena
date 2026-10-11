@@ -85,3 +85,72 @@ describe("MatchInputValidator player registrations", () => {
     expect(errors[0]).toContain("BOB");
   });
 });
+
+describe("matchInputValidator.validateSideResults", () => {
+  const scored = { scoreEnabled: true, minScore: null, maxScore: 10, allowDraw: false };
+  const unscored = { scoreEnabled: false, minScore: null, maxScore: null, allowDraw: true };
+
+  const codeOf = (fn: () => void): string | undefined => {
+    try {
+      fn();
+      return undefined;
+    } catch (error) {
+      return (error as BadRequestError).code;
+    }
+  };
+
+  it("accepts a ranking backed by in-range scores", () => {
+    const results = [
+      { position: 1, score: 3, rank: 2 },
+      { position: 2, score: 7, rank: 1 },
+      { position: 3, score: 1, rank: 3 },
+    ];
+    expect(codeOf(() => matchInputValidator.validateSideResults(results, scored))).toBeUndefined();
+  });
+
+  it("requires a score on every side when the competition keeps scores", () => {
+    const results = [
+      { position: 1, score: 3 },
+      { position: 2, score: null },
+      { position: 3, score: 1 },
+    ];
+    expect(codeOf(() => matchInputValidator.validateSideResults(results, scored))).toBe(ErrorCode.MATCH_INVALID_SCORE);
+  });
+
+  it("refuses a score above the competition's maximum", () => {
+    const results = [
+      { position: 1, score: 11 },
+      { position: 2, score: 2 },
+      { position: 3, score: 1 },
+    ];
+    expect(codeOf(() => matchInputValidator.validateSideResults(results, scored))).toBe(
+      ErrorCode.MATCH_SCORE_OUT_OF_RANGE,
+    );
+  });
+
+  it("requires a rank on every side when the competition keeps no score", () => {
+    const results = [{ position: 1, rank: 1 }, { position: 2, rank: 2 }, { position: 3 }];
+    expect(codeOf(() => matchInputValidator.validateSideResults(results, unscored))).toBe(
+      ErrorCode.MATCH_RANKING_REQUIRED,
+    );
+  });
+
+  it("treats a shared first place as a draw", () => {
+    const results = [
+      { position: 1, score: 5 },
+      { position: 2, score: 5 },
+      { position: 3, score: 1 },
+    ];
+    expect(codeOf(() => matchInputValidator.validateSideResults(results, scored))).toBe(
+      ErrorCode.MATCH_DRAW_NOT_ALLOWED,
+    );
+    expect(
+      codeOf(() => matchInputValidator.validateSideResults(results, { ...scored, allowDraw: true })),
+    ).toBeUndefined();
+  });
+
+  it("caps the number of sides at the competition's setting", () => {
+    expect(codeOf(() => matchInputValidator.validateSideCount(4, 3))).toBe(ErrorCode.MATCH_TOO_MANY_SIDES);
+    expect(codeOf(() => matchInputValidator.validateSideCount(3, 3))).toBeUndefined();
+  });
+});

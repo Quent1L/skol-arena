@@ -435,6 +435,7 @@ export class RankedSeasonService {
         endDate: input.endDate,
         minTeamSize: input.minTeamSize,
         maxTeamSize: input.maxTeamSize,
+        maxSidesPerMatch: input.maxSidesPerMatch,
         rulesId: input.rulesId,
         organizationId: input.organizationId,
         scoreEnabled: input.scoreEnabled ?? true,
@@ -738,6 +739,7 @@ export class RankedSeasonService {
       input.minScore !== undefined ||
       input.maxScore !== undefined ||
       input.allowDraw !== undefined ||
+      input.maxSidesPerMatch !== undefined ||
       input.validationMode !== undefined ||
       input.validationTimerHours !== undefined;
 
@@ -756,6 +758,8 @@ export class RankedSeasonService {
       ...(input.minScore !== undefined && { minScore: input.minScore }),
       ...(input.maxScore !== undefined && { maxScore: input.maxScore }),
       ...(input.allowDraw !== undefined && { allowDraw: input.allowDraw }),
+      // Only bounds the matches created from now on, so it stays editable all season.
+      ...(input.maxSidesPerMatch !== undefined && { maxSidesPerMatch: input.maxSidesPerMatch }),
       ...(input.validationMode !== undefined && { validationMode: input.validationMode }),
       ...(input.validationTimerHours !== undefined && {
         validationTimerHours: input.validationTimerHours,

@@ -19,6 +19,7 @@ export * from "./avatar";
 export * from "./admin-user";
 export * from "./maintenance";
 export * from "./match";
+export * from "./match-ranking";
 export * from "./mmr";
 export * from "./team";
 export * from "./participant";

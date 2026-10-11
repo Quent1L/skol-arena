@@ -176,6 +176,7 @@ export class RankedSeasonRolloverService {
       endDate,
       minTeamSize: season.minTeamSize,
       maxTeamSize: season.maxTeamSize,
+      maxSidesPerMatch: season.maxSidesPerMatch,
       rulesId: season.rulesId,
       organizationId: season.organizationId,
       scoreEnabled: season.scoreEnabled,

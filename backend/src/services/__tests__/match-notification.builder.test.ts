@@ -17,10 +17,10 @@ beforeEach(() => {
   };
   (userRepository as any).getById = async (id: string) => ({ id, displayName: `User-${id}` });
   (matchRepository as any).getParticipationsByMatchId = async () => [
-    { playerId: "p1", teamSide: "A" },
-    { playerId: "p2", teamSide: "A" },
-    { playerId: "p3", teamSide: "B" },
-    { playerId: "p4", teamSide: "B" },
+    { playerId: "p1", sidePosition: 1 },
+    { playerId: "p2", sidePosition: 1 },
+    { playerId: "p3", sidePosition: 2 },
+    { playerId: "p4", sidePosition: 2 },
   ];
   (tournamentRepository as any).getAdminUserIds = async () => ["admin-1", "admin-2"];
   (userRepository as any).getActiveSuperAdminIds = async () => [];
@@ -75,9 +75,9 @@ describe("MatchNotificationBuilder", () => {
       playedAt: new Date("2026-06-01T15:00:00Z"),
     });
     (matchRepository as any).getParticipationsByMatchId = async () => [
-      { playerId: "p1", teamSide: "A" },
-      { playerId: "p2", teamSide: "A" },
-      { playerId: "p3", teamSide: "B" },
+      { playerId: "p1", sidePosition: 1 },
+      { playerId: "p2", sidePosition: 1 },
+      { playerId: "p3", sidePosition: 2 },
     ];
 
     await matchNotificationBuilder.notifyMatchCreated("m-6", "p1", "Tour");
@@ -85,6 +85,28 @@ describe("MatchNotificationBuilder", () => {
     // p2 is the outnumbering side, p3 the lone one — each reads its own side first
     expect(sentPayloads.find((p) => p.userId === "p2").translationParams.matchFormat).toBe("2v1");
     expect(sentPayloads.find((p) => p.userId === "p3").translationParams.matchFormat).toBe("1v2");
+  });
+
+  it("lists every side in matchFormat on a match of three sides or more", async () => {
+    (matchRepository as any).getById = async () => ({
+      id: "m-7",
+      tournamentId: "t-1",
+      status: "scheduled",
+      playedAt: new Date("2026-06-01T15:00:00Z"),
+    });
+    (matchRepository as any).getParticipationsByMatchId = async () => [
+      { playerId: "p1", sidePosition: 1 },
+      { playerId: "p2", sidePosition: 2 },
+      { playerId: "p3", sidePosition: 2 },
+      { playerId: "p4", sidePosition: 3 },
+    ];
+
+    await matchNotificationBuilder.notifyMatchCreated("m-7", "p1", "Tour");
+
+    const p3 = sentPayloads.find((p) => p.userId === "p3").translationParams;
+    expect(p3.matchFormat).toBe("2v1v1");
+    expect(p3.teammates).toBe("User-p2");
+    expect(p3.opponents).toBe("User-p1, User-p4");
   });
 
   it("stores a null matchDate when the match has no date yet", async () => {
@@ -108,8 +130,8 @@ describe("MatchNotificationBuilder", () => {
       playedAt: new Date("2026-06-01T15:00:00Z"),
     });
     (matchRepository as any).getParticipationsByMatchId = async () => [
-      { playerId: "p1", teamSide: "A" },
-      { playerId: "p3", teamSide: "B" },
+      { playerId: "p1", sidePosition: 1 },
+      { playerId: "p3", sidePosition: 2 },
     ];
 
     await matchNotificationBuilder.notifyMatchCreated("m-5", "p1", "Tour");

@@ -237,7 +237,7 @@ describe("matchRepository (integration)", () => {
       const participations = await matchRepository.getParticipationsByMatchId(finalizedId);
       expect(
         participations
-          .filter((p) => p.teamSide === "A")
+          .filter((p) => p.sidePosition === 1)
           .map((p) => p.playerId)
           .sort(),
       ).toEqual([ann!, bob!].sort());
@@ -246,10 +246,10 @@ describe("matchRepository (integration)", () => {
     it("finds earlier matches with the same two entries", async () => {
       const sides = (await matchRepository.getById(finalizedId))!.sides;
       const [a, b] = sides.map((s) => s.entryId as string);
-      expect(await matchRepository.findMatchesWithSameEntries(tournamentId, a!, b!)).toEqual(
+      expect(await matchRepository.findMatchesWithSameEntries(tournamentId, [a!, b!])).toEqual(
         expect.arrayContaining([finalizedId, secondId]),
       );
-      expect(await matchRepository.findMatchesWithSameEntries(tournamentId, a!, b!, finalizedId)).toEqual([secondId]);
+      expect(await matchRepository.findMatchesWithSameEntries(tournamentId, [a!, b!], finalizedId)).toEqual([secondId]);
     });
 
     it("detects a player already playing at the same minute", async () => {

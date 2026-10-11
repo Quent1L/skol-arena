@@ -51,6 +51,7 @@ export interface CreateRankedSeasonData {
   endDate: string;
   minTeamSize: number;
   maxTeamSize: number;
+  maxSidesPerMatch?: number;
   rulesId?: string | null;
   scoreEnabled?: boolean;
   minScore?: number | null;
@@ -109,6 +110,7 @@ export class RankedSeasonRepository {
           teamMode: "flex",
           minTeamSize: tournamentData.minTeamSize,
           maxTeamSize: tournamentData.maxTeamSize,
+          maxSidesPerMatch: tournamentData.maxSidesPerMatch ?? 2,
           startDate: tournamentData.startDate,
           endDate: tournamentData.endDate,
           disciplineId: tournamentData.disciplineId,

@@ -18,8 +18,12 @@ import {
   type FinalizedAmendRights,
   type FinalizedAmendDenial,
   POST_FINALIZATION_DISPUTE_DAYS,
+  type MatchSideInput,
+  type MatchSideResultInput,
   getFinalizedAmendRights,
   hasOpposingPostDispute,
+  resolveStoredRanks,
+  sideOutcome,
   isSelfValidatedReason,
 } from "@skol-arena/shared/types/index";
 import { ErrorCode, NotFoundError, BadRequestError, ForbiddenError, ConflictError, AppError } from "../types/errors";
@@ -55,6 +59,41 @@ interface FinalizedAmendment {
 const DEFAULT_AUTO_VALIDATION_HOURS = 24;
 const TRUST_SCORE_THRESHOLD = 10;
 
+/** The result fields shared by an update and a report. */
+type SideResultsPayload = {
+  sideResults?: MatchSideResultInput[];
+  scoreA?: number | null;
+  scoreB?: number | null;
+  winnerPosition?: number | null;
+};
+
+/**
+ * Whether a created match reports its result side by side (rank and/or score on each side)
+ * rather than through the two-side scoreA/scoreB/winnerPosition fields. Always the case
+ * from three sides on.
+ */
+function usesSideResults(sides: MatchSideInput[] | undefined): boolean {
+  if (!sides) return false;
+  return sides.length > 2 || sides.some((s) => s.rank != null || s.score != null);
+}
+
+/**
+ * Fills the scores a revision left out with the ones already stored, so a ranking-only
+ * change is validated against the scores the match keeps. A competition without scores
+ * stores none.
+ */
+function mergeStoredScores(
+  results: MatchSideResultInput[],
+  stored: { position: number; score: number | null }[],
+  scoreEnabled: boolean,
+): MatchSideResultInput[] {
+  return results.map((r) => {
+    if (!scoreEnabled) return { ...r, score: null };
+    if (r.score !== undefined) return r;
+    return { ...r, score: stored.find((s) => s.position === r.position)?.score ?? null };
+  });
+}
+
 export class MatchService {
   async canManageMatches(tournamentId: string, userId: string): Promise<boolean> {
     return await matchPermissionValidator.canManageMatches(tournamentId, userId);
@@ -88,7 +127,11 @@ export class MatchService {
       await this.autoRegisterRankedPlayers(input);
     }
 
-    if (!tournament.scoreEnabled && input.status === "reported") {
+    if (input.status === "reported" && usesSideResults(input.sides)) {
+      // Any number of sides: each one carries its rank and/or its score.
+      if (!tournament.scoreEnabled) input.sides = input.sides?.map((s) => ({ ...s, score: null }));
+      matchInputValidator.validateSideResults(input.sides ?? [], tournament);
+    } else if (!tournament.scoreEnabled && input.status === "reported") {
       matchInputValidator.validateWinnerRequired(input.winnerPosition, tournament.allowDraw ?? false);
       input.scoreA = null;
       input.scoreB = null;
@@ -226,6 +269,21 @@ export class MatchService {
       if (winnerPosition !== undefined) matchData.winnerPosition = winnerPosition;
     }
 
+    const carriesResult = usesSideResults(input.sides) || (input.scoreA !== undefined && input.scoreB !== undefined);
+    if (input.status === "reported" && carriesResult) {
+      if (input.scoreA !== undefined) matchData.scoreA = input.scoreA;
+      if (input.scoreB !== undefined) matchData.scoreB = input.scoreB;
+      matchData.reportProof = input.reportProof;
+      matchData.outcomeTypeId = input.outcomeTypeId;
+      matchData.outcomeReasonId = input.outcomeReasonId;
+      matchData.reportedBy = createdBy;
+      matchData.confirmationDeadline = this.getDeadlineForTournament(tournament) ?? undefined;
+      const winnerPosition = usesSideResults(input.sides)
+        ? undefined
+        : this.deriveWinnerFromScores(input.scoreA ?? null, input.scoreB ?? null, input.winnerPosition);
+      if (winnerPosition !== undefined) matchData.winnerPosition = winnerPosition;
+    }
+
     return await matchRepository.create(matchData);
   }
 
@@ -280,18 +338,7 @@ export class MatchService {
         mode: row.tournamentMode,
         scoreEnabled: row.tournamentScoreEnabled,
       },
-      sides: (sidesByMatch.get(row.matchId) ?? []).map((s) => ({
-        position: s.position,
-        score: s.score,
-        isWinner: row.winnerSide === (s.position === 1 ? "A" : "B"),
-        teamName: s.entry.team?.name ?? null,
-        players: s.entry.players.map((p) => ({
-          id: p.player.id,
-          displayName: p.player.displayName,
-          shortName: p.player.shortName ?? p.player.displayName.slice(0, 8),
-          ...(mvpByMatch.get(row.matchId)?.includes(p.player.id) && { isMvp: true }),
-        })),
-      })),
+      sides: this.buildCardSides(sidesByMatch.get(row.matchId) ?? [], row.winnerSide, mvpByMatch.get(row.matchId)),
       outcomeType: row.outcomeTypeId ? { id: row.outcomeTypeId, name: row.outcomeTypeName ?? "" } : null,
       ...(filters.playerIds && {
         playerId: filters.playerIds.split(",")[0],
@@ -305,6 +352,29 @@ export class MatchService {
       total,
       hasMore: filters.offset + filters.limit < total,
     };
+  }
+
+  /** Card sides in position order; a side wins when it stands alone in first place. */
+  private buildCardSides(
+    sides: Awaited<ReturnType<typeof matchSidesRepository.getByMatchIds>>,
+    winnerSide: string | null,
+    mvpIds: string[] | undefined,
+  ): ClientMatchCard["sides"] {
+    const ordered = [...sides].sort((a, b) => a.position - b.position);
+    const ranks = resolveStoredRanks(ordered, winnerSide);
+    return ordered.map((s) => ({
+      position: s.position,
+      score: s.score,
+      rank: s.rank ?? null,
+      isWinner: sideOutcome(ranks, s.position).isWin,
+      teamName: s.entry.team?.name ?? null,
+      players: s.entry.players.map((p) => ({
+        id: p.player.id,
+        displayName: p.player.displayName,
+        shortName: p.player.shortName ?? p.player.displayName.slice(0, 8),
+        ...(mvpIds?.includes(p.player.id) && { isMvp: true }),
+      })),
+    }));
   }
 
   async updateMatch(id: string, input: UpdateMatchInput, updatedBy: string) {
@@ -343,6 +413,7 @@ export class MatchService {
     if (match.status !== "reported" && match.status !== "disputed") return false;
 
     return (
+      input.sideResults !== undefined ||
       input.scoreA !== undefined ||
       input.scoreB !== undefined ||
       input.winnerPosition !== undefined ||
@@ -421,6 +492,7 @@ export class MatchService {
     if (input.outcomeTypeId !== undefined) data.outcomeTypeId = input.outcomeTypeId;
     if (input.outcomeReasonId !== undefined) data.outcomeReasonId = input.outcomeReasonId;
     if (input.winnerPosition !== undefined) data.winnerPosition = input.winnerPosition;
+    if (input.sideResults !== undefined) data.sideResults = input.sideResults;
     return data;
   }
 
@@ -435,6 +507,11 @@ export class MatchService {
     tournament: TournamentFromRepository,
   ): Promise<void> {
     const isFirstResult = match.status === "scheduled";
+
+    if (input.sideResults !== undefined || (match.sides?.length ?? 0) > 2) {
+      this.validateUpdatedSideResults(input, match, tournament);
+      return;
+    }
 
     if (tournament?.scoreEnabled === false) {
       if (isFirstResult || input.winnerPosition !== undefined) {
@@ -455,6 +532,31 @@ export class MatchService {
     matchInputValidator.validateScores(scoreA, scoreB);
     matchInputValidator.validateScoreRange(scoreA, scoreB, tournament?.minScore, tournament?.maxScore);
     await matchInputValidator.validateDrawAllowed(match.tournamentId, scoreA, scoreB, input.winnerPosition);
+  }
+
+  /**
+   * The per-side counterpart of `validateUpdatedResult`. A match of 3+ sides can only take
+   * a ranking: the two-side fields would name a winner among two sides out of N. A
+   * revision may still carry an outcome change alone, keeping the stored ranking.
+   */
+  private validateUpdatedSideResults(
+    input: SideResultsPayload,
+    match: NonNullable<Awaited<ReturnType<typeof matchRepository.getById>>>,
+    tournament: TournamentFromRepository,
+  ): void {
+    const sendsLegacyResult =
+      input.scoreA !== undefined || input.scoreB !== undefined || input.winnerPosition !== undefined;
+    if (!input.sideResults) {
+      if (match.status === "scheduled" || sendsLegacyResult) {
+        throw new BadRequestError(ErrorCode.MATCH_RANKING_REQUIRED);
+      }
+      return;
+    }
+    if (input.sideResults.length !== match.sides.length || !tournament) {
+      throw new BadRequestError(ErrorCode.MATCH_RANKING_REQUIRED);
+    }
+    input.sideResults = mergeStoredScores(input.sideResults, match.sides, tournament.scoreEnabled);
+    matchInputValidator.validateSideResults(input.sideResults, tournament);
   }
 
   /**
@@ -496,10 +598,11 @@ export class MatchService {
     }
   }
 
+  /** "3 - 1", or "3 - 1 - 0" for three sides: every side's score in position order. */
   private formatScore(match: Awaited<ReturnType<typeof matchRepository.getById>>): string {
-    const sideA = match?.sides?.find((s) => s.position === 1);
-    const sideB = match?.sides?.find((s) => s.position === 2);
-    return `${sideA?.score ?? 0} - ${sideB?.score ?? 0}`;
+    const sides = [...(match?.sides ?? [])].sort((a, b) => a.position - b.position);
+    if (sides.length === 0) return "0 - 0";
+    return sides.map((s) => s.score ?? 0).join(" - ");
   }
 
   /**
@@ -511,10 +614,19 @@ export class MatchService {
     tournament: TournamentFromRepository,
   ): string {
     if (tournament?.scoreEnabled !== false) return this.formatScore(match);
+    if ((match?.sides.length ?? 0) > 2) return this.formatRanking(match);
 
     const winner = match?.sides?.find((s) => s.isWinner);
     if (!winner) return "=";
     return winner.players.map((p) => p.displayName).join(" / ");
+  }
+
+  /** "1. Alice · 2. Bob / Carol · 2. Dan": the placement of every side, best first. */
+  private formatRanking(match: Awaited<ReturnType<typeof matchRepository.getById>>): string {
+    const sides = [...(match?.sides ?? [])].sort(
+      (a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity) || a.position - b.position,
+    );
+    return sides.map((s) => `${s.rank ?? "?"}. ${s.players.map((p) => p.displayName).join(" / ")}`).join(" · ");
   }
 
   private async handleReportedUpdate(matchId: string, updatedBy: string): Promise<void> {
@@ -559,9 +671,9 @@ export class MatchService {
     const match = await this.getMatchById(id);
     await this.validateReportPermissions(id, reportedBy);
     this.validateReportStatus(match.status);
-    await this.validateScoreConstraints(match.tournamentId, input);
-
     const tournament = await matchRepository.getTournament(match.tournamentId);
+    await this.validateReportedResult(match, input, tournament);
+
     const updateData = this.buildReportUpdateData(input, match, reportedBy);
     updateData.confirmationDeadline = this.getDeadlineForTournament(tournament);
 
@@ -582,7 +694,7 @@ export class MatchService {
     const reporterUser = await userRepository.getById(reportedBy);
     await matchMessageService.postSystem(id, "matchMessages.RESULT_REPORTED", {
       authorName: reporterUser?.displayName ?? null,
-      score: `${input.scoreA} - ${input.scoreB}`,
+      score: this.formatScore(await matchRepository.getById(id)),
     });
 
     if (tournament?.validationMode === "none") {
@@ -621,11 +733,21 @@ export class MatchService {
     matchStatusValidator.validateReportStatus(status);
   }
 
-  private async validateScoreConstraints(tournamentId: string, input: ReportMatchResultInput) {
+  private async validateReportedResult(
+    match: NonNullable<Awaited<ReturnType<typeof matchRepository.getById>>>,
+    input: ReportMatchResultInput,
+    tournament: TournamentFromRepository,
+  ) {
+    if (input.sideResults !== undefined || (match.sides?.length ?? 0) > 2) {
+      this.validateUpdatedSideResults(input, { ...match, status: "scheduled" }, tournament);
+      return;
+    }
+    if (input.scoreA == null || input.scoreB == null) {
+      throw new BadRequestError(ErrorCode.MATCH_INVALID_SCORE);
+    }
     matchInputValidator.validateScores(input.scoreA, input.scoreB);
-    const tournament = await matchRepository.getTournament(tournamentId);
     matchInputValidator.validateScoreRange(input.scoreA, input.scoreB, tournament?.minScore, tournament?.maxScore);
-    await matchInputValidator.validateDrawAllowed(tournamentId, input.scoreA, input.scoreB, input.winnerPosition);
+    await matchInputValidator.validateDrawAllowed(match.tournamentId, input.scoreA, input.scoreB, input.winnerPosition);
   }
 
   private buildReportUpdateData(
@@ -633,15 +755,20 @@ export class MatchService {
     _match: Awaited<ReturnType<typeof matchRepository.getById>>,
     reportedBy: string,
   ): UpdateMatchData {
-    return {
-      scoreA: input.scoreA,
-      scoreB: input.scoreB,
+    const base: UpdateMatchData = {
       status: "reported",
       reportProof: input.reportProof,
       outcomeTypeId: input.outcomeTypeId,
       outcomeReasonId: input.outcomeReasonId,
       reportedBy,
-      winnerPosition: this.deriveWinnerFromScores(input.scoreA, input.scoreB, input.winnerPosition) ?? null,
+    };
+    if (input.sideResults) return { ...base, sideResults: input.sideResults };
+    return {
+      ...base,
+      scoreA: input.scoreA,
+      scoreB: input.scoreB,
+      winnerPosition:
+        this.deriveWinnerFromScores(input.scoreA ?? null, input.scoreB ?? null, input.winnerPosition) ?? null,
     };
   }
 
@@ -1044,8 +1171,7 @@ export class MatchService {
 
       const duplicates = await matchRepository.findMatchesWithSameEntries(
         input.tournamentId,
-        entryIds[0]!,
-        entryIds[1]!,
+        entryIds as string[],
         excludeMatchId,
       );
 
@@ -1076,29 +1202,35 @@ export class MatchService {
     const tournament = await matchRepository.getTournament(match.tournamentId);
     if (tournament?.validationMode === "admin") return;
 
-    const reporter = match.result?.reportedBy;
-    const reporterSide = participants.find((p) => p.playerId === reporter)?.teamSide;
-
-    const confirmedSides = new Set(
-      confirmations
-        .filter((c) => c.isConfirmed && !c.isContested)
-        .map((c) => participants.find((p) => p.playerId === c.playerId)?.teamSide)
-        .filter((side) => side !== undefined),
-    );
-
-    // A result entered by a participant needs the other side's agreement. One entered
-    // by an outsider (kiosk, admin) speaks for neither side, so both have to agree:
-    // otherwise the winners alone could validate it.
-    const isAgreed = reporterSide
-      ? [...confirmedSides].some((side) => side !== reporterSide)
-      : confirmedSides.has("A") && confirmedSides.has("B");
-
-    if (isAgreed) {
+    if (this.hasMajorityAgreement(participants, confirmations, match.result?.reportedBy)) {
       // A simultaneous confirmation may have finalized it first: nothing left to do.
       await this.finalizeMatch(matchId, { finalizationReason: "consensus" }).catch((err) => {
         if (!(err instanceof AppError && err.code === ErrorCode.MATCH_ALREADY_FINALIZED)) throw err;
       });
     }
+  }
+
+  /**
+   * A result stands once a strict majority of the sides agrees with it. The reporter's
+   * side agrees by reporting, but never alone: with two sides that means the other side
+   * confirms, exactly as before N-way matches. One entered by an outsider (kiosk, admin)
+   * speaks for no side, so the majority has to come from confirmations: with two sides,
+   * both — otherwise the winners alone could validate it.
+   */
+  private hasMajorityAgreement(
+    participants: Awaited<ReturnType<typeof matchRepository.getParticipationsByMatchId>>,
+    confirmations: Awaited<ReturnType<typeof matchConfirmationRepository.getByMatchId>>,
+    reporter: string | null | undefined,
+  ): boolean {
+    const sideOf = (playerId: string | null | undefined) =>
+      participants.find((p) => p.playerId === playerId)?.sidePosition;
+    const agreeing = new Set(
+      [reporter, ...confirmations.filter((c) => c.isConfirmed && !c.isContested).map((c) => c.playerId)]
+        .map(sideOf)
+        .filter((side) => side !== undefined),
+    );
+    const sideCount = new Set(participants.map((p) => p.sidePosition)).size;
+    return agreeing.size > sideCount / 2 && agreeing.size >= 2;
   }
 
   async cancelMatch(id: string, cancelledBy: string) {
@@ -1235,12 +1367,23 @@ export class MatchService {
     const differs = <T>(sent: T | undefined, stored: T | null) => sent !== undefined && (sent ?? null) !== stored;
 
     const changed =
+      this.sideResultsDiffer(input.sideResults, match) ||
       differs(input.scoreA, score(1)) ||
       differs(input.scoreB, score(2)) ||
       differs(input.winnerPosition, winner) ||
       differs(input.outcomeTypeId, match.outcomeTypeId ?? null) ||
       differs(input.outcomeReasonId, match.outcomeReasonId ?? null);
     if (!changed) throw new BadRequestError(ErrorCode.MATCH_RESULT_UNCHANGED);
+  }
+
+  private sideResultsDiffer(results: MatchSideResultInput[] | undefined, match: MatchDetail): boolean {
+    if (!results) return false;
+    return results.some((result) => {
+      const stored = match.sides.find((s) => s.position === result.position);
+      if (!stored) return true;
+      const scoreChanged = result.score !== undefined && (result.score ?? null) !== stored.score;
+      return result.rank !== stored.rank || scoreChanged;
+    });
   }
 
   /** Resolves who may amend a finalized match, through the rule the client shows too. */
@@ -1498,7 +1641,7 @@ export class MatchService {
 
   private async resolveSidePosition(matchId: string, playerId: string): Promise<number> {
     const participants = await matchRepository.getParticipationsByMatchId(matchId);
-    return participants.find((p) => p.playerId === playerId)?.teamSide === "A" ? 1 : 2;
+    return participants.find((p) => p.playerId === playerId)?.sidePosition ?? 2;
   }
 
   private async resolvePlayerIds(

@@ -218,6 +218,9 @@ export class TournamentService {
       teamMode: input.teamMode,
       minTeamSize: input.minTeamSize,
       maxTeamSize: input.maxTeamSize,
+      // A bracket pairs its matches itself, always as duels.
+      ...(input.mode !== "bracket" &&
+        input.maxSidesPerMatch !== undefined && { maxSidesPerMatch: input.maxSidesPerMatch }),
       // Points apply to every mode that awards them; ranked runs on MMR instead.
       ...(input.mode !== "ranked" && {
         scoringConfig: resolveScoringConfig(input.scoringConfig),

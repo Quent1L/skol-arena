@@ -10,7 +10,14 @@ export type CreateSideData = {
   entryId: string;
   position: number;
   score: number | null;
+  rank?: number | null;
   pointsAwarded?: number;
+};
+
+export type SideResultData = {
+  score: number | null;
+  rank: number;
+  pointsAwarded: number;
 };
 
 export type UpdateScoreData = {
@@ -79,6 +86,7 @@ export class MatchSidesRepository {
       entryId: side.entryId,
       position: side.position,
       score: side.score,
+      rank: side.rank ?? null,
       pointsAwarded: side.pointsAwarded ?? 0,
     }));
 
@@ -105,6 +113,17 @@ export class MatchSidesRepository {
   async updateScores(matchId: string, updates: UpdateScoreData[]) {
     const results = await Promise.all(updates.map((update) => this.updateScore(matchId, update.entryId, update.score)));
     return results;
+  }
+
+  /** Write a side's whole result at once: score, placement and the points it earns. */
+  async updateSideResult(matchId: string, entryId: string, result: SideResultData, tx?: DbTransaction) {
+    const [updated] = await (tx ?? db)
+      .update(matchSides)
+      .set(result)
+      .where(and(eq(matchSides.matchId, matchId), eq(matchSides.entryId, entryId)))
+      .returning();
+
+    return updated;
   }
 
   /**

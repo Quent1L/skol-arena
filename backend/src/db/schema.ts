@@ -19,7 +19,12 @@ import {
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
-import type { SeasonAutomationMode, TierScalingMode, TournamentRulesetPayload } from "@skol-arena/shared/types/index";
+import type {
+  SeasonAutomationMode,
+  StandingsPointsSource,
+  TierScalingMode,
+  TournamentRulesetPayload,
+} from "@skol-arena/shared/types/index";
 import { newId } from "../utils/uuid";
 
 // ********************************************************************
@@ -359,6 +364,8 @@ export const tournaments = pgTable("tournaments", {
   teamMode: teamModeEnum("team_mode").notNull(),
   minTeamSize: integer("min_team_size").notNull(),
   maxTeamSize: integer("max_team_size").notNull(),
+  /** Most sides a single match may oppose: 2 is a duel, more allows 1v1v1, 2v2v2… */
+  maxSidesPerMatch: integer("max_sides_per_match").notNull().default(2),
   allowDraw: boolean("allow_draw").default(true),
   scoreEnabled: boolean("score_enabled").notNull().default(true),
   startDate: date("start_date").notNull(),
@@ -396,6 +403,10 @@ export const tournamentScoringConfigs = pgTable("tournament_scoring_configs", {
   pointPerVictory: integer("point_per_victory").notNull().default(3),
   pointPerDraw: integer("point_per_draw").notNull().default(1),
   pointPerLoss: integer("point_per_loss").notNull().default(0),
+  /** match_result (the three values above), rank (`rankPoints` per placement) or score. */
+  pointsSource: text("points_source").$type<StandingsPointsSource>().notNull().default("match_result"),
+  /** Points per placement, index 0 = first. Read with the `rank` source only. */
+  rankPoints: jsonb("rank_points").$type<number[]>(),
 });
 
 /**
@@ -593,6 +604,12 @@ export const matchSides = pgTable(
       .references(() => tournamentEntries.id, { onDelete: "restrict" }),
     position: integer("position").notNull(),
     score: integer("score"),
+    /**
+     * Placement, 1 = first, tied sides sharing a rank (1, 1, 3). The source of truth of
+     * the result; null while the match has none. `matches.winner_side` only mirrors it
+     * for two-side matches.
+     */
+    rank: integer("rank"),
     pointsAwarded: integer("points_awarded").default(0),
   },
   (table) => [unique().on(table.matchId, table.entryId)],

@@ -34,6 +34,7 @@ export interface CreateTournamentData {
   teamMode: TeamMode;
   minTeamSize: number;
   maxTeamSize: number;
+  maxSidesPerMatch?: number;
   /** Fully resolved by the service; omitted for modes that award no points. */
   scoringConfig?: TournamentScoringConfig;
   /** Fully resolved by the service; omitted outside championship mode. */
@@ -58,6 +59,7 @@ export interface UpdateTournamentData {
   mode?: TournamentMode;
   teamMode?: TeamMode;
   teamSize?: number;
+  maxSidesPerMatch?: number;
   scoringConfig?: Partial<TournamentScoringConfig>;
   championshipConfig?: Partial<ChampionshipConfig>;
   voteConfig?: Partial<VoteConfig>;
@@ -103,6 +105,7 @@ export class TournamentRepository {
       status: data.status,
       createdBy: data.createdBy,
       ...(data.description !== undefined && { description: data.description }),
+      ...(data.maxSidesPerMatch !== undefined && { maxSidesPerMatch: data.maxSidesPerMatch }),
       ...(data.allowDraw !== null && data.allowDraw !== undefined && { allowDraw: data.allowDraw }),
       ...(data.scoreEnabled !== undefined && {
         scoreEnabled: data.scoreEnabled,
