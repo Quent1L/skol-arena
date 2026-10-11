@@ -2491,7 +2491,7 @@
       },
       "strict": {
         "badge": "STRICT",
-        "description": "Automatic validation with mutual confirmation. Trust Score active.",
+        "description": "The other teams must confirm the score: the opponent in a duel, a majority of the teams beyond that. No automatic validation.",
         "label": "Strict validation"
       }
     },

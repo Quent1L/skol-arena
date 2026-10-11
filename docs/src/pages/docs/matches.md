@@ -43,7 +43,8 @@ confirmation a reported match result needs before it's locked in:
 - **Auto** — finalizes automatically after an organizer-set delay (1 to 168 hours), unless
   disputed first. An opponent can also confirm early to finalize immediately.
 - **Strict** (the default for new tournaments) — requires explicit confirmation from a player
-  on the opposing side before the result locks in. No timer, no automatic finalization.
+  on the opposing side before the result locks in; with three sides or more, a majority of the
+  sides must agree (the reporter's side counts). No timer, no automatic finalization.
 - **Admin** — full manual control: only a tournament admin can validate and finalize a
   reported result.
 

@@ -2491,7 +2491,7 @@
       },
       "strict": {
         "badge": "Compétition",
-        "description": "Un adversaire doit confirmer le score pour valider. Pas d'auto-validation.",
+        "description": "Les autres équipes doivent confirmer le score : l'adversaire en duel, la majorité des équipes au-delà. Pas d'auto-validation.",
         "label": "STRICT"
       }
     },
