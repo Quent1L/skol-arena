@@ -44,7 +44,9 @@ import {
   bracketMatchMetadata,
 } from "../src/db/schema";
 import { eq } from "drizzle-orm";
+import { join } from "node:path";
 import { newId } from "../src/utils/uuid";
+import { avatarService } from "../src/services/avatar.service";
 import { tournamentRulesetRepository } from "../src/repository/tournament-ruleset.repository";
 import { standingsService } from "../src/services/standings.service";
 import { mmrCalculationService } from "../src/services/mmr-calculation.service";
@@ -211,6 +213,23 @@ async function seedUsers() {
   }
 
   console.log(`Seeded ${defs.length} users`);
+}
+
+/**
+ * Players with a picture, the rest keep their initials: a real club is a mix of
+ * both, and the screenshots should show the fallback as much as the avatar.
+ * The files live with the capture pipeline, see docs/screenshots/README.md.
+ */
+const AVATAR_KEYS = ["theo", "ilyas", "camille", "marta", "anais", "lucas", "nina"];
+const AVATAR_DIR = join(import.meta.dir, "../../docs/screenshots/avatars");
+
+async function seedAvatars() {
+  for (const key of AVATAR_KEYS) {
+    const bytes = await Bun.file(join(AVATAR_DIR, `${key}.png`)).bytes();
+    // The real upload pipeline: same resize, same variants, same storage keys.
+    await avatarService.setAvatar(id(key), bytes);
+  }
+  console.log(`Seeded ${AVATAR_KEYS.length} avatars`);
 }
 
 // ---------------------------------------------------------------------------
@@ -831,6 +850,7 @@ async function main() {
   }
 
   await seedUsers();
+  await seedAvatars();
 
   const tableFootball = await seedDiscipline(
     "Table football",

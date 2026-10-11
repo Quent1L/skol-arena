@@ -19,6 +19,21 @@ seeded PRNG, and a frozen "today". Re-running it on an empty database reproduces
 the same standings and the same ladder, so a re-capture only shows real UI
 changes rather than churn.
 
+## Avatars
+
+Seven of the twelve players have a picture, the others keep their initials, so
+the screenshots show both. The images are in `avatars/`, committed, and the seed
+pushes them through the real upload pipeline (`avatarService.setAvatar`), so they
+are resized and stored exactly as a player's own upload would be. The scripts pin
+`AVATAR_STORAGE=postgres` so the seed and the backend read the same store whatever
+`backend/.env` says.
+
+They are [DiceBear](https://www.dicebear.com) "Lorelei" illustrations (CC0),
+downloaded once from
+`https://api.dicebear.com/9.x/lorelei/png?seed=<seed>&size=256&backgroundColor=c0aede,b6e3f4,d1d4f9,ffd5dc,ffdfbf&mouth=happy01,…,happy18`
+with the player key as seed, except Nina (`nina-4`). Illustrations rather than
+photos: the landing page is public, and nobody's face belongs on it by accident.
+
 ## Full run
 
 Four commands, three terminals. From `docs/`:

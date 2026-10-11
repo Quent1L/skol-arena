@@ -190,6 +190,11 @@ async function main() {
     // The app reads its language from localStorage and defaults to French; the
     // docs site is English-only, so the screenshots have to be too.
     await context.addInitScript(() => window.localStorage.setItem('locale', 'en'))
+    // A fresh browser has never opened the release notes, so the "What's new"
+    // badge would sit on the header avatar in every shot. Mark them as read.
+    await context.addInitScript(() =>
+      window.localStorage.setItem('skol.whatsNew.seenVersion', '9999.0.0'),
+    )
     // The Vue DevTools floating button is injected by the dev server and would
     // sit in the middle of every shot.
     await context.addInitScript(() => {
