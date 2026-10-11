@@ -150,7 +150,8 @@
             :outcome-type-stats="stats?.outcomeTypeStats"
             :format-stats="stats?.formatStats"
           />
-          <div class="rounded-2xl p-4">
+          <!-- No side padding: the match cards span the same width as the cards above. -->
+          <div class="py-4">
             <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">
               {{ t('playerDetailView.last10Matches') }}
             </div>
@@ -233,7 +234,7 @@
         />
 
         <!-- Match history -->
-        <div class="rounded-2xl p-4">
+        <div class="py-4">
           <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">
             {{ t('playerDetailView.last10Matches') }}
           </div>
@@ -348,7 +349,7 @@
 
 
         <!-- All matches -->
-        <div class="rounded-2xl p-4">
+        <div class="py-4">
           <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">
             {{ t('playerDetailView.last10Matches') }}
           </div>

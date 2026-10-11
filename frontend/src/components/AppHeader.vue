@@ -37,6 +37,7 @@
             </NotificationDropdown>
 
             <UDropdownMenu
+              v-model:open="userMenuOpen"
               :items="menuItems"
               :content="{ align: 'end' }"
               :ui="{ content: 'min-w-56', item: 'py-2 text-base' }"
@@ -101,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
@@ -126,7 +127,12 @@ const EGG_TAPS = 5
 const EGG_HINT_AT = 3
 
 const { play: playEasterEgg } = useEasterEgg()
-const { tap: tapVersion, count: eggTaps } = useSecretTap(EGG_TAPS, playEasterEgg)
+const userMenuOpen = ref(false)
+// The menu goes before the animation starts: left open, it would sit over it.
+const { tap: tapVersion, count: eggTaps } = useSecretTap(EGG_TAPS, () => {
+  userMenuOpen.value = false
+  playEasterEgg()
+})
 
 const router = useRouter()
 const { appUser, isAuthenticated, logout, kioskSettingsLocked } = useAuth()

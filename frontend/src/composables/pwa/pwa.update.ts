@@ -438,6 +438,36 @@ async function prepareWorker(): Promise<boolean> {
 }
 
 /**
+ * Puts a newer worker in control of the page, whatever version.json says.
+ *
+ * For a lazy chunk that vanished under an unchanged version: the server runs another
+ * build of the same version (a rebuild without a bump), while the worker holding the
+ * page answers every navigation with the previous build's shell. Its successor is
+ * already waiting, or starts installing on `update()`. Returns false when there is
+ * none — same build after all, the failure was transient — without waiting for one.
+ */
+export async function handOverToNewerWorker(): Promise<boolean> {
+  const registration = await getRegistration()
+  if (!registration || !navigator.serviceWorker.controller) return false
+  try {
+    await registration.update()
+  } catch {
+    // Unreachable worker script: one may still be waiting from before.
+  }
+  if (!registration.waiting && !registration.installing) return false
+
+  const worker =
+    registration.waiting ??
+    (await withTimeout(waitForInstalled(registration), BACKGROUND_DOWNLOAD_MAX_MS, null))
+  if (!worker) return false
+  const controllerChanged = waitForControllerChange()
+  worker.postMessage({ type: 'SKIP_WAITING' })
+  await withTimeout(controllerChanged, HANDOVER_TIMEOUT_MS, undefined)
+  controllerTakenOver.value = true
+  return true
+}
+
+/**
  * Whether the update detected during the splash should be applied before the app
  * shows. A mandatory one always is. A routine one only when applying it costs a
  * single reload: its bundle is already downloaded, or no worker controls the page

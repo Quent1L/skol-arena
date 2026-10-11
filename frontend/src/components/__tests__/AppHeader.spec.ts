@@ -4,6 +4,7 @@ import type { DropdownMenuItem } from '@nuxt/ui'
 import { mountWithUi } from '@/test-support/mount'
 import { makeAuthMock, type AuthMockState } from '@/test-support/mock-modules'
 import { useAuth } from '@/composables/useAuth'
+import { useEasterEgg } from '@/composables/useEasterEgg'
 import AppHeader from '../AppHeader.vue'
 
 vi.mock('vue-i18n', async () => (await import('@/test-support/mock-modules')).i18nEchoMock())
@@ -24,22 +25,35 @@ vi.mock('@/composables/whats-new/useWhatsNew', () => ({
   }),
 }))
 
-/** Renders the menu's items inline, through the real `item-leading` slot, next to its trigger. */
+/**
+ * Renders the menu's items inline, through the real `item-leading` slot, next to its
+ * trigger. Clicking the trigger opens it; `data-open` mirrors the bound `open`.
+ */
 const DropdownMenuStub = defineComponent({
-  props: { items: { type: Array as PropType<DropdownMenuItem[][]>, required: true } },
-  setup(props, { slots }) {
+  props: {
+    items: { type: Array as PropType<DropdownMenuItem[][]>, required: true },
+    open: { type: Boolean, default: false },
+  },
+  emits: ['update:open'],
+  setup(props, { slots, emit }) {
     const ui = { itemLeadingIcon: () => '' }
     return () =>
-      h('div', [
-        slots.default?.({ open: false }),
+      h('div', { 'data-testid': 'user-menu', 'data-open': String(props.open) }, [
+        h('div', { 'data-testid': 'user-menu-trigger', onClick: () => emit('update:open', true) }, [
+          slots.default?.({ open: props.open }),
+        ]),
+        slots['content-bottom']?.(),
         h(
           'ul',
-          props.items.flat().map((item, index) =>
-            h('li', { 'data-key': item.value, onClick: () => item.onSelect?.(new Event('select')) }, [
-              slots['item-leading']?.({ item, active: false, index, ui }),
-              item.label,
-            ]),
-          ),
+          props.items
+            .flat()
+            .map((item, index) =>
+              h(
+                'li',
+                { 'data-key': item.value, onClick: () => item.onSelect?.(new Event('select')) },
+                [slots['item-leading']?.({ item, active: false, index, ui }), item.label],
+              ),
+            ),
         ),
       ])
   },
@@ -103,5 +117,22 @@ describe('AppHeader — what’s new', () => {
 
     expect(wrapper.find('[data-key="whats-new"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="avatar-whats-new-dot"]').exists()).toBe(false)
+  })
+})
+
+describe('AppHeader — version easter egg', () => {
+  it('closes the user menu when the easter egg fires', async () => {
+    const { visible, stop } = useEasterEgg()
+    const wrapper = mountHeader()
+    const menu = () => wrapper.find('[data-testid="user-menu"]')
+
+    await wrapper.find('[data-testid="user-menu-trigger"]').trigger('click')
+    expect(menu().attributes('data-open')).toBe('true')
+
+    for (let i = 0; i < 5; i++) await wrapper.find('.app-version').trigger('click')
+
+    expect(visible.value).toBe(true)
+    expect(menu().attributes('data-open')).toBe('false')
+    stop()
   })
 })

@@ -777,3 +777,46 @@ describe('pwa.update', () => {
     })
   })
 })
+
+describe('handOverToNewerWorker', () => {
+  beforeEach(() => stubLocation())
+  afterEach(() => vi.useRealTimers())
+
+  it('activates the worker already waiting', async () => {
+    const stub = stubServiceWorker()
+    const { handOverToNewerWorker, reloadServesLatest } = await loadModule()
+
+    expect(await handOverToNewerWorker()).toBe(true)
+    expect(stub.registration.update).toHaveBeenCalledOnce()
+    expect(stub.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' })
+    expect(reloadServesLatest()).toBe(true)
+  })
+
+  it('waits for a worker the update check starts installing', async () => {
+    const installing = createInstallingWorker()
+    const stub = stubServiceWorker({ waiting: false, installing })
+    const { handOverToNewerWorker } = await loadModule()
+
+    const handover = handOverToNewerWorker()
+    await vi.waitFor(() => expect(stub.registration.update).toHaveBeenCalled())
+    const postMessage = finishInstall(stub, installing)
+
+    expect(await handover).toBe(true)
+    expect(postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' })
+  })
+
+  it('gives up at once when the server has no other build', async () => {
+    stubServiceWorker({ waiting: false })
+    const { handOverToNewerWorker } = await loadModule()
+
+    expect(await handOverToNewerWorker()).toBe(false)
+  })
+
+  it('does nothing for a page no worker controls', async () => {
+    const stub = stubServiceWorker({ controlled: false })
+    const { handOverToNewerWorker } = await loadModule()
+
+    expect(await handOverToNewerWorker()).toBe(false)
+    expect(stub.postMessage).not.toHaveBeenCalled()
+  })
+})

@@ -3,8 +3,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const checkVersion = vi.fn<() => Promise<boolean>>()
 const applyUpdate = vi.fn<(target?: string) => Promise<boolean>>()
 const reloadServesLatest = vi.fn<() => boolean>()
+const handOverToNewerWorker = vi.fn<() => Promise<boolean>>()
 const showError = vi.fn()
-vi.mock('../pwa.update', () => ({ checkVersion, applyUpdate, reloadServesLatest }))
+vi.mock('../pwa.update', () => ({
+  checkVersion,
+  applyUpdate,
+  reloadServesLatest,
+  handOverToNewerWorker,
+}))
 vi.mock('@/composables/useErrorService', () => ({ errorService: { showError } }))
 vi.mock('@/i18n', () => ({ i18n: { global: { t: (key: string) => key } } }))
 
@@ -30,6 +36,7 @@ describe('stale-chunk', () => {
     checkVersion.mockReset().mockResolvedValue(false)
     applyUpdate.mockReset().mockResolvedValue(true)
     reloadServesLatest.mockReset().mockReturnValue(true)
+    handOverToNewerWorker.mockReset().mockResolvedValue(false)
     showError.mockReset()
     sessionStorage.clear()
     stubOnline(true)
@@ -149,5 +156,27 @@ describe('stale-chunk', () => {
 
     expect(checkVersion).toHaveBeenCalledOnce()
     expect(location.reload).toHaveBeenCalledOnce()
+  })
+
+  it('hands over to a newer build of the same version before reloading', async () => {
+    const location = stubLocation('/')
+    handOverToNewerWorker.mockResolvedValue(true)
+    const { recoverFromStaleChunk } = await load()
+
+    await recoverFromStaleChunk('/admin/rules-engine')
+
+    expect(handOverToNewerWorker).toHaveBeenCalledOnce()
+    expect(applyUpdate).not.toHaveBeenCalled()
+    expect(location.href).toBe(`${ORIGIN}/admin/rules-engine`)
+  })
+
+  it('leaves the worker alone when a new version is applied the usual way', async () => {
+    stubLocation('/')
+    checkVersion.mockResolvedValue(true)
+    const { recoverFromStaleChunk } = await load()
+
+    await recoverFromStaleChunk('/admin/users')
+
+    expect(handOverToNewerWorker).not.toHaveBeenCalled()
   })
 })

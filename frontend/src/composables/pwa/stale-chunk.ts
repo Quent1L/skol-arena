@@ -1,7 +1,7 @@
 import { markLeaving } from '@/utils/app-lifecycle'
 import { errorService } from '@/composables/useErrorService'
 import { i18n } from '@/i18n'
-import { applyUpdate, checkVersion, reloadServesLatest } from './pwa.update'
+import { applyUpdate, checkVersion, handOverToNewerWorker, reloadServesLatest } from './pwa.update'
 
 /**
  * A lazy chunk that fails to load almost always means a deployment replaced the
@@ -91,7 +91,10 @@ export async function recoverFromStaleChunk(targetUrl?: string): Promise<void> {
     return
   }
 
-  // Same version served (dev server re-optimisation, a transient failure), or a new
-  // worker already in control: one straight reload.
+  // Same version served, yet the chunk is gone: either a transient failure (or the dev
+  // server re-optimising), or another build of this same version, whose worker is
+  // waiting behind the one serving our stale shell. Hand over to it first if there is
+  // one, or the reload lands on that shell again; then one straight reload.
+  if (!updateServed) await handOverToNewerWorker()
   reloadOnce(target)
 }
