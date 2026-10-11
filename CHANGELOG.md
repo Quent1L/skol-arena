@@ -1,5 +1,101 @@
 # Changelog
 
+## [2.3.0](https://github.com/Quent1L/skol-arena/compare/2.2.0...2.3.0) (2026-10-11)
+
+### ✨ New Features
+
+* **admin:** add a responsive admin layout with sidebar ([17204ed](https://github.com/Quent1L/skol-arena/commit/17204eddc0c27a203ffc938d81d57679d7aadbb0))
+* **admin:** global rules engine stats screen with firing feed ([2c5dd65](https://github.com/Quent1L/skol-arena/commit/2c5dd65c732ce26c2ba744bcd519fedb1a98b8b7))
+* **admin:** open a new discipline after creating it ([2dc1d91](https://github.com/Quent1L/skol-arena/commit/2dc1d9138bae95386f29adebc128384188525e02))
+* **admin:** reach hidden table columns and sorting on a phone ([160c8d6](https://github.com/Quent1L/skol-arena/commit/160c8d6767f8fea3359cfc6c9c860c10c5911b0b))
+* **frontend:** add Nuxt UI building blocks for the migration ([15deb77](https://github.com/Quent1L/skol-arena/commit/15deb77fdccaffe69a8c1186119a7962939271ff))
+* **mobile:** route every back action through the header button ([480a0a5](https://github.com/Quent1L/skol-arena/commit/480a0a5d9532027fd050308c7c90b32e2f7fb4b6))
+* **pwa:** apply routine updates quietly and announce them with a pill ([a810b66](https://github.com/Quent1L/skol-arena/commit/a810b6689b9cd0657b6636627e3034cde54b719e))
+* **ranked:** show the profile's win rate per match format ([36245a5](https://github.com/Quent1L/skol-arena/commit/36245a52044a2dea2e520fa946e8666b36d7ae11))
+* **standings:** render championship standings like a ranked leaderboard ([885f5e3](https://github.com/Quent1L/skol-arena/commit/885f5e3715fa20882ed0622e87ca6866e4b26f6d))
+* **tournament:** show the start and end dates in the details tab ([f4b5554](https://github.com/Quent1L/skol-arena/commit/f4b5554b778754f14b151f742d7ba6d1658b1802))
+
+### 🐛 Bug Fixes
+
+* **admin:** hold the season form state in a ref ([71c0b9f](https://github.com/Quent1L/skol-arena/commit/71c0b9f947e6736db1a7f62b458f76e902324c58))
+* **admin:** let a new tournament's general fields be filled in ([28ad79f](https://github.com/Quent1L/skol-arena/commit/28ad79f1e1624249e6f1ea09c3a21879af751321))
+* **bracket:** show player avatars on match cards ([87518e7](https://github.com/Quent1L/skol-arena/commit/87518e7e523a5b383ddd9c4783fa93a061dad92f))
+* **docker:** keep docs/tsconfig.json in the build context ([f1e15b9](https://github.com/Quent1L/skol-arena/commit/f1e15b9d80840f63f1614b1c3163907dc0a95564))
+* **frontend:** bundle icons declared in .ts files ([996f4b1](https://github.com/Quent1L/skol-arena/commit/996f4b16fa5ae72ce4a2a32b3930863201a999cf))
+* **i18n:** translate every backend error code ([2c9a88a](https://github.com/Quent1L/skol-arena/commit/2c9a88a5568b5d0e7fd0dfd1fc5efc9b1788c3bd))
+* **maintenance:** drop NODE_ENV from the application card ([822e1fa](https://github.com/Quent1L/skol-arena/commit/822e1fade5152fe7833f011701f55689f38776e7))
+* **match:** accept the whole last day of a tournament as a match date ([6919b07](https://github.com/Quent1L/skol-arena/commit/6919b070c3ff4f9aeb3788873a8b692c11a9611b))
+* **match:** round the ranked reporting floor up and keep it current ([38a66a5](https://github.com/Quent1L/skol-arena/commit/38a66a5d0a9fe73029b83f798f4ef8a1cf9f8729))
+* **match:** show player names in white on match cards again ([b638690](https://github.com/Quent1L/skol-arena/commit/b6386904c2627806674b00415d9e1ff86c5262e8))
+* **pwa:** keep the destination when recovering from a stale chunk ([df79c46](https://github.com/Quent1L/skol-arena/commit/df79c465c33c96895179206cdc3b869609f47600))
+* **pwa:** never boot a shell from another deployment ([0b735ef](https://github.com/Quent1L/skol-arena/commit/0b735ef7537504ed906e8850daa6886540cee70c))
+* **pwa:** rest the install banner on the bottom edge ([79752a5](https://github.com/Quent1L/skol-arena/commit/79752a5d83099216b184cdcb1c3c6c7c4e6807a9))
+* **pwa:** stop forcing routine updates on the user at startup ([9d2c794](https://github.com/Quent1L/skol-arena/commit/9d2c794122dca3c80161e80bfd869e9e51311172))
+* **ranked:** complete the copied tiers help text ([4e6c8c9](https://github.com/Quent1L/skol-arena/commit/4e6c8c9b8bff2021b7d9af80458dda84735a2c79))
+* **ranked:** count unvalidated matches in provisional placement progress ([0e30f73](https://github.com/Quent1L/skol-arena/commit/0e30f73b8a30fa8106783fcad786fce84f4ae777))
+* **rules:** drop an overview that answers after the range changed ([dbafa47](https://github.com/Quent1L/skol-arena/commit/dbafa47593c8084f98c68773d5590261957b5539))
+* **standings:** refetch a view each time it is shown again ([37036bd](https://github.com/Quent1L/skol-arena/commit/37036bda9aa6d4008fcb55a0a5619055d180908a))
+* **ui:** pointer cursor, match list width and stale admin chunks ([2b9f491](https://github.com/Quent1L/skol-arena/commit/2b9f4912fdfe1d2382bd214db16c3fbae775a0fa))
+
+### ⚡ Performance
+
+* **frontend:** trim fonts and charts out of the PWA precache ([3c53b67](https://github.com/Quent1L/skol-arena/commit/3c53b673bffb3e4d3eac53681dee5e8a252c7b1b))
+* **pwa:** fetch the admin screens on demand instead of precaching them ([7bfb4f9](https://github.com/Quent1L/skol-arena/commit/7bfb4f95b4e81cc3d76ea5d7723896ae7cf785ff))
+
+### ♻️ Refactoring
+
+* **admin:** migrate outcome type management to Nuxt UI ([c40b263](https://github.com/Quent1L/skol-arena/commit/c40b2631d1d3308dbc4ca3862161f97788f9244b))
+* **admin:** migrate the admin dashboard to Nuxt UI ([d249754](https://github.com/Quent1L/skol-arena/commit/d249754b7887b35f0aa67391fccfff4e3610c10b))
+* **admin:** migrate the discipline list and form to Nuxt UI ([b631dfd](https://github.com/Quent1L/skol-arena/commit/b631dfd07bf82a93fb8696b6a41b9529d3987b41))
+* **admin:** migrate the game rules screens to Nuxt UI ([1431a0d](https://github.com/Quent1L/skol-arena/commit/1431a0db9c4af05716e151ae3f2f3abfe688b7ba))
+* **admin:** migrate the icon picker to Nuxt UI ([8787693](https://github.com/Quent1L/skol-arena/commit/8787693bfaeca01bbc3adf0dfe927c2615c360e4))
+* **admin:** migrate the invitations screen to Nuxt UI ([4110152](https://github.com/Quent1L/skol-arena/commit/4110152ff09faf44432b4dd20724747e2d506460))
+* **admin:** migrate the maintenance screen to Nuxt UI ([ea96bb2](https://github.com/Quent1L/skol-arena/commit/ea96bb2d1166ee887986c2def72068f259cde7df))
+* **admin:** migrate the organizations screen to Nuxt UI ([7f7d8ab](https://github.com/Quent1L/skol-arena/commit/7f7d8ab9936ee896f2a4fdb684cf8c1cb90dbe53))
+* **admin:** migrate the ranked seasons list to Nuxt UI ([e1524ec](https://github.com/Quent1L/skol-arena/commit/e1524ecfa5132e809ae53df4241a498668ad5ddb))
+* **admin:** migrate the ranked tiers editor to Nuxt UI ([278def4](https://github.com/Quent1L/skol-arena/commit/278def497f1ccf2efb3589c8b2770a181d2e7219))
+* **admin:** migrate the rules engine condition builder ([e1e6753](https://github.com/Quent1L/skol-arena/commit/e1e6753e170673b8d93f8eb4737dff34bbd05f5a))
+* **admin:** migrate the rules engine form to Nuxt UI ([7d7b377](https://github.com/Quent1L/skol-arena/commit/7d7b3772d9148558f265ed0036ae5c06781660df))
+* **admin:** migrate the rules engine list and stats to Nuxt UI ([eb6c784](https://github.com/Quent1L/skol-arena/commit/eb6c784a9a126d1981484afe55b84df779c323a4))
+* **admin:** migrate the tournament and ranked season forms ([b82421e](https://github.com/Quent1L/skol-arena/commit/b82421ebe6e5d7e2b165af86f4ad16477b75786a))
+* **admin:** migrate the tournament list to Nuxt UI ([292e15a](https://github.com/Quent1L/skol-arena/commit/292e15adb8a221f1c8403163af249aac063f404c))
+* **admin:** migrate the user edit form to Nuxt UI ([9b59b42](https://github.com/Quent1L/skol-arena/commit/9b59b426bb6c6f17b2d37ec3c8099ceaee47db1a))
+* **admin:** migrate the users list to Nuxt UI ([5df7f6e](https://github.com/Quent1L/skol-arena/commit/5df7f6e1b09cf44e78afa5584a5802503788824a))
+* **auth:** migrate auth screens to UForm ([52af0ea](https://github.com/Quent1L/skol-arena/commit/52af0ea8f19da9782e8fb2c5c1c99e0c6b6e879b))
+* **bracket:** migrate bracket screens to Nuxt UI ([3257479](https://github.com/Quent1L/skol-arena/commit/325747940f5cf0785583f7d123aecd14e6bb39d8))
+* **frontend:** migrate app shell to Nuxt UI ([928ac98](https://github.com/Quent1L/skol-arena/commit/928ac98aaad7316dfe6116a87711f69b195d67f0))
+* **frontend:** migrate avatar components to Nuxt UI ([158df39](https://github.com/Quent1L/skol-arena/commit/158df39508de75535fcc86d5b1fa22d762475d54))
+* **frontend:** route app toasts through Nuxt UI ([7e2c57f](https://github.com/Quent1L/skol-arena/commit/7e2c57fb1dee3dbfc9bedb365ba4bbd304688a7f))
+* **match:** migrate match detail and list to Nuxt UI ([b470be9](https://github.com/Quent1L/skol-arena/commit/b470be9194a76b472b170662594970f873c28dac))
+* **match:** migrate match form steppers and skeleton to Nuxt UI ([5f4fab5](https://github.com/Quent1L/skol-arena/commit/5f4fab5cbbacb8947189a1fb7a9ae4983f0b1e4f))
+* **match:** migrate match form steps to Nuxt UI ([e835e3a](https://github.com/Quent1L/skol-arena/commit/e835e3ad983036d8983530625dff56af89cda517))
+* **player:** migrate player profile and comparison to Nuxt UI ([f809fe9](https://github.com/Quent1L/skol-arena/commit/f809fe9d05af0ae36e50405458093eb777ea0cc1))
+* **ranked:** migrate ranked components to Nuxt UI ([271a743](https://github.com/Quent1L/skol-arena/commit/271a743990d5e43dfc3619518d90bf04676672df))
+* **rewind:** migrate rewind screens and rules content to Nuxt UI ([0f485f1](https://github.com/Quent1L/skol-arena/commit/0f485f1baaf2902612f9ada26bf1d582161362d4))
+* **settings:** migrate settings screen to Nuxt UI ([51688c3](https://github.com/Quent1L/skol-arena/commit/51688c38dae9aefc6955a375e4aecee22c2af0b7))
+* **tournament:** migrate standings table to Nuxt UI ([d2b308b](https://github.com/Quent1L/skol-arena/commit/d2b308b4c2c8f450cc82e878cf437f6f6345de5c))
+* **tournament:** migrate team management panel to Nuxt UI ([47ca062](https://github.com/Quent1L/skol-arena/commit/47ca062c129368328ff9202d13bfe3d18d5114c3))
+* **tournament:** migrate tournament detail and tabs to Nuxt UI ([69c2499](https://github.com/Quent1L/skol-arena/commit/69c2499477352d97136ecd4b516e2d0f3699df49))
+* **tournament:** migrate tournaments list to Nuxt UI ([843b4fc](https://github.com/Quent1L/skol-arena/commit/843b4fcc7cb5892aeb9245478d304de2becea74e))
+
+### 🔧 Maintenance
+
+* **frontend:** regenerate component type declarations ([e36b07e](https://github.com/Quent1L/skol-arena/commit/e36b07e92c08aa0995dae7bd1827488c9eccd28b))
+* **frontend:** remove PrimeVue ([f4f60ab](https://github.com/Quent1L/skol-arena/commit/f4f60ab667575b30a0145ceaac6c1e55aa8f7e7d))
+* **frontend:** set up Nuxt UI alongside PrimeVue ([73c5ba6](https://github.com/Quent1L/skol-arena/commit/73c5ba6db8f78914388c4cb52d2b9d07298a5609))
+
+### 🎨 Style
+
+* **admin:** drop the hover spotlight on dashboard cards ([49b02fb](https://github.com/Quent1L/skol-arena/commit/49b02fb3c7924ba1475b503b93b083d7cafe9f9e))
+
+### 📝 Documentation
+
+* drop the leftover PrimeVue mentions ([4f85903](https://github.com/Quent1L/skol-arena/commit/4f8590331b3abef555f6a1cff4e33b996cd68c5f))
+* **release-notes:** keep only what changed since main ([d770832](https://github.com/Quent1L/skol-arena/commit/d770832b598c2801ee8225cafc44b779de325e5c))
+* **release-notes:** note the administration on phones ([3b49835](https://github.com/Quent1L/skol-arena/commit/3b49835b97e300ef5578bac63567b949ff07f6ab))
+* **release-notes:** note the player screens rework ([656c957](https://github.com/Quent1L/skol-arena/commit/656c957b74daf2be539e7bdc0df2393fb5b8baec))
+* **screenshots:** refresh captures after the Nuxt UI migration ([7a8e48a](https://github.com/Quent1L/skol-arena/commit/7a8e48aab345c4025770880f6ba5b12e46656836))
+
 ## [2.2.0](https://github.com/Quent1L/skol-arena/compare/2.1.0...2.2.0) (2026-10-07)
 
 ### ✨ New Features
