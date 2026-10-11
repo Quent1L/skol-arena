@@ -39,8 +39,38 @@
         </div>
       </div>
 
+      <!-- Three sides or more: the sides as a ranking, my side emphasised -->
+      <ol v-if="isNway" class="flex flex-1 flex-col gap-1.5 pt-1" data-testid="match-card-ranking">
+        <li
+          v-for="side in placedSides"
+          :key="side.position"
+          class="flex items-center gap-2 rounded-md px-1.5 py-1"
+          :class="isMySide(side) ? 'bg-slate-700/60' : ''"
+        >
+          <span
+            class="w-5 shrink-0 text-center font-headline font-black tabular-nums"
+            :class="
+              side.rank === 1 && entry.status !== 'cancelled' ? 'text-yellow-500' : 'text-muted'
+            "
+            >{{ side.rank ?? '–' }}</span
+          >
+          <PlayerAvatarStack :players="side.players" size="sm" />
+          <span
+            class="min-w-0 flex-1 truncate font-label text-sm text-highlighted"
+            :class="isMySide(side) ? 'font-bold' : 'font-semibold'"
+            >{{ side.teamName ?? side.players.map((p) => p.displayName).join(' / ') }}</span
+          >
+          <MvpBadge v-if="side.players.some((p) => p.isMvp)" icon-only />
+          <span
+            v-if="showNwayScore"
+            class="shrink-0 font-headline font-black tabular-nums text-highlighted"
+            >{{ side.score ?? 0 }}</span
+          >
+        </li>
+      </ol>
+
       <!-- Center: left side | score | right side -->
-      <div class="flex items-center gap-2 pt-3 flex-1 justify-center">
+      <div v-else class="flex items-center gap-2 pt-3 flex-1 justify-center">
         <!-- Left side (my side when player mode, side A when neutral) -->
         <div class="flex-1 flex flex-col items-center gap-1 relative">
           <div
@@ -161,6 +191,12 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { ClientMatchCard } from '@skol-arena/shared/types/index'
 import PlayerAvatarStack from '@/components/PlayerAvatarStack.vue'
+import {
+  isNwayMatch,
+  matchFormatLabel,
+  placementOutcome,
+  sortByPlacement,
+} from '@/utils/match-sides'
 import { useMatchStatus } from '@/composables/match/match-status-style'
 
 const props = defineProps<{
@@ -189,7 +225,20 @@ const rightSide = computed(() => {
   return props.entry.sides.find((s) => s.position === 2)
 })
 
+const isNway = computed(() => isNwayMatch(props.entry.sides))
+const placedSides = computed(() => sortByPlacement(props.entry.sides))
+const showNwayScore = computed(
+  () => props.entry.tournament.scoreEnabled && props.entry.sides.every((s) => s.score != null),
+)
+
+function isMySide(side: ClientMatchCard['sides'][number]): boolean {
+  return !!props.currentPlayerId && side.players.some((p) => p.id === props.currentPlayerId)
+}
+
 const outcome = computed((): 'WIN' | 'LOSS' | 'DRAW' => {
+  // With three sides or more, a place can earn MMR without being a win: the
+  // placement says it, not the sign of the delta.
+  if (isNway.value) return placementOutcome(props.entry.sides, leftSide.value) ?? 'DRAW'
   if (props.entry.mmrDelta != null) {
     if (props.entry.mmrDelta > 0) return 'WIN'
     if (props.entry.mmrDelta < 0) return 'LOSS'
@@ -238,6 +287,7 @@ const scoreColorClass = computed(() => {
 })
 
 const formatBadge = computed(() => {
+  if (isNway.value) return matchFormatLabel(props.entry.sides, leftSide.value?.position)
   const a = leftSide.value?.players.length ?? '?'
   const b = rightSide.value?.players.length ?? '?'
   return `${a}v${b}`

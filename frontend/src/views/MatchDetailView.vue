@@ -81,10 +81,43 @@
             </div>
           </div>
 
+          <!-- Three sides or more: every side in finishing order, its place and score
+               on its panel. One column on a phone, a grid from sm:. -->
+          <ol
+            v-if="isNway"
+            class="relative grid grid-cols-1 gap-2 px-2 pb-4 pt-2 sm:grid-cols-2 sm:gap-3 sm:px-5 sm:pb-6 lg:grid-cols-3"
+            data-testid="match-ranking"
+          >
+            <li v-for="side in placedSides" :key="side.position" class="relative">
+              <span
+                class="font-headline absolute left-3 top-2 z-10 text-xl font-black tabular-nums"
+                :class="placeClass(side.rank)"
+                data-testid="match-ranking-place"
+                >{{ hasReportedWinner && side.rank != null ? side.rank : '–' }}</span
+              >
+              <span
+                v-if="showScore && hasReportedWinner"
+                class="font-headline absolute right-3 top-2 z-10 text-xl font-black tabular-nums"
+                :class="scoreClass(side)"
+                >{{ side.score ?? 0 }}</span
+              >
+              <MatchSidePanel
+                :side="side"
+                :fallback-name="t('matchDetailView.team', { number: side.position })"
+                :mode="match.tournament?.mode"
+                :is-finalized="isFinalized"
+                :show-winner="hasReportedWinner"
+                :confirmation-statuses="confirmationStatuses"
+                :tournament-id="match.tournamentId"
+              />
+            </li>
+          </ol>
+
           <!-- Phone: the score takes its own full-width row so the two sides split the
                remaining width evenly and the names stay readable. From sm: the classic
                A | score | B duel. -->
           <div
+            v-else
             class="relative grid grid-cols-2 items-start gap-2 px-2 pb-4 pt-2 sm:grid-cols-[1fr_auto_1fr] sm:gap-6 sm:px-5 sm:pb-6"
           >
             <MatchSidePanel
@@ -290,6 +323,7 @@
 </template>
 
 <script setup lang="ts">
+import { isNwayMatch, sortByPlacement } from '@/utils/match-sides'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -440,6 +474,17 @@ const currentUser = computed(() => appUser.value)
 const sideA = computed(() => match.value?.sides.find((s) => s.position === 1))
 const sideB = computed(() => match.value?.sides.find((s) => s.position === 2))
 
+const isNway = computed(() => isNwayMatch(match.value?.sides ?? []))
+const placedSides = computed(() => sortByPlacement(match.value?.sides ?? []))
+
+function placeClass(rank: number | null): string {
+  if (!hasReportedWinner.value || rank == null) return 'text-white/40'
+  if (rank === 1) return 'text-yellow-500'
+  if (rank === 2) return 'text-slate-300'
+  if (rank === 3) return 'text-amber-600'
+  return 'text-white/50'
+}
+
 const isFinalized = computed(() => match.value?.status === 'finalized')
 
 /**
@@ -469,7 +514,7 @@ async function loadBalance() {
 const balance = computed(() => {
   const a = sideA.value
   const b = sideB.value
-  if (!a || !b) return null
+  if (!a || !b || isNway.value) return null
   return computeMatchBalance(
     [a, b].map((s) => ({ position: s.position, playerIds: s.players.map((p) => p.id) })),
     balanceStandings.value,
@@ -535,7 +580,7 @@ function scoreClass(side?: MatchDetailSide): string {
 }
 
 const heroGlowClass = computed(() => {
-  if (!isFinalized.value) return ''
+  if (!isFinalized.value || isNway.value) return ''
   if (sideA.value?.isWinner) return 'hero-glow hero-glow-left'
   if (sideB.value?.isWinner) return 'hero-glow hero-glow-right'
   return ''

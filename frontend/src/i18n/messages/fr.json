@@ -805,6 +805,7 @@
     "reason": "Raison :",
     "rematchMatch": "Rejouer",
     "reportedAt": "Saisi le :",
+    "team": "Équipe {number}",
     "teamA": "Équipe A",
     "teamB": "Équipe B",
     "trustScoreBy": "Trust Score de {name}",

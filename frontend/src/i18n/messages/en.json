@@ -805,6 +805,7 @@
     "reason": "Reason:",
     "rematchMatch": "Rematch",
     "reportedAt": "Entered on:",
+    "team": "Team {number}",
     "teamA": "Team A",
     "teamB": "Team B",
     "trustScoreBy": "Trust Score by {name}",

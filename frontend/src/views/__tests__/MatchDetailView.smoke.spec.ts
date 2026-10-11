@@ -132,6 +132,32 @@ describe('MatchDetailView (render smoke)', () => {
     expect(text).not.toMatch(/matchDetailView\./)
   })
 
+  it('lists the sides of a three-side match in finishing order', async () => {
+    const base = makeMatch('finalized')
+    const side = (position: number, rank: number, name: string) => ({
+      ...base.sides[0],
+      position,
+      rank,
+      score: 10 - rank,
+      isWinner: rank === 1,
+      entryId: `e-${position}`,
+      players: [{ id: `p${position}`, displayName: name, shortName: name }],
+    })
+    const wrapper = await mountView(
+      makeMatch('finalized', {
+        sides: [side(1, 2, 'Toto'), side(2, 3, 'Titi'), side(3, 1, 'Tata')],
+      }),
+    )
+
+    expect(wrapper.find('[data-testid="match-ranking"]').exists()).toBe(true)
+    expect(wrapper.find('.col-span-2').exists()).toBe(false)
+    const places = wrapper.findAll('[data-testid="match-ranking-place"]').map((p) => p.text())
+    expect(places).toEqual(['1', '2', '3'])
+    const rows = wrapper.findAll('[data-testid="match-ranking"] > li')
+    expect(rows[0].text()).toContain('Tata')
+    expect(rows[2].text()).toContain('Titi')
+  })
+
   it('gives the score its own row on phones and the middle column from sm:', async () => {
     const wrapper = await mountView(makeMatch('reported'))
 

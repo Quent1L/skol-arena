@@ -152,6 +152,7 @@
 </template>
 
 <script setup lang="ts">
+import { isNwayMatch, placementOutcome } from '@/utils/match-sides'
 import { ref, computed, defineAsyncComponent, nextTick, onActivated, onUnmounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
@@ -287,6 +288,11 @@ function toggleOutcome(value: OutcomeFilter) {
 }
 
 function getOutcome(entry: ClientMatchCard): OutcomeFilter {
+  // Three sides or more: the placement decides, as on the card itself.
+  if (isNwayMatch(entry.sides)) {
+    const mySide = entry.sides.find((s) => s.players.some((p) => p.id === entry.playerId))
+    return placementOutcome(entry.sides, mySide) ?? 'DRAW'
+  }
   if (entry.mmrDelta != null) {
     if (entry.mmrDelta > 0) return 'WIN'
     if (entry.mmrDelta < 0) return 'LOSS'
