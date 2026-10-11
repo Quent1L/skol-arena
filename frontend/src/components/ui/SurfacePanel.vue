@@ -14,8 +14,7 @@ import { computed } from 'vue'
 
 /**
  * The single panel shell for the match screen. Before this, the same card was hand-rolled
- * five times with five different border/background recipes, plus two PrimeVue Cards that
- * looked like neither.
+ * five times with five different border/background recipes.
  */
 const props = withDefaults(
   defineProps<{

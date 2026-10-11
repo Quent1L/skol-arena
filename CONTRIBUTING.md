@@ -56,7 +56,7 @@ This is a Bun workspace monorepo with four packages:
 skol-arena/
 ├── shared/     # @skol-arena/shared — TypeScript types + Zod schemas, used by both sides
 ├── backend/    # Hono API server (Bun, Drizzle ORM, PostgreSQL, Better Auth)
-├── frontend/   # Vue 3 SPA (Vite, PrimeVue, TailwindCSS, vue-i18n)
+├── frontend/   # Vue 3 SPA (Vite, Nuxt UI, TailwindCSS, vue-i18n)
 └── docs/       # @skol-arena/docs — Astro static site (showcase, blog, self-hosting docs)
 ```
 
@@ -215,7 +215,8 @@ Only what is actually enforced or consistently applied:
 - **Validate with `validate()`** from `backend/src/api/validator.ts`, never `zValidator` or
   `hono-openapi`'s `validator` directly: the wrapper also registers the schema with the
   OpenAPI generator and converts failures into the canonical error envelope.
-- **Use Font Awesome icons** (`fa fa-*`) for action buttons, not PrimeIcons.
+- **Use Font Awesome icons** for action buttons, not Lucide. In Nuxt UI components pass them
+  through Iconify: `icon="i-fa7-solid:pen"`.
 
 ## Documentation
 

@@ -5,7 +5,7 @@ import { secureHeaders } from "hono/secure-headers";
  * the rich text sanitizer: even a payload that slipped into stored HTML cannot load
  * or run a script, since only the bundle's own files are allowed to execute.
  *
- * - `style-src 'unsafe-inline'`: PrimeVue and index.html set inline styles.
+ * - `style-src 'unsafe-inline'`: Nuxt UI's floating overlays and index.html set inline styles.
  * - `img-src https:`: rules and descriptions embed images hosted anywhere.
  * - The cross-origin isolation headers stay off: the dev frontend runs on another
  *   origin, and nothing here needs the isolation they buy.

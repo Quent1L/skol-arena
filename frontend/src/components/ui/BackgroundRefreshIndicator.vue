@@ -45,7 +45,7 @@ const { t } = useI18n()
   left: 0;
   right: 0;
   height: 2px;
-  /* Under PrimeVue's toasts (1100) and far under the brand overlays (9999+). */
+  /* Far under the brand overlays (9999+). */
   z-index: 900;
   overflow: hidden;
   background: rgba(167, 139, 250, 0.15);

@@ -74,8 +74,7 @@ skol-arena/
 
 ### UI library: Nuxt UI
 
-The frontend uses Nuxt UI v4 in Vue/Vite mode (`@nuxt/ui/vite`). PrimeVue is gone; do not
-reintroduce it or its `tailwindcss-primeui` utilities (`bg-surface-*`, `text-muted-color`).
+The frontend uses Nuxt UI v4 in Vue/Vite mode (`@nuxt/ui/vite`).
 
 - `ui()` in `vite.config.ts` owns Tailwind, the component auto-import and the theme
   overrides (primary violet, neutral slate, `USkeleton` one step lighter). Composable

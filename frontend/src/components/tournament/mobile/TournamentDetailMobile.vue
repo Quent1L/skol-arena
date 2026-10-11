@@ -168,7 +168,7 @@ import TournamentInfosTab from '@/views/tournament/tabs/TournamentInfosTab.vue'
 import MobileBottomNav from '@/components/tournament/mobile/MobileBottomNav.vue'
 
 // One tab is on screen at a time, and each of these drags in something substantial —
-// the standings table brings PrimeVue's DataTable, the bracket its own renderer. Kept
+// the standings their tabs and dialogs, the bracket its own renderer. Kept
 // out of this chunk, they land while the reader is already looking at their tab.
 const MatchList = defineAsyncComponent(() => import('@/components/MatchList.vue'))
 const StandingsTable = defineAsyncComponent(() => import('@/components/tournament/StandingsTable.vue'))

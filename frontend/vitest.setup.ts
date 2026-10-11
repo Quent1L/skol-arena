@@ -1,4 +1,4 @@
-// jsdom lacks several browser APIs that PrimeVue overlays (Select, DatePicker)
+// jsdom lacks several browser APIs that Nuxt UI overlays (menus, popovers)
 // and viewport composables rely on.
 import { vi } from 'vitest'
 

@@ -119,7 +119,7 @@ html {
 }
 
 /* ── Skeleton sweep ── */
-/* A single brand sweep across a whole skeleton, on top of PrimeVue's per-block
+/* A single brand sweep across a whole skeleton, on top of USkeleton's per-block
    pulse: it tells the eye the page is one thing loading, not eight. Purple taken
    from the splash lockup so the wait reads as ours. Shared by every skeleton
    screen (tournament detail, match form). */

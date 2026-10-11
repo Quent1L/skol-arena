@@ -9,9 +9,8 @@ import { onBeforeUnmount, onMounted, shallowRef, useTemplateRef, watch } from 'v
 import type { Chart, ChartData, ChartOptions, ChartType } from 'chart.js'
 
 /**
- * Thin Chart.js host, the drop-in successor of PrimeVue's <Chart>: same props, the
- * chart is rebuilt whenever its data or options change. Chart.js is loaded lazily so
- * it stays out of the bundles of screens without a chart.
+ * Thin Chart.js host: the chart is rebuilt whenever its data or options change. Chart.js
+ * is loaded lazily so it stays out of the bundles of screens without a chart.
  */
 const props = defineProps<{
   type: ChartType
