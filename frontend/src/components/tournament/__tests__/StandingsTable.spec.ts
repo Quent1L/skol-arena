@@ -88,6 +88,16 @@ describe('StandingsTable', () => {
     expect(loadProvisionalStandings).toHaveBeenCalledWith('t1')
   })
 
+  it('refetches a view each time it is shown again', async () => {
+    const wrapper = await mountTable()
+    await wrapper.find('[data-test="subtab-provisional"]').trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-test="subtab-official"]').trigger('click')
+    await flushPromises()
+    expect(loadOfficialStandings).toHaveBeenCalledTimes(2)
+    expect(loadProvisionalStandings).toHaveBeenCalledTimes(1)
+  })
+
   it('mobile: the same views sit in the draggable track used by ranked', async () => {
     isMobile.value = true
     const wrapper = await mountTable()

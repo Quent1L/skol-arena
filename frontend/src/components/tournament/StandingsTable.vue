@@ -192,25 +192,28 @@ const sources = {
 }
 const loaded = new Set<StandingsMode>()
 
-/** Each view is fetched once, the first time it is rendered. */
-function ensureModeData(value: StandingsMode) {
-  if (loaded.has(value)) return
+function loadMode(value: StandingsMode) {
   loaded.add(value)
   const load =
     value === 'official'
       ? sources.official.loadOfficialStandings
       : sources.provisional.loadProvisionalStandings
-  // The service already turns a failure into the `error` the list displays.
+  // The service already turns a failure into the `error` the list displays, and keeps
+  // the rows on screen while a refresh is in flight.
   load(props.tournamentId).catch(() => {})
 }
 
 /** Mobile mounts the neighbouring view too: it must not be empty mid-drag. */
 function prefetchModes(values: string[]) {
-  values.forEach((value) => ensureModeData(value as StandingsMode))
+  values.forEach((value) => {
+    if (!loaded.has(value as StandingsMode)) loadMode(value as StandingsMode)
+  })
 }
 
-// Immediate, because the view can be restored from the URL rather than picked here.
-watch(mode, ensureModeData, { immediate: true })
+// Switching to a view refetches it: a match validated since it was last shown moves
+// rows between the two. Immediate, because the view can be restored from the URL
+// rather than picked here.
+watch(mode, loadMode, { immediate: true })
 
 function listPropsFor(value: StandingsMode) {
   const source = sources[value]
