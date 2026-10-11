@@ -92,8 +92,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { registerBottomNav } from '@/composables/ui/useBottomNav'
 
 const { t } = useI18n()
+registerBottomNav()
 
 interface NavTab {
   id: string

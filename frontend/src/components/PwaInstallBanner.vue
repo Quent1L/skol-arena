@@ -2,8 +2,8 @@
   <Transition name="slide-up">
     <div
       v-if="shouldShowBanner"
-      class="fixed bottom-15 left-0 right-0 z-50 flex items-center justify-between gap-3 px-4 py-3 shadow-lg"
-      style="background: var(--ui-color-neutral-700)"
+      class="install-banner flex items-center justify-between gap-3"
+      :class="{ 'above-nav': hasBottomNav }"
     >
       <div class="flex items-center gap-3 min-w-0">
         <img src="/icons/icon-192.png" alt="Skol Arena" class="w-10 h-10 rounded-xl shrink-0" />
@@ -30,8 +30,8 @@
   <Transition name="fade">
     <div
       v-if="showIOSInstructions"
-      class="fixed bottom-15 left-0 right-0 z-50 px-4 py-3 shadow-lg"
-      style="background: var(--ui-color-neutral-700);"
+      class="install-banner"
+      :class="{ 'above-nav': hasBottomNav }"
     >
       <div class="flex items-start justify-between gap-2">
         <p class="text-sm">
@@ -55,11 +55,36 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { usePWAInstall } from '@/composables/pwa/pwa.install'
+import { useBottomNavPresence } from '@/composables/ui/useBottomNav'
 
 const { t } = useI18n()
 const { shouldShowBanner, showIOSInstructions, triggerInstall, dismissBanner } = usePWAInstall()
+const hasBottomNav = useBottomNavPresence()
 
 function handleDismiss() {
   dismissBanner()
 }
 </script>
+
+<style scoped>
+/* Flush with the bottom edge, padded past the home indicator. When a bottom nav
+   is on screen the banner rests on top of it instead (same height contract as
+   MobileBottomNav), and the nav already absorbs the safe area. It also slips one
+   layer under the nav, so the nav's raised "create" button stays on top of it. */
+.install-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+  background: var(--ui-color-neutral-700);
+  box-shadow: 0 -4px 12px rgb(0 0 0 / 0.25);
+}
+
+.install-banner.above-nav {
+  bottom: calc(4rem + env(safe-area-inset-bottom));
+  padding-bottom: 0.75rem;
+  z-index: 40;
+}
+</style>
