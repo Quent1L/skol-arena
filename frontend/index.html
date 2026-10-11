@@ -13,6 +13,9 @@
     <meta name="theme-color" content="#000006" />
     <title>Skol Arena</title>
     <meta name="description" content="Skol Arena - Skill Or Luck ?" />
+    <!-- Blocking on purpose: it has to listen before the entry module can fail. See
+         public/boot-recovery.js. External: the CSP forbids inline scripts. -->
+    <script src="/boot-recovery.js"></script>
     <style>
       /* Painted before any bundle is parsed, so the first frame is already the
          brand's black rather than the browser's white. Same colour as the PWA

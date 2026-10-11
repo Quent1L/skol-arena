@@ -235,9 +235,10 @@ function rememberVersion(version: string): void {
  * for next time. Null when there is nothing to say.
  *
  * Reading it from storage rather than from the update flow is what makes the
- * announcement reliable: navigations bypass the precache, so a plain reload lands on
- * the new bundle without `applyUpdate` ever running — the very case where the user
- * would otherwise be moved to a new version with no explanation at all.
+ * announcement reliable: a reload can land on the new bundle without `applyUpdate`
+ * ever running — a page no worker controls goes straight to the network, and a
+ * waiting worker can take over on its own once every tab is closed — the very case
+ * where the user would otherwise be moved to a new version with no explanation at all.
  *
  * Mandatory updates get announced too. The blocking screen they show on the way in
  * says a version is *required*, not that one was installed, and it can be gone in the

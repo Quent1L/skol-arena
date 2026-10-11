@@ -1,6 +1,12 @@
 /// <reference lib="webworker" />
 
-import { addPlugins, cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching'
+import {
+  addPlugins,
+  cleanupOutdatedCaches,
+  createHandlerBoundToURL,
+  precacheAndRoute,
+} from 'workbox-precaching'
+import { NavigationRoute, registerRoute } from 'workbox-routing'
 
 declare const self: ServiceWorkerGlobalScope
 
@@ -60,6 +66,22 @@ cleanupOutdatedCaches()
 
 // Precache and route assets
 precacheAndRoute(manifest)
+
+// Every navigation gets the shell of this worker's own precache, not just `/`. Left to
+// the browser, a deep URL is loaded from the network or, on a back/forward navigation,
+// from the HTTP cache — which happily serves a stale index.html from a previous
+// deployment. That shell then points at hashed files the server no longer has, the
+// entry module fails to load and the app never starts. Serving the precached shell
+// keeps the HTML and the bundle it references from the same build; a new version
+// still arrives through the update flow (composables/pwa/pwa.update.ts).
+//
+// Left out: the server's own pages (`/api/*`: SSO callbacks, the API reference) and
+// any URL naming a file (`/version.json`, an icon opened in a tab).
+registerRoute(
+  new NavigationRoute(createHandlerBoundToURL('index.html'), {
+    denylist: [/^\/api\//, /^[^?]*\/[^/?]*\.[^/?]*(\?.*)?$/],
+  }),
+)
 
 // Service worker for push notifications
 
