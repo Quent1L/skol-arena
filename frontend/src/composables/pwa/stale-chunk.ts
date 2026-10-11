@@ -1,5 +1,7 @@
 import { markLeaving } from '@/utils/app-lifecycle'
-import { applyUpdate, checkVersion } from './pwa.update'
+import { errorService } from '@/composables/useErrorService'
+import { i18n } from '@/i18n'
+import { applyUpdate, checkVersion, reloadServesLatest } from './pwa.update'
 
 /**
  * A lazy chunk that fails to load almost always means a deployment replaced the
@@ -42,6 +44,23 @@ function rememberReload(target: string): void {
   }
 }
 
+/** Resolves on the next task, once every pending microtask has run. */
+function nextTask(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0))
+}
+
+/** One straight navigation onto `target`, never a loop. */
+function reloadOnce(target: string): void {
+  if (reloadedRecently(target)) {
+    recovering = false
+    return
+  }
+  rememberReload(target)
+  markLeaving()
+  if (target === window.location.href) window.location.reload()
+  else window.location.href = target
+}
+
 /**
  * Reloads onto `targetUrl` so the page picks up the bundle the server now serves.
  *
@@ -52,20 +71,27 @@ function rememberReload(target: string): void {
  * chunk is simply unreachable and reloading would only blank the screen.
  */
 export async function recoverFromStaleChunk(targetUrl?: string): Promise<void> {
+  // `vite:preloadError` fires before the router hears of the failed navigation: let
+  // the router's call, the one that knows the destination, go first.
+  if (!targetUrl) await nextTask()
   if (recovering || !navigator.onLine) return
   recovering = true
   const target = new URL(targetUrl ?? window.location.href, window.location.origin).href
 
-  if ((await checkVersion()) && (await applyUpdate(target))) return
+  const updateServed = await checkVersion()
+  if (updateServed && (await applyUpdate(target))) return
 
-  // Same version served (dev server re-optimisation, a transient failure) or an
-  // update that could not be applied: one straight reload, never a loop.
-  if (reloadedRecently(target)) {
+  // An update that could not be applied while the old worker still holds the page:
+  // a reload would get its stale index.html back and fail on the same chunk. Say why
+  // the screen did not open instead; a later navigation applies the update once the
+  // new bundle is downloaded.
+  if (updateServed && !reloadServesLatest()) {
     recovering = false
+    errorService.showError(i18n.global.t('errorService.updateRequired'))
     return
   }
-  rememberReload(target)
-  markLeaving()
-  if (target === window.location.href) window.location.reload()
-  else window.location.href = target
+
+  // Same version served (dev server re-optimisation, a transient failure), or a new
+  // worker already in control: one straight reload.
+  reloadOnce(target)
 }

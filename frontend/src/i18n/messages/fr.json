@@ -520,7 +520,8 @@
     "uncaughtJs": "Erreur JavaScript non capturée",
     "unexpectedError": "Une erreur inattendue est survenue",
     "unhandledRejection": "Promesse rejetée non capturée",
-    "unknownLocation": "Emplacement inconnu"
+    "unknownLocation": "Emplacement inconnu",
+    "updateRequired": "Cette page nécessite la dernière version de l'application, encore en cours de téléchargement. Réessayez dans un instant."
   },
   "fieldEditability": {
     "lockedByMatches": "Verrouillé : {count} résultat(s) ont déjà été saisis",

@@ -520,7 +520,8 @@
     "uncaughtJs": "Uncaught JavaScript error",
     "unexpectedError": "An unexpected error occurred",
     "unhandledRejection": "Unhandled promise rejection",
-    "unknownLocation": "Unknown location"
+    "unknownLocation": "Unknown location",
+    "updateRequired": "This page needs the latest version of the app, which is still downloading. Try again in a moment."
   },
   "fieldEditability": {
     "lockedByMatches": "Locked: {count} result(s) have already been entered",

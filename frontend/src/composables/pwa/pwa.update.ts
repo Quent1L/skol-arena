@@ -565,6 +565,16 @@ export function isUpdateForcedPending(): boolean {
   return updateForced.value
 }
 
+/**
+ * Whether a plain reload would land on the bundle the server now serves. Not while
+ * the old worker still controls the page: it answers the navigation with its own
+ * precached index.html, which points at the same hashed files as before.
+ */
+export function reloadServesLatest(): boolean {
+  if (!hasServiceWorker() || !navigator.serviceWorker.controller) return true
+  return controllerTakenOver.value
+}
+
 export function usePWAUpdate() {
   return {
     updatePending: readonly(updatePending),
