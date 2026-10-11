@@ -21,7 +21,6 @@ function makeInfo(strandedDrivers: AvatarStorageDriver[]): SystemInfo {
     application: {
       version: '2.0.4',
       bunVersion: '1.4.0',
-      nodeEnv: 'production',
       startedAt: new Date('2026-10-03T10:00:00Z'),
       apiVersions: ['v1'],
       latestApiVersion: 'v1',

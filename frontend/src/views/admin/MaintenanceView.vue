@@ -104,8 +104,6 @@
           </dd>
           <dt>Bun</dt>
           <dd>{{ info.application.bunVersion }}</dd>
-          <dt>NODE_ENV</dt>
-          <dd>{{ info.application.nodeEnv ?? t('maintenanceView.unknown') }}</dd>
           <dt>{{ t('maintenanceView.app.startedAt') }}</dt>
           <dd>{{ dateToStringDDMMYYYYHHMM(info.application.startedAt) }}</dd>
           <dt>{{ t('maintenanceView.app.apiVersions') }}</dt>

@@ -2613,7 +2613,6 @@
     "title": "Maintenance technique",
     "subtitle": "État de l'instance et opérations de maintenance",
     "refresh": "Actualiser",
-    "unknown": "Inconnue",
     "avatars": {
       "title": "Stockage des avatars",
       "driver": "Stockage configuré (AVATAR_STORAGE)",

@@ -25,7 +25,6 @@ function makeInfo(report: AvatarStorageReport): SystemInfo {
     application: {
       version: '2.0.4',
       bunVersion: '1.4.0',
-      nodeEnv: 'production',
       startedAt: new Date(),
       apiVersions: ['v1'],
       latestApiVersion: 'v1',

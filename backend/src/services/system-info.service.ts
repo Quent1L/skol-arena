@@ -43,7 +43,6 @@ export const systemInfoService = {
       application: {
         version,
         bunVersion: Bun.version,
-        nodeEnv: process.env.NODE_ENV ?? null,
         startedAt,
         apiVersions: [...API_VERSIONS],
         latestApiVersion: LATEST_API_VERSION,

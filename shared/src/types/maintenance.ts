@@ -83,7 +83,6 @@ export const systemInfoSchema = z
     application: z.object({
       version: z.string().nullable(),
       bunVersion: z.string(),
-      nodeEnv: z.string().nullable(),
       startedAt: z.date(),
       apiVersions: z.array(z.string()),
       latestApiVersion: z.string(),

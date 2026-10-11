@@ -2613,7 +2613,6 @@
     "title": "Technical maintenance",
     "subtitle": "Instance health and maintenance operations",
     "refresh": "Refresh",
-    "unknown": "Unknown",
     "avatars": {
       "title": "Avatar storage",
       "driver": "Configured storage (AVATAR_STORAGE)",

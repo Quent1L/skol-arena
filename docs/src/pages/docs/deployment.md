@@ -251,8 +251,8 @@ behind it gathers what you would otherwise dig out of the container and the
 database:
 
 - **Application**: the deployed version (flagged when the open tab still runs an
-  older bundle, until it reloads), Bun version, `NODE_ENV`, when the process
-  started, and the API versions served.
+  older bundle, until it reloads), Bun version, when the process started, and the
+  API versions served.
 - **Database**: PostgreSQL version, total size, the ten largest tables (size and
   estimated row count), and how many migrations are applied.
 - **Avatar storage**: the configured driver, where each current avatar actually
