@@ -14,6 +14,7 @@
       :best-partners="store.playerStats?.stats?.bestPartners"
       :nemeses="store.playerStats?.stats?.nemeses"
       :outcome-type-stats="store.playerStats?.stats?.outcomeTypeStats"
+      :format-stats="store.playerStats?.stats?.formatStats"
       :season-id="store.tournamentId"
       :allow-draw="store.tournament?.allowDraw"
     />

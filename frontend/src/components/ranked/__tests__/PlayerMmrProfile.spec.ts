@@ -62,7 +62,11 @@ describe('PlayerMmrProfile peak tile', () => {
   it('falls back to the peak of the season being shown', () => {
     const wrapper = mountProfile({ history })
 
-    expect(peakTile(wrapper).text().replace(/ | |\s/g, '')).toContain('1100')
+    expect(
+      peakTile(wrapper)
+        .text()
+        .replace(/ | |\s/g, ''),
+    ).toContain('1100')
     expect(wrapper.find('[data-test="peak-season"]').exists()).toBe(false)
   })
 
@@ -75,7 +79,11 @@ describe('PlayerMmrProfile peak tile', () => {
     }
     const wrapper = mountProfile({ history, careerPeak })
 
-    expect(peakTile(wrapper).text().replace(/ | |\s/g, '')).toContain('1620')
+    expect(
+      peakTile(wrapper)
+        .text()
+        .replace(/ | |\s/g, ''),
+    ).toContain('1620')
   })
 
   it('names the season the record was set in', () => {
@@ -95,7 +103,12 @@ describe('PlayerMmrProfile peak tile', () => {
   it('shows the tier the record was worth in its own season, not today', () => {
     // 1620 sits in Bronze on the ladder passed as `tiers`; the record carries the
     // Légende it was worth on the ladder of the season that set it.
-    const legendOfTheDay = makeTier({ id: 'old-legend', level: 2, name: 'Légende 2024', minMmr: 1500 })
+    const legendOfTheDay = makeTier({
+      id: 'old-legend',
+      level: 2,
+      name: 'Légende 2024',
+      minMmr: 1500,
+    })
     const wrapper = mountProfile({
       history,
       tiers: [makeTier({ id: 'only', level: 1, name: 'Bronze', minMmr: 700 })],
@@ -108,7 +121,11 @@ describe('PlayerMmrProfile peak tile', () => {
   it('falls back to the current MMR when the season has no history yet', () => {
     const wrapper = mountProfile({ history: [] })
 
-    expect(peakTile(wrapper).text().replace(/ | |\s/g, '')).toContain('1200')
+    expect(
+      peakTile(wrapper)
+        .text()
+        .replace(/ | |\s/g, ''),
+    ).toContain('1200')
   })
 
   it('shows a dash for a player who has never played', () => {
@@ -118,5 +135,32 @@ describe('PlayerMmrProfile peak tile', () => {
     })
 
     expect(peakTile(wrapper).text()).toContain('—')
+  })
+})
+
+describe('PlayerMmrProfile format win rates', () => {
+  const format = (teamSize: number, opponentSize: number, wins: number, losses: number) => ({
+    teamSize,
+    opponentSize,
+    wins,
+    losses,
+    draws: 0,
+    matchesPlayed: wins + losses,
+    winRate: Math.round((wins / (wins + losses)) * 100),
+  })
+
+  it('shows one tile per format, in the order received', () => {
+    const wrapper = mountProfile({ formatStats: [format(1, 1, 3, 1), format(2, 2, 1, 1)] })
+    const tiles = wrapper.findAll('[data-test="format-row"]')
+
+    expect(tiles.map((tile) => tile.text().trim().slice(0, 3))).toEqual(['1v1', '2v2'])
+    expect(tiles[0].text()).toContain('75%')
+    expect(tiles[1].text()).toContain('50%')
+  })
+
+  it('stays hidden without any format', () => {
+    expect(mountProfile({ formatStats: [] }).find('[data-test="format-stats"]').exists()).toBe(
+      false,
+    )
   })
 })

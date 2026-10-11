@@ -148,6 +148,7 @@
             :career-peak="rankedCareerPeak"
             :recent-form="stats?.recentForm"
             :outcome-type-stats="stats?.outcomeTypeStats"
+            :format-stats="stats?.formatStats"
           />
           <div class="rounded-2xl p-4">
             <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">

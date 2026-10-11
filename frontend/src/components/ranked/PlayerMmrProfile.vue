@@ -309,6 +309,40 @@
       </div>
     </div>
 
+    <!-- Win rate by format: compact rows, like the head-to-head split of the comparison -->
+    <div v-if="formatStats?.length" class="rounded-xl p-4 bg-gray-800" data-test="format-stats">
+      <div
+        class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-1.5"
+      >
+        {{ t('playerMmrProfile.winrateByFormat') }}
+        <InfoTooltip :text="t('playerMmrProfile.formatTooltip')" />
+      </div>
+      <div class="space-y-1">
+        <div
+          v-for="format in formatStats"
+          :key="`${format.teamSize}v${format.opponentSize}`"
+          class="grid grid-cols-[4rem_1fr_3rem_3rem] items-center text-xs px-3 py-1.5 rounded-lg bg-gray-700/50"
+          data-test="format-row"
+        >
+          <span class="text-gray-400">
+            <i class="fa mr-1" :class="format.teamSize === 1 ? 'fa-user' : 'fa-users'" />
+            {{ format.teamSize }}v{{ format.opponentSize }}
+          </span>
+          <span class="tabular-nums font-bold text-center">
+            <span class="text-green-400">{{ format.wins }}</span>
+            <span class="text-gray-600 mx-1">-</span>
+            <template v-if="format.draws > 0">
+              <span class="text-gray-400">{{ format.draws }}</span>
+              <span class="text-gray-600 mx-1">-</span>
+            </template>
+            <span class="text-red-400">{{ format.losses }}</span>
+          </span>
+          <span class="tabular-nums font-black text-white text-right">{{ format.winRate }}%</span>
+          <span class="tabular-nums text-gray-500 text-right">{{ format.matchesPlayed }} m</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Partner / nemesis stats -->
     <PlayerRelationStats
       :most-frequent-partners="mostFrequentPartners"
@@ -333,6 +367,7 @@ import type {
   PlayerRelationStat,
   OpponentQualityStats,
   PlayerOutcomeTypeStat,
+  PlayerFormatStat,
 } from '@skol-arena/shared/types/index'
 import { useServerLabels } from '@/i18n/serverLabels'
 import InfoTooltip from '@/components/InfoTooltip.vue'
@@ -384,6 +419,8 @@ const props = defineProps<{
   opponentQuality?: OpponentQualityStats
   recentForm?: Array<'V' | 'D' | 'N'>
   outcomeTypeStats?: PlayerOutcomeTypeStat[]
+  /** Record split by match format (1v1, 2v2, 2v1…), even formats first. */
+  formatStats?: PlayerFormatStat[]
   allowDraw?: boolean
   /** Matches needed to be ranked; below it the player holds no position. */
   placementMatches?: number

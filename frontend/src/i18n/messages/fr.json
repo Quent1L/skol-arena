@@ -1203,6 +1203,8 @@
     "weeklyMmrLabel": "MMR cette semaine",
     "weeklyMmrMatches": "{count} match | {count} matchs",
     "winrateByOpponentLevel": "Win rate par niveau d'adversaire",
+    "winrateByFormat": "Win rate par format",
+    "formatTooltip": "Lu de votre côté : en 2v1, vous êtes deux contre un adversaire.",
     "winrateLabel": "Winrate",
     "winsDrawsLosses": "Victoires / Nuls / Défaites",
     "winsLosses": "Victoires / Défaites",

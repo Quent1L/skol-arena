@@ -16,6 +16,7 @@ import type {
   HistoryMatchSide,
   HistoryMatchSidePlayer,
   PlayerOutcomeTypeStat,
+  PlayerFormatStat,
   PlayerH2HStat,
   H2HSubRecord,
   PlayerHeadToHeadRecord,
@@ -27,7 +28,7 @@ import { winRatePercent } from "../utils/win-rate";
 
 type ExtendedFilters = PlayerStatsFilters & { allowedModes?: string[] };
 
-type MatchResult = {
+export type MatchResult = {
   matchId: string;
   entryId: string;
   ownScore: number | null;
@@ -51,6 +52,41 @@ function isLossResult(r: SideOutcome): boolean {
 }
 
 type EntryPlayer = { playerId: string; displayName: string; shortName: string };
+
+type FormatAcc = { teamSize: number; opponentSize: number; played: number; wins: number; losses: number; draws: number };
+
+/**
+ * Splits a player's record by match format, from their side of the table: 2v1 (two of
+ * them against one) is not 1v2. Even formats come first, smallest first (1v1, 2v2, 3v3),
+ * then the uneven ones: the order stays the same from one player to the next.
+ */
+export function tallyFormats(matchResults: MatchResult[], entrySizes: Map<string, number>): PlayerFormatStat[] {
+  const seen = new Set<string>();
+  const byFormat = new Map<string, FormatAcc>();
+
+  for (const r of matchResults) {
+    if (seen.has(r.matchId)) continue;
+    seen.add(r.matchId);
+    const teamSize = entrySizes.get(r.entryId) ?? 0;
+    const opponentSize = entrySizes.get(r.oppEntryId) ?? 0;
+    if (teamSize === 0 || opponentSize === 0) continue;
+    const key = `${teamSize}v${opponentSize}`;
+    if (!byFormat.has(key)) byFormat.set(key, { teamSize, opponentSize, played: 0, wins: 0, losses: 0, draws: 0 });
+    const s = byFormat.get(key)!;
+    s.played++;
+    if (isWinResult(r)) s.wins++;
+    else if (isLossResult(r)) s.losses++;
+    else if (r.winnerSide === null && r.allowDraw) s.draws++;
+  }
+
+  return [...byFormat.values()]
+    .map(({ played, ...s }) => ({ ...s, matchesPlayed: played, winRate: winRatePercent(s.wins, played) }))
+    .sort((a, b) => isUneven(a) - isUneven(b) || a.teamSize - b.teamSize || a.opponentSize - b.opponentSize);
+}
+
+function isUneven(format: { teamSize: number; opponentSize: number }): number {
+  return format.teamSize === format.opponentSize ? 0 : 1;
+}
 
 function groupPlayersByEntry(
   rows: Array<{ entryId: string; playerId: string; displayName: string; shortName: string }>,
@@ -260,7 +296,8 @@ export class PlayerStatsService {
 
     if (cacheKey) {
       const cached = await playerComputedDataRepository.get(playerId, cacheKey);
-      if (cached) {
+      // A row cached before `formatStats` existed is recomputed, not served without it.
+      if (cached?.formatStats) {
         const player = await this.getPlayerProfile(playerId);
         return { player, stats: cached, filters };
       }
@@ -285,6 +322,7 @@ export class PlayerStatsService {
     const nemesisStats = await this.computeNemesisStats(matchResults, playerEntryIds, playerId);
     const h2hStats = await this.computeH2HStats(matchResults, playerId);
     const outcomeTypeStats = await this.computeOutcomeTypeStats(matchResults);
+    const formatStats = await this.computeFormatStats(matchResults);
     const tournamentHistory = await this.buildTournamentHistory(entries, matchResults);
     const recentForm = await this.computeRecentForm(playerId, filters.tournamentId, visibleOrganizationIds);
 
@@ -296,6 +334,7 @@ export class PlayerStatsService {
       bestPartners: partnerStats.best,
       nemeses: nemesisStats,
       outcomeTypeStats,
+      formatStats,
       h2hStats,
       tournamentHistory,
     };
@@ -532,6 +571,15 @@ export class PlayerStatsService {
       .sort((a, b) => b.matchesPlayed - a.matchesPlayed);
   }
 
+  private async computeFormatStats(matchResults: MatchResult[]): Promise<PlayerFormatStat[]> {
+    const entryIds = [...new Set(matchResults.flatMap((r) => [r.entryId, r.oppEntryId]))];
+    const sizes = new Map<string, number>();
+    for (const row of await playerStatsRepository.getPlayersInEntries(entryIds)) {
+      sizes.set(row.entryId, (sizes.get(row.entryId) ?? 0) + 1);
+    }
+    return tallyFormats(matchResults, sizes);
+  }
+
   private async computeH2HStats(
     matchResults: MatchResult[],
     playerId: string,
@@ -723,6 +771,7 @@ export class PlayerStatsService {
         bestPartners: [],
         nemeses: [],
         outcomeTypeStats: [],
+        formatStats: [],
         h2hStats: [],
         tournamentHistory: [],
       },

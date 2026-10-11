@@ -45,6 +45,21 @@ export const playerOutcomeTypeStatSchema = z
 
 export type PlayerOutcomeTypeStat = z.infer<typeof playerOutcomeTypeStatSchema>;
 
+/** A player's record in one match format, read from their side: 2v1 is two of them against one. */
+export const playerFormatStatSchema = z
+  .object({
+    teamSize: z.number(),
+    opponentSize: z.number(),
+    wins: z.number(),
+    losses: z.number(),
+    draws: z.number(),
+    matchesPlayed: z.number(),
+    winRate: z.number(),
+  })
+  .meta({ id: "PlayerFormatStat" });
+
+export type PlayerFormatStat = z.infer<typeof playerFormatStatSchema>;
+
 export const playerH2HStatSchema = z
   .object({
     opponentId: z.string(),
@@ -92,6 +107,7 @@ export const playerDetailStatsSchema = z
     bestPartners: z.array(playerRelationStatSchema),
     nemeses: z.array(playerRelationStatSchema),
     outcomeTypeStats: z.array(playerOutcomeTypeStatSchema),
+    formatStats: z.array(playerFormatStatSchema),
     h2hStats: z.array(playerH2HStatSchema),
     tournamentHistory: z.array(playerTournamentEntrySchema),
   })
