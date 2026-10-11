@@ -15,5 +15,7 @@ Championships run for weeks or months, which opens the door to gaming the standi
 - **Score tracking** — enable or disable numeric scores entirely, and optionally bound reported scores with a min/max range.
 - **Team size bounds** — set the minimum and maximum players per team.
 - **Points per victory / draw / loss** — the standings scoring system, fully configurable per championship.
+- **Points source** — award points by result, by a points-per-place table, or by the score itself, which suits matches of three sides or more.
+- **Sides per match** — keep every match a duel, or let a match oppose up to eight sides ranked by finishing order.
 
 Once a championship leaves draft status these settings lock — they become read-only for the rest of the season, so the rules can't shift mid-competition. Ranked seasons have their own tuning (see **Ranked mode**) and brackets don't need season-long caps at all.

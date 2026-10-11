@@ -62,10 +62,9 @@ validation round.
 
 ## Team formats
 
-Every match opposes exactly two sides, A and B, each holding the same number of players —
-whatever the discipline and whatever the team size. What changes is who fills those two
-sides: championships and brackets pick one of two team modes, and a side can be a single
-player.
+A match opposes two sides by default, each holding the same number of players — whatever
+the discipline and whatever the team size. What changes is who fills those sides:
+championships and brackets pick one of two team modes, and a side can be a single player.
 
 - **Solo** — team size 1 on both sides, so a plain 1v1. Not a separate mode, just the
   smallest team size.
@@ -77,8 +76,33 @@ player.
 Team size is yours to set with a minimum and maximum, so the same platform covers 1v1 chess,
 2v2 foosball, and 5v5 five-a-side.
 
-**On the roadmap:** N-way matches — 1v1v1, 2v2v2 and other multi-side formats — are planned,
-but aren't part of a release yet.
+### Matches of three sides or more
+
+Championships and ranked seasons can let a match oppose more than two sides — a 1v1v1 kart
+race, a 2v2v2 pétanque game, up to eight sides. The organiser sets the **maximum number of
+sides per match** (2 by default, which keeps every match a duel); each match then holds
+anywhere between two sides and that maximum. Brackets always stay duels.
+
+When entering such a match, add the sides you need on the composition step (or the team
+step in static mode), then give the **finishing order** on the result step: drag the sides
+into place, and use the **=** button to tie a side with the one above it. When the
+competition keeps scores, the order follows the scores — highest first, equal scores tied —
+and can still be adjusted by hand.
+
+How a placement counts:
+
+- **Win, draw or loss.** Alone in first place is a win; sharing first place is a draw (only
+  where draws are allowed); any other place is a loss.
+- **Championship points** come from the competition's points source: the win/draw/loss
+  points, a **points-per-place table** (for example 10 / 6 / 3 / 1), or each side's **raw
+  score**. Changing the source recalculates the standings.
+- **Head-to-head** and the player statistics against a given opponent read each duel within
+  the match: whoever finished ahead of the other won that duel.
+- **Ranked MMR** treats the match as all the duels it contains — see
+  [MMR Rating](/docs/mmr#matches-of-three-sides-or-more).
+- **Validation** in strict mode needs a **majority of the sides** to agree with the reported
+  result (the reporter's side counts): two sides out of three, three out of four. With two
+  sides this is the usual rule — the other side confirms.
 
 ## Static team rosters
 
