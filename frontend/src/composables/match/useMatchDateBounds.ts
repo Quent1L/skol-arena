@@ -1,9 +1,14 @@
 import { computed, type Ref } from 'vue'
+import { useNow } from '@vueuse/core'
 import type { ClientBaseTournament } from '@skol-arena/shared/types/index'
 import { useConfigService } from '@/composables/config/config.service'
 
 /** Server default, used until GET /config has landed. Mirrors backend/src/config/ranked.ts. */
 const FALLBACK_MATCH_MAX_AGE_HOURS = 48
+
+/** How often the ranked floor moves forward while the form stays open. */
+const FLOOR_REFRESH_MS = 30 * 1000
+const MINUTE_MS = 60 * 1000
 
 /**
  * A tournament's start and end dates are calendar days (`2026-12-07`), which the HTTP
@@ -18,17 +23,21 @@ function endOfDay(day: Date): Date {
 export type DateRangeIssue = 'tooEarly' | 'tooLate' | null
 
 /**
- * Whether a match date falls outside the picker's range. The floor is compared to the
- * minute, like the picker itself: a reporting window ending at 18:42:37 must not reject
- * the 18:42 the input shows as allowed.
+ * The picker works to the minute, so a reporting window opening at 18:42:37 starts at
+ * 18:43 for it: 18:42 would already be older than the window the server checks.
  */
+function ceilToMinute(date: Date): Date {
+  return new Date(Math.ceil(date.getTime() / MINUTE_MS) * MINUTE_MS)
+}
+
+/** Whether a match date falls outside the picker's range. */
 export function dateRangeIssue(
   date: Date | null | undefined,
   min: Date | null | undefined,
   max: Date | null | undefined,
 ): DateRangeIssue {
   if (!date) return null
-  if (min && date.getTime() < Math.floor(min.getTime() / 60_000) * 60_000) return 'tooEarly'
+  if (min && date < min) return 'tooEarly'
   if (max && date > max) return 'tooLate'
   return null
 }
@@ -41,11 +50,16 @@ export function dateRangeIssue(
  * server setting (`RANKED_MATCH_MAX_AGE_HOURS`) served by GET /config — `0` means the
  * server enforces no limit, and the picker then opens back to the season start.
  *
+ * The window slides with the clock, so the floor follows `now` rather than the moment
+ * the form opened: a form left open would otherwise keep accepting dates the server
+ * has since stopped taking.
+ *
  * This is a UI convenience only: `WhenStep` enables `manualInput`, so the real
  * enforcement stays server-side.
  */
 export function useMatchDateBounds(tournament: Ref<ClientBaseTournament | null>) {
   const { config } = useConfigService()
+  const now = useNow({ interval: FLOOR_REFRESH_MS })
 
   const rankedMaxAgeHours = computed(
     () => config.value?.ranked.matchMaxAgeHours ?? FALLBACK_MATCH_MAX_AGE_HOURS,
@@ -57,7 +71,9 @@ export function useMatchDateBounds(tournament: Ref<ClientBaseTournament | null>)
 
     if (rankedMaxAgeHours.value === 0) return startDate
 
-    const windowStart = new Date(Date.now() - rankedMaxAgeHours.value * 60 * 60 * 1000)
+    const windowStart = ceilToMinute(
+      new Date(now.value.getTime() - rankedMaxAgeHours.value * 60 * MINUTE_MS),
+    )
     return startDate && startDate > windowStart ? startDate : windowStart
   })
 
