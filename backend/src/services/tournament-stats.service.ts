@@ -1,7 +1,13 @@
 import { tournamentStatsRepository } from "../repository/tournament-stats.repository";
 import { tournamentRulesetService } from "./tournament-ruleset.service";
 import { NotFoundError, ErrorCode } from "../types/errors";
-import { resolveRulesetOutcome, type TournamentRulesetPayload } from "@skol-arena/shared/types/index";
+import {
+  resolveRulesetOutcome,
+  resolveStoredRanks,
+  sideOutcome,
+  type RankOutcome,
+  type TournamentRulesetPayload,
+} from "@skol-arena/shared/types/index";
 import {
   assignCompetitionRanks,
   cutWholeRankGroups,
@@ -52,14 +58,20 @@ function withRanks<T>(ranked: RankedEntry<T>[]): (T & CompetitionRank)[] {
 
 type MatchData = Awaited<ReturnType<typeof tournamentStatsRepository.getMatchesWithSidesAndPlayers>>[number];
 
-function isWinner(side: MatchData["sides"][number], winnerSide: string | null): boolean {
-  if (!winnerSide) return false;
-  return (side.position === 1 && winnerSide === "A") || (side.position === 2 && winnerSide === "B");
+type MatchSide = MatchData["sides"][number];
+type MatchResultView = Pick<MatchData, "sides" | "winnerSide">;
+
+/** Win / draw / loss of a side: alone in first place wins, sharing first place draws. */
+function outcomeOf(side: MatchSide, match: MatchResultView): RankOutcome {
+  return sideOutcome(resolveStoredRanks(match.sides, match.winnerSide), side.position);
 }
 
-function isLoser(side: MatchData["sides"][number], winnerSide: string | null): boolean {
-  if (!winnerSide) return false;
-  return (side.position === 1 && winnerSide === "B") || (side.position === 2 && winnerSide === "A");
+function isWinner(side: MatchSide, match: MatchResultView): boolean {
+  return outcomeOf(side, match).isWin;
+}
+
+function isLoser(side: MatchSide, match: MatchResultView): boolean {
+  return outcomeOf(side, match).isLoss;
 }
 
 type PlayerWLStats = {
@@ -135,14 +147,10 @@ function isBelowThreshold<T>(candidates: T[], countOf: (item: T) => number): boo
   return candidates.length > 0 && !candidates.some((candidate) => countOf(candidate) >= MIN_WEIGHTED_RATE_MATCHES);
 }
 
-function accumulateSides(
-  sides: MatchData["sides"],
-  winnerSide: string | null,
-  stats: Map<string, PlayerWLStats>,
-): void {
-  for (const side of sides) {
-    const won = isWinner(side, winnerSide);
-    const lost = isLoser(side, winnerSide);
+function accumulateSides(match: MatchResultView, stats: Map<string, PlayerWLStats>): void {
+  for (const side of match.sides) {
+    const won = isWinner(side, match);
+    const lost = isLoser(side, match);
     for (const ep of side.entry.players) {
       if (ep.player) recordPlayerResult(stats, ep.player, won, lost);
     }
@@ -222,9 +230,10 @@ export function computeBestTeams(matchesData: MatchData[], allowDraw = true): Be
       const stats = entryStats.get(entryId)!;
 
       stats.played++;
-      if (!match.winnerSide) {
+      const outcome = outcomeOf(side, match);
+      if (outcome.isDraw) {
         if (allowDraw) stats.draws++;
-      } else if (isWinner(side, match.winnerSide)) {
+      } else if (outcome.isWin) {
         stats.wins++;
       } else {
         stats.losses++;
@@ -271,7 +280,7 @@ export function computeBestTeams(matchesData: MatchData[], allowDraw = true): Be
 function computeWinStreaks(matchesData: MatchData[]): WinStreakEntry[] {
   const playerMatches = collectPlayerResults(matchesData, (match, side) => ({
     playedAt: new Date(match.playedAt),
-    won: isWinner(side, match.winnerSide),
+    won: isWinner(side, match),
   }));
 
   const streaks: WinStreakEntry[] = [];
@@ -293,7 +302,7 @@ function computeWinStreaks(matchesData: MatchData[]): WinStreakEntry[] {
 function computeLossStreaks(matchesData: MatchData[]): WinStreakEntry[] {
   const playerMatches = collectPlayerResults(matchesData, (match, side) => ({
     playedAt: new Date(match.playedAt),
-    lost: isLoser(side, match.winnerSide),
+    lost: isLoser(side, match),
   }));
 
   const streaks: WinStreakEntry[] = [];
@@ -316,12 +325,11 @@ function computeSymmetricPlayers(matchesData: MatchData[], teamSize: number): Be
   const playerStats = new Map<string, PlayerWLStats>();
 
   for (const match of matchesData) {
-    const sideA = match.sides.find((s) => s.position === 1);
-    const sideB = match.sides.find((s) => s.position === 2);
-    if (!sideA || !sideB) continue;
-    if (sideA.entry.players.length !== teamSize || sideB.entry.players.length !== teamSize) continue;
+    // Format boards (1v1, 2v2) read duels only: a 1v1v1 is a format of its own.
+    if (match.sides.length !== 2) continue;
+    if (match.sides.some((side) => side.entry.players.length !== teamSize)) continue;
 
-    accumulateSides([sideA, sideB], match.winnerSide, playerStats);
+    accumulateSides(match, playerStats);
   }
 
   return rankBestPlayers(playerStats);
@@ -339,16 +347,15 @@ function computeBestAsymmetricSoloPlayers(matchesData: MatchData[]): BestPlayers
   const playerStats = new Map<string, PlayerWLStats>();
 
   for (const match of matchesData) {
-    const sideA = match.sides.find((s) => s.position === 1);
-    const sideB = match.sides.find((s) => s.position === 2);
-    if (!sideA || !sideB) continue;
+    if (match.sides.length !== 2) continue;
+    const [sideA, sideB] = match.sides;
     if (sideA.entry.players.length === sideB.entry.players.length) continue;
 
     for (const side of [sideA, sideB]) {
       if (side.entry.players.length !== 1) continue;
       const ep = side.entry.players[0];
       if (!ep.player) continue;
-      recordPlayerResult(playerStats, ep.player, isWinner(side, match.winnerSide), isLoser(side, match.winnerSide));
+      recordPlayerResult(playerStats, ep.player, isWinner(side, match), isLoser(side, match));
     }
   }
 
@@ -358,7 +365,7 @@ function computeBestAsymmetricSoloPlayers(matchesData: MatchData[]): BestPlayers
 function computeBestInvincibleStreak(matchesData: MatchData[]): WinStreakEntry[] {
   const playerMatches = collectPlayerResults(matchesData, (match, side) => ({
     playedAt: new Date(match.playedAt),
-    notLost: !isLoser(side, match.winnerSide),
+    notLost: !isLoser(side, match),
   }));
 
   const streaks: WinStreakEntry[] = [];
@@ -412,8 +419,8 @@ function recordOutcomeTypeResult(
 
 function countOutcomePlayers(match: MatchData, entry: OutcomeTypeAcc): void {
   for (const side of match.sides) {
-    const won = isWinner(side, match.winnerSide);
-    const lost = isLoser(side, match.winnerSide);
+    const won = isWinner(side, match);
+    const lost = isLoser(side, match);
     for (const ep of side.entry.players) {
       if (ep.player) recordOutcomeTypeResult(entry.players, ep.player, won, lost);
     }

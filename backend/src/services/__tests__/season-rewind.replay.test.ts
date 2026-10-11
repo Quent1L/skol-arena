@@ -465,6 +465,36 @@ describe("replaySeason — pair tallies", () => {
     expect(ab).toMatchObject({ matches: 1, aWins: 1, aLosses: 0 });
   });
 
+  it("scores each duel of a three-side match on who finished ahead", () => {
+    // a 1st, b 2nd, c 3rd: b lost the match but won its duel against c
+    const playedAt = new Date(Date.UTC(2026, 0, 1));
+    const row = (playerId: string, outcome: "win" | "loss") => ({
+      playerId,
+      matchId: "m1",
+      mmrBefore: 1000,
+      mmrAfter: outcome === "win" ? 1010 : 995,
+      mmrDelta: outcome === "win" ? 10 : -5,
+      opponentAvgMmr: 1000,
+      isPlacement: false,
+      outcome,
+      playedAt,
+    });
+    const result = replaySeason(
+      [row("a", "win"), row("b", "loss"), row("c", "loss")],
+      [
+        { matchId: "m1", position: 1, playerId: "a", rank: 1 },
+        { matchId: "m1", position: 2, playerId: "b", rank: 2 },
+        { matchId: "m1", position: 3, playerId: "c", rank: 3 },
+      ],
+    );
+
+    expect(result.rivalries).toHaveLength(3);
+    const bc = result.rivalries.find((t) => t.aId === "b" && t.bId === "c")!;
+    expect(bc).toMatchObject({ matches: 1, aWins: 1, aLosses: 0 });
+    const ab = result.rivalries.find((t) => t.aId === "a" && t.bId === "b")!;
+    expect(ab).toMatchObject({ matches: 1, aWins: 1, aLosses: 0 });
+  });
+
   it("keeps a pair's record from the lexicographically first player's side", () => {
     const result = replay([
       { matchId: "m1", sideA: { z: [1000, 1010] }, sideB: { a: [1000, 990] }, winner: "A" },

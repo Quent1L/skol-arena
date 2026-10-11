@@ -4,7 +4,7 @@ import { matches } from "../db/schema";
 import { playerMmrRepository } from "../repository/player-mmr.repository";
 import { rankedSeasonRepository } from "../repository/ranked-season.repository";
 import { tournamentRulesetService } from "./tournament-ruleset.service";
-import { resolveRulesetOutcome } from "@skol-arena/shared/types/index";
+import { resolveRulesetOutcome, resolveStoredRanks, sideOutcome } from "@skol-arena/shared/types/index";
 import type { MatchSubmittedContext } from "@skol-arena/shared";
 
 type TierData = { level: number; name: string; minMmr: number };
@@ -26,6 +26,9 @@ interface SideInfo {
   position: number;
   score: number;
   playerIds: string[];
+  rank: number;
+  isWin: boolean;
+  isLoss: boolean;
 }
 
 /**
@@ -67,20 +70,17 @@ export class RulesContextService {
     }
 
     const tournamentId = match.tournamentId;
-    const sides = this.extractSides(match.sides);
-    const sideA = sides.find((s) => s.position === 1);
-    const sideB = sides.find((s) => s.position === 2);
-    if (!sideA || !sideB) return empty;
+    const sides = this.extractSides(match.sides, match.winnerSide);
 
-    const winnerSide = match.winnerSide; // 'A' | 'B' | null
-    const { winnerSideInfo, loserSideInfo } = this.resolveWinnerLoser(sideA, sideB, winnerSide);
     // Whole line-ups, never a single representative: on a team match, picking the
-    // first player of a side would depend on entry insertion order.
-    const winnerIds = winnerSide ? winnerSideInfo.playerIds : [];
-    const loserIds = winnerSide ? loserSideInfo.playerIds : [];
-    const scoreWinner = Math.max(sideA.score, sideB.score);
-    const scoreLoser = Math.min(sideA.score, sideB.score);
-    const matchScore = `${sideA.score}-${sideB.score}`;
+    // first player of a side would depend on entry insertion order. A shared first
+    // place is a draw: nobody won, and only the sides behind it lost.
+    const winnerIds = sides.filter((s) => s.isWin).flatMap((s) => s.playerIds);
+    const loserIds = sides.filter((s) => s.isLoss).flatMap((s) => s.playerIds);
+    const scores = sides.map((s) => s.score);
+    const scoreWinner = Math.max(...scores);
+    const scoreLoser = Math.min(...scores);
+    const matchScore = scores.join("-");
 
     const rankedConfig = await rankedSeasonRepository.getConfigByTournamentId(tournamentId);
     const tiers = rankedConfig ? ((await rankedSeasonRepository.getRankTiers(tournamentId)) as TierData[]) : [];
@@ -112,14 +112,13 @@ export class RulesContextService {
       site: match.tournament?.organizationId ?? "",
     };
 
-    const allPlayerTasks = ([sideA, sideB] as const).flatMap((side) => {
-      const opponent = side === sideA ? sideB : sideA;
+    const allPlayerTasks = sides.flatMap((side) => {
+      const opponentIds = sides.filter((other) => other.position !== side.position).flatMap((other) => other.playerIds);
       return side.playerIds.map(async (playerId) => {
         const personal = await this.buildPersonalFacts(
           tournamentId,
           matchId,
           playerId,
-          opponent,
           tiers,
           !!rankedConfig,
           historical,
@@ -127,8 +126,10 @@ export class RulesContextService {
         const lineUp = {
           playerId,
           teammateIds: side.playerIds.filter((id) => id !== playerId),
-          opponentIds: opponent.playerIds,
-          isWinner: winnerIds.includes(playerId),
+          opponentIds,
+          isWinner: side.isWin,
+          rank: side.rank,
+          sideCount: sides.length,
         };
         return { playerId, context: { ...base, ...lineUp, ...personal } as MatchSubmittedContext };
       });
@@ -137,14 +138,29 @@ export class RulesContextService {
     return { contexts, displayNames, playedAt: match.playedAt };
   }
 
+  /** The sides in position order, each with its placement resolved. */
   private extractSides(
-    rawSides: Array<{ position: number; score: number | null; entry: { players: { playerId: string }[] } }>,
+    rawSides: Array<{
+      position: number;
+      score: number | null;
+      rank: number | null;
+      entry: { players: { playerId: string }[] };
+    }>,
+    winnerSide: string | null,
   ): SideInfo[] {
-    return rawSides.map((s) => ({
-      position: s.position,
-      score: s.score ?? 0,
-      playerIds: s.entry.players.map((p) => p.playerId),
-    }));
+    const ordered = [...rawSides].sort((a, b) => a.position - b.position);
+    const ranks = resolveStoredRanks(ordered, winnerSide);
+    return ordered.map((s) => {
+      const { isWin, isLoss } = sideOutcome(ranks, s.position);
+      return {
+        position: s.position,
+        score: s.score ?? 0,
+        playerIds: s.entry.players.map((p) => p.playerId),
+        rank: ranks.get(s.position) ?? 1,
+        isWin,
+        isLoss,
+      };
+    });
   }
 
   /** Date/time facts for the match, computed in the app timezone. */
@@ -176,17 +192,10 @@ export class RulesContextService {
     return { matchHour, matchMinuteOfDay, matchDayOfWeek, matchDate: `${year}-${month}-${day}` };
   }
 
-  private resolveWinnerLoser(sideA: SideInfo, sideB: SideInfo, winnerSide: string | null) {
-    if (winnerSide === "B") return { winnerSideInfo: sideB, loserSideInfo: sideA };
-    // Draw (null) falls through: caller guards the line-ups with `winnerSide ? … : []`
-    return { winnerSideInfo: sideA, loserSideInfo: sideB };
-  }
-
   private async buildPersonalFacts(
     seasonId: string,
     matchId: string,
     playerId: string,
-    opponent: SideInfo,
     tiers: TierData[],
     isRanked: boolean,
     historical: boolean,
@@ -199,6 +208,8 @@ export class RulesContextService {
       | "winnerIds"
       | "loserIds"
       | "isWinner"
+      | "rank"
+      | "sideCount"
       | "scoreWinner"
       | "scoreLoser"
       | "matchScore"

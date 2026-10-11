@@ -2857,6 +2857,8 @@
     "winnerIds": "Winning side",
     "loserIds": "Losing side",
     "isWinner": "The player won",
+    "rank": "Player's place in the match (1 = first)",
+    "sideCount": "Number of sides in the match",
     "scoreWinner": "Winner's score",
     "scoreLoser": "Loser's score",
     "matchScore": "Match score",

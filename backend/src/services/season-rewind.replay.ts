@@ -288,17 +288,39 @@ function recordTeammates(state: ReplayState, team: string[], outcomes: Map<strin
   }
 }
 
-function recordPairs(state: ReplayState, sides: Map<number, string[]>, outcomes: Map<string, MmrHistoryOutcome>): void {
-  const teamA = sides.get(1) ?? [];
-  const teamB = sides.get(2) ?? [];
+/**
+ * Outcome of a rivalry duel inside the match, from the first player's side: whoever
+ * finished ahead won it. Without stored ranks (a duel recorded before N-way matches)
+ * the player's own match outcome is that duel's outcome.
+ */
+function duelOutcome(
+  ranks: Map<number, number>,
+  positions: [number, number],
+  ownOutcome: MmrHistoryOutcome | undefined,
+): MmrHistoryOutcome | undefined {
+  const [mine, theirs] = positions.map((p) => ranks.get(p));
+  if (mine === undefined || theirs === undefined) return ownOutcome;
+  if (mine === theirs) return "draw";
+  return mine < theirs ? "win" : "loss";
+}
 
-  recordTeammates(state, teamA, outcomes);
-  recordTeammates(state, teamB, outcomes);
+function recordPairs(
+  state: ReplayState,
+  sides: Map<number, string[]>,
+  outcomes: Map<string, MmrHistoryOutcome>,
+  ranks: Map<number, number> = new Map(),
+): void {
+  for (const team of sides.values()) recordTeammates(state, team, outcomes);
 
-  for (const a of teamA) {
-    for (const b of teamB) {
-      const outcome = outcomes.get(a);
-      if (outcome) addToTally(state.rivalries, a, b, outcome, "opposed");
+  // Every pair of sides is a rivalry: a 1v1v1 holds three duels.
+  const positions = [...sides.keys()].sort((a, b) => a - b);
+  for (let i = 0; i < positions.length; i++) {
+    for (let j = i + 1; j < positions.length; j++) {
+      for (const a of sides.get(positions[i]!)!) {
+        const outcome = duelOutcome(ranks, [positions[i]!, positions[j]!], outcomes.get(a));
+        if (!outcome) continue;
+        for (const b of sides.get(positions[j]!)!) addToTally(state.rivalries, a, b, outcome, "opposed");
+      }
     }
   }
 }
@@ -425,9 +447,13 @@ function returnToStandings(state: ReplayState, participants: string[]): void {
  * player, which keeps `opponents` reading team A as it always did.
  */
 function sideOf(playerId: string, sides: Map<number, string[]>): { allies: string[]; opponents: string[] } {
-  const teamA = sides.get(1) ?? [];
-  const teamB = sides.get(2) ?? [];
-  return teamA.includes(playerId) ? { allies: teamA, opponents: teamB } : { allies: teamB, opponents: teamA };
+  const ownPosition = [...sides.entries()].find(([, players]) => players.includes(playerId))?.[0] ?? 2;
+  const allies = sides.get(ownPosition) ?? [];
+  const opponents = [...sides.entries()]
+    .filter(([position]) => position !== ownPosition)
+    .sort(([a], [b]) => a - b)
+    .flatMap(([, players]) => players);
+  return { allies, opponents };
 }
 
 /**
@@ -537,6 +563,18 @@ function buildSideIndex(sides: SeasonSideRow[]): Map<string, Map<number, string[
   return index;
 }
 
+/** Placement of each side, per match; only sides with a stored rank appear. */
+function buildRankIndex(sides: SeasonSideRow[]): Map<string, Map<number, number>> {
+  const index = new Map<string, Map<number, number>>();
+  for (const side of sides) {
+    if (side.rank == null) continue;
+    const byPosition = index.get(side.matchId) ?? new Map<number, number>();
+    byPosition.set(side.position, side.rank);
+    index.set(side.matchId, byPosition);
+  }
+  return index;
+}
+
 /**
  * The current #1, read *before* the match is applied — otherwise a player who
  * dethrones the leader would be credited with beating the leader they just
@@ -559,6 +597,7 @@ export function replaySeason(history: SeasonHistoryRow[], sides: SeasonSideRow[]
     unresolvedOutcomes: 0,
   };
   const sideIndex = buildSideIndex(sides);
+  const rankIndex = buildRankIndex(sides);
   const matchGroups = groupByMatch(history);
 
   for (const rows of matchGroups) {
@@ -576,7 +615,7 @@ export function replaySeason(history: SeasonHistoryRow[], sides: SeasonSideRow[]
       const side = sideContexts.get(row.playerId)!;
       outcomes.set(row.playerId, applyRow(state, row, matchSides, side, leaderId));
     }
-    recordPairs(state, matchSides, outcomes);
+    recordPairs(state, matchSides, outcomes, rankIndex.get(rows[0]!.matchId));
     returnToStandings(state, participants);
   }
 

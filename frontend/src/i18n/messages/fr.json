@@ -2857,6 +2857,8 @@
     "winnerIds": "Camp vainqueur",
     "loserIds": "Camp perdant",
     "isWinner": "Le joueur est vainqueur",
+    "rank": "Place du joueur dans le match (1 = premier)",
+    "sideCount": "Nombre de camps du match",
     "scoreWinner": "Score du vainqueur",
     "scoreLoser": "Score du perdant",
     "matchScore": "Score du match",

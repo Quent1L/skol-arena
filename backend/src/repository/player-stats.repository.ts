@@ -90,9 +90,15 @@ export class PlayerStatsRepository {
         entryId: matchSides.entryId,
         ownScore: matchSides.score,
         ownPosition: matchSides.position,
+        ownRank: matchSides.rank,
         winnerSide: matches.winnerSide,
+        firstPlaces:
+          sql<number>`(SELECT COUNT(*) FROM match_sides fp WHERE fp.match_id = ${matchSides.matchId} AND fp.rank = 1)`.mapWith(
+            Number,
+          ),
         oppEntryId: sql<string>`ms2.entry_id`,
         oppScore: sql<number>`ms2.score`,
+        oppRank: sql<number | null>`ms2.rank`,
         allowDraw: tournaments.allowDraw,
         pointsAwarded: sql<number | null>`COALESCE(${matchPlayerPoints.pointsAwarded}, ${matchSides.pointsAwarded})`,
         outcomeTypeId: matches.outcomeTypeId,
@@ -220,6 +226,11 @@ export class PlayerStatsRepository {
       .select({
         matchId: matches.id,
         ownPosition: sql<number>`MAX(${matchSides.position})`.mapWith(Number),
+        ownRank: sql<number | null>`MAX(${matchSides.rank})`,
+        firstPlaces:
+          sql<number>`(SELECT COUNT(*) FROM match_sides fp WHERE fp.match_id = ${matches.id} AND fp.rank = 1)`.mapWith(
+            Number,
+          ),
         winnerSide: sql<string | null>`MAX(${matches.winnerSide})`,
         allowDraw: sql<boolean>`BOOL_OR(${tournaments.allowDraw})`,
       })

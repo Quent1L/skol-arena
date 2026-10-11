@@ -106,7 +106,7 @@ export class StandingsRepository {
           },
         },
         sides: {
-          columns: { position: true, score: true, entryId: true },
+          columns: { position: true, score: true, rank: true, entryId: true },
           with: {
             entry: {
               columns: { id: true },

@@ -63,6 +63,8 @@ export interface SeasonSideRow {
   matchId: string;
   position: number;
   playerId: string;
+  /** Placement of the side; absent on rows stored before N-way matches. */
+  rank?: number | null;
 }
 
 export class SeasonRewindRepository {
@@ -109,6 +111,7 @@ export class SeasonRewindRepository {
       .selectDistinct({
         matchId: matchSides.matchId,
         position: matchSides.position,
+        rank: matchSides.rank,
         playerId: tournamentEntryPlayers.playerId,
       })
       .from(matchSides)

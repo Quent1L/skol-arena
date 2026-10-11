@@ -226,6 +226,127 @@ describe("StandingsService", () => {
     });
   });
 
+  // ── N-way matches ─────────────────────────────────────────────────────────
+
+  describe("matches of three sides", () => {
+    // Gamma 1st (7), Alpha 2nd (5), Beta 3rd (2), placement points 10/6/3
+    const threeWayStatic = {
+      id: "m3",
+      winnerSide: null,
+      outcomeTypeId: null,
+      sides: [
+        { position: 1, score: 5, rank: 2, pointsAwarded: 6, entry: { teamId: "team-a", players: [] } },
+        { position: 2, score: 2, rank: 3, pointsAwarded: 3, entry: { teamId: "team-b", players: [] } },
+        { position: 3, score: 7, rank: 1, pointsAwarded: 10, entry: { teamId: "team-c", players: [] } },
+      ],
+    };
+
+    it("static: credits each team its placement points and a win only to the first", async () => {
+      mockRepo.getTournamentTeams.mockImplementation(() => Promise.resolve([TEAM_A, TEAM_B, TEAM_C]));
+      mockRepo.getMatchesWithSides.mockImplementation(() => Promise.resolve([threeWayStatic]));
+
+      const { standings } = await standingsService.getOfficialStandings("tournament-1");
+      const [a, b, c] = ["team-a", "team-b", "team-c"].map((id) => findEntry(standings, id)!);
+
+      expect(standings.map((e: any) => e.id)).toEqual(["team-c", "team-a", "team-b"]);
+      expect([a.points, b.points, c.points]).toEqual([6, 3, 10]);
+      expect([a.wins, b.wins, c.wins]).toEqual([0, 0, 1]);
+      expect([a.losses, b.losses, c.losses]).toEqual([1, 1, 0]);
+      // conceded = best opposing score
+      expect([a.conceded, b.conceded, c.conceded]).toEqual([7, 7, 5]);
+    });
+
+    it("static: scores head-to-head on each duel within the match", async () => {
+      mockRepo.getTournamentTeams.mockImplementation(() => Promise.resolve([TEAM_A, TEAM_B, TEAM_C]));
+      mockRepo.getMatchesWithSides.mockImplementation(() => Promise.resolve([threeWayStatic]));
+
+      const { standings } = await standingsService.getOfficialStandings("tournament-1");
+      const a = findEntry(standings, "team-a")!;
+
+      expect(a.headToHead["team-b"]).toEqual({ wins: 1, draws: 0, losses: 0 });
+      expect(a.headToHead["team-c"]).toEqual({ wins: 0, draws: 0, losses: 1 });
+      // Buchholz averages the two opponents' points: (3 + 10) / 2
+      expect(a.buchholzScore).toBe(6.5);
+    });
+
+    it("flex: counts a shared first place as a draw for both leaders", async () => {
+      mockRepo.getTournamentWithScoring.mockImplementation(() =>
+        Promise.resolve({ ...DEFAULT_TOURNAMENT, teamMode: "flex" as const }),
+      );
+      mockRepo.getTournamentEntries.mockImplementation(() =>
+        Promise.resolve(
+          ["p1", "p2", "p3"].map((id) => ({
+            players: [{ playerId: id, player: { displayName: id, shortName: id } }],
+          })),
+        ),
+      );
+      mockRepo.getPlayerPointsForStandings.mockImplementation(() =>
+        Promise.resolve([
+          {
+            id: "m1",
+            winnerSide: null,
+            outcomeTypeId: null,
+            playerPoints: [
+              { playerId: "p1", pointsAwarded: 1, countsForRanking: true },
+              { playerId: "p2", pointsAwarded: 1, countsForRanking: true },
+              { playerId: "p3", pointsAwarded: 0, countsForRanking: true },
+            ],
+            sides: ["p1", "p2", "p3"].map((pid, i) => ({
+              position: i + 1,
+              score: [4, 4, 1][i],
+              rank: [1, 1, 3][i],
+              entryId: `e-${pid}`,
+              entry: { id: `e-${pid}`, players: [{ playerId: pid }] },
+            })),
+          },
+        ]),
+      );
+
+      const { standings } = await standingsService.getOfficialStandings("tournament-1");
+      const [p1, p2, p3] = ["p1", "p2", "p3"].map((id) => findEntry(standings, id)!);
+
+      expect([p1.draws, p2.draws, p3.losses]).toEqual([1, 1, 1]);
+      expect(p1.headToHead["p2"]).toEqual({ wins: 0, draws: 1, losses: 0 });
+      expect(p1.headToHead["p3"]).toEqual({ wins: 1, draws: 0, losses: 0 });
+      expect(p3.conceded).toBe(4);
+    });
+
+    it("recalculates every side's points from its placement", async () => {
+      mockRepo.getTournamentWithScoring.mockImplementation(() =>
+        Promise.resolve({
+          ...DEFAULT_TOURNAMENT,
+          scoringConfig: {
+            ...DEFAULT_TOURNAMENT.scoringConfig,
+            pointsSource: "rank",
+            rankPoints: [10, 6, 3],
+          },
+        }),
+      );
+      mockRepo.getMatchesForStandings.mockImplementation(() =>
+        Promise.resolve([{ id: "m1", winnerSide: null, playedAt: new Date() }]),
+      );
+      mockRepo.getMatchSides.mockImplementation(() =>
+        Promise.resolve(
+          ["entry-a", "entry-b", "entry-c"].map((entryId, i) => ({
+            matchId: "m1",
+            entryId,
+            position: i + 1,
+            score: null,
+            rank: [3, 1, 2][i],
+            pointsAwarded: null,
+            entry: null,
+          })),
+        ),
+      );
+
+      await standingsService.recalculatePointsInternal("tournament-1");
+
+      expect(mockMatchSidesRepo.updatePointsAwarded).toHaveBeenCalledWith("m1", "entry-a", 3);
+      expect(mockMatchSidesRepo.updatePointsAwarded).toHaveBeenCalledWith("m1", "entry-b", 10);
+      expect(mockMatchSidesRepo.updatePointsAwarded).toHaveBeenCalledWith("m1", "entry-c", 6);
+    });
+  });
+
   // ── Mode static ───────────────────────────────────────────────────────────
 
   describe("mode static", () => {
@@ -1087,8 +1208,8 @@ describe("StandingsService", () => {
       );
       mockRepo.getMatchSides.mockImplementation(() =>
         Promise.resolve([
-          { matchId: "m1", entryId: "entry-a", pointsAwarded: null, entry: null },
-          { matchId: "m1", entryId: "entry-b", pointsAwarded: null, entry: null },
+          { matchId: "m1", entryId: "entry-a", position: 1, score: null, rank: null, pointsAwarded: null, entry: null },
+          { matchId: "m1", entryId: "entry-b", position: 2, score: null, rank: null, pointsAwarded: null, entry: null },
         ]),
       );
 
@@ -1104,8 +1225,8 @@ describe("StandingsService", () => {
       );
       mockRepo.getMatchSides.mockImplementation(() =>
         Promise.resolve([
-          { matchId: "m1", entryId: "entry-a", pointsAwarded: null, entry: null },
-          { matchId: "m1", entryId: "entry-b", pointsAwarded: null, entry: null },
+          { matchId: "m1", entryId: "entry-a", position: 1, score: null, rank: null, pointsAwarded: null, entry: null },
+          { matchId: "m1", entryId: "entry-b", position: 2, score: null, rank: null, pointsAwarded: null, entry: null },
         ]),
       );
 
@@ -1137,12 +1258,60 @@ describe("StandingsService", () => {
       );
       mockRepo.getMatchSides.mockImplementation(() =>
         Promise.resolve([
-          { matchId: "m1", entryId: "entry-a", pointsAwarded: null, entry: { players: [{ playerId: "p-x" }] } },
-          { matchId: "m1", entryId: "entry-b", pointsAwarded: null, entry: { players: [] } },
-          { matchId: "m2", entryId: "entry-a", pointsAwarded: null, entry: { players: [{ playerId: "p-x" }] } },
-          { matchId: "m2", entryId: "entry-b", pointsAwarded: null, entry: { players: [] } },
-          { matchId: "m3", entryId: "entry-a", pointsAwarded: null, entry: { players: [{ playerId: "p-x" }] } },
-          { matchId: "m3", entryId: "entry-b", pointsAwarded: null, entry: { players: [] } },
+          {
+            matchId: "m1",
+            entryId: "entry-a",
+            position: 1,
+            score: null,
+            rank: null,
+            pointsAwarded: null,
+            entry: { players: [{ playerId: "p-x" }] },
+          },
+          {
+            matchId: "m1",
+            entryId: "entry-b",
+            position: 2,
+            score: null,
+            rank: null,
+            pointsAwarded: null,
+            entry: { players: [] },
+          },
+          {
+            matchId: "m2",
+            entryId: "entry-a",
+            position: 1,
+            score: null,
+            rank: null,
+            pointsAwarded: null,
+            entry: { players: [{ playerId: "p-x" }] },
+          },
+          {
+            matchId: "m2",
+            entryId: "entry-b",
+            position: 2,
+            score: null,
+            rank: null,
+            pointsAwarded: null,
+            entry: { players: [] },
+          },
+          {
+            matchId: "m3",
+            entryId: "entry-a",
+            position: 1,
+            score: null,
+            rank: null,
+            pointsAwarded: null,
+            entry: { players: [{ playerId: "p-x" }] },
+          },
+          {
+            matchId: "m3",
+            entryId: "entry-b",
+            position: 2,
+            score: null,
+            rank: null,
+            pointsAwarded: null,
+            entry: { players: [] },
+          },
         ]),
       );
 
@@ -1188,17 +1357,39 @@ describe("StandingsService", () => {
           {
             matchId: "m1",
             entryId: "entry-a",
+            position: 1,
+            score: null,
+            rank: null,
             pointsAwarded: null,
             entry: { players: [{ playerId: "p1" }, { playerId: "p2" }] },
           },
-          { matchId: "m1", entryId: "entry-b", pointsAwarded: null, entry: { players: [] } },
+          {
+            matchId: "m1",
+            entryId: "entry-b",
+            position: 2,
+            score: null,
+            rank: null,
+            pointsAwarded: null,
+            entry: { players: [] },
+          },
           {
             matchId: "m2",
             entryId: "entry-a",
+            position: 1,
+            score: null,
+            rank: null,
             pointsAwarded: null,
             entry: { players: [{ playerId: "p1" }, { playerId: "p2" }] },
           },
-          { matchId: "m2", entryId: "entry-b", pointsAwarded: null, entry: { players: [] } },
+          {
+            matchId: "m2",
+            entryId: "entry-b",
+            position: 2,
+            score: null,
+            rank: null,
+            pointsAwarded: null,
+            entry: { players: [] },
+          },
         ]),
       );
 
@@ -1239,10 +1430,42 @@ describe("StandingsService", () => {
       );
       mockRepo.getMatchSides.mockImplementation(() =>
         Promise.resolve([
-          { matchId: "m1", entryId: "entry-a", pointsAwarded: null, entry: { players: [{ playerId: "p-x" }] } },
-          { matchId: "m1", entryId: "entry-b", pointsAwarded: null, entry: { players: [] } },
-          { matchId: "m2", entryId: "entry-a", pointsAwarded: null, entry: { players: [{ playerId: "p-x" }] } },
-          { matchId: "m2", entryId: "entry-b", pointsAwarded: null, entry: { players: [] } },
+          {
+            matchId: "m1",
+            entryId: "entry-a",
+            position: 1,
+            score: null,
+            rank: null,
+            pointsAwarded: null,
+            entry: { players: [{ playerId: "p-x" }] },
+          },
+          {
+            matchId: "m1",
+            entryId: "entry-b",
+            position: 2,
+            score: null,
+            rank: null,
+            pointsAwarded: null,
+            entry: { players: [] },
+          },
+          {
+            matchId: "m2",
+            entryId: "entry-a",
+            position: 1,
+            score: null,
+            rank: null,
+            pointsAwarded: null,
+            entry: { players: [{ playerId: "p-x" }] },
+          },
+          {
+            matchId: "m2",
+            entryId: "entry-b",
+            position: 2,
+            score: null,
+            rank: null,
+            pointsAwarded: null,
+            entry: { players: [] },
+          },
         ]),
       );
 

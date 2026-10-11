@@ -64,6 +64,27 @@ describe("computeDirectH2H", () => {
     expect(h2h.playerAWinRate).toBe(33);
   });
 
+  it("scores a match of three sides on who finished ahead of whom", async () => {
+    // A 2nd, B 3rd, C 1st: A lost the match but beat B
+    const threeWay = (oppEntryId: string, oppRank: number) => ({
+      ...result("m5", oppEntryId, null),
+      ownRank: 2,
+      oppRank,
+      firstPlaces: 1,
+    });
+    mockPlayerStatsRepo.getPlayerMatchResults.mockResolvedValueOnce([threeWay("eB", 3), threeWay("eC", 1)] as any);
+    mockPlayerStatsRepo.getPlayersInEntries.mockResolvedValueOnce([
+      entryPlayer("eB", "B"),
+      entryPlayer("eC", "C"),
+    ] as any);
+
+    const h2h = await (service as any).computeDirectH2H("A", "B", {});
+
+    expect(h2h.matchesPlayed).toBe(1);
+    expect(h2h.playerAWins).toBe(1);
+    expect(h2h.playerBWins).toBe(0);
+  });
+
   it("returns an empty record when the two never met", async () => {
     mockPlayerStatsRepo.getPlayerMatchResults.mockResolvedValueOnce([result("m1", "eC", "A")] as any);
     mockPlayerStatsRepo.getPlayersInEntries.mockResolvedValueOnce([entryPlayer("eC", "C")] as any);

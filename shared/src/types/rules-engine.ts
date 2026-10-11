@@ -51,8 +51,14 @@ export interface MatchSubmittedContext {
   loserIds: string[];
   /** Whether the evaluated player is on the winning side. */
   isWinner: boolean;
+  /** Placement of the evaluated player's side (1 = first, ties share a rank). */
+  rank: number;
+  /** Number of sides the match opposed: 2 for a duel, 3 for a 1v1v1… */
+  sideCount: number;
+  /** Best and worst score of the match, whatever the number of sides. */
   scoreWinner: number;
   scoreLoser: number;
+  /** Every side's score in position order: "2-1", "3-1-0"… */
   matchScore: string;
 
   // Declared outcome, from the discipline's outcome catalog. Empty/false when the
@@ -121,6 +127,8 @@ export const MATCH_SUBMITTED_FACTS: FactDefinition[] = [
   { key: "winnerIds", label: "Winning side", type: "stringList", sample: [], ref: "player" },
   { key: "loserIds", label: "Losing side", type: "stringList", sample: [], ref: "player" },
   { key: "isWinner", label: "The player won", type: "boolean", sample: true },
+  { key: "rank", label: "Player's place in the match (1 = first)", type: "number", sample: 1 },
+  { key: "sideCount", label: "Number of sides in the match", type: "number", sample: 2 },
   { key: "scoreWinner", label: "Winner's score", type: "number", sample: 2 },
   { key: "scoreLoser", label: "Loser's score", type: "number", sample: 1 },
   { key: "matchScore", label: "Match score", type: "string", sample: "2-1" },

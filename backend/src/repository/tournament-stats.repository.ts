@@ -46,7 +46,7 @@ export class TournamentStatsRepository {
       },
       with: {
         sides: {
-          columns: { position: true, entryId: true },
+          columns: { position: true, rank: true, entryId: true },
           with: {
             entry: {
               columns: { id: true },

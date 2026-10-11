@@ -4,6 +4,7 @@ import { playerComputedDataRepository } from "../repository/player-computed-data
 import { NotFoundError, ErrorCode } from "../types/errors";
 import { compareCodeUnits } from "../utils/compare";
 import { MIN_WEIGHTED_RATE_MATCHES, rankByWeightedRate, TOP_WEIGHTED_RATE } from "./stats-ranking";
+import { classifyRank, pairwiseResult, type RankOutcome } from "@skol-arena/shared";
 import type {
   PlayerProfile,
   PlayerDetailStats,
@@ -34,22 +35,49 @@ export type MatchResult = {
   entryId: string;
   ownScore: number | null;
   ownPosition: number;
+  ownRank: number | null;
+  firstPlaces: number;
   winnerSide: string | null;
   oppEntryId: string;
   oppScore: number | null;
+  oppRank: number | null;
   allowDraw: boolean | null;
   pointsAwarded: number | null;
   outcomeTypeId: string | null;
 };
 
-type SideOutcome = { ownPosition: number; winnerSide: string | null };
+type SideOutcome = {
+  ownPosition: number;
+  ownRank: number | null;
+  firstPlaces: number;
+  winnerSide: string | null;
+};
 
-function isWinResult(r: SideOutcome): boolean {
-  return (r.ownPosition === 1 && r.winnerSide === "A") || (r.ownPosition === 2 && r.winnerSide === "B");
+/**
+ * The player's record in the match: alone in first place is a win, sharing it a draw,
+ * anything else a loss. A side without a stored rank falls back on the A/B letter.
+ */
+function matchOutcome(r: SideOutcome): RankOutcome {
+  if (r.ownRank != null && r.firstPlaces > 0) return classifyRank(r.ownRank, r.firstPlaces);
+  const isWin = (r.ownPosition === 1 && r.winnerSide === "A") || (r.ownPosition === 2 && r.winnerSide === "B");
+  const isDraw = r.winnerSide === null;
+  return { isWin, isDraw, isLoss: !isWin && !isDraw };
 }
 
-function isLossResult(r: SideOutcome): boolean {
-  return (r.ownPosition === 1 && r.winnerSide === "B") || (r.ownPosition === 2 && r.winnerSide === "A");
+/** The player's record against one opposing entry: whoever finished ahead won that duel. */
+function duelOutcome(r: MatchResult): RankOutcome {
+  if (r.ownRank == null || r.oppRank == null) return matchOutcome(r);
+  const result = pairwiseResult(r.ownRank, r.oppRank);
+  return { isWin: result === 1, isDraw: result === 0.5, isLoss: result === 0 };
+}
+
+type Tally = { wins: number; losses: number; draws: number };
+
+/** Adds one result; a draw only counts where the competition allows draws, as before. */
+function tally(acc: Tally, outcome: RankOutcome, allowDraw: boolean | null): void {
+  if (outcome.isWin) acc.wins++;
+  else if (outcome.isLoss) acc.losses++;
+  else if (allowDraw) acc.draws++;
 }
 
 type EntryPlayer = { playerId: string; displayName: string; shortName: string };
@@ -82,9 +110,7 @@ export function tallyFormats(matchResults: MatchResult[], entrySizes: Map<string
     if (!byFormat.has(key)) byFormat.set(key, { teamSize, opponentSize, played: 0, wins: 0, losses: 0, draws: 0 });
     const s = byFormat.get(key)!;
     s.played++;
-    if (isWinResult(r)) s.wins++;
-    else if (isLossResult(r)) s.losses++;
-    else if (r.winnerSide === null && r.allowDraw) s.draws++;
+    tally(s, matchOutcome(r), r.allowDraw);
   }
 
   return [...byFormat.values()]
@@ -114,9 +140,10 @@ function tabulateH2HMatch(r: MatchResult, playerCounts: Map<string, number>, sol
   const bCount = playerCounts.get(r.oppEntryId) ?? 1;
   const acc = aCount === 1 && bCount === 1 ? soloAcc : teamAcc;
   acc.played++;
-  if (isWinResult(r)) acc.playerAWins++;
-  else if (isLossResult(r)) acc.playerBWins++;
-  else if (r.winnerSide === null && r.allowDraw) acc.draws++;
+  const outcome = duelOutcome(r);
+  if (outcome.isWin) acc.playerAWins++;
+  else if (outcome.isLoss) acc.playerBWins++;
+  else if (r.allowDraw) acc.draws++;
 }
 
 function buildH2HSubRecord(acc: H2HAcc): H2HSubRecord {
@@ -138,36 +165,45 @@ type RelationAcc = {
   count: number;
 };
 
-function accumulatePlayer(acc: Map<string, RelationAcc>, p: EntryPlayer, win: boolean, loss: boolean, draw: boolean) {
+function accumulatePlayer(
+  acc: Map<string, RelationAcc>,
+  p: EntryPlayer,
+  outcome: RankOutcome,
+  allowDraw: boolean | null,
+) {
   if (!acc.has(p.playerId)) {
     acc.set(p.playerId, { displayName: p.displayName, shortName: p.shortName, wins: 0, losses: 0, draws: 0, count: 0 });
   }
   const s = acc.get(p.playerId)!;
   s.count++;
-  if (win) s.wins++;
-  else if (loss) s.losses++;
-  else if (draw) s.draws++;
+  tally(s, outcome, allowDraw);
 }
 
+/**
+ * Tallies the players of one entry per match: the partners (own entry, scored on the
+ * match) or each opponent (opposing entry, scored on the duel with it — a match of N
+ * sides yields one row per opposing entry).
+ */
 function tallyRelations(
   matchResults: MatchResult[],
   entryToPlayers: Map<string, EntryPlayer[]>,
   pickEntryId: (r: MatchResult) => string,
+  outcomeOf: (r: MatchResult) => RankOutcome,
   excludePlayerId?: string,
 ): Map<string, RelationAcc> {
   const acc = new Map<string, RelationAcc>();
-  const seenMatches = new Set<string>();
+  const seen = new Set<string>();
 
   for (const r of matchResults) {
-    if (seenMatches.has(r.matchId)) continue;
-    seenMatches.add(r.matchId);
-    const win = isWinResult(r);
-    const loss = isLossResult(r);
-    const draw = r.winnerSide === null && (r.allowDraw ?? false);
+    const entryId = pickEntryId(r);
+    const key = `${r.matchId}:${entryId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const outcome = outcomeOf(r);
 
-    for (const p of entryToPlayers.get(pickEntryId(r)) ?? []) {
+    for (const p of entryToPlayers.get(entryId) ?? []) {
       if (excludePlayerId && p.playerId === excludePlayerId) continue;
-      accumulatePlayer(acc, p, win, loss, draw);
+      accumulatePlayer(acc, p, outcome, r.allowDraw);
     }
   }
   return acc;
@@ -218,9 +254,7 @@ function accumulateTournamentMatches(
       seenMatches.add(r.matchId);
       base.matchesPlayed++;
       totalPoints += r.pointsAwarded ?? 0;
-      if (isWinResult(r)) base.wins++;
-      else if (isLossResult(r)) base.losses++;
-      else if (r.winnerSide === null && r.allowDraw) base.draws++;
+      tally(base, matchOutcome(r), r.allowDraw);
     }
   }
   return totalPoints;
@@ -398,19 +432,16 @@ export class PlayerStatsService {
     );
 
     const seenMatches = new Set<string>();
-    let wins = 0,
-      losses = 0,
-      draws = 0;
+    const record: Tally = { wins: 0, losses: 0, draws: 0 };
 
     for (const r of matchResults) {
       if (seenMatches.has(r.matchId)) continue;
       if (!ownEntriesWithB.has(r.entryId)) continue;
       seenMatches.add(r.matchId);
-      if (isWinResult(r)) wins++;
-      else if (isLossResult(r)) losses++;
-      else if (r.winnerSide === null && r.allowDraw) draws++;
+      tally(record, matchOutcome(r), r.allowDraw);
     }
 
+    const { wins, losses, draws } = record;
     const matchesPlayed = seenMatches.size;
     return {
       matchesPlayed,
@@ -509,19 +540,16 @@ export class PlayerStatsService {
 
   private aggregateBaseStats(matchResults: MatchResult[]) {
     const seen = new Set<string>();
-    let wins = 0,
-      draws = 0,
-      losses = 0,
-      totalScore = 0;
+    const record: Tally = { wins: 0, losses: 0, draws: 0 };
+    let totalScore = 0;
 
     for (const r of matchResults) {
       if (seen.has(r.matchId)) continue;
       seen.add(r.matchId);
       totalScore += r.ownScore ?? 0;
-      if (isWinResult(r)) wins++;
-      else if (isLossResult(r)) losses++;
-      else if (r.winnerSide === null && r.allowDraw) draws++;
+      tally(record, matchOutcome(r), r.allowDraw);
     }
+    const { wins, draws, losses } = record;
 
     const totalMatches = seen.size;
     return {
@@ -542,8 +570,9 @@ export class PlayerStatsService {
     const rows = await playerStatsRepository.getPlayerRecentForm(playerId, 10, tournamentId, visibleOrganizationIds);
     // Reverse so index 0 = oldest, last = most recent (left→right = old→recent)
     return [...rows].reverse().map((r) => {
-      if (isWinResult(r)) return "V";
-      if (isLossResult(r)) return "D";
+      const outcome = matchOutcome(r);
+      if (outcome.isWin) return "V";
+      if (outcome.isLoss) return "D";
       return "N";
     });
   }
@@ -559,9 +588,7 @@ export class PlayerStatsService {
       if (!byType.has(r.outcomeTypeId)) byType.set(r.outcomeTypeId, { played: 0, wins: 0, losses: 0, draws: 0 });
       const s = byType.get(r.outcomeTypeId)!;
       s.played++;
-      if (isWinResult(r)) s.wins++;
-      else if (isLossResult(r)) s.losses++;
-      else if (r.winnerSide === null && r.allowDraw) s.draws++;
+      tally(s, matchOutcome(r), r.allowDraw);
     }
 
     if (byType.size === 0) return [];
@@ -598,7 +625,7 @@ export class PlayerStatsService {
     const playersInOppEntries = await playerStatsRepository.getPlayersInEntries(oppEntryIds);
     const entryToPlayers = groupPlayersByEntry(playersInOppEntries);
 
-    const h2h = tallyRelations(matchResults, entryToPlayers, (r) => r.oppEntryId, playerId);
+    const h2h = tallyRelations(matchResults, entryToPlayers, (r) => r.oppEntryId, duelOutcome, playerId);
 
     return [...h2h.entries()]
       .map(([id, s]) => {
@@ -628,7 +655,7 @@ export class PlayerStatsService {
     const playersInEntries = await playerStatsRepository.getPlayersInEntries(partnerEntryIds);
     const entryToPlayers = groupPlayersByEntry(playersInEntries);
 
-    const partnerStats = tallyRelations(matchResults, entryToPlayers, (r) => r.entryId, playerId);
+    const partnerStats = tallyRelations(matchResults, entryToPlayers, (r) => r.entryId, matchOutcome, playerId);
 
     const allPartners = Array.from(partnerStats.entries()).map(([id, s]): PlayerRelationStat => {
       const winRate = winRatePercent(s.wins, s.count);
@@ -658,7 +685,7 @@ export class PlayerStatsService {
     const playersInOppEntries = await playerStatsRepository.getPlayersInEntries(oppEntryIds);
     const entryToPlayers = groupPlayersByEntry(playersInOppEntries);
 
-    const nemesisStats = tallyRelations(matchResults, entryToPlayers, (r) => r.oppEntryId);
+    const nemesisStats = tallyRelations(matchResults, entryToPlayers, (r) => r.oppEntryId, duelOutcome);
 
     // wins/losses are counted from the subject player's point of view, so a nemesis is an
     // opponent with a high loss rate — not merely the one met most often.
@@ -740,6 +767,7 @@ export class PlayerStatsService {
     return rows.map((row) => {
       const sides: HistoryMatchSide[] = (sidesByMatch.get(row.matchId) ?? []).map((s) => ({
         position: s.position,
+        rank: s.rank ?? null,
         players: s.entry.players.map((p): HistoryMatchSidePlayer => ({
           id: p.player.id,
           displayName: p.player.displayName,
