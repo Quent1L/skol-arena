@@ -10,7 +10,7 @@ import { rankedCacheRepository } from "../repository/ranked-cache.repository";
 import { participantRepository } from "../repository/participant.repository";
 import { partitionInactive } from "../utils/inactive-players";
 import { seasonRewindRepository } from "../repository/season-rewind.repository";
-import { calculateMatchMmr, toEnginePlayers, type EnginePlayer } from "./mmr-engine";
+import { calculateMultiSideMmr, toEnginePlayers, type EnginePlayer } from "./mmr-engine";
 import { enqueueMmrSeasonRecalculation, enqueueSeasonRewindGeneration } from "./mmr-job-queue.service";
 import { tournamentRulesetService } from "./tournament-ruleset.service";
 import { tournamentRulesetRepository } from "../repository/tournament-ruleset.repository";
@@ -23,6 +23,8 @@ import {
   resolveRulesetInteractionMode,
   REWIND_VERSION,
   RULESET_OUTCOME_DEFAULTS,
+  resolveStoredRanks,
+  sideOutcome,
 } from "@skol-arena/shared/types/index";
 import type {
   CreateRankedSeasonInput,
@@ -47,7 +49,6 @@ import { sanitizeOptionalRichText } from "../utils/sanitize-html";
 import { isOrganizationVisible, visibleOrganizationIdsFor } from "./visibility";
 
 type ProvisionalOutcome = "win" | "loss" | "draw";
-type MatchResult = 1 | 0 | 0.5;
 type SeasonPlayers = Awaited<ReturnType<typeof playerMmrRepository.getBySeasonOrdered>>;
 
 interface ProvisionalReplayCtx {
@@ -271,7 +272,7 @@ function loadUnfinalizedMatches(seasonId: string) {
     with: {
       sides: {
         orderBy: (s, { asc }) => [asc(s.position)],
-        columns: { position: true, score: true },
+        columns: { position: true, score: true, rank: true },
         with: {
           entry: {
             columns: { id: true },
@@ -286,16 +287,11 @@ function loadUnfinalizedMatches(seasonId: string) {
 
 type UnfinalizedMatch = Awaited<ReturnType<typeof loadUnfinalizedMatches>>[number];
 
-function sideResult(winnerSide: string | null, side: "A" | "B"): MatchResult {
-  if (winnerSide === "A") return side === "A" ? 1 : 0;
-  if (winnerSide === "B") return side === "B" ? 1 : 0;
-  return 0.5;
-}
-
-function resultToOutcome(result: MatchResult): ProvisionalOutcome {
-  if (result === 1) return "win";
-  if (result === 0) return "loss";
-  return "draw";
+/** win / loss / draw of the side at `position`, from the match's placements. */
+function provisionalOutcome(ranks: Map<number, number>, position: number): ProvisionalOutcome {
+  const { isWin, isLoss } = sideOutcome(ranks, position);
+  if (isWin) return "win";
+  return isLoss ? "loss" : "draw";
 }
 
 /** Today as `YYYY-MM-DD`, the shape the season date columns are stored in. */
@@ -1110,28 +1106,24 @@ export class RankedSeasonService {
   }
 
   private replayMatch(match: UnfinalizedMatch, ctx: ProvisionalReplayCtx, touched: Set<string>): void {
-    const sideA = match.sides[0];
-    const sideB = match.sides[1];
-    if (!sideA || !sideB) return;
+    if (match.sides.length < 2) return;
+    const idsBySide = match.sides.map((side) => side.entry?.players.map((p) => p.playerId) ?? []);
+    if (idsBySide.some((ids) => ids.length === 0)) return;
 
-    const idsA = sideA.entry?.players.map((p) => p.playerId) ?? [];
-    const idsB = sideB.entry?.players.map((p) => p.playerId) ?? [];
-    if (!idsA.length || !idsB.length) return;
+    for (const id of idsBySide.flat()) touched.add(id);
 
-    for (const id of [...idsA, ...idsB]) touched.add(id);
-
-    const resultA = sideResult(match.winnerSide, "A");
+    const ranks = resolveStoredRanks(match.sides, match.winnerSide);
+    const positionOf = new Map(
+      match.sides.flatMap((side, i) => idsBySide[i].map((id) => [id, side.position] as const)),
+    );
     const matchOutcome =
       (match.outcomeTypeId ? ctx.outcomes.get(match.outcomeTypeId) : undefined) ?? RULESET_OUTCOME_DEFAULTS;
-    const deltas = calculateMatchMmr({
-      sides: [
-        { players: toReplayPlayers(idsA, ctx), score: sideA.score ?? 0, result: resultA },
-        {
-          players: toReplayPlayers(idsB, ctx),
-          score: sideB.score ?? 0,
-          result: sideResult(match.winnerSide, "B"),
-        },
-      ],
+    const deltas = calculateMultiSideMmr({
+      sides: match.sides.map((side, i) => ({
+        players: toReplayPlayers(idsBySide[i], ctx),
+        score: side.score ?? 0,
+        rank: ranks.get(side.position) ?? 1,
+      })),
       kFactor: ctx.kFactor,
       scoreCountsForMmr: matchOutcome.scoreCountsForMmr,
       mmrMultiplier: matchOutcome.mmrMultiplier,
@@ -1139,7 +1131,7 @@ export class RankedSeasonService {
     });
 
     for (const delta of deltas) {
-      const outcome = resultToOutcome(idsA.includes(delta.playerId) ? resultA : sideResult(match.winnerSide, "B"));
+      const outcome = provisionalOutcome(ranks, positionOf.get(delta.playerId) ?? 0);
       ctx.provisionalMmr.set(delta.playerId, delta.newMmr);
       ctx.matchesPlayed.set(delta.playerId, (ctx.matchesPlayed.get(delta.playerId) ?? 0) + 1);
       const prev = ctx.provisionalResults.get(delta.playerId) ?? [];
@@ -1150,8 +1142,9 @@ export class RankedSeasonService {
   private findProvisionalOnlyPlayerIds(unfinalizedMatches: UnfinalizedMatch[], players: SeasonPlayers): string[] {
     const allUnfinalizedPlayerIds = new Set<string>();
     for (const match of unfinalizedMatches) {
-      for (const p of match.sides[0]?.entry?.players ?? []) allUnfinalizedPlayerIds.add(p.playerId);
-      for (const p of match.sides[1]?.entry?.players ?? []) allUnfinalizedPlayerIds.add(p.playerId);
+      for (const side of match.sides) {
+        for (const p of side.entry?.players ?? []) allUnfinalizedPlayerIds.add(p.playerId);
+      }
     }
     const officialPlayerIds = new Set(players.map((p) => p.playerId));
     return [...allUnfinalizedPlayerIds].filter((id) => !officialPlayerIds.has(id));

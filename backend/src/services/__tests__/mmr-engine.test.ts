@@ -1,6 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import {
   calculateMatchMmr,
+  calculateMultiSideMmr,
   calculateScoreMultiplier,
   MIN_MMR,
   type EnginePlayer,
@@ -451,5 +452,85 @@ describe("exceptions to conservation", () => {
     const results = run([side([p("a", 5)], 0), side([p("b", 5)], 1)]);
     expect(results.find((r) => r.playerId === "a")!.newMmr).toBe(1);
     expect(deltaOf(results, "a")).toBe(-4);
+  });
+});
+
+describe("calculateMultiSideMmr", () => {
+  const base = {
+    kFactor: 32,
+    scoreCountsForMmr: true,
+    mmrMultiplier: 1,
+    teamInteractionMode: "COLLABORATIVE" as TeamInteractionMode,
+  };
+  const ranked = (players: EnginePlayer[], rank: number, score: number | null = null) => ({
+    players,
+    rank,
+    score,
+  });
+
+  it("prices a duel exactly like calculateMatchMmr", () => {
+    const multi = calculateMultiSideMmr({
+      ...base,
+      sides: [ranked([p("a", 1100), p("b", 950)], 2, 3), ranked([p("c", 1000), p("d", 1020)], 1, 5)],
+    });
+    const duel = run([side([p("a", 1100), p("b", 950)], 0, 3), side([p("c", 1000), p("d", 1020)], 1, 5)]);
+    expect(multi).toEqual(duel);
+  });
+
+  it("reads a shared rank in a duel as a draw", () => {
+    const multi = calculateMultiSideMmr({
+      ...base,
+      sides: [ranked([p("a", 1100)], 1), ranked([p("b", 900)], 1)],
+    });
+    expect(multi).toEqual(run([side([p("a", 1100)], 0.5), side([p("b", 900)], 0.5)]));
+  });
+
+  it("averages the duels of a 1v1v1 between equal players", () => {
+    const results = calculateMultiSideMmr({
+      ...base,
+      sides: [ranked([p("a", 1000)], 1), ranked([p("b", 1000)], 2), ranked([p("c", 1000)], 3)],
+    });
+    // Each duel between equals moves 16: the winner wins two, the middle one splits
+    expect(deltaOf(results, "a")).toBe(16);
+    expect(deltaOf(results, "b")).toBe(0);
+    expect(deltaOf(results, "c")).toBe(-16);
+    expect(totalDelta(results)).toBe(0);
+  });
+
+  it("lets two sides sharing first place draw their duel", () => {
+    const results = calculateMultiSideMmr({
+      ...base,
+      sides: [ranked([p("a", 1000)], 1), ranked([p("b", 1000)], 1), ranked([p("c", 1000)], 3)],
+    });
+    expect(deltaOf(results, "a")).toBe(8);
+    expect(deltaOf(results, "b")).toBe(8);
+    expect(deltaOf(results, "c")).toBe(-16);
+  });
+
+  it("applies the placement multiplier once, on the average", () => {
+    const results = calculateMultiSideMmr({
+      ...base,
+      sides: [ranked([p("a", 1000, true)], 1), ranked([p("b", 1000)], 2), ranked([p("c", 1000)], 3)],
+    });
+    expect(deltaOf(results, "a")).toBe(32);
+  });
+
+  it("never takes a player below the MMR floor", () => {
+    const results = calculateMultiSideMmr({
+      ...base,
+      sides: [ranked([p("a", 1000)], 1), ranked([p("b", 1000)], 2), ranked([p("c", MIN_MMR)], 3)],
+    });
+    expect(results.find((r) => r.playerId === "c")!.newMmr).toBe(MIN_MMR);
+  });
+
+  it("splits a team side's share of every duel in a 2v2v2", () => {
+    const team = (x: string, y: string) => [p(x, 1000), p(y, 1000)];
+    const results = calculateMultiSideMmr({
+      ...base,
+      sides: [ranked(team("a1", "a2"), 1), ranked(team("b1", "b2"), 2), ranked(team("c1", "c2"), 3)],
+    });
+    expect(deltaOf(results, "a1")).toBe(16);
+    expect(deltaOf(results, "c2")).toBe(-16);
+    expect(totalDelta(results)).toBe(0);
   });
 });

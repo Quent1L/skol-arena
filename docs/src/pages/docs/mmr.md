@@ -106,6 +106,33 @@ difference is withheld from the winners' pot instead of appearing from nowhere. 
 it only ever comes up at the very bottom of a ladder — a player below the match's effective
 K — but it is what makes the invariant exact rather than nearly exact.
 
+## Matches of three sides or more
+
+A season can allow matches with more than two sides — 1v1v1, 2v2v2, four players around a
+kart race. Such a match records a **placement** for every side (1 for first, tied sides
+sharing a place) rather than a single winner, and the MMR reads it as **every duel it
+contains**: each pair of sides is priced exactly like a two-side match of its own, the side
+that finished ahead winning it and a shared place counting as a draw.
+
+A player's delta is the **average of their N − 1 duels**, all priced on the MMR everyone
+brought into the match. Averaging rather than summing is what keeps a 1v1v1 inside the
+risk of a duel: the winner of a three-player match between equals gains what a duel win is
+worth (+16 at K-factor 32), the last loses what a duel loss costs (−16), and the middle one,
+who won one duel and lost the other, does not move.
+
+Two details follow from that:
+
+- The placement multiplier and the MMR floor apply once, to the averaged delta.
+- The average is rounded per player, so a match of three sides or more can leave a point or
+  two unbalanced. Like placement, it is a bounded exception to the invariant below.
+
+A match with exactly two sides goes through the two-side calculation untouched: allowing
+more sides changes nothing for the duels of the season.
+
+The player's own record follows the placement: **alone in first place is a win, a shared
+first place a draw, any other place a loss** — a second place out of four counts as a loss
+in the win/loss streaks and the match history, even though it can earn MMR.
+
 ## Sharing between teammates
 
 The team interaction mode is the only calculation lever carried by the discipline. It
@@ -240,11 +267,14 @@ A draw is a real Elo result: the underdog gains MMR, the favourite loses some.
 Σ delta(side A) + Σ delta(side B) = 0
 ```
 
-Exact, with one deliberate exception:
+Exact, with two deliberate exceptions:
 
 1. **Placement.** A player in placement has their delta doubled after the split, so a
    rookie converges twice as fast without their opponents risking double. The injection is
    bounded by `placementMatches × K` per player and disappears once placement is over.
+2. **Matches of three sides or more.** Each player's averaged delta is rounded on its own,
+   which can leave a point or two per match unbalanced (see above). Two-side matches are
+   not concerned.
 
 **The MMR floor of 1 is not an exception.** A player cannot pay more than they own, and
 what they cannot pay is withheld from the winners rather than created — see the settlement

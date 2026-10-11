@@ -9,15 +9,13 @@ import { mmrSeedRepository } from "../repository/mmr-seed.repository";
 import { rankedSeasonRepository } from "../repository/ranked-season.repository";
 import { ruleFiringRepository } from "../repository/rule-firing.repository";
 import { notificationService } from "./notification.service";
-import {
-  calculateMatchMmr,
-  toEnginePlayers,
-  type EnginePlayerStanding,
-  type MatchResult,
-  type PlayerMmrDelta,
-} from "./mmr-engine";
+import { calculateMultiSideMmr, toEnginePlayers, type EnginePlayerStanding, type PlayerMmrDelta } from "./mmr-engine";
 import { tournamentRulesetService } from "./tournament-ruleset.service";
-import { resolveRulesetInteractionMode, resolveRulesetOutcome } from "@skol-arena/shared/types/index";
+import {
+  resolveRulesetInteractionMode,
+  resolveRulesetOutcome,
+  resolveStoredRanks,
+} from "@skol-arena/shared/types/index";
 import { webSocketService } from "./websocket.service";
 import { logger } from "../utils/logger";
 import type { MmrAnimationEventReason, PlayerRulesOutput, RuleFiringSurface } from "@skol-arena/shared";
@@ -29,8 +27,6 @@ type MmrAnimationEventRecord = Awaited<ReturnType<typeof mmrAnimationEventReposi
 interface ProvisionalContext {
   matchId: string;
   seasonId: string;
-  playerIdsA: string[];
-  playerIdsB: string[];
   baseMmr: number;
   tiers: TierData[];
   mmrRecords: Map<string, MmrRecord>;
@@ -63,11 +59,6 @@ function translateEncouragement(
 function getTierForMmr(mmr: number, tiers: TierData[]): TierData | null {
   if (tiers.length === 0) return null;
   return [...tiers].sort((a, b) => b.level - a.level).find((t) => mmr >= t.minMmr) ?? tiers[0];
-}
-
-function resolveResult(winnerSide: string | null, playerInSideA: boolean): MatchResult {
-  if (winnerSide === null) return 0.5;
-  return (winnerSide === "A") === playerInSideA ? 1 : 0;
 }
 
 function standingFromRecords(
@@ -114,11 +105,9 @@ export class MmrAnimationEventService {
     });
     if (sides.length < 2) return;
 
-    const sideA = sides[0];
-    const sideB = sides[1];
-    const playerIdsA = sideA.entry?.players.map((p) => p.playerId) ?? [];
-    const playerIdsB = sideB.entry?.players.map((p) => p.playerId) ?? [];
-    const allPlayerIds = [...playerIdsA, ...playerIdsB];
+    const idsBySide = sides.map((side) => side.entry?.players.map((p) => p.playerId) ?? []);
+    const allPlayerIds = idsBySide.flat();
+    const ranks = resolveStoredRanks(sides, match.winnerSide);
 
     const mmrRecords = await this.loadMmrRecords(allPlayerIds, tournamentId, config.baseMmr);
 
@@ -126,19 +115,12 @@ export class MmrAnimationEventService {
 
     // Same engine as the finalization path, fed with the current MMR snapshot:
     // what the player is shown before validation is what they will actually get.
-    const deltas = calculateMatchMmr({
-      sides: [
-        {
-          players: toEnginePlayers(playerIdsA, config.placementMatches, standingOf),
-          score: sideA.score ?? 0,
-          result: resolveResult(match.winnerSide, true),
-        },
-        {
-          players: toEnginePlayers(playerIdsB, config.placementMatches, standingOf),
-          score: sideB.score ?? 0,
-          result: resolveResult(match.winnerSide, false),
-        },
-      ],
+    const deltas = calculateMultiSideMmr({
+      sides: sides.map((side, i) => ({
+        players: toEnginePlayers(idsBySide[i], config.placementMatches, standingOf),
+        score: side.score ?? 0,
+        rank: ranks.get(side.position) ?? 1,
+      })),
       kFactor: config.kFactor,
       scoreCountsForMmr: outcome.scoreCountsForMmr,
       mmrMultiplier: outcome.mmrMultiplier,
@@ -148,8 +130,6 @@ export class MmrAnimationEventService {
     const ctx: ProvisionalContext = {
       matchId,
       seasonId: tournamentId,
-      playerIdsA,
-      playerIdsB,
       baseMmr: config.baseMmr,
       tiers,
       mmrRecords,

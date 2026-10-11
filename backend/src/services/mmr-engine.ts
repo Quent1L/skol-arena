@@ -290,3 +290,97 @@ export function calculateMatchMmr(input: MatchMmrInput): PlayerMmrDelta[] {
 
   return aLoses ? [...lost.results, ...won.results] : [...won.results, ...lost.results];
 }
+
+// ── Matches of three sides or more ───────────────────────────────────────────
+
+/** A side of a match of any size, placed by its rank (1 = first, ties share it). */
+export interface RankedEngineSide {
+  players: EnginePlayer[];
+  score: number | null;
+  rank: number;
+}
+
+export interface MultiSideMmrInput extends Omit<MatchMmrInput, "sides"> {
+  sides: RankedEngineSide[];
+}
+
+function duelResult(rank: number, opponentRank: number): MatchResult {
+  if (rank < opponentRank) return 1;
+  return rank === opponentRank ? 0.5 : 0;
+}
+
+type PairTotals = { delta: number; share: number; kEffective: number };
+
+/** Sums what every duel of the match moved, priced on the pre-match MMR. */
+function sumPairDeltas(input: MultiSideMmrInput): Map<string, PairTotals> {
+  const { sides, ...rest } = input;
+  const withoutPlacement = (side: RankedEngineSide) => side.players.map((p) => ({ ...p, isPlacement: false }));
+  const totals = new Map<string, PairTotals>();
+
+  for (let i = 0; i < sides.length; i++) {
+    for (let j = i + 1; j < sides.length; j++) {
+      const [a, b] = [sides[i], sides[j]];
+      const results = calculateMatchMmr({
+        ...rest,
+        sides: [
+          { players: withoutPlacement(a), score: a.score, result: duelResult(a.rank, b.rank) },
+          { players: withoutPlacement(b), score: b.score, result: duelResult(b.rank, a.rank) },
+        ],
+      });
+      for (const r of results) {
+        const t = totals.get(r.playerId) ?? { delta: 0, share: 0, kEffective: 0 };
+        totals.set(r.playerId, {
+          delta: t.delta + r.mmrDelta,
+          share: t.share + r.share,
+          kEffective: t.kEffective + r.kEffective,
+        });
+      }
+    }
+  }
+  return totals;
+}
+
+/**
+ * MMR of a match of any number of sides. Two sides go through `calculateMatchMmr`
+ * untouched, so every duel keeps exactly the deltas it always had.
+ *
+ * From three sides on, the match is read as every duel it contains: each pair of
+ * sides is priced like a match of its own (whoever finished ahead won it, a shared
+ * rank is a draw), on the MMR everyone brought into the match. A player's delta is
+ * the average over their N−1 duels, so a 1v1v1 risks what a duel risks.
+ *
+ * The placement multiplier and the MMR floor apply once, on that average. The
+ * rounding of the average can leave a point or two unbalanced per match: like the
+ * placement multiplier, a bounded breach of conservation.
+ */
+export function calculateMultiSideMmr(input: MultiSideMmrInput): PlayerMmrDelta[] {
+  const { sides } = input;
+  if (sides.length === 2) {
+    const [a, b] = sides;
+    return calculateMatchMmr({
+      ...input,
+      sides: [
+        { players: a.players, score: a.score, result: duelResult(a.rank, b.rank) },
+        { players: b.players, score: b.score, result: duelResult(b.rank, a.rank) },
+      ],
+    });
+  }
+
+  const duels = sides.length - 1;
+  const totals = duels > 0 ? sumPairDeltas(input) : new Map<string, PairTotals>();
+  return sides.flatMap((side) =>
+    side.players.map((player) => {
+      const t = totals.get(player.id) ?? { delta: 0, share: 0, kEffective: 0 };
+      const multiplier = player.isPlacement ? PLACEMENT_MULTIPLIER : 1;
+      const average = (value: number) => (duels > 0 ? value / duels : 0);
+      const newMmr = Math.max(MIN_MMR, player.mmr + Math.round(average(t.delta)) * multiplier);
+      return {
+        playerId: player.id,
+        mmrDelta: newMmr - player.mmr,
+        newMmr,
+        share: average(t.share),
+        kEffective: average(t.kEffective) * multiplier,
+      };
+    }),
+  );
+}

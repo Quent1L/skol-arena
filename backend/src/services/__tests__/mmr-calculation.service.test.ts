@@ -138,17 +138,31 @@ function makeMatch(id: string, outcomeType: { scoreCountsForMmr: boolean; points
   return { id, outcomeTypeId: registerOutcome(id, outcomeType) };
 }
 
+/** A duel seen from the player (default "player-1"), who always plays on side 1. */
 function makeSideResult(opts: {
+  playerId?: string;
   opponentPlayerIds?: string[];
   scoreForPlayer?: number;
   scoreForOpponent?: number;
   playerWon?: boolean | null;
 }) {
+  const won = opts.playerWon ?? null;
   return {
-    opponentPlayerIds: opts.opponentPlayerIds ?? ["opp-1"],
-    scoreForPlayer: opts.scoreForPlayer ?? 0,
-    scoreForOpponent: opts.scoreForOpponent ?? 0,
-    playerWon: opts.playerWon ?? null,
+    sides: [
+      {
+        position: 1,
+        rank: won === false ? 2 : 1,
+        score: opts.scoreForPlayer ?? 0,
+        playerIds: [opts.playerId ?? "player-1"],
+      },
+      {
+        position: 2,
+        rank: won === true ? 2 : 1,
+        score: opts.scoreForOpponent ?? 0,
+        playerIds: opts.opponentPlayerIds ?? ["opp-1"],
+      },
+    ],
+    ownPosition: 1,
   };
 }
 
@@ -559,7 +573,8 @@ describe("MmrCalculationService", () => {
     it("recalculatePlayerMmr → the 1st match starts from the seeded MMR, not baseMmr", async () => {
       mockMmrSeedRepo.getMapBySeason.mockImplementation(() => Promise.resolve(new Map([["p1", 1180]])));
       (service as any).getPlayerMatchesForSeason = async () => [makeMatch("m1")];
-      (service as any).preloadMatchSides = async () => new Map([["m1", makeSideResult({ playerWon: false })]]);
+      (service as any).preloadMatchSides = async () =>
+        new Map([["m1", makeSideResult({ playerId: "p1", playerWon: false })]]);
 
       await service.recalculatePlayerMmr("s1", "p1");
 
@@ -592,8 +607,8 @@ describe("MmrCalculationService", () => {
             winnerSide: "A",
             outcomeTypeId: registerOutcome("m1", { scoreCountsForMmr: true, points: 3 }),
             sides: [
-              { score: 0, entry: { players: [{ playerId: "p1" }] } },
-              { score: 0, entry: { players: [{ playerId: "p2" }] } },
+              { position: 1, rank: null, score: 0, entry: { players: [{ playerId: "p1" }] } },
+              { position: 2, rank: null, score: 0, entry: { players: [{ playerId: "p2" }] } },
             ],
           },
         ]);
@@ -653,57 +668,58 @@ describe("MmrCalculationService", () => {
     });
   });
 
-  // ── extractMatchSidesForPlayer ─────────────────────────────────────────────
+  // ── resolveSideData ──────────────────────────────────────────────────────
 
-  describe("extractMatchSidesForPlayer", () => {
-    function makeRawSides(playerIdsA: string[], playerIdsB: string[], scoreA: number, scoreB: number) {
-      return [
-        { position: 1, score: scoreA, entry: { players: playerIdsA.map((id) => ({ playerId: id })) } },
-        { position: 2, score: scoreB, entry: { players: playerIdsB.map((id) => ({ playerId: id })) } },
-      ];
-    }
-
-    const DEFAULTS = { opponentPlayerIds: [], scoreForPlayer: 0, scoreForOpponent: 0, playerWon: null };
-
-    it("match not found → default values", async () => {
-      mockDb.query.matchSides.findMany.mockImplementation(() => Promise.resolve(makeRawSides(["p1"], ["p2"], 3, 1)));
-      // findFirst already returns null by default
-      const result = await (service as any).extractMatchSidesForPlayer("m1", "p1");
-      expect(result).toEqual(DEFAULTS);
+  describe("resolveSideData", () => {
+    const side = (position: number, playerIds: string[], rank: number | null, score = 0) => ({
+      position,
+      rank,
+      score,
+      entry: { players: playerIds.map((playerId) => ({ playerId })) },
     });
 
-    it("fewer than 2 sides → default values", async () => {
-      mockDb.query.matchSides.findMany.mockImplementation(() => Promise.resolve([]));
-      mockDb.query.matches.findFirst.mockImplementation(() => Promise.resolve({ id: "m1", winnerSide: "A" }));
-      const result = await (service as any).extractMatchSidesForPlayer("m1", "p1");
-      expect(result).toEqual(DEFAULTS);
+    it("ranks a duel without stored ranks from the A/B letter", () => {
+      const data = (service as any).resolveSideData([side(1, ["p1"], null, 3), side(2, ["p2"], null, 1)], "p2", "A");
+      expect(data.ownPosition).toBe(2);
+      expect(data.sides.map((s: any) => s.rank)).toEqual([1, 2]);
     });
 
-    it("player on side A, winnerSide A → playerWon=true, correct scores", async () => {
-      mockDb.query.matchSides.findMany.mockImplementation(() => Promise.resolve(makeRawSides(["p1"], ["p2"], 3, 1)));
-      mockDb.query.matches.findFirst.mockImplementation(() => Promise.resolve({ id: "m1", winnerSide: "A" }));
-      const result = await (service as any).extractMatchSidesForPlayer("m1", "p1");
-      expect(result.playerWon).toBe(true);
-      expect(result.scoreForPlayer).toBe(3);
-      expect(result.scoreForOpponent).toBe(1);
-      expect(result.opponentPlayerIds).toEqual(["p2"]);
+    it("keeps every side of a match of three sides", () => {
+      const data = (service as any).resolveSideData(
+        [side(1, ["p1"], 3), side(2, ["p2", "p3"], 1), side(3, ["p4"], 2)],
+        "p3",
+        null,
+      );
+      expect(data.ownPosition).toBe(2);
+      expect(data.sides).toHaveLength(3);
+      expect(data.sides[1].playerIds).toEqual(["p2", "p3"]);
     });
+  });
 
-    it("player on side B, winnerSide A → playerWon=false, scores swapped", async () => {
-      mockDb.query.matchSides.findMany.mockImplementation(() => Promise.resolve(makeRawSides(["p1"], ["p2"], 3, 1)));
-      mockDb.query.matches.findFirst.mockImplementation(() => Promise.resolve({ id: "m1", winnerSide: "A" }));
-      const result = await (service as any).extractMatchSidesForPlayer("m1", "p2");
-      expect(result.playerWon).toBe(false);
-      expect(result.scoreForPlayer).toBe(1);
-      expect(result.scoreForOpponent).toBe(3);
-      expect(result.opponentPlayerIds).toEqual(["p1"]);
-    });
+  describe("recalculatePlayerMmr on a match of three sides", () => {
+    it("prices every duel and records a loss for a second place", async () => {
+      (service as any).getPlayerMatchesForSeason = async () => [makeMatch("m1")];
+      (service as any).preloadMatchSides = async () =>
+        new Map([
+          [
+            "m1",
+            {
+              sides: [
+                { position: 1, rank: 2, score: 0, playerIds: ["p1"] },
+                { position: 2, rank: 1, score: 0, playerIds: ["p2"] },
+                { position: 3, rank: 3, score: 0, playerIds: ["p3"] },
+              ],
+              ownPosition: 1,
+            },
+          ],
+        ]);
 
-    it("winnerSide null → playerWon=null (draw / no result)", async () => {
-      mockDb.query.matchSides.findMany.mockImplementation(() => Promise.resolve(makeRawSides(["p1"], ["p2"], 2, 2)));
-      mockDb.query.matches.findFirst.mockImplementation(() => Promise.resolve({ id: "m1", winnerSide: null }));
-      const result = await (service as any).extractMatchSidesForPlayer("m1", "p1");
-      expect(result.playerWon).toBeNull();
+      await service.recalculatePlayerMmr("s1", "p1");
+
+      const history = mockPlayerMmrRepo.createMmrHistory.mock.calls.at(-1)![0] as any;
+      // One win, one loss against equal opponents: the two duels cancel out
+      expect(history.mmrDelta).toBe(0);
+      expect(history.outcome).toBe("loss");
     });
   });
 
@@ -796,9 +812,9 @@ describe("MmrCalculationService", () => {
         p3: [makeMatch("m2")],
       };
       const sideByPlayer: Record<string, ReturnType<typeof makeSideResult>> = {
-        p1: makeSideResult({ playerWon: true, opponentPlayerIds: ["p2"] }),
-        p2: makeSideResult({ playerWon: false, opponentPlayerIds: ["p1"] }),
-        p3: makeSideResult({ playerWon: true, opponentPlayerIds: ["p1"] }),
+        p1: makeSideResult({ playerId: "p1", playerWon: true, opponentPlayerIds: ["p2"] }),
+        p2: makeSideResult({ playerId: "p2", playerWon: false, opponentPlayerIds: ["p1"] }),
+        p3: makeSideResult({ playerId: "p3", playerWon: true, opponentPlayerIds: ["p1"] }),
       };
       (service as any).getPlayerMatchesForSeason = async (_seasonId: string, playerId: string) =>
         matchesByPlayer[playerId] ?? [];

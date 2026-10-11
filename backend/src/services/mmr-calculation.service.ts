@@ -9,6 +9,8 @@ import type { MmrAnimationEventReason, MmrHistoryOutcome } from "@skol-arena/sha
 import {
   indexRulesetOutcomes,
   resolveRulesetInteractionMode,
+  resolveStoredRanks,
+  sideOutcome,
   RULESET_OUTCOME_DEFAULTS,
   type RulesetOutcomeType,
   type TeamInteractionMode,
@@ -16,19 +18,41 @@ import {
 import { tournamentRulesetService } from "./tournament-ruleset.service";
 import { BadRequestError, ErrorCode, NotFoundError } from "../types/errors";
 import {
-  calculateMatchMmr,
+  calculateMultiSideMmr,
   toEnginePlayers,
   type EnginePlayer,
   type EnginePlayerStanding,
-  type MatchResult,
+  type RankedEngineSide,
 } from "./mmr-engine";
 
+/** One side of a match as the replay reads it: who played, how it scored and placed. */
+interface SnapshotSide {
+  position: number;
+  rank: number;
+  score: number;
+  playerIds: string[];
+}
+
+/** A match seen from one player: every side, theirs included, and which one is theirs. */
 interface MatchSideData {
-  opponentPlayerIds: string[];
-  sameTeamPlayerIds: string[];
-  scoreForPlayer: number;
-  scoreForOpponent: number;
-  playerWon: boolean | null;
+  sides: SnapshotSide[];
+  /** Null when the player is on no side — a match recorded without its line-up. */
+  ownPosition: number | null;
+}
+
+const EMPTY_SIDE_DATA: MatchSideData = { sides: [], ownPosition: null };
+
+/** win → true, loss → false, draw → null: the player's record from their side's rank. */
+function playerWonFrom(sides: SnapshotSide[], ownPosition: number | null): boolean | null {
+  if (ownPosition === null) return null;
+  const outcome = sideOutcome(new Map(sides.map((s) => [s.position, s.rank])), ownPosition);
+  if (outcome.isWin) return true;
+  return outcome.isLoss ? false : null;
+}
+
+/** Every player of the match but the given one. */
+function otherPlayerIds(data: MatchSideData, playerId: string): string[] {
+  return data.sides.flatMap((s) => s.playerIds).filter((id) => id !== playerId);
 }
 
 interface CheckpointState {
@@ -59,20 +83,27 @@ interface SeasonRuleset {
 }
 
 type ResolvableSide = {
+  position: number;
+  rank: number | null;
   score: number | null;
   entry?: { players: { playerId: string }[] } | null;
 };
+
+/** The sides of a stored match, ranked (stored rank, else the A/B letter). */
+function snapshotSides(sides: ResolvableSide[], winnerSide: string | null): SnapshotSide[] {
+  const ranks = resolveStoredRanks(sides, winnerSide);
+  return sides.map((side) => ({
+    position: side.position,
+    rank: ranks.get(side.position) ?? 1,
+    score: side.score ?? 0,
+    playerIds: side.entry?.players.map((p) => p.playerId) ?? [],
+  }));
+}
 
 function outcomeFromWin(playerWon: boolean | null): MmrHistoryOutcome {
   if (playerWon === true) return "win";
   if (playerWon === false) return "loss";
   return "draw";
-}
-
-function resultFromWin(playerWon: boolean | null): MatchResult {
-  if (playerWon === true) return 1;
-  if (playerWon === false) return 0;
-  return 0.5;
 }
 
 /**
@@ -200,9 +231,7 @@ export class MmrCalculationService {
     if (playerMatches.length > 0) {
       const matchIds = playerMatches.map((m) => m.id);
       const sidesMap = await this.preloadMatchSides(matchIds, playerId);
-      const allOtherPlayerIds = [
-        ...new Set([...sidesMap.values()].flatMap((s) => [...s.opponentPlayerIds, ...(s.sameTeamPlayerIds ?? [])])),
-      ];
+      const allOtherPlayerIds = [...new Set([...sidesMap.values()].flatMap((s) => otherPlayerIds(s, playerId)))];
       const historiesMap = await playerMmrRepository.preloadOpponentHistories(seasonId, matchIds, allOtherPlayerIds);
       const currentMmrMap = await playerMmrRepository.getPlayerCurrentMmrs(seasonId, allOtherPlayerIds);
       const ruleset = await loadSeasonRuleset(seasonId);
@@ -248,43 +277,26 @@ export class MmrCalculationService {
   ): Promise<CheckpointState> {
     const { sidesMap, historiesMap, currentMmrMap, entryMmrMap, ruleset } = lookups;
     const isPlacement = state.wins + state.losses + state.draws < config.placementMatches;
-    const raw = sidesMap.get(match.id) ?? {
-      opponentPlayerIds: [],
-      sameTeamPlayerIds: [],
-      scoreForPlayer: 0,
-      scoreForOpponent: 0,
-      playerWon: null,
-    };
-    const { opponentPlayerIds, playerWon } = raw;
-    const sameTeamPlayerIds = raw.sameTeamPlayerIds ?? [];
+    const data = sidesMap.get(match.id) ?? EMPTY_SIDE_DATA;
+    const playerWon = playerWonFrom(data.sides, data.ownPosition);
 
     const getOtherPlayerMmr = (id: string) =>
       historiesMap.get(`${id}:${match.id}`) ?? currentMmrMap.get(id) ?? entryMmrMap.get(id) ?? config.baseMmr;
 
-    // Only this player's placement status is known here — the teammates' deltas
-    // are discarded anyway, and placement is applied per player after the split,
-    // so leaving them at false cannot alter the value we persist.
-    const mySidePlayers: EnginePlayer[] = [
-      { id: playerId, mmr: state.mmr, isPlacement },
-      ...sameTeamPlayerIds.map((id) => ({ id, mmr: getOtherPlayerMmr(id), isPlacement: false })),
-    ];
-    const oppSidePlayers: EnginePlayer[] = opponentPlayerIds.map((id) => ({
-      id,
-      mmr: getOtherPlayerMmr(id),
-      isPlacement: false,
-    }));
+    // Only this player's placement status is known here — the other players'
+    // deltas are discarded anyway, and placement is applied per player after the
+    // split, so leaving them at false cannot alter the value we persist.
+    const enginePlayer = (id: string): EnginePlayer =>
+      id === playerId ? { id, mmr: state.mmr, isPlacement } : { id, mmr: getOtherPlayerMmr(id), isPlacement: false };
+    const engineSides = this.playerEngineSides(data, playerId, enginePlayer);
+    const opponents = engineSides
+      .filter((side) => !side.players.some((p) => p.id === playerId))
+      .flatMap((side) => side.players);
 
     const outcomeType = outcomeOf(ruleset, match.outcomeTypeId);
 
-    const calcResults = calculateMatchMmr({
-      sides: [
-        { players: mySidePlayers, score: raw.scoreForPlayer, result: resultFromWin(playerWon) },
-        {
-          players: oppSidePlayers,
-          score: raw.scoreForOpponent,
-          result: resultFromWin(playerWon === null ? null : !playerWon),
-        },
-      ],
+    const calcResults = calculateMultiSideMmr({
+      sides: engineSides,
       kFactor: config.kFactor,
       scoreCountsForMmr: outcomeType.scoreCountsForMmr,
       mmrMultiplier: outcomeType.mmrMultiplier,
@@ -295,7 +307,7 @@ export class MmrCalculationService {
     const delta = playerResult?.mmrDelta ?? 0;
     const mmrBefore = state.mmr;
     const mmrAfter = playerResult?.newMmr ?? Math.max(1, state.mmr + delta);
-    const opponentAvgMmr = averageMmr(oppSidePlayers, config.baseMmr);
+    const opponentAvgMmr = averageMmr(opponents, config.baseMmr);
     const kEffective = playerResult?.kEffective ?? 0;
 
     const newState = this.advanceState(state, playerWon, mmrAfter);
@@ -317,6 +329,28 @@ export class MmrCalculationService {
     });
 
     return newState;
+  }
+
+  /**
+   * The engine sides of a match priced for one player. A match recorded without
+   * the player's side is a lone side against nobody: a draw worth nothing.
+   */
+  private playerEngineSides(
+    data: MatchSideData,
+    playerId: string,
+    enginePlayer: (id: string) => EnginePlayer,
+  ): RankedEngineSide[] {
+    if (data.ownPosition === null) {
+      return [
+        { players: [enginePlayer(playerId)], score: 0, rank: 1 },
+        { players: [], score: 0, rank: 1 },
+      ];
+    }
+    return data.sides.map((side) => ({
+      players: side.playerIds.map(enginePlayer),
+      score: side.score,
+      rank: side.rank,
+    }));
   }
 
   private advanceState(state: CheckpointState, playerWon: boolean | null, mmrAfter: number): CheckpointState {
@@ -568,12 +602,9 @@ export class MmrCalculationService {
     entryMmrMap: Map<string, number>,
     ruleset: SeasonRuleset,
   ): void {
-    const sides = match.sides;
-    if (!sides || sides.length < 2) return;
-    const [sideA, sideB] = sides;
-    const sideAIds = sideA.entry?.players.map((p) => p.playerId) ?? [];
-    const sideBIds = sideB.entry?.players.map((p) => p.playerId) ?? [];
-    const participantIds = [...new Set([...sideAIds, ...sideBIds])];
+    if (!match.sides || match.sides.length < 2) return;
+    const sides = snapshotSides(match.sides, match.winnerSide);
+    const participantIds = [...new Set(sides.flatMap((s) => s.playerIds))];
     if (participantIds.length === 0) return;
 
     const preState = this.buildPreState(participantIds, stateMap, entryMmrMap, config.baseMmr);
@@ -584,29 +615,32 @@ export class MmrCalculationService {
       return { mmr: s.mmr, matchesPlayed: s.wins + s.losses + s.draws };
     };
 
-    const playersA = toEnginePlayers(sideAIds, config.placementMatches, standingOf);
-    const playersB = toEnginePlayers(sideBIds, config.placementMatches, standingOf);
-    const resultA = resultFromWin(match.winnerSide === null ? null : match.winnerSide === "A");
+    const engineSides = sides.map((side) => ({
+      players: toEnginePlayers(side.playerIds, config.placementMatches, standingOf),
+      score: side.score,
+      rank: side.rank,
+    }));
 
     // One engine call for the whole match: every participant is priced against
     // the same pre-match snapshot, which is what keeps the replay deterministic.
-    const results = calculateMatchMmr({
-      sides: [
-        { players: playersA, score: sideA.score ?? 0, result: resultA },
-        { players: playersB, score: sideB.score ?? 0, result: (1 - resultA) as MatchResult },
-      ],
+    const results = calculateMultiSideMmr({
+      sides: engineSides,
       kFactor: config.kFactor,
       scoreCountsForMmr: outcomeType.scoreCountsForMmr,
       mmrMultiplier: outcomeType.mmrMultiplier,
       teamInteractionMode: ruleset.interactionMode,
     });
 
-    const avgA = averageMmr(playersA, config.baseMmr);
-    const avgB = averageMmr(playersB, config.baseMmr);
+    const positionOf = new Map(sides.flatMap((s) => s.playerIds.map((id) => [id, s.position] as const)));
+    const opponentAvg = (position: number) =>
+      averageMmr(
+        engineSides.filter((_, i) => sides[i].position !== position).flatMap((s) => s.players),
+        config.baseMmr,
+      );
 
     for (const result of results) {
-      const inSideA = sideAIds.includes(result.playerId);
-      const playerWon = match.winnerSide === null ? null : (match.winnerSide === "A") === inSideA;
+      const position = positionOf.get(result.playerId) ?? null;
+      const playerWon = playerWonFrom(sides, position);
       const playerState = preState.get(result.playerId)!;
       const newState = this.advanceState(playerState, playerWon, result.newMmr);
 
@@ -618,7 +652,7 @@ export class MmrCalculationService {
         mmrAfter: result.newMmr,
         mmrDelta: result.mmrDelta,
         kEffective: result.kEffective,
-        opponentAvgMmr: inSideA ? avgB : avgA,
+        opponentAvgMmr: opponentAvg(position ?? 0),
         isPlacement: playerState.wins + playerState.losses + playerState.draws < config.placementMatches,
         outcome: outcomeFromWin(playerWon),
         winStreakAfter: newState.winStreak,
@@ -712,84 +746,21 @@ export class MmrCalculationService {
     for (const matchId of matchIds) {
       const sides = sidesByMatch.get(matchId);
       if (!sides || sides.length < 2) {
-        result.set(matchId, {
-          opponentPlayerIds: [],
-          sameTeamPlayerIds: [],
-          scoreForPlayer: 0,
-          scoreForOpponent: 0,
-          playerWon: null,
-        });
+        result.set(matchId, EMPTY_SIDE_DATA);
         continue;
       }
 
       const winnerSide = winnerSideMap.get(matchId) ?? null;
-      result.set(matchId, this.resolveSideData(sides[0], sides[1], playerId, winnerSide));
+      result.set(matchId, this.resolveSideData(sides, playerId, winnerSide));
     }
 
     return result;
   }
 
-  private resolveSideData(
-    sideA: ResolvableSide,
-    sideB: ResolvableSide,
-    playerId: string,
-    winnerSide: string | null,
-  ): MatchSideData {
-    const playerIdsA = sideA.entry?.players.map((p) => p.playerId) ?? [];
-    const playerIdsB = sideB.entry?.players.map((p) => p.playerId) ?? [];
-    const playerInSideA = playerIdsA.includes(playerId);
-    const mySide = playerInSideA ? sideA : sideB;
-    const oppSide = playerInSideA ? sideB : sideA;
-
-    let playerWon: boolean | null = null;
-    if (winnerSide === "A") playerWon = playerInSideA;
-    else if (winnerSide === "B") playerWon = !playerInSideA;
-
-    const myIds = playerInSideA ? playerIdsA : playerIdsB;
-    const oppIds = playerInSideA ? playerIdsB : playerIdsA;
-    return {
-      opponentPlayerIds: oppIds,
-      sameTeamPlayerIds: myIds.filter((id) => id !== playerId),
-      scoreForPlayer: mySide.score ?? 0,
-      scoreForOpponent: oppSide.score ?? 0,
-      playerWon,
-    };
-  }
-
-  private async extractMatchSidesForPlayer(
-    matchId: string,
-    playerId: string,
-  ): Promise<{
-    opponentPlayerIds: string[];
-    scoreForPlayer: number;
-    scoreForOpponent: number;
-    playerWon: boolean | null;
-  }> {
-    const sides = await db.query.matchSides.findMany({
-      where: eq(matchSides.matchId, matchId),
-      orderBy: (s, { asc }) => [asc(s.position)],
-      with: {
-        entry: {
-          with: {
-            players: {
-              with: {
-                player: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const match = await db.query.matches.findFirst({
-      where: eq(matches.id, matchId),
-    });
-
-    if (!match || sides.length < 2) {
-      return { opponentPlayerIds: [], scoreForPlayer: 0, scoreForOpponent: 0, playerWon: null };
-    }
-
-    return this.resolveSideData(sides[0], sides[1], playerId, match.winnerSide);
+  private resolveSideData(sides: ResolvableSide[], playerId: string, winnerSide: string | null): MatchSideData {
+    const snapshot = snapshotSides(sides, winnerSide);
+    const own = snapshot.find((side) => side.playerIds.includes(playerId));
+    return { sides: snapshot, ownPosition: own?.position ?? null };
   }
 
   private async getMatchPlayerIds(matchId: string): Promise<string[]> {

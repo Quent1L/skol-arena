@@ -526,12 +526,13 @@ ranked.get(
 
     const sidesMap = new Map<
       string,
-      { position: number; players: { id: string; displayName: string; shortName: string }[] }[]
+      { position: number; rank: number | null; players: { id: string; displayName: string; shortName: string }[] }[]
     >();
     for (const side of sidesData) {
       const list = sidesMap.get(side.matchId) ?? [];
       list.push({
         position: side.position,
+        rank: side.rank ?? null,
         players: (side.entry?.players ?? []).map((p) => ({
           id: p.player.id,
           displayName: p.player.displayName,
