@@ -1707,6 +1707,7 @@
     "feedEmpty": "No firing matches these filters.",
     "feedTitle": "Latest firings",
     "filterRule": "Rule",
+    "includeHeld": "Show badges already held",
     "kpiActiveRules": "Active rules",
     "kpiAllTimeHint": "{count} all time",
     "kpiBadges": "Badges awarded",

@@ -1707,6 +1707,7 @@
     "feedEmpty": "Aucun déclenchement ne correspond à ces filtres.",
     "feedTitle": "Derniers déclenchements",
     "filterRule": "Règle",
+    "includeHeld": "Afficher les badges déjà détenus",
     "kpiActiveRules": "Règles actives",
     "kpiAllTimeHint": "{count} depuis toujours",
     "kpiBadges": "Badges attribués",

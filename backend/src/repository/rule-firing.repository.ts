@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, isNull, lt, max, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, lt, max, ne, or, sql, type SQL } from "drizzle-orm";
 import { db } from "../config/database";
 import { appUsers, ruleFirings, rules } from "../db/schema";
 import type { RuleFiringResult, RuleFiringSurface, RuleType } from "@skol-arena/shared";
@@ -91,6 +91,8 @@ export interface RuleFiringFeedQuery {
   type?: RuleType;
   ruleId?: string;
   result?: RuleFiringResult;
+  /** Keeps `already_held` rows, left out by default. Ignored when `result` is set. */
+  includeHeld?: boolean;
 }
 
 export interface RuleFiringFeedRow {
@@ -123,7 +125,11 @@ async function dailyBuckets(days: number, scope?: SQL) {
         sql<number>`count(*) filter (where ${ruleFirings.seenSurface} in ('reveal', 'reveal_skipped'))`.mapWith(Number),
       recapCount: sql<number>`count(*) filter (where ${ruleFirings.seenSurface} = 'recap')`.mapWith(Number),
       messageCount: sql<number>`count(*) filter (where ${ruleFirings.ruleType} = 'message')`.mapWith(Number),
-      badgeCount: sql<number>`count(*) filter (where ${ruleFirings.ruleType} = 'badge')`.mapWith(Number),
+      // Awarded only: a badge rule matching a player who already holds it is not news.
+      badgeCount:
+        sql<number>`count(*) filter (where ${ruleFirings.ruleType} = 'badge' and ${ruleFirings.result} = 'awarded')`.mapWith(
+          Number,
+        ),
     })
     .from(ruleFirings)
     .where(and(scope, gte(ruleFirings.createdAt, since)))
@@ -261,7 +267,7 @@ export class RuleFiringRepository {
    * would round them off and skip the rows sharing the truncated millisecond.
    */
   async feed(query: RuleFiringFeedQuery): Promise<RuleFiringFeedRow[]> {
-    const { cursor, limit, type, ruleId, result } = query;
+    const { cursor, limit, type, ruleId, result, includeHeld } = query;
     const keyset = cursor
       ? or(
           lt(ruleFirings.createdAt, sql`${cursor.createdAt}::timestamptz`),
@@ -288,7 +294,7 @@ export class RuleFiringRepository {
           keyset,
           type ? eq(ruleFirings.ruleType, type) : undefined,
           ruleId ? eq(ruleFirings.ruleId, ruleId) : undefined,
-          result ? eq(ruleFirings.result, result) : undefined,
+          resultFilter(result, includeHeld),
         ),
       )
       .orderBy(desc(ruleFirings.createdAt), desc(ruleFirings.id))
@@ -305,6 +311,12 @@ export class RuleFiringRepository {
       .orderBy(desc(ruleFirings.createdAt))
       .limit(limit);
   }
+}
+
+/** An explicit result wins; otherwise `already_held` is dropped unless asked for. */
+function resultFilter(result: RuleFiringResult | undefined, includeHeld: boolean | undefined): SQL | undefined {
+  if (result) return eq(ruleFirings.result, result);
+  return includeHeld ? undefined : ne(ruleFirings.result, "already_held");
 }
 
 /** Composite key of the unique constraint, used to map upserted rows back to drafts. */

@@ -657,6 +657,7 @@ export interface ClientRuleFiringDetail extends Omit<RuleFiringDetail, "totals" 
 export const ruleFiringGlobalDayStatSchema = ruleFiringDayStatSchema
   .extend({
     messages: z.number().int(),
+    // Badges actually awarded: a match on a badge the player already holds is left out.
     badges: z.number().int(),
   })
   .meta({ id: "RuleFiringGlobalDayStat" });
@@ -707,6 +708,9 @@ export const ruleFiringFeedQuerySchema = z.object({
   type: z.enum(["message", "badge"]).optional(),
   ruleId: z.uuid().optional(),
   result: z.enum(RULE_FIRING_RESULTS).optional(),
+  // A badge rule matching a player who already holds the badge is noise, hidden
+  // unless asked for. An explicit `result` filter takes precedence.
+  includeHeld: z.stringbool().optional(),
 });
 
 export type RuleFiringFeedQuery = z.infer<typeof ruleFiringFeedQuerySchema>;

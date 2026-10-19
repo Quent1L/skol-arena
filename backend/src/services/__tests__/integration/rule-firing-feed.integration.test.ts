@@ -100,7 +100,7 @@ describe("Global rule firing feed & overview (integration)", () => {
     const seen: string[] = [];
     let cursor: string | undefined;
     do {
-      const page = await rulesService.getFiringFeed({ limit: 1, cursor });
+      const page = await rulesService.getFiringFeed({ limit: 1, cursor, includeHeld: true });
       seen.push(...page.items.map((i) => i.createdAt));
       cursor = page.nextCursor ?? undefined;
     } while (cursor);
@@ -140,6 +140,20 @@ describe("Global rule firing feed & overview (integration)", () => {
     expect(superseded.items.map((i) => i.result)).toEqual(["superseded"]);
   });
 
+  it("hides badges already held unless asked for", async () => {
+    await seedFiring(badgeRuleId, "badge", "2026-01-01 10:00:00+00", "awarded");
+    await seedFiring(badgeRuleId, "badge", "2026-01-01 11:00:00+00", "already_held");
+
+    const byDefault = await rulesService.getFiringFeed({ limit: 30 });
+    expect(byDefault.items.map((i) => i.result)).toEqual(["awarded"]);
+
+    const included = await rulesService.getFiringFeed({ limit: 30, includeHeld: true });
+    expect(included.items.map((i) => i.result)).toEqual(["already_held", "awarded"]);
+
+    const explicit = await rulesService.getFiringFeed({ limit: 30, result: "already_held" });
+    expect(explicit.items.map((i) => i.result)).toEqual(["already_held"]);
+  });
+
   it("rejects a cursor it did not issue", async () => {
     const forged = Buffer.from("'; drop table rules; --|x").toString("base64url");
     await expect(rulesService.getFiringFeed({ limit: 10, cursor: forged })).rejects.toBeInstanceOf(BadRequestError);
@@ -159,17 +173,19 @@ describe("Global rule firing feed & overview (integration)", () => {
     const day = 24 * 60 * 60 * 1000;
     await seedFiring(messageRuleId, "message", iso(day), "selected");
     await seedFiring(badgeRuleId, "badge", iso(2 * day), "awarded");
+    await seedFiring(badgeRuleId, "badge", iso(3 * day), "already_held");
     await seedFiring(badgeRuleId, "badge", iso(60 * day), "awarded");
 
     const overview = await rulesService.getFiringOverview(30);
 
-    expect(overview.totals.fired).toBe(3);
-    expect(overview.windowTotals.fired).toBe(2);
+    expect(overview.totals.fired).toBe(4);
+    expect(overview.windowTotals.fired).toBe(3);
     expect(overview.timeline.reduce((sum, d) => sum + d.messages, 0)).toBe(1);
+    // The already-held match is a firing, not a badge won.
     expect(overview.timeline.reduce((sum, d) => sum + d.badges, 0)).toBe(1);
 
     const byRule = new Map(overview.rules.map((r) => [r.ruleId, r.fired]));
     expect(byRule.get(messageRuleId)).toBe(1);
-    expect(byRule.get(badgeRuleId)).toBe(2);
+    expect(byRule.get(badgeRuleId)).toBe(3);
   });
 });

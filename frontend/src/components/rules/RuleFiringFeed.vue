@@ -34,6 +34,13 @@
         class="sm:w-48"
         @update:model-value="refresh"
       />
+      <USwitch
+        v-if="filters.type !== 'message'"
+        v-model="filters.includeHeld"
+        :label="t('rulesEngineOverview.includeHeld')"
+        class="sm:self-center"
+        @update:model-value="refresh"
+      />
     </div>
 
     <UAlert
@@ -153,7 +160,13 @@ const ruleOptions = computed(() =>
 
 /** A cleared select sets its key to undefined; copying drops the reactive proxy. */
 function activeFilters(): RuleFiringFeedFilters {
-  return { type: filters.type, ruleId: filters.ruleId, result: filters.result }
+  return {
+    type: filters.type,
+    ruleId: filters.ruleId,
+    result: filters.result,
+    // Already-held badges are hidden server-side unless asked for.
+    includeHeld: filters.includeHeld || undefined,
+  }
 }
 
 function relativeDate(date: Date) {

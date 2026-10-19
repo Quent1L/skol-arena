@@ -29,6 +29,7 @@ export interface RuleFiringFeedFilters {
   type?: 'message' | 'badge'
   ruleId?: string
   result?: RuleFiringResult
+  includeHeld?: boolean
 }
 
 export interface CatalogFact extends FactDefinition {

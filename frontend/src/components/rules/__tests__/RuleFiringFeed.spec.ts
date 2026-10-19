@@ -54,7 +54,22 @@ describe('RuleFiringFeed', () => {
   it('loads the newest firings on mount, unfiltered', async () => {
     mountWithUi(RuleFiringFeed, { props: { rules: [] } })
     await flushPromises()
-    expect(loadFeed).toHaveBeenCalledWith({ type: undefined, ruleId: undefined, result: undefined })
+    expect(loadFeed).toHaveBeenCalledWith({
+      type: undefined,
+      ruleId: undefined,
+      result: undefined,
+      includeHeld: undefined,
+    })
+  })
+
+  it('asks for the badges already held once the switch is on', async () => {
+    const wrapper = mountWithUi(RuleFiringFeed, { props: { rules: [] } })
+    await flushPromises()
+    loadFeed.mockClear()
+
+    await wrapper.find('button[role="switch"]').trigger('click')
+    await flushPromises()
+    expect(loadFeed).toHaveBeenCalledWith(expect.objectContaining({ includeHeld: true }))
   })
 
   it('shows who got which rule, its message and its fate', async () => {
