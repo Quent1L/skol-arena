@@ -463,6 +463,21 @@ export const clientPlayerBadgeSchema = playerBadgeSchema
 
 export type ClientPlayerBadge = z.infer<typeof clientPlayerBadgeSchema>;
 
+/** A player holding a badge, across every season the viewer can see. */
+export const badgeHolderSchema = z
+  .object({
+    id: z.string(),
+    displayName: z.string(),
+    shortName: z.string(),
+    /** Number of awards: one per season for a seasonal badge. */
+    count: z.number().int(),
+    /** Awarded in the tournament being viewed. */
+    earnedHere: z.boolean(),
+  })
+  .meta({ id: "BadgeHolder" });
+
+export type BadgeHolder = z.infer<typeof badgeHolderSchema>;
+
 /** A badge a player can earn in a tournament (global or discipline-scoped rule). */
 export const availableBadgeSchema = z
   .object({
@@ -472,10 +487,16 @@ export const availableBadgeSchema = z
     description: z.string(),
     recurrence: z.enum(BADGE_RECURRENCES),
     scope: z.enum(["global", "discipline"]),
+    /** Only with `withHolders`: this tournament's holders first, then by award count. */
+    holders: z.array(badgeHolderSchema).optional(),
   })
   .meta({ id: "AvailableBadge" });
 
 export type AvailableBadge = z.infer<typeof availableBadgeSchema>;
+
+export const availableBadgesQuerySchema = z.object({
+  withHolders: z.stringbool().optional(),
+});
 
 // ============================================
 // Inferred types

@@ -278,6 +278,12 @@
     "refreshing": "Actualisation…",
     "updated": "Mis à jour"
   },
+  "badgeHolders": {
+    "count": "{n} joueur | {n} joueurs",
+    "thisSeason": "Cette saison",
+    "times": "×{count}",
+    "title": "Détenteurs : {badge}"
+  },
   "badgeRevealAnimation": {
     "continue": "Continuer",
     "newBadge": "Nouveau badge"

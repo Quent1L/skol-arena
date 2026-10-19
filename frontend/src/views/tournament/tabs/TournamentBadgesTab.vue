@@ -52,6 +52,12 @@
               t('tournamentBadgesTab.alreadyEarnedIn', { seasons: previousSeasons(badge.ruleId).join(', ') })
             }}
           </div>
+          <BadgeHolders
+            :holders="badge.holders ?? []"
+            :badge-label="badge.label"
+            :tournament-id="tournamentId"
+            class="mt-auto"
+          />
         </div>
       </div>
     </div>
@@ -65,6 +71,7 @@ import { useI18n } from 'vue-i18n'
 import { rulesApi } from '@/composables/rules/rules.api'
 import { useAuth } from '@/composables/useAuth'
 import { onWsEvent } from '@/composables/notification/notification.socket'
+import BadgeHolders from '@/components/rules/BadgeHolders.vue'
 import type { AvailableBadge, ClientPlayerBadge } from '@skol-arena/shared/types/index'
 
 const route = useRoute()
@@ -118,11 +125,15 @@ function formatDate(date: Date | undefined): string {
   return new Date(date).toLocaleDateString('fr-FR')
 }
 
-async function load() {
-  loading.value = true
+/**
+ * `silent` keeps the grid on screen: a live badge event refreshes it in place instead
+ * of swapping in the spinner, which would also close an open holders list.
+ */
+async function load({ silent = false } = {}) {
+  if (!silent) loading.value = true
   try {
     const [badges, earned] = await Promise.all([
-      rulesApi.getAvailableBadges(tournamentId.value),
+      rulesApi.getAvailableBadges(tournamentId.value, { withHolders: true }),
       appUser.value ? rulesApi.getPlayerBadges(appUser.value.id) : Promise.resolve([]),
     ])
     availableBadges.value = badges
@@ -132,10 +143,11 @@ async function load() {
   }
 }
 
-watch(() => route.params.id, load, { immediate: true })
+watch(() => route.params.id, () => load(), { immediate: true })
 
-const offAwarded = onWsEvent('badge_awarded', load)
-const offRevoked = onWsEvent('badge_revoked', load)
+const reloadSilently = () => load({ silent: true })
+const offAwarded = onWsEvent('badge_awarded', reloadSilently)
+const offRevoked = onWsEvent('badge_revoked', reloadSilently)
 onUnmounted(() => {
   offAwarded()
   offRevoked()

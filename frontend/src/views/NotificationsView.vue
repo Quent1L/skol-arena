@@ -43,7 +43,7 @@ async function handleDeleteAll() {
 
 <template>
   <div class="max-w-xl mx-auto w-full mt-4">
-    <div class="flex items-center justify-between gap-3 mb-4">
+    <div class="flex items-center justify-between gap-3 mx-4 mb-2">
       <div class="flex items-center gap-3">
         <h2 class="text-lg font-semibold">{{ t('notificationsView.title') }}</h2>
       </div>

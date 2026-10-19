@@ -4,6 +4,7 @@ import {
   OPERATORS_BY_TYPE,
   TRIGGER_EVENTS,
   type AvailableBadge,
+  type BadgeHolder,
   type BadgeAction,
   type CreateRuleData,
   type FactDefinition,
@@ -86,6 +87,14 @@ function collectLeaves(conditions: RuleConditions, acc: { fact: string; operator
   if ("all" in conditions) conditions.all.forEach((c) => collectLeaves(c, acc));
   else if ("any" in conditions) conditions.any.forEach((c) => collectLeaves(c, acc));
   else acc.push({ fact: conditions.fact, operator: conditions.operator });
+}
+
+function compareHolders(a: BadgeHolder, b: BadgeHolder): number {
+  return (
+    Number(b.earnedHere) - Number(a.earnedHere) ||
+    b.count - a.count ||
+    a.displayName.localeCompare(b.displayName)
+  );
 }
 
 export class RulesService {
@@ -265,6 +274,33 @@ export class RulesService {
           scope: r.scope,
         };
       });
+  }
+
+  /**
+   * Badges earnable in a tournament with who holds each, all visible seasons counted.
+   * Players who earned it in this tournament come first, then the most decorated.
+   */
+  async listAvailableBadgesWithHolders(
+    tournament: { id: string; disciplineId: string | null },
+    viewerId: string | null,
+  ): Promise<AvailableBadge[]> {
+    const [badges, visibleOrganizationIds] = await Promise.all([
+      this.listAvailableBadges(tournament.disciplineId),
+      visibleOrganizationIdsFor(viewerId),
+    ]);
+    const rows = await rulesRepository.listBadgeHolders(
+      badges.map((b) => b.ruleId),
+      tournament.id,
+      visibleOrganizationIds,
+    );
+
+    const byRule = new Map<string, BadgeHolder[]>();
+    for (const { ruleId, ...holder } of rows) {
+      const holders = byRule.get(ruleId);
+      if (holders) holders.push(holder);
+      else byRule.set(ruleId, [holder]);
+    }
+    return badges.map((b) => ({ ...b, holders: (byRule.get(b.ruleId) ?? []).sort(compareHolders) }));
   }
 
   /** Current state of the nightly badge reconciliation (admin UI). */

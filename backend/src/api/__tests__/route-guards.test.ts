@@ -42,7 +42,7 @@ const SERVICE_ENFORCED = new Map<string, string>([
 
   // tournamentService.assertCanAccess / assertOrganizationAccess — organization scoping
   ["GET /tournaments/:id", "assertTournamentAccess"],
-  ["GET /tournaments/:id/available-badges", "assertTournamentAccess"],
+  ["GET /tournaments/:id/available-badges", "tournamentService.assertOrganizationAccess"],
   ["GET /tournaments/:id/participants", "assertTournamentAccess"],
   ["GET /tournaments/:id/standings/official", "assertTournamentAccess"],
   ["GET /tournaments/:id/standings/provisional", "assertTournamentAccess"],

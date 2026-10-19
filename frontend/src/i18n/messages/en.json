@@ -278,6 +278,12 @@
     "refreshing": "Refreshing…",
     "updated": "Updated"
   },
+  "badgeHolders": {
+    "count": "{n} player | {n} players",
+    "thisSeason": "This season",
+    "times": "×{count}",
+    "title": "Holders: {badge}"
+  },
   "badgeRevealAnimation": {
     "continue": "Continue",
     "newBadge": "New badge"

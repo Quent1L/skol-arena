@@ -25,11 +25,12 @@ import {
   bracketDataSchema,
   canGenerateBracketResponseSchema,
   availableBadgeSchema,
+  availableBadgesQuerySchema,
   mutationResultSchema,
   tournamentRulesetSchema,
   tournamentEditabilitySchema,
 } from "@skol-arena/shared";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, resolveOptionalViewer } from "../middleware/auth";
 import { userRepository } from "../repository/user.repository";
 import { createAppHono } from "../types/hono";
 import { rankedSeasonRepository } from "../repository/ranked-season.repository";
@@ -148,16 +149,23 @@ tournaments.get(
     role: true,
     notFound: true,
     success: {
-      description: "Badges reachable given the tournament's discipline",
+      description:
+        "Badges reachable given the tournament's discipline. With `withHolders`, each carries its holders, awards counted across the seasons the caller can see",
       schema: z.object({ badges: z.array(availableBadgeSchema) }),
     },
   }),
   tournamentIdParam,
+  validate("query", availableBadgesQuerySchema),
   async (c) => {
     const id = c.req.param("id")!;
-    await assertTournamentAccess(c.get("user")?.id, id);
+    const { withHolders } = c.req.valid("query");
+    const viewerId = await resolveOptionalViewer(c);
     const tournament = await tournamentService.getTournamentById(id);
-    const badges = await rulesService.listAvailableBadges(tournament?.disciplineId ?? null);
+    await tournamentService.assertOrganizationAccess(tournament.organizationId, viewerId);
+    const disciplineId = tournament.disciplineId ?? null;
+    const badges = withHolders
+      ? await rulesService.listAvailableBadgesWithHolders({ id, disciplineId }, viewerId)
+      : await rulesService.listAvailableBadges(disciplineId);
     return c.json({ badges });
   }
 );

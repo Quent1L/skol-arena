@@ -1,8 +1,9 @@
-import { and, eq, inArray, isNull, or, desc, countDistinct, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, desc, count, countDistinct, sql } from "drizzle-orm";
 import { db } from "../config/database";
-import { badgeReconciliationState, playerBadges, rules } from "../db/schema";
+import { appUsers, badgeReconciliationState, playerBadges, rules, tournaments } from "../db/schema";
 import { RULES_ENGINE_VERSION } from "@skol-arena/shared";
 import { newId } from "../utils/uuid";
+import { organizationVisibilityCondition } from "./organization-visibility";
 import type { BadgeRecurrence, RuleAction, RuleConditions, RuleScope, RuleType } from "@skol-arena/shared";
 
 export interface CreateRuleData {
@@ -225,6 +226,34 @@ export class RulesRepository {
       .from(playerBadges)
       .where(eq(playerBadges.ruleId, ruleId));
     return row?.value ?? 0;
+  }
+
+  /**
+   * One row per (rule, player) holding any of the given badges, awards counted across
+   * the seasons the viewer can see. `visibleOrganizationIds` follows `visibleOrganizationIdsFor`:
+   * null lifts the restriction, otherwise only seasons in those organizations (or in none).
+   */
+  async listBadgeHolders(ruleIds: string[], seasonId: string, visibleOrganizationIds: string[] | null) {
+    if (ruleIds.length === 0) return [];
+    return await db
+      .select({
+        ruleId: playerBadges.ruleId,
+        id: appUsers.id,
+        displayName: appUsers.displayName,
+        shortName: appUsers.shortName,
+        count: count(),
+        earnedHere: sql<boolean>`bool_or(${playerBadges.seasonId} = ${seasonId})`.mapWith(Boolean),
+      })
+      .from(playerBadges)
+      .innerJoin(appUsers, eq(appUsers.id, playerBadges.playerId))
+      .leftJoin(tournaments, eq(tournaments.id, playerBadges.seasonId))
+      .where(
+        and(
+          inArray(playerBadges.ruleId, ruleIds),
+          organizationVisibilityCondition(tournaments.organizationId, visibleOrganizationIds),
+        ),
+      )
+      .groupBy(playerBadges.ruleId, appUsers.id);
   }
 
   /** Player ids currently holding the badge produced by a rule. */

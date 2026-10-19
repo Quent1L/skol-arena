@@ -86,9 +86,10 @@ export const rulesApi = {
     return response.data.badges
   },
 
-  async getAvailableBadges(tournamentId: string): Promise<AvailableBadge[]> {
+  async getAvailableBadges(tournamentId: string, options: { withHolders?: boolean } = {}): Promise<AvailableBadge[]> {
     const response = await http.get<{ badges: AvailableBadge[] }>(
       `/api/tournaments/${tournamentId}/available-badges`,
+      { params: options },
     )
     return response.data.badges
   },
