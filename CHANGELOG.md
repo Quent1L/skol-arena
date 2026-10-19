@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.4.0](https://github.com/Quent1L/skol-arena/compare/2.3.0...2.4.0) (2026-10-19)
+
+### ✨ New Features
+
+* **rules:** show badge holders in tournament badges tab ([69b7d2f](https://github.com/Quent1L/skol-arena/commit/69b7d2fe01643f591989ed22f0c0af46559404e6))
+
+### 🐛 Bug Fixes
+
+* **rules-engine:** keep date conditions as YYYY-MM-DD ([1a5ab1d](https://github.com/Quent1L/skol-arena/commit/1a5ab1d5177190d838009344b4e10e2b585e877d))
+* **rules:** hide already-held badges from global stats ([1cb9697](https://github.com/Quent1L/skol-arena/commit/1cb9697bdf88f431c95a0c271acc7c819b459da9))
+
 ## [2.3.0](https://github.com/Quent1L/skol-arena/compare/2.2.0...2.3.0) (2026-10-11)
 
 ### ✨ New Features
