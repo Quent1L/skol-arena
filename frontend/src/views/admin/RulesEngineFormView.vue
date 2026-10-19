@@ -86,7 +86,11 @@
             :label="t('rulesEngineFormView.labelPriority')"
             :help="t('rulesEngineFormView.hintPriority')"
           >
-            <UInputNumber v-model="form.priority" class="w-full" />
+            <UInputNumber
+              :model-value="form.priority"
+              class="w-full"
+              @update:model-value="form.priority = $event ?? 0"
+            />
           </UFormField>
           <UCheckbox v-model="form.isActive" :label="t('rulesEngineFormView.labelIsActive')" />
         </div>
@@ -267,6 +271,12 @@
               class="w-full"
               @update:model-value="testContext[fact.key] = timeToMinutes($event)"
             />
+            <UInputDate
+              v-else-if="fact.type === 'date'"
+              :model-value="stringToDate(testContext[fact.key])"
+              class="w-full"
+              @update:model-value="testContext[fact.key] = $event ? $event.toString() : ''"
+            />
             <UInputNumber
               v-else-if="fact.type === 'number'"
               v-model="testContext[fact.key] as number"
@@ -318,7 +328,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Time } from '@internationalized/date'
+import { Time, parseDate, type DateValue } from '@internationalized/date'
 import { useRulesService } from '@/composables/rules/rules.service'
 import { useFormReferences } from '@/composables/useFormReferences'
 import { useAppToast } from '@/composables/useAppToast'
@@ -370,6 +380,11 @@ function minutesToTime(min: unknown): Time | undefined {
 }
 function timeToMinutes(time: Time | null | undefined): number | '' {
   return time ? time.hour * 60 + time.minute : ''
+}
+function stringToDate(value: unknown): DateValue | undefined {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? parseDate(value)
+    : undefined
 }
 function formatMinutes(min: number): string {
   const h = Math.floor(min / 60)

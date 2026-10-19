@@ -11,6 +11,12 @@ import type {
   TestRuleResult,
   UpdateRuleData,
 } from '@skol-arena/shared/types/index'
+import { restoreDateValue, restoreDateValues } from '@/components/rules/condition-tree'
+
+/** Date condition values, as stored: see `restoreDateValues`. */
+function withStoredDates(rule: ClientRule): ClientRule {
+  return { ...rule, conditions: restoreDateValues(rule.conditions) }
+}
 
 export function useRulesService() {
   const { t } = useI18n()
@@ -24,7 +30,7 @@ export function useRulesService() {
     loading.value = true
     error.value = null
     try {
-      rules.value = await rulesApi.list(filters)
+      rules.value = (await rulesApi.list(filters)).map(withStoredDates)
     } catch (err) {
       error.value = err instanceof Error ? err.message : t('rulesService.errors.listFailed')
     } finally {
@@ -36,7 +42,7 @@ export function useRulesService() {
     loading.value = true
     error.value = null
     try {
-      currentRule.value = await rulesApi.getById(id)
+      currentRule.value = withStoredDates(await rulesApi.getById(id))
     } catch (err) {
       error.value = err instanceof Error ? err.message : t('rulesService.errors.getFailed')
     } finally {
@@ -47,7 +53,11 @@ export function useRulesService() {
   async function loadCatalog(triggerEvent: string) {
     try {
       const result = await rulesApi.getCatalog(triggerEvent)
-      catalog.value = result.facts
+      // The `matchDate` sample is a `YYYY-MM-DD` string the interceptor revived too.
+      catalog.value = result.facts.map((f) => ({
+        ...f,
+        sample: restoreDateValue(f.sample),
+      }))
     } catch (err) {
       error.value = err instanceof Error ? err.message : t('rulesService.errors.loadCatalogFailed')
     }
@@ -57,7 +67,7 @@ export function useRulesService() {
     loading.value = true
     error.value = null
     try {
-      const rule = await rulesApi.create(data)
+      const rule = withStoredDates(await rulesApi.create(data))
       rules.value.unshift(rule)
       return rule
     } catch (err) {
@@ -72,7 +82,7 @@ export function useRulesService() {
     loading.value = true
     error.value = null
     try {
-      const updated = await rulesApi.update(id, data)
+      const updated = withStoredDates(await rulesApi.update(id, data))
       const idx = rules.value.findIndex((r) => r.id === id)
       if (idx !== -1) rules.value[idx] = updated
       currentRule.value = updated

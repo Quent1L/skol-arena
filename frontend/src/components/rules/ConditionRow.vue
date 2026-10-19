@@ -19,11 +19,12 @@
       />
 
       <USelectMenu
-        v-model="node.operator"
+        :model-value="node.operator"
         :items="operatorOptions"
         value-key="value"
         :search-input="false"
         :placeholder="t('conditionRow.placeholderOperator')"
+        @update:model-value="onOperatorChange"
       />
 
       <template v-if="selectedFact">
@@ -76,7 +77,7 @@
 import { computed, inject, ref, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Time, parseDate, type DateValue } from '@internationalized/date'
-import type { BuilderNode, PlayerOption } from './condition-tree'
+import { restoreDateValue, type BuilderNode, type PlayerOption } from './condition-tree'
 import type { CatalogFact } from '@/composables/rules/rules.api'
 import { LIST_VALUE_OPERATORS } from '@skol-arena/shared/types/index'
 import type {
@@ -160,7 +161,7 @@ const weekdayOptions = computed(() => [
 /** `YYYY-MM-DD` string, the stored form, <-> calendar day for the date input. */
 const dateValue = computed<DateValue | undefined>({
   get: () => {
-    const v = node.value.value
+    const v = restoreDateValue(node.value.value)
     if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return undefined
     return parseDate(v)
   },
@@ -283,6 +284,13 @@ const stringValue = computed(() =>
 function onFactChange() {
   node.value.operator = ''
   node.value.value = selectedFact.value?.type === 'boolean' ? true : ''
+}
+
+/** A scalar left under a list operator (or the reverse) is a value the backend rejects. */
+function onOperatorChange(operator: string) {
+  const wasList = isListOperator.value
+  node.value.operator = operator
+  if (isListOperator.value !== wasList) node.value.value = isListOperator.value ? [] : ''
 }
 
 function onTextValue(val: string | undefined) {

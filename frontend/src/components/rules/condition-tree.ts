@@ -1,4 +1,5 @@
 import type { RuleConditions } from '@skol-arena/shared/types/index'
+import { toCalendarDate } from '@/utils/calendar-date'
 
 /**
  * Internal builder representation of the condition tree. Easier to manipulate
@@ -62,4 +63,25 @@ export function fromConditions(conditions: RuleConditions | null | undefined): B
 export function hasValidLeaf(node: BuilderNode): boolean {
   if (node.kind === 'leaf') return !!node.fact && !!node.operator
   return node.children.some(hasValidLeaf)
+}
+
+/** A `Date` revived by the HTTP interceptor, back to the `YYYY-MM-DD` it was sent as. */
+export function restoreDateValue<T>(value: T): T | string {
+  // Revived at local midnight, so the local calendar day is the original string.
+  return value instanceof Date ? toCalendarDate(value)!.toString() : value
+}
+
+/**
+ * The response interceptor turns every `YYYY-MM-DD` string into a `Date`, condition
+ * values included: left as is, the date input cannot show them and a save sends an
+ * ISO instant, shifted by the time zone, that no longer compares with `matchDate`.
+ */
+export function restoreDateValues(conditions: RuleConditions): RuleConditions {
+  if ('all' in conditions) return { all: conditions.all.map(restoreDateValues) }
+  if ('any' in conditions) return { any: conditions.any.map(restoreDateValues) }
+  const { value } = conditions
+  return {
+    ...conditions,
+    value: Array.isArray(value) ? value.map(restoreDateValue) : restoreDateValue(value),
+  }
 }
