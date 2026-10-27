@@ -1,11 +1,13 @@
 import {
   EVENT_FACT_CATALOG,
+  MATCH_COUNT_FACT,
   NON_DETERMINISTIC_FACTS,
   OPERATORS_BY_TYPE,
   TRIGGER_EVENTS,
   type AvailableBadge,
   type BadgeHolder,
   type BadgeAction,
+  type ConditionLeaf,
   type CreateRuleData,
   type FactDefinition,
   type RuleAction,
@@ -83,10 +85,32 @@ function toFeedItem({ cursorAt: _cursorAt, ...row }: RuleFiringFeedRow) {
 }
 
 /** Flattens the condition tree down to its leaves, for catalog checking. */
-function collectLeaves(conditions: RuleConditions, acc: { fact: string; operator: string }[]): void {
+function collectLeaves(conditions: RuleConditions, acc: ConditionLeaf[]): void {
   if ("all" in conditions) conditions.all.forEach((c) => collectLeaves(c, acc));
   else if ("any" in conditions) conditions.any.forEach((c) => collectLeaves(c, acc));
-  else acc.push({ fact: conditions.fact, operator: conditions.operator });
+  else acc.push(conditions);
+}
+
+function hasLeaf(conditions: RuleConditions): boolean {
+  const leaves: ConditionLeaf[] = [];
+  collectLeaves(conditions, leaves);
+  return leaves.length > 0;
+}
+
+/**
+ * A counter compares a number of matches, filtered by sub-conditions of its own.
+ * Counters do not nest: a count of matches meeting a count has no meaning per match.
+ */
+function assertValidMatchCount(leaf: ConditionLeaf, nested: boolean): RuleConditions {
+  const conditions = leaf.params?.conditions;
+  if (nested || !conditions || !hasLeaf(conditions)) throw new BadRequestError(ErrorCode.INVALID_MATCH_COUNT);
+  if (typeof leaf.value !== "number" || !Number.isInteger(leaf.value) || leaf.value < 0) {
+    throw new BadRequestError(ErrorCode.INVALID_MATCH_COUNT);
+  }
+  if (!OPERATORS_BY_TYPE.number.includes(leaf.operator)) {
+    throw new BadRequestError(ErrorCode.INVALID_OPERATOR_FOR_FACT);
+  }
+  return conditions;
 }
 
 function compareHolders(a: BadgeHolder, b: BadgeHolder): number {
@@ -392,9 +416,23 @@ export class RulesService {
     if (scope === "discipline" && !disciplineId) throw new BadRequestError(ErrorCode.VALIDATION_ERROR);
 
     const catalog = new Map(EVENT_FACT_CATALOG[triggerEvent].map((f) => [f.key, f]));
-    const leaves: { fact: string; operator: string }[] = [];
+    this.validateConditions(conditions, catalog, type, false);
+  }
+
+  private validateConditions(
+    conditions: RuleConditions,
+    catalog: Map<string, FactDefinition>,
+    type: string,
+    nested: boolean,
+  ): void {
+    const leaves: ConditionLeaf[] = [];
     collectLeaves(conditions, leaves);
-    for (const { fact, operator } of leaves) {
+    for (const leaf of leaves) {
+      const { fact, operator } = leaf;
+      if (fact === MATCH_COUNT_FACT) {
+        this.validateConditions(assertValidMatchCount(leaf, nested), catalog, type, true);
+        continue;
+      }
       const definition = catalog.get(fact);
       if (!definition) throw new BadRequestError(ErrorCode.VALIDATION_ERROR);
       // Badge awards are replayed by the nightly reconciliation: a random fact

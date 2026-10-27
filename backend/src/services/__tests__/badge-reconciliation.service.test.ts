@@ -43,6 +43,9 @@ mock.module("../notification.service", () => ({ notificationService: mockNotify 
 const mockWs = { send: mock((_u: any, _p: any) => true) };
 mock.module("../websocket.service", () => ({ webSocketService: mockWs }));
 
+const mockMatchHistory = { save: mock((_m: any, _s: any, _at: any, _c: any) => Promise.resolve()) };
+mock.module("../rules-match-history.service", () => ({ rulesMatchHistoryService: mockMatchHistory }));
+
 import { BadgeReconciliationService } from "../badge-reconciliation.service";
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -63,9 +66,25 @@ const LIFETIME_RULE = { ...STREAK_RULE, action: { ...STREAK_RULE.action, recurre
 const PLAYED_AT = new Date("2025-03-01T20:00:00Z");
 const M2_PLAYED_AT = new Date("2025-03-08T20:00:00Z");
 
-function ctx(playerId: string, winStreak: number, playedAt = PLAYED_AT) {
-  return { contexts: [{ playerId, context: { winStreak } as any }], displayNames: new Map(), playedAt };
+function ctx(playerId: string, winStreak: number, playedAt = PLAYED_AT, extra: Record<string, unknown> = {}) {
+  return { contexts: [{ playerId, context: { winStreak, ...extra } as any }], displayNames: new Map(), playedAt };
 }
+
+/** Badge for a second win of the season, whatever happened in between. */
+const TWO_WINS_RULE = {
+  ...STREAK_RULE,
+  id: "r2",
+  conditions: {
+    all: [
+      {
+        fact: "matchCount",
+        params: { conditions: { all: [{ fact: "isWinner", operator: "equal", value: true }] } },
+        operator: "greaterThanInclusive",
+        value: 2,
+      },
+    ],
+  },
+};
 
 function resetAll() {
   for (const m of [
@@ -77,6 +96,7 @@ function resetAll() {
     mockContextService.buildMatchSubmittedContexts,
     mockPlayerMmrRepo.getMmrHistoryOrdered, mockPlayerMmrRepo.getSeasonMatchIdsOrdered,
     mockRankedRepo.getSeasonWithConfig, mockRankedRepo.listSeasons, mockNotify.send, mockWs.send,
+    mockMatchHistory.save,
   ]) m.mockClear();
   mockRankedRepo.getSeasonWithConfig.mockResolvedValue({ disciplineId: "d1" } as any);
   mockRankedRepo.listSeasons.mockResolvedValue([{ id: "season-1" }] as any);
@@ -126,6 +146,24 @@ describe("BadgeReconciliationService.reconcilePlayers", () => {
     expect(mockRulesRepo.revokeBadge).toHaveBeenCalledWith("p1", "r1", "season-1");
     expect(mockRulesRepo.awardBadge).not.toHaveBeenCalled();
     expect(mockNotify.send).toHaveBeenCalledTimes(1);
+  });
+
+  it("awards a counted badge on the match that reaches the count, and refreshes the snapshots", async () => {
+    mockRulesRepo.listActiveByTrigger.mockResolvedValue([TWO_WINS_RULE] as any);
+    mockPlayerMmrRepo.getMmrHistoryOrdered.mockResolvedValue(
+      [{ matchId: "m1" }, { matchId: "m2" }, { matchId: "m3" }] as any,
+    );
+    mockContextService.buildMatchSubmittedContexts
+      .mockResolvedValueOnce(ctx("p1", 1, PLAYED_AT, { isWinner: true }) as any)
+      .mockResolvedValueOnce(ctx("p1", 0, PLAYED_AT, { isWinner: false }) as any)
+      .mockResolvedValueOnce(ctx("p1", 1, M2_PLAYED_AT, { isWinner: true }) as any);
+    mockRulesRepo.listBadgesByPlayerAndSeason.mockResolvedValue([] as any);
+
+    await service.reconcilePlayers("season-1", ["p1"]);
+
+    expect(mockRulesRepo.awardBadge).toHaveBeenCalledTimes(1);
+    expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r2", "m3", "season-1", "per_season", M2_PLAYED_AT);
+    expect(mockMatchHistory.save).toHaveBeenCalledTimes(3);
   });
 
   it("keeps badges from deactivated rules (no active badge rules → early return)", async () => {

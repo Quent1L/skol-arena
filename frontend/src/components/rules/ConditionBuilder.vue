@@ -13,7 +13,13 @@
 import { computed, ref, watch, provide, onMounted } from 'vue'
 import ConditionPalette from './ConditionPalette.vue'
 import ConditionGroup from './ConditionGroup.vue'
-import { fromConditions, toConditions, type BuilderNode, type PlayerOption } from './condition-tree'
+import {
+  ensureGroup,
+  fromConditions,
+  toConditions,
+  type BuilderNode,
+  type PlayerOption,
+} from './condition-tree'
 import type { RuleConditions } from '@skol-arena/shared/types/index'
 import type { CatalogFact } from '@/composables/rules/rules.api'
 import { disciplineApi } from '@/composables/discipline/discipline.api'
@@ -70,10 +76,6 @@ onMounted(async () => {
 type GroupNode = Extract<BuilderNode, { kind: 'group' }>
 
 const tree = ref<GroupNode>(ensureGroup(fromConditions(props.modelValue)))
-
-function ensureGroup(node: BuilderNode): GroupNode {
-  return node.kind === 'group' ? node : { kind: 'group', operator: 'all', children: [node] }
-}
 
 // Re-hydrate when the parent loads an existing rule.
 watch(

@@ -156,6 +156,19 @@ export const MATCH_SUBMITTED_FACTS: FactDefinition[] = [
  */
 export const NON_DETERMINISTIC_FACTS = ["randomRoll"] as const;
 
+/**
+ * The season counter: a condition leaf whose value is the number of the player's
+ * matches this season — the one being evaluated included — that meet the
+ * sub-conditions carried in `params.conditions`. It is computed by the engine rather
+ * than read from the match, which is why it lives outside `MATCH_SUBMITTED_FACTS`:
+ * it must not show up in the fact picker nor be interpolated into a message.
+ */
+export const MATCH_COUNT_FACT = "matchCount";
+
+export interface MatchCountParams {
+  conditions: RuleConditions;
+}
+
 export const EVENT_FACT_CATALOG: Record<TriggerEvent, FactDefinition[]> = {
   match_submitted: MATCH_SUBMITTED_FACTS,
 };
@@ -227,6 +240,8 @@ export interface ConditionLeaf {
   fact: string;
   operator: string;
   value: unknown;
+  /** Only on the `matchCount` counter: the sub-conditions a counted match must meet. */
+  params?: MatchCountParams;
 }
 
 export interface ConditionGroupAll {
@@ -370,6 +385,7 @@ const conditionLeafSchema: z.ZodType<ConditionLeaf> = z.object({
   fact: z.string().min(1),
   operator: z.string().min(1),
   value: z.unknown(),
+  params: z.lazy(() => z.object({ conditions: ruleConditionsSchema })).optional(),
 });
 
 export const ruleConditionsSchema: z.ZodType<RuleConditions> = z.lazy(() =>

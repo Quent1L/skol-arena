@@ -38,6 +38,7 @@ declare module 'vue' {
     CompositionStep: typeof import('./src/components/match/steps/CompositionStep.vue')['default']
     ConclusionCard: typeof import('./src/components/rewind/cards/ConclusionCard.vue')['default']
     ConditionBuilder: typeof import('./src/components/rules/ConditionBuilder.vue')['default']
+    ConditionCount: typeof import('./src/components/rules/ConditionCount.vue')['default']
     ConditionGroup: typeof import('./src/components/rules/ConditionGroup.vue')['default']
     ConditionPalette: typeof import('./src/components/rules/ConditionPalette.vue')['default']
     ConditionRow: typeof import('./src/components/rules/ConditionRow.vue')['default']

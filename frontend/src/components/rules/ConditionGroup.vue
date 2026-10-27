@@ -24,6 +24,14 @@
           @click="addGroup"
         />
         <UButton
+          v-if="!inCounter"
+          :label="t('conditionGroup.addCount')"
+          icon="i-fa7-solid:plus"
+          size="xs"
+          variant="ghost"
+          @click="addCount"
+        />
+        <UButton
           v-if="removable"
           icon="i-fa7-solid:trash"
           size="xs"
@@ -49,10 +57,25 @@
           :facts="facts"
           :players="players"
           :depth="depth + 1"
+          :in-counter="inCounter"
           removable
           @update:model-value="node.children[idx] = $event"
           @remove="removeChild(idx)"
         />
+        <ConditionCount
+          v-else-if="child.kind === 'count'"
+          :model-value="child"
+          @update:model-value="node.children[idx] = $event"
+          @remove="removeChild(idx)"
+        >
+          <ConditionGroup
+            v-model="child.where"
+            :facts="facts"
+            :players="players"
+            :depth="depth + 1"
+            in-counter
+          />
+        </ConditionCount>
         <ConditionRow
           v-else-if="child.kind === 'leaf'"
           :model-value="child"
@@ -75,7 +98,14 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { VueDraggable } from 'vue-draggable-plus'
 import ConditionRow from './ConditionRow.vue'
-import { emptyGroup, emptyLeaf, type BuilderNode, type PlayerOption } from './condition-tree'
+import ConditionCount from './ConditionCount.vue'
+import {
+  emptyCount,
+  emptyGroup,
+  emptyLeaf,
+  type BuilderNode,
+  type PlayerOption,
+} from './condition-tree'
 import type { CatalogFact } from '@/composables/rules/rules.api'
 
 const { t } = useI18n()
@@ -87,8 +117,10 @@ withDefaults(
     players: PlayerOption[]
     depth?: number
     removable?: boolean
+    /** Inside a counter's sub-conditions, where another counter would mean nothing. */
+    inCounter?: boolean
   }>(),
-  { depth: 0, removable: false },
+  { depth: 0, removable: false, inCounter: false },
 )
 
 defineEmits<{ remove: [] }>()
@@ -104,6 +136,10 @@ function addLeaf() {
 
 function addGroup() {
   node.value.children.push(emptyGroup('all'))
+}
+
+function addCount() {
+  node.value.children.push(emptyCount())
 }
 
 function removeChild(idx: number) {

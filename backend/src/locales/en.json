@@ -127,6 +127,7 @@
     "RANKED_MATCH_TOO_OLD": "Ranked matches must be reported within {{hours}} hours of being played",
     "RANDOM_NOT_ALLOWED_ON_BADGE": "The random roll cannot be used in a badge rule",
     "INVALID_OPERATOR_FOR_FACT": "This operator does not apply to this variable: the condition could never be true",
+    "INVALID_MATCH_COUNT": "A match counter needs at least one condition and a number, and cannot hold another counter",
     "REWIND_NOT_FOUND": "This Rewind is not available yet",
     "SEASON_AUTOMATION_NOT_FOUND": "This season has no automatic chaining configured",
     "SEASON_NAME_COLLISION": "Could not derive a free name for the next season",

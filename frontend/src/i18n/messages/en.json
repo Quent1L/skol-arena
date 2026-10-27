@@ -382,8 +382,14 @@
     "teamB": "Team B",
     "title": "Composition"
   },
+  "conditionCount": {
+    "comparison": "This number must be",
+    "matchesLabel": "matches",
+    "title": "Number of matches this season where…"
+  },
   "conditionGroup": {
     "addCondition": "Add condition",
+    "addCount": "Counter",
     "addGroup": "Add group",
     "allTrue": "All true",
     "anyTrue": "Any true",
@@ -1650,6 +1656,8 @@
     "successSummary": "Success",
     "testButton": "Test",
     "testDialogTitle": "Test rule",
+    "testMatchCount": "Counted matches",
+    "testMatchCountHelp": "The test has no history: enter the number of matches the counter would find.",
     "testMatched": "✓ Rule matched",
     "testNotMatched": "✗ Rule did not match",
     "triggerMatchSubmitted": "Match submission",

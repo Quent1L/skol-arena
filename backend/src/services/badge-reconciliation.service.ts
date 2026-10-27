@@ -7,6 +7,8 @@ import { RULE_OPERATORS } from "./rules-operators";
 import { notificationService } from "./notification.service";
 import { webSocketService } from "./websocket.service";
 import { logger } from "../utils/logger";
+import { MATCH_HISTORY_FACT, registerMatchCountFact } from "./rules-match-count";
+import { rulesMatchHistoryService } from "./rules-match-history.service";
 import type { BadgeAction, BadgeRecurrence, MatchSubmittedContext, RuleConditions } from "@skol-arena/shared";
 
 type Facts = Record<string, unknown>;
@@ -68,6 +70,7 @@ export class BadgeReconciliationService {
     // Same operators as the live evaluation: without them a replay reads `contains`
     // on a text fact as always false and fails outright on the line-up operators.
     for (const operator of RULE_OPERATORS) engine.addOperator(operator);
+    registerMatchCountFact(engine);
     for (const rule of rules) {
       engine.addRule({
         conditions: rule.conditions as never,
@@ -77,14 +80,33 @@ export class BadgeReconciliationService {
     return engine;
   }
 
-  private async matchedRuleIds(engine: Engine, context: MatchSubmittedContext): Promise<Set<string>> {
-    const { events } = await engine.run(context as unknown as Facts);
+  /**
+   * `history` is the player's replayed season up to this match, included: the
+   * `matchCount` condition counts over it, as the live evaluation does over the
+   * stored snapshots.
+   */
+  private async matchedRuleIds(engine: Engine, context: MatchSubmittedContext, history: Facts[]): Promise<Set<string>> {
+    const { events } = await engine.run({ ...(context as unknown as Facts), [MATCH_HISTORY_FACT]: history });
     const ids = new Set<string>();
     for (const event of events) {
       const ruleId = event.params?.ruleId as string | undefined;
       if (ruleId) ids.add(ruleId);
     }
     return ids;
+  }
+
+  /**
+   * Rebuilds a past match's facts and refreshes their snapshot on the way: the replay
+   * is what repairs the snapshots after a cascade and backfills those that predate them.
+   */
+  private async replayMatch(matchId: string, seasonId: string) {
+    const replayed = await rulesContextService.buildMatchSubmittedContexts(matchId, true);
+    if (replayed.playedAt) {
+      await rulesMatchHistoryService
+        .save(matchId, seasonId, replayed.playedAt, replayed.contexts)
+        .catch((err) => logger.error({ err, matchId }, "[BadgeReconcile] saving match facts failed"));
+    }
+    return replayed;
   }
 
   /** Reconcile all badges for the given players within a single season. */
@@ -117,11 +139,13 @@ export class BadgeReconciliationService {
     // Desired set: ruleId -> earliest matching match (chronological).
     const ordered = await playerMmrRepository.getMmrHistoryOrdered(seasonId, playerId);
     const desired = new Map<string, EarningMatch>();
+    const history: Facts[] = [];
     for (const row of ordered) {
-      const { contexts, playedAt } = await rulesContextService.buildMatchSubmittedContexts(row.matchId, true);
+      const { contexts, playedAt } = await this.replayMatch(row.matchId, seasonId);
       const ctx = contexts.find((c) => c.playerId === playerId);
       if (!ctx) continue;
-      for (const ruleId of await this.matchedRuleIds(engine, ctx.context)) {
+      history.push(ctx.context as unknown as Facts);
+      for (const ruleId of await this.matchedRuleIds(engine, ctx.context, history)) {
         if (!desired.has(ruleId)) desired.set(ruleId, { matchId: row.matchId, playedAt });
       }
     }
@@ -168,12 +192,16 @@ export class BadgeReconciliationService {
     const desired = new Map<string, DesiredAward>();
     for (const season of seasons) {
       const matchIds = await playerMmrRepository.getSeasonMatchIdsOrdered(season.id);
+      const histories = new Map<string, Facts[]>();
       for (const matchId of matchIds) {
-        const { contexts, playedAt } = await rulesContextService.buildMatchSubmittedContexts(matchId, true);
+        const { contexts, playedAt } = await this.replayMatch(matchId, season.id);
         for (const ctx of contexts) {
+          const history = histories.get(ctx.playerId) ?? [];
+          history.push(ctx.context as unknown as Facts);
+          histories.set(ctx.playerId, history);
           const key = awardKey(badgeRule.recurrence, ctx.playerId, season.id);
           if (desired.has(key)) continue;
-          if ((await this.matchedRuleIds(engine, ctx.context)).has(rule.id)) {
+          if ((await this.matchedRuleIds(engine, ctx.context, history)).has(rule.id)) {
             desired.set(key, { playerId: ctx.playerId, seasonId: season.id, matchId, playedAt });
           }
         }

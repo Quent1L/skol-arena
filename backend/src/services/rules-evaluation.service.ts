@@ -3,6 +3,8 @@ import { rulesRepository } from "../repository/rules.repository";
 import { firingKey, ruleFiringRepository, type RuleFiringDraft } from "../repository/rule-firing.repository";
 import { rulesContextService } from "./rules-context.service";
 import { RULE_OPERATORS } from "./rules-operators";
+import { MATCH_HISTORY_FACT, registerMatchCountFact, usesMatchCount } from "./rules-match-count";
+import { rulesMatchHistoryService } from "./rules-match-history.service";
 import { logger } from "../utils/logger";
 import {
   EVENT_FACT_CATALOG,
@@ -25,6 +27,13 @@ interface EvaluableRule {
   action: RuleAction;
   conditions: RuleConditions;
   engineVersion: number;
+}
+
+interface EngineBundle {
+  engine: Engine;
+  byId: Map<string, EvaluableRule>;
+  /** Some rule counts matches: each player's season history must be loaded. */
+  needsHistory: boolean;
 }
 
 /** The match being evaluated, as every player's evaluation needs it. */
@@ -99,6 +108,7 @@ export class RulesEvaluationService {
     const result = new Map<string, PlayerRulesOutput>();
     const { contexts, displayNames, playedAt } = await rulesContextService.buildMatchSubmittedContexts(matchId);
     if (contexts.length === 0) return result;
+    await this.saveSnapshots(matchId, seasonId, playedAt, contexts);
 
     const disciplineId = contexts[0].context.discipline || null;
     const rules = await rulesRepository.listActiveByTrigger("match_submitted", disciplineId);
@@ -150,6 +160,37 @@ export class RulesEvaluationService {
   }
 
   /**
+   * Freezes this match's facts for the `matchCount` condition of later matches. A
+   * failure costs the count one match until the next reconciliation, never the evaluation.
+   */
+  private async saveSnapshots(
+    matchId: string,
+    seasonId: string | undefined,
+    playedAt: Date | undefined,
+    contexts: { playerId: string; context: MatchSubmittedContext }[],
+  ): Promise<void> {
+    if (!seasonId || !playedAt) return;
+    await rulesMatchHistoryService
+      .save(matchId, seasonId, playedAt, contexts)
+      .catch((err) => logger.error({ err, matchId }, "[Rules] saving match facts failed"));
+  }
+
+  /** The player's season so far, only when a rule counts matches. */
+  private async historyFacts(
+    { seasonId, playedAt }: EvaluatedMatch,
+    playerId: string,
+    needsHistory: boolean,
+  ): Promise<Facts> {
+    if (!needsHistory || !seasonId || !playedAt) return {};
+    // A failed read only blanks the counters: the player's other rules still run.
+    const history = await rulesMatchHistoryService.loadSeason(seasonId, playerId, playedAt).catch((err) => {
+      logger.error({ err, seasonId, playerId }, "[Rules] loading match history failed");
+      return [];
+    });
+    return { [MATCH_HISTORY_FACT]: history };
+  }
+
+  /**
    * Persists the whole match's firings in one insert and threads the resulting ids
    * back into the outputs. A failure here loses statistics, never the message: the
    * outputs are already built and the caller carries on regardless.
@@ -174,16 +215,18 @@ export class RulesEvaluationService {
   }
 
   private async evaluateForPlayer(
-    { matchId, seasonId, playedAt }: EvaluatedMatch,
+    evaluated: EvaluatedMatch,
     playerId: string,
     context: MatchSubmittedContext,
-    engineBundle: { engine: Engine; byId: Map<string, EvaluableRule> },
+    engineBundle: EngineBundle,
     displayNames: Map<string, string>,
   ): Promise<PlayerEvaluation> {
+    const { matchId, seasonId, playedAt } = evaluated;
     // `randomRoll` is drawn here rather than in the context service: that service
     // must stay deterministic so badge reconciliation can replay past matches.
     const facts: Facts = { ...(context as unknown as Facts), randomRoll: Math.floor(Math.random() * 100) };
-    const matched = await this.runEngine(engineBundle, facts);
+    const history = await this.historyFacts(evaluated, playerId, engineBundle.needsHistory);
+    const matched = await this.runEngine(engineBundle, { ...facts, ...history });
     const output: PlayerRulesOutput = {};
     const firings: RuleFiringDraft[] = [];
     const draft = (rule: EvaluableRule): Omit<RuleFiringDraft, "result"> => ({
@@ -251,19 +294,20 @@ export class RulesEvaluationService {
     return { output, firings };
   }
 
-  private buildEngine(rules: EvaluableRule[]): { engine: Engine; byId: Map<string, EvaluableRule> } {
+  private buildEngine(rules: EvaluableRule[], countMatches = true): EngineBundle {
     const engine = new Engine([], { allowUndefinedFacts: true });
     for (const operator of RULE_OPERATORS) engine.addOperator(operator);
+    if (countMatches) registerMatchCountFact(engine);
     const byId = new Map<string, EvaluableRule>();
     for (const rule of rules) {
       byId.set(rule.id, rule);
       engine.addRule({ conditions: rule.conditions as never, event: { type: "rule_matched", params: { ruleId: rule.id } } });
     }
-    return { engine, byId };
+    return { engine, byId, needsHistory: rules.some((r) => usesMatchCount(r.conditions)) };
   }
 
   private async runEngine(
-    { engine, byId }: { engine: Engine; byId: Map<string, EvaluableRule> },
+    { engine, byId }: EngineBundle,
     facts: Facts,
   ): Promise<EvaluableRule[]> {
     const { events } = await engine.run(facts);
@@ -289,7 +333,8 @@ export class RulesEvaluationService {
       conditions,
       engineVersion: RULES_ENGINE_VERSION,
     };
-    const matched = await this.runEngine(this.buildEngine([ephemeral]), context);
+    // No history to count over: the simulator's context supplies `matchCount` itself.
+    const matched = await this.runEngine(this.buildEngine([ephemeral], false), context);
     if (matched.length === 0) return { matched: false };
 
     if (action.type === "message") {
