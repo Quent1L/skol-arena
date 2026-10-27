@@ -3,6 +3,7 @@ import { rulesRepository } from "../repository/rules.repository";
 import { rulesContextService } from "./rules-context.service";
 import { playerMmrRepository } from "../repository/player-mmr.repository";
 import { rankedSeasonRepository } from "../repository/ranked-season.repository";
+import { RULE_OPERATORS } from "./rules-operators";
 import { notificationService } from "./notification.service";
 import { webSocketService } from "./websocket.service";
 import { logger } from "../utils/logger";
@@ -64,6 +65,9 @@ function toBadgeRule(rule: { id: string; conditions: unknown; action: unknown })
 export class BadgeReconciliationService {
   private buildEngine(rules: BadgeRule[]): Engine {
     const engine = new Engine([], { allowUndefinedFacts: true });
+    // Same operators as the live evaluation: without them a replay reads `contains`
+    // on a text fact as always false and fails outright on the line-up operators.
+    for (const operator of RULE_OPERATORS) engine.addOperator(operator);
     for (const rule of rules) {
       engine.addRule({
         conditions: rule.conditions as never,
