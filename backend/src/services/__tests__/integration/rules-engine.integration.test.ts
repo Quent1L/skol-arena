@@ -857,4 +857,73 @@ describe("Rules engine — line-up facts & random gating (integration)", () => {
       expect(award.awardedAt.toISOString()).toBe(match.playedAt.toISOString());
     });
   });
+
+  describe("matchCount", () => {
+    /** Message rule firing once Alice's side has won `atLeast` matches this season. */
+    const winsAtLeast = (atLeast: number): RuleConditions => ({
+      all: [
+        {
+          fact: "matchCount",
+          params: { conditions: { all: [{ fact: "isWinner", operator: "equal", value: true }] } },
+          operator: "greaterThanInclusive",
+          value: atLeast,
+        },
+      ],
+    });
+
+    it("counts the season's matches, the current one included", async () => {
+      const { seasonId, matchId: first } = await createSeasonWithMatch();
+      const second = await createMatch(undefined, seasonId);
+      await addMessageRule("Two wins", winsAtLeast(2), ["Second win"]);
+      const alice = playerIds[0];
+      const carl = playerIds[2];
+
+      expect((await rulesEvaluationService.evaluateMatchSubmitted(first, seasonId)).get(alice)).toBeUndefined();
+      const outputs = await rulesEvaluationService.evaluateMatchSubmitted(second, seasonId);
+
+      expect(outputs.get(alice)?.message).toBe("Second win");
+      // Carl lost both: the sub-condition holds for none of his matches.
+      expect(outputs.get(carl)).toBeUndefined();
+    });
+
+    it("leaves a cancelled match out of the count", async () => {
+      const { seasonId, matchId: first } = await createSeasonWithMatch();
+      const second = await createMatch(undefined, seasonId);
+      await addMessageRule("Two wins", winsAtLeast(2), ["Second win"]);
+
+      await rulesEvaluationService.evaluateMatchSubmitted(first, seasonId);
+      await testDb.update(matches).set({ status: "cancelled" }).where(eq(matches.id, first));
+      const outputs = await rulesEvaluationService.evaluateMatchSubmitted(second, seasonId);
+
+      expect(outputs.get(playerIds[0])).toBeUndefined();
+    });
+
+    it("rejects a counter nested inside another counter", async () => {
+      const nested: RuleConditions = {
+        all: [
+          {
+            fact: "matchCount",
+            params: { conditions: winsAtLeast(1) },
+            operator: "greaterThanInclusive",
+            value: 1,
+          },
+        ],
+      };
+      await expect(
+        rulesService.create(
+          {
+            triggerEvent: "match_submitted",
+            type: "message",
+            scope: "global",
+            priority: 0,
+            name: "Nested",
+            conditions: nested,
+            action: { type: "message", variants: ["x"] },
+            isActive: true,
+          },
+          adminId,
+        ),
+      ).rejects.toThrow("INVALID_MATCH_COUNT");
+    });
+  });
 });

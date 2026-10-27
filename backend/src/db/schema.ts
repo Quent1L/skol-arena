@@ -1249,6 +1249,38 @@ export const ruleFirings = pgTable(
   ],
 );
 
+/**
+ * The facts a player's match evaluated to, frozen per (match, player). This is what
+ * the `matchCount` counter condition counts over: rebuilding every past match's
+ * facts at each finalization would cost a dozen queries per match. Written at
+ * finalization, rebuilt by the badge reconciliation replay, and backfilled lazily
+ * for matches that predate the table.
+ */
+export const matchPlayerFacts = pgTable(
+  "match_player_facts",
+  {
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    playerId: uuid("player_id")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "cascade" }),
+    seasonId: uuid("season_id")
+      .notNull()
+      .references(() => tournaments.id, { onDelete: "cascade" }),
+    playedAt: timestamp("played_at", { withTimezone: true }).notNull(),
+    facts: jsonb("facts").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.matchId, table.playerId] }),
+    index("match_player_facts_season_player_idx").on(table.seasonId, table.playerId, table.playedAt),
+  ],
+);
+
 // ***************************************************************
 // [End] Rules engine tables
 // ***************************************************************

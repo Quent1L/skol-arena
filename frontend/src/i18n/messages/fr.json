@@ -382,8 +382,14 @@
     "teamB": "Équipe 2",
     "title": "Composition"
   },
+  "conditionCount": {
+    "comparison": "Ce nombre doit être",
+    "matchesLabel": "matchs",
+    "title": "Nombre de matchs de la saison où…"
+  },
   "conditionGroup": {
     "addCondition": "Condition",
+    "addCount": "Compteur",
     "addGroup": "Sous-groupe",
     "allTrue": "toutes les conditions doivent être vraies",
     "anyTrue": "au moins une condition doit être vraie",
@@ -1650,6 +1656,8 @@
     "successSummary": "Succès",
     "testButton": "Tester",
     "testDialogTitle": "Tester la règle",
+    "testMatchCount": "Matchs comptés",
+    "testMatchCountHelp": "Le test n'a pas d'historique : saisissez le nombre de matchs que le compteur trouverait.",
     "testMatched": "✓ La règle matche",
     "testNotMatched": "✗ La règle ne matche pas",
     "triggerMatchSubmitted": "Saisie de match",

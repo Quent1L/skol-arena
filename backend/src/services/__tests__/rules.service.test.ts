@@ -131,6 +131,49 @@ describe("RulesService — non-deterministic facts", () => {
     expect(mockRulesRepo.create).toHaveBeenCalled();
   });
 
+  describe("matchCount", () => {
+    const counter = (overrides: Record<string, unknown> = {}): RuleConditions => ({
+      all: [
+        {
+          fact: "matchCount",
+          params: { conditions: streakCondition },
+          operator: "greaterThanInclusive",
+          value: 10,
+          ...overrides,
+        },
+      ],
+    });
+
+    it("accepts a counter over catalog facts", async () => {
+      await rulesService.create(baseRule({ type: "badge", conditions: counter() }), "admin-1");
+      expect(mockRulesRepo.create).toHaveBeenCalled();
+    });
+
+    it("rejects a counter without sub-conditions", async () => {
+      const rule = baseRule({ conditions: counter({ params: { conditions: { all: [] } } }) });
+      await expect(rulesService.create(rule, "admin-1")).rejects.toThrow("INVALID_MATCH_COUNT");
+    });
+
+    it("rejects a counter without a whole number to compare with", async () => {
+      const rule = baseRule({ conditions: counter({ value: "ten" }) });
+      await expect(rulesService.create(rule, "admin-1")).rejects.toThrow("INVALID_MATCH_COUNT");
+    });
+
+    it("rejects a non-numeric operator on a counter", async () => {
+      const rule = baseRule({ conditions: counter({ operator: "contains" }) });
+      await expect(rulesService.create(rule, "admin-1")).rejects.toThrow("INVALID_OPERATOR_FOR_FACT");
+    });
+
+    it("checks the sub-conditions against the catalog, random gating included", async () => {
+      const unknown = baseRule({
+        conditions: counter({ params: { conditions: { all: [{ fact: "nope", operator: "equal", value: 1 }] } } }),
+      });
+      await expect(rulesService.create(unknown, "admin-1")).rejects.toThrow();
+      const random = baseRule({ type: "badge", conditions: counter({ params: { conditions: randomCondition } }) });
+      await expect(rulesService.create(random, "admin-1")).rejects.toThrow("RANDOM_NOT_ALLOWED_ON_BADGE");
+    });
+  });
+
   it("exposes the line-up facts in the catalog", async () => {
     const facts = rulesService.getCatalog("match_submitted").facts;
     const winnerIds = facts.find((f) => f.key === "winnerIds");

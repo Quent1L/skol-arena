@@ -284,6 +284,19 @@
             />
             <UInput v-else v-model="testContext[fact.key] as string" class="w-full" />
           </UFormField>
+          <!-- The simulator has no history to count over: the admin supplies the count. -->
+          <UFormField
+            v-if="countsMatches"
+            :label="t('rulesEngineFormView.testMatchCount')"
+            :help="t('rulesEngineFormView.testMatchCountHelp')"
+            size="sm"
+          >
+            <UInputNumber
+              v-model="testContext[MATCH_COUNT_FACT] as number"
+              :min="0"
+              class="w-full"
+            />
+          </UFormField>
         </div>
         <UAlert
           v-if="testResult"
@@ -339,13 +352,14 @@ import {
   toConditions,
   fromConditions,
   hasValidLeaf,
+  usesMatchCount,
   type PlayerOption,
 } from '@/components/rules/condition-tree'
 import { userApi } from '@/composables/user/user.api'
 import { outcomeTypeApi } from '@/composables/outcome-type.api'
 import { outcomeReasonApi } from '@/composables/outcome-reason.api'
 import type { CatalogFact } from '@/composables/rules/rules.api'
-import { NON_DETERMINISTIC_FACTS } from '@skol-arena/shared/types/index'
+import { MATCH_COUNT_FACT, NON_DETERMINISTIC_FACTS } from '@skol-arena/shared/types/index'
 import type {
   BadgeAction,
   BadgeRecurrence,
@@ -631,11 +645,13 @@ async function handleSave() {
 const testDialogVisible = ref(false)
 const testContext = reactive<Record<string, unknown>>({})
 const testResult = ref<TestRuleResult | null>(null)
+const countsMatches = computed(() => usesMatchCount(form.conditions))
 
 function openTest() {
   testResult.value = null
   for (const fact of catalog.value)
     testContext[fact.key] = Array.isArray(fact.sample) ? [...fact.sample] : fact.sample
+  testContext[MATCH_COUNT_FACT] = 1
   testDialogVisible.value = true
 }
 
