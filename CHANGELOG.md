@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.1](https://github.com/Quent1L/skol-arena/compare/2.4.0...2.4.1) (2026-10-28)
+
+### 🐛 Bug Fixes
+
+* **frontend:** stop the ranked profile flashing "no MMR" while it loads ([1e8325f](https://github.com/Quent1L/skol-arena/commit/1e8325ffb6682207f74a71c29ae9d715b3651efc))
+
 ## [2.4.0](https://github.com/Quent1L/skol-arena/compare/2.3.0...2.4.0) (2026-10-19)
 
 ### ✨ New Features
