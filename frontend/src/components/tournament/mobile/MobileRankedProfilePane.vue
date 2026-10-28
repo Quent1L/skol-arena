@@ -25,7 +25,7 @@
       leave most of the screen inert to the finger.
     -->
     <div
-      v-else-if="!store.rankedLoading"
+      v-else-if="store.playerProfileLoaded"
       class="flex min-h-[calc(100vh-14rem)] flex-col items-center justify-center text-center text-gray-500 dark:text-gray-400"
     >
       <i class="fa fa-user-slash text-4xl mb-4 block"></i>

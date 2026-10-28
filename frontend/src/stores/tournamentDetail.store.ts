@@ -46,6 +46,12 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
   // player with no ranked history.
   const playerCareer = ref<PlayerCareerSeason[] | null>(null)
   const playerStats = ref<PlayerStatsResponse | null>(null)
+  // Whether the profile request has answered for this tournament. "No MMR this season"
+  // is a claim about that answer, so it cannot be read off `rankedLoading`: every ranked
+  // request shares that flag, and the weekly movers landing first would clear it while
+  // the profile is still on its way.
+  const playerProfileLoaded = ref(false)
+  let playerProfileRequest: Promise<void> | null = null
   const isLeaderboardRecalculating = ref(false)
   // Bumped whenever the server-side match data may have moved. The match list owns
   // its own paging and filters, so it cannot be reloaded from here — it watches this
@@ -164,6 +170,8 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
     tournamentStats.value = null
     playerMmr.value = null
     playerStats.value = null
+    playerProfileLoaded.value = false
+    playerProfileRequest = null
     profileChartHistory.value = []
     rankedLeaderboard.value = []
     rankedProvisionalLeaderboard.value = []
@@ -244,16 +252,30 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
   // MMR only exists in ranked seasons: without the mode guard the profile tab fires
   // ranked endpoints against a championship id, which 404s on a good day and reads as
   // a ranked call on a non-ranked competition on any other.
+  // Several callers fire on the same tick (the tab watch, the navigation handler), so
+  // they share the request in flight instead of each sending their own.
   async function ensurePlayerProfile() {
     if (!tournamentId.value || !appUser.value?.id) return
     if (tournament.value?.mode !== 'ranked') return
-    if (!playerMmr.value) {
+    if (playerMmr.value) return
+    playerProfileRequest ??= loadPlayerProfile(tournamentId.value, appUser.value.id)
+    await playerProfileRequest
+  }
+
+  async function loadPlayerProfile(seasonId: string, playerId: string) {
+    try {
       const [chartHistory] = await Promise.all([
-        rankedSvc.loadPlayerMmr(tournamentId.value, appUser.value.id),
-        playerApi.getStats(appUser.value.id, { tournamentId: tournamentId.value })
+        rankedSvc.loadPlayerMmr(seasonId, playerId),
+        playerApi.getStats(playerId, { tournamentId: seasonId })
           .then((s) => { playerStats.value = s }),
       ])
       profileChartHistory.value = chartHistory
+    } finally {
+      // A request started for the previous tournament must not vouch for this one.
+      if (tournamentId.value === seasonId) {
+        playerProfileLoaded.value = true
+        playerProfileRequest = null
+      }
     }
   }
 
@@ -334,6 +356,7 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
       playerCareer.value === null ? Promise.resolve() : loadPlayerCareer(),
     ])
     profileChartHistory.value = chartHistory
+    playerProfileLoaded.value = true
   }
 
   async function refreshSilently() {
@@ -429,6 +452,7 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
     playerMmr,
     playerOpponentQuality,
     playerStats,
+    playerProfileLoaded,
     rankedLoading,
     rankedProvisionalLoading,
     rankedSeasonMmrLoading,

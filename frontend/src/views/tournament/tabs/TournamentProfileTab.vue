@@ -18,7 +18,7 @@
       :season-id="store.tournamentId"
       :allow-draw="store.tournament?.allowDraw"
     />
-    <div v-else-if="store.rankedLoading" class="flex justify-center py-12">
+    <div v-else-if="!store.playerProfileLoaded" class="flex justify-center py-12">
       <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
     </div>
     <div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
