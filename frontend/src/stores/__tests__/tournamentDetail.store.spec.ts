@@ -304,3 +304,65 @@ describe('useTournamentDetailStore — uninitialized store', () => {
     expect(loadWeeklyMmrLeaders).not.toHaveBeenCalled()
   })
 })
+
+describe('useTournamentDetailStore — player profile loaded state', () => {
+  function deferPlayerMmr() {
+    let resolve!: (mmr: unknown) => void
+    loadPlayerMmr.mockImplementationOnce(
+      () =>
+        new Promise<never[]>((done) => {
+          resolve = (mmr) => {
+            playerMmrRef.value = mmr
+            done([])
+          }
+        }),
+    )
+    return (mmr: unknown) => resolve(mmr)
+  }
+
+  // The empty state used to key off the ranked loading flag, which the weekly movers
+  // clear as well: answering first, they showed "no MMR" while the profile was loading.
+  it('stays unloaded while the profile is pending, whatever else answers first', async () => {
+    const store = useTournamentDetailStore()
+    await store.initialize('tournament-a')
+    const answerProfile = deferPlayerMmr()
+
+    const profile = store.ensurePlayerProfile()
+    await store.ensureWeeklyMmrLeaders()
+    expect(store.playerProfileLoaded).toBe(false)
+
+    answerProfile({ currentMmr: 1000 })
+    await profile
+    expect(store.playerProfileLoaded).toBe(true)
+  })
+
+  it('is loaded once the profile answers with no MMR', async () => {
+    loadPlayerMmr.mockImplementationOnce(async () => [])
+    const store = useTournamentDetailStore()
+    await store.initialize('tournament-a')
+
+    await store.ensurePlayerProfile()
+
+    expect(store.playerMmr).toBeNull()
+    expect(store.playerProfileLoaded).toBe(true)
+  })
+
+  it('shares the request in flight between concurrent callers', async () => {
+    const store = useTournamentDetailStore()
+    await store.initialize('tournament-a')
+
+    await Promise.all([store.ensurePlayerProfile(), store.ensurePlayerProfile()])
+
+    expect(loadPlayerMmr).toHaveBeenCalledTimes(1)
+  })
+
+  it('goes back to unloaded on another tournament', async () => {
+    const store = useTournamentDetailStore()
+    await store.initialize('tournament-a')
+    await store.ensurePlayerProfile()
+
+    await store.initialize('tournament-b')
+
+    expect(store.playerProfileLoaded).toBe(false)
+  })
+})
