@@ -98,12 +98,11 @@ export function fromConditions(conditions: RuleConditions | null | undefined): B
   return { kind: 'leaf', fact: conditions.fact, operator: conditions.operator, value: conditions.value }
 }
 
-/** Whether a rule counts matches anywhere: the simulator then asks for the count. */
-export function usesMatchCount(conditions: RuleConditions | null | undefined): boolean {
-  if (!conditions) return false
-  if ('all' in conditions) return conditions.all.some(usesMatchCount)
-  if ('any' in conditions) return conditions.any.some(usesMatchCount)
-  return conditions.fact === MATCH_COUNT_FACT
+const COUNTER_SELECTOR = '[data-palette-type="count"], [data-condition-count]'
+
+/** Whether a dragged block is, or holds, a counter: counters do not nest. */
+export function holdsCounter(dragged: Element): boolean {
+  return dragged.matches(COUNTER_SELECTOR) || dragged.querySelector(COUNTER_SELECTOR) !== null
 }
 
 /** True when the tree has at least one leaf with a fact + operator set. */

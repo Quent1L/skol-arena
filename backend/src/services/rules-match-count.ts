@@ -1,8 +1,10 @@
-import { Engine, type Almanac } from "json-rules-engine";
+import type { Almanac, Engine } from "json-rules-engine";
 import { MATCH_COUNT_FACT, type MatchCountParams, type RuleConditions } from "@skol-arena/shared";
-import { RULE_OPERATORS } from "./rules-operators";
+import { createRulesEngine } from "./rules-operators";
 
 type Facts = Record<string, unknown>;
+
+type MatchCounter = (history: Facts[], conditions: RuleConditions) => Promise<number>;
 
 /**
  * Runtime fact carrying the evaluated player's facts for every match of the season
@@ -10,24 +12,49 @@ type Facts = Record<string, unknown>;
  */
 export const MATCH_HISTORY_FACT = "__matchHistory";
 
-/** Whether a condition tree uses the season counter anywhere. */
-export function usesMatchCount(conditions: RuleConditions): boolean {
-  if ("all" in conditions) return conditions.all.some(usesMatchCount);
-  if ("any" in conditions) return conditions.any.some(usesMatchCount);
-  return conditions.fact === MATCH_COUNT_FACT;
+/**
+ * A counter remembering each match's verdict per sub-condition: a replay counts over
+ * a history growing by one match at a time, and would otherwise re-evaluate all of it
+ * at every step. Keyed on the facts object, so a verdict lives as long as its history.
+ */
+export function createMatchCounter(): MatchCounter {
+  const engines = new Map<string, Engine>();
+  const verdicts = new WeakMap<Facts, Map<string, boolean>>();
+
+  const engineFor = (key: string, conditions: RuleConditions): Engine => {
+    let engine = engines.get(key);
+    if (!engine) {
+      engine = createRulesEngine();
+      engine.addRule({ conditions: conditions as never, event: { type: "counted" } });
+      engines.set(key, engine);
+    }
+    return engine;
+  };
+
+  const meets = async (facts: Facts, key: string, conditions: RuleConditions): Promise<boolean> => {
+    const known = verdicts.get(facts) ?? new Map<string, boolean>();
+    verdicts.set(facts, known);
+    let verdict = known.get(key);
+    if (verdict === undefined) {
+      verdict = (await engineFor(key, conditions).run(facts)).events.length > 0;
+      known.set(key, verdict);
+    }
+    return verdict;
+  };
+
+  return async (history, conditions) => {
+    const key = JSON.stringify(conditions);
+    let count = 0;
+    for (const facts of history) {
+      if (await meets(facts, key, conditions)) count += 1;
+    }
+    return count;
+  };
 }
 
 /** Number of past matches whose facts meet `conditions`. */
-export async function countMatching(history: Facts[], conditions: RuleConditions): Promise<number> {
-  const engine = new Engine([], { allowUndefinedFacts: true });
-  for (const operator of RULE_OPERATORS) engine.addOperator(operator);
-  engine.addRule({ conditions: conditions as never, event: { type: "counted" } });
-  let count = 0;
-  for (const facts of history) {
-    const { events } = await engine.run(facts);
-    if (events.length > 0) count += 1;
-  }
-  return count;
+export function countMatching(history: Facts[], conditions: RuleConditions): Promise<number> {
+  return createMatchCounter()(history, conditions);
 }
 
 /**
@@ -37,10 +64,11 @@ export async function countMatching(history: Facts[], conditions: RuleConditions
  * `matchCount` itself, which then wins as a plain runtime fact.
  */
 export function registerMatchCountFact(engine: Engine): void {
+  const count = createMatchCounter();
   engine.addFact(MATCH_COUNT_FACT, async (params: unknown, almanac: Almanac) => {
     const conditions = (params as Partial<MatchCountParams> | undefined)?.conditions;
     if (!conditions) return 0;
     const history = (await almanac.factValue<Facts[]>(MATCH_HISTORY_FACT).catch(() => undefined)) ?? [];
-    return countMatching(history, conditions);
+    return count(history, conditions);
   });
 }

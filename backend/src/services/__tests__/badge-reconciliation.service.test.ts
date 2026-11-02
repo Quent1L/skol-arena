@@ -43,9 +43,6 @@ mock.module("../notification.service", () => ({ notificationService: mockNotify 
 const mockWs = { send: mock((_u: any, _p: any) => true) };
 mock.module("../websocket.service", () => ({ webSocketService: mockWs }));
 
-const mockMatchHistory = { save: mock((_m: any, _s: any, _at: any, _c: any) => Promise.resolve()) };
-mock.module("../rules-match-history.service", () => ({ rulesMatchHistoryService: mockMatchHistory }));
-
 import { BadgeReconciliationService } from "../badge-reconciliation.service";
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -96,7 +93,6 @@ function resetAll() {
     mockContextService.buildMatchSubmittedContexts,
     mockPlayerMmrRepo.getMmrHistoryOrdered, mockPlayerMmrRepo.getSeasonMatchIdsOrdered,
     mockRankedRepo.getSeasonWithConfig, mockRankedRepo.listSeasons, mockNotify.send, mockWs.send,
-    mockMatchHistory.save,
   ]) m.mockClear();
   mockRankedRepo.getSeasonWithConfig.mockResolvedValue({ disciplineId: "d1" } as any);
   mockRankedRepo.listSeasons.mockResolvedValue([{ id: "season-1" }] as any);
@@ -148,7 +144,7 @@ describe("BadgeReconciliationService.reconcilePlayers", () => {
     expect(mockNotify.send).toHaveBeenCalledTimes(1);
   });
 
-  it("awards a counted badge on the match that reaches the count, and refreshes the snapshots", async () => {
+  it("awards a counted badge on the match that reaches the count", async () => {
     mockRulesRepo.listActiveByTrigger.mockResolvedValue([TWO_WINS_RULE] as any);
     mockPlayerMmrRepo.getMmrHistoryOrdered.mockResolvedValue(
       [{ matchId: "m1" }, { matchId: "m2" }, { matchId: "m3" }] as any,
@@ -163,7 +159,6 @@ describe("BadgeReconciliationService.reconcilePlayers", () => {
 
     expect(mockRulesRepo.awardBadge).toHaveBeenCalledTimes(1);
     expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r2", "m3", "season-1", "per_season", M2_PLAYED_AT);
-    expect(mockMatchHistory.save).toHaveBeenCalledTimes(3);
   });
 
   it("keeps badges from deactivated rules (no active badge rules → early return)", async () => {

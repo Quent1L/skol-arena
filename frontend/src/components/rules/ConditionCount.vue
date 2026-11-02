@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-md border border-warning/50 bg-elevated p-2 sm:p-3">
+  <div data-condition-count class="rounded-md border border-warning/50 bg-elevated p-2 sm:p-3">
     <div class="mb-2 flex items-center gap-2">
       <UIcon
         name="i-fa7-solid:grip-vertical"
@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { OPERATORS_BY_TYPE } from '@skol-arena/shared/types/index'
+import { MATCH_COUNT_OPERATORS } from '@skol-arena/shared/types/index'
 import type { BuilderNode } from './condition-tree'
 
 const { t } = useI18n()
@@ -53,13 +53,11 @@ const { t } = useI18n()
 const node = defineModel<Extract<BuilderNode, { kind: 'count' }>>({ required: true })
 defineEmits<{ remove: [] }>()
 
-// A count compares like any number, so it reuses the number operators and their labels.
+// A count compares like any number, so it reuses the number operators' labels.
 const operatorOptions = computed(() =>
-  OPERATORS_BY_TYPE.number
-    .filter((op) => op !== 'in' && op !== 'notIn')
-    .map((op) => ({
-      label: t(`conditionRow.operator${op[0].toUpperCase()}${op.slice(1)}`),
-      value: op,
-    })),
+  MATCH_COUNT_OPERATORS.map((op) => ({
+    label: t(`conditionRow.operator${op[0].toUpperCase()}${op.slice(1)}`),
+    value: op,
+  })),
 )
 </script>

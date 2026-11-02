@@ -30,6 +30,7 @@ mock.module("../../services/ranked-season.service", () => stub("rankedSeasonServ
 mock.module("../../services/websocket.service", () => stub("webSocketService"));
 mock.module("../../services/rules-evaluation.service", () => stub("rulesEvaluationService"));
 mock.module("../../services/badge-reconciliation.service", () => stub("badgeReconciliationService"));
+mock.module("../../services/rules-match-history.service", () => stub("rulesMatchHistoryService"));
 mock.module("../../services/mmr-job-queue.service", () => ({
   enqueueSeasonRewindGeneration: mock(async () => {}),
 }));

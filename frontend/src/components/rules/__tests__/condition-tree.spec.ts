@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import type { RuleConditions } from '@skol-arena/shared/types/index'
+import { usesMatchCount, type RuleConditions } from '@skol-arena/shared/types/index'
 import { convertStringDatesToJS } from '@/utils/DateUtils'
 import {
   emptyCount,
   fromConditions,
   hasValidLeaf,
+  holdsCounter,
   restoreDateValues,
   toConditions,
-  usesMatchCount,
 } from '../condition-tree'
 
 const stored: RuleConditions = {
@@ -89,5 +89,24 @@ describe('match counter', () => {
   it('is detected anywhere in the tree', () => {
     expect(usesMatchCount({ any: [counted] })).toBe(true)
     expect(usesMatchCount(stored)).toBe(false)
+  })
+})
+
+describe('holdsCounter', () => {
+  const dragged = (html: string) => {
+    const el = document.createElement('div')
+    el.innerHTML = html
+    return el
+  }
+
+  it('spots the palette block, a counter, and a group holding one', () => {
+    expect(holdsCounter(dragged('<div data-palette-type="count"></div>').firstElementChild!)).toBe(true)
+    expect(holdsCounter(dragged('<div data-condition-count></div>'))).toBe(true)
+    expect(holdsCounter(dragged('<div><div><div data-condition-count></div></div></div>'))).toBe(true)
+  })
+
+  it('lets every other block through', () => {
+    expect(holdsCounter(dragged('<div data-palette-type="leaf"></div>').firstElementChild!)).toBe(false)
+    expect(holdsCounter(dragged('<div><span></span></div>'))).toBe(false)
   })
 })

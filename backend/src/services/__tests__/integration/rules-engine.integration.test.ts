@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, afterEach, spyOn } from "bun:test";
 import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
@@ -8,6 +8,7 @@ const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
 import { rulesContextService } from "../../rules-context.service";
 import { rulesEvaluationService } from "../../rules-evaluation.service";
+import { rulesMatchHistoryService } from "../../rules-match-history.service";
 import {
   tournaments,
   appUsers,
@@ -896,6 +897,38 @@ describe("Rules engine — line-up facts & random gating (integration)", () => {
       const outputs = await rulesEvaluationService.evaluateMatchSubmitted(second, seasonId);
 
       expect(outputs.get(playerIds[0])).toBeUndefined();
+    });
+
+    it("freezes the snapshot from the match's history, not the player's live state", async () => {
+      const { seasonId, matchId: first } = await createSeasonWithMatch();
+      const build = spyOn(rulesContextService, "buildMatchSubmittedContexts");
+
+      await rulesEvaluationService.evaluateMatchSubmitted(first, seasonId);
+
+      expect(build).toHaveBeenCalledWith(first, true);
+      build.mockRestore();
+    });
+
+    it("skips counting rules, and only them, when the history cannot be read", async () => {
+      const { seasonId, matchId: first } = await createSeasonWithMatch();
+      const fewerThanFive: RuleConditions = {
+        all: [
+          {
+            fact: "matchCount",
+            params: { conditions: { all: [{ fact: "isWinner", operator: "equal", value: true }] } },
+            operator: "lessThan",
+            value: 5,
+          },
+        ],
+      };
+      await addMessageRule("Rookie", fewerThanFive, ["Rookie"], 10);
+      await addMessageRule("Plain", { all: [{ fact: "isWinner", operator: "equal", value: true }] }, ["Plain"]);
+      const load = spyOn(rulesMatchHistoryService, "loadSeason").mockRejectedValue(new Error("db down"));
+
+      const outputs = await rulesEvaluationService.evaluateMatchSubmitted(first, seasonId);
+      load.mockRestore();
+
+      expect(outputs.get(playerIds[0])?.message).toBe("Plain");
     });
 
     it("rejects a counter nested inside another counter", async () => {

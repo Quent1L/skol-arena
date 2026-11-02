@@ -1,14 +1,15 @@
-import { Engine } from "json-rules-engine";
+import type { Engine } from "json-rules-engine";
 import { rulesRepository } from "../repository/rules.repository";
 import { firingKey, ruleFiringRepository, type RuleFiringDraft } from "../repository/rule-firing.repository";
 import { rulesContextService } from "./rules-context.service";
-import { RULE_OPERATORS } from "./rules-operators";
-import { MATCH_HISTORY_FACT, registerMatchCountFact, usesMatchCount } from "./rules-match-count";
+import { createRulesEngine } from "./rules-operators";
+import { MATCH_HISTORY_FACT, registerMatchCountFact } from "./rules-match-count";
 import { rulesMatchHistoryService } from "./rules-match-history.service";
 import { logger } from "../utils/logger";
 import {
   EVENT_FACT_CATALOG,
   RULES_ENGINE_VERSION,
+  usesMatchCount,
   type BadgeAction,
   type MatchSubmittedContext,
   type MessageAction,
@@ -108,7 +109,7 @@ export class RulesEvaluationService {
     const result = new Map<string, PlayerRulesOutput>();
     const { contexts, displayNames, playedAt } = await rulesContextService.buildMatchSubmittedContexts(matchId);
     if (contexts.length === 0) return result;
-    await this.saveSnapshots(matchId, seasonId, playedAt, contexts);
+    await this.saveSnapshot(matchId, seasonId);
 
     const disciplineId = contexts[0].context.discipline || null;
     const rules = await rulesRepository.listActiveByTrigger("match_submitted", disciplineId);
@@ -163,31 +164,22 @@ export class RulesEvaluationService {
    * Freezes this match's facts for the `matchCount` condition of later matches. A
    * failure costs the count one match until the next reconciliation, never the evaluation.
    */
-  private async saveSnapshots(
-    matchId: string,
-    seasonId: string | undefined,
-    playedAt: Date | undefined,
-    contexts: { playerId: string; context: MatchSubmittedContext }[],
-  ): Promise<void> {
-    if (!seasonId || !playedAt) return;
+  private async saveSnapshot(matchId: string, seasonId: string | undefined): Promise<void> {
+    if (!seasonId) return;
     await rulesMatchHistoryService
-      .save(matchId, seasonId, playedAt, contexts)
+      .refreshMatch(matchId, seasonId)
       .catch((err) => logger.error({ err, matchId }, "[Rules] saving match facts failed"));
   }
 
-  /** The player's season so far, only when a rule counts matches. */
-  private async historyFacts(
-    { seasonId, playedAt }: EvaluatedMatch,
-    playerId: string,
-    needsHistory: boolean,
-  ): Promise<Facts> {
-    if (!needsHistory || !seasonId || !playedAt) return {};
-    // A failed read only blanks the counters: the player's other rules still run.
-    const history = await rulesMatchHistoryService.loadSeason(seasonId, playerId, playedAt).catch((err) => {
+  /** The player's season so far, or null when it cannot be known. */
+  private async historyFacts({ seasonId, playedAt }: EvaluatedMatch, playerId: string): Promise<Facts | null> {
+    if (!seasonId || !playedAt) return null;
+    try {
+      return { [MATCH_HISTORY_FACT]: await rulesMatchHistoryService.loadSeason(seasonId, playerId, playedAt) };
+    } catch (err) {
       logger.error({ err, seasonId, playerId }, "[Rules] loading match history failed");
-      return [];
-    });
-    return { [MATCH_HISTORY_FACT]: history };
+      return null;
+    }
   }
 
   /**
@@ -225,8 +217,11 @@ export class RulesEvaluationService {
     // `randomRoll` is drawn here rather than in the context service: that service
     // must stay deterministic so badge reconciliation can replay past matches.
     const facts: Facts = { ...(context as unknown as Facts), randomRoll: Math.floor(Math.random() * 100) };
-    const history = await this.historyFacts(evaluated, playerId, engineBundle.needsHistory);
-    const matched = await this.runEngine(engineBundle, { ...facts, ...history });
+    const history = engineBundle.needsHistory ? await this.historyFacts(evaluated, playerId) : {};
+    const candidates = await this.runEngine(engineBundle, { ...facts, ...history });
+    // Without a history every count reads 0, which `matchCount < 5` would take for a
+    // true result on a veteran: counting rules sit this one out, the others still run.
+    const matched = history ? candidates : candidates.filter((r) => !usesMatchCount(r.conditions));
     const output: PlayerRulesOutput = {};
     const firings: RuleFiringDraft[] = [];
     const draft = (rule: EvaluableRule): Omit<RuleFiringDraft, "result"> => ({
@@ -295,8 +290,7 @@ export class RulesEvaluationService {
   }
 
   private buildEngine(rules: EvaluableRule[], countMatches = true): EngineBundle {
-    const engine = new Engine([], { allowUndefinedFacts: true });
-    for (const operator of RULE_OPERATORS) engine.addOperator(operator);
+    const engine = createRulesEngine();
     if (countMatches) registerMatchCountFact(engine);
     const byId = new Map<string, EvaluableRule>();
     for (const rule of rules) {

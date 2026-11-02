@@ -1,6 +1,7 @@
 import {
   EVENT_FACT_CATALOG,
   MATCH_COUNT_FACT,
+  MATCH_COUNT_OPERATORS,
   NON_DETERMINISTIC_FACTS,
   OPERATORS_BY_TYPE,
   TRIGGER_EVENTS,
@@ -107,7 +108,7 @@ function assertValidMatchCount(leaf: ConditionLeaf, nested: boolean): RuleCondit
   if (typeof leaf.value !== "number" || !Number.isInteger(leaf.value) || leaf.value < 0) {
     throw new BadRequestError(ErrorCode.INVALID_MATCH_COUNT);
   }
-  if (!OPERATORS_BY_TYPE.number.includes(leaf.operator)) {
+  if (!MATCH_COUNT_OPERATORS.includes(leaf.operator)) {
     throw new BadRequestError(ErrorCode.INVALID_OPERATOR_FOR_FACT);
   }
   return conditions;
@@ -437,8 +438,10 @@ export class RulesService {
       if (!definition) throw new BadRequestError(ErrorCode.VALIDATION_ERROR);
       // Badge awards are replayed by the nightly reconciliation: a random fact
       // would grant/revoke badges at every pass.
-      if (type === "badge" && (NON_DETERMINISTIC_FACTS as readonly string[]).includes(fact)) {
-        throw new BadRequestError(ErrorCode.RANDOM_NOT_ALLOWED_ON_BADGE);
+      if ((NON_DETERMINISTIC_FACTS as readonly string[]).includes(fact)) {
+        if (type === "badge") throw new BadRequestError(ErrorCode.RANDOM_NOT_ALLOWED_ON_BADGE);
+        // Snapshots hold no random draw: counting over one would stay at 0 forever.
+        if (nested) throw new BadRequestError(ErrorCode.INVALID_MATCH_COUNT);
       }
       // An operator the fact's type does not support evaluates to false forever,
       // which reads as "my rule never fires" rather than as an error. Reject it.

@@ -1,4 +1,4 @@
-import { Operator } from "json-rules-engine";
+import { Engine, Operator } from "json-rules-engine";
 
 /**
  * Custom operators layered on top of json-rules-engine's defaults.
@@ -52,3 +52,10 @@ export const RULE_OPERATORS: Operator[] = [
   ),
   new Operator<unknown[], unknown>("containsExactly", sameMembers, Array.isArray),
 ] as Operator[];
+
+/** An empty engine set up the one way rules are evaluated: live, replayed or counted. */
+export function createRulesEngine(): Engine {
+  const engine = new Engine([], { allowUndefinedFacts: true });
+  for (const operator of RULE_OPERATORS) engine.addOperator(operator);
+  return engine;
+}

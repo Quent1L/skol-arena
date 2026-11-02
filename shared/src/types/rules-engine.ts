@@ -169,6 +169,14 @@ export interface MatchCountParams {
   conditions: RuleConditions;
 }
 
+/** Whether a condition tree uses the season counter anywhere. */
+export function usesMatchCount(conditions: RuleConditions | null | undefined): boolean {
+  if (!conditions) return false;
+  if ("all" in conditions) return conditions.all.some(usesMatchCount);
+  if ("any" in conditions) return conditions.any.some(usesMatchCount);
+  return conditions.fact === MATCH_COUNT_FACT;
+}
+
 export const EVENT_FACT_CATALOG: Record<TriggerEvent, FactDefinition[]> = {
   match_submitted: MATCH_SUBMITTED_FACTS,
 };
@@ -188,6 +196,9 @@ export const OPERATORS_BY_TYPE: Record<FactType, string[]> = {
   stringList: ["contains", "doesNotContain", "containsAll", "containsAny", "containsNone", "containsExactly"],
   date: ["equal", "notEqual", "greaterThan", "greaterThanInclusive", "lessThan", "lessThanInclusive"],
 };
+
+/** A counter compares with a single whole number, so the list operators are out. */
+export const MATCH_COUNT_OPERATORS = OPERATORS_BY_TYPE.number.filter((op) => op !== "in" && op !== "notIn");
 
 /**
  * Operators whose `value` is a list rather than a scalar. The builder renders a

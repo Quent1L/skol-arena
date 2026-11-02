@@ -12,6 +12,7 @@
       <div
         v-for="item in items"
         :key="item.paletteType"
+        :data-palette-type="item.paletteType"
         class="flex shrink-0 cursor-grab items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm select-none"
       >
         <UIcon name="i-fa7-solid:grip-vertical" class="size-4 text-dimmed" />

@@ -46,7 +46,7 @@
 
     <VueDraggable
       v-model="node.children"
-      :group="{ name: 'cond', pull: true, put: true }"
+      :group="dragGroup"
       handle=".drag-handle"
       class="flex min-h-12 flex-col gap-2 rounded-md bg-muted/40 p-1"
     >
@@ -70,7 +70,7 @@
         >
           <ConditionGroup
             v-model="child.where"
-            :facts="facts"
+            :facts="countableFacts"
             :players="players"
             :depth="depth + 1"
             in-counter
@@ -99,10 +99,12 @@ import { useI18n } from 'vue-i18n'
 import { VueDraggable } from 'vue-draggable-plus'
 import ConditionRow from './ConditionRow.vue'
 import ConditionCount from './ConditionCount.vue'
+import { NON_DETERMINISTIC_FACTS } from '@skol-arena/shared/types/index'
 import {
   emptyCount,
   emptyGroup,
   emptyLeaf,
+  holdsCounter,
   type BuilderNode,
   type PlayerOption,
 } from './condition-tree'
@@ -111,7 +113,7 @@ import type { CatalogFact } from '@/composables/rules/rules.api'
 const { t } = useI18n()
 
 const node = defineModel<Extract<BuilderNode, { kind: 'group' }>>({ required: true })
-withDefaults(
+const props = withDefaults(
   defineProps<{
     facts: CatalogFact[]
     players: PlayerOption[]
@@ -124,6 +126,20 @@ withDefaults(
 )
 
 defineEmits<{ remove: [] }>()
+
+// The add button is not the only way in: every group shares one drag group.
+const dragGroup = computed(() => ({
+  name: 'cond',
+  pull: true,
+  put: props.inCounter
+    ? (_to: unknown, _from: unknown, dragged: HTMLElement) => !holdsCounter(dragged)
+    : true,
+}))
+
+// Match snapshots hold no random draw: a counter could never see one.
+const countableFacts = computed(() =>
+  props.facts.filter((f) => !(NON_DETERMINISTIC_FACTS as readonly string[]).includes(f.key)),
+)
 
 const operatorButtons = computed(() => [
   { label: t('conditionGroup.operatorAnd'), value: 'all' },

@@ -46,6 +46,9 @@ mock.module("../../services/mmr-animation-event.service", () => ({
 mock.module("../../services/badge-reconciliation.service", () => ({
   badgeReconciliationService: { reconcilePlayers: record("badges") },
 }));
+mock.module("../../services/rules-match-history.service", () => ({
+  rulesMatchHistoryService: { refreshPlayers: record("facts") },
+}));
 mock.module("../../services/websocket.service", () => ({
   webSocketService: {
     send: mock((userId: string, msg: any) => sockets.user.push([userId, msg.event])),
@@ -84,6 +87,12 @@ describe("correct_match_mmr", () => {
     // The direct players' later matches moved too: they are resynced like the cascade.
     expect(calls.recalcEvents).toEqual([["s1", ["p1", "p2", "p3"]]]);
     expect(calls.badges).toEqual([["s1", ["p1", "p2", "p3"]]]);
+  });
+
+  it("rewrites the snapshots from the corrected match on", async () => {
+    await run();
+
+    expect(calls.facts).toEqual([["s1", ["p1", "p2", "p3"], matchRow.playedAt]]);
   });
 
   it("pings the match's own players directly, not only the tournament subscribers", async () => {

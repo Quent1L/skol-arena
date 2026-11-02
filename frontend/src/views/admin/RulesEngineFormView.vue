@@ -352,14 +352,17 @@ import {
   toConditions,
   fromConditions,
   hasValidLeaf,
-  usesMatchCount,
   type PlayerOption,
 } from '@/components/rules/condition-tree'
 import { userApi } from '@/composables/user/user.api'
 import { outcomeTypeApi } from '@/composables/outcome-type.api'
 import { outcomeReasonApi } from '@/composables/outcome-reason.api'
 import type { CatalogFact } from '@/composables/rules/rules.api'
-import { MATCH_COUNT_FACT, NON_DETERMINISTIC_FACTS } from '@skol-arena/shared/types/index'
+import {
+  MATCH_COUNT_FACT,
+  NON_DETERMINISTIC_FACTS,
+  usesMatchCount,
+} from '@skol-arena/shared/types/index'
 import type {
   BadgeAction,
   BadgeRecurrence,

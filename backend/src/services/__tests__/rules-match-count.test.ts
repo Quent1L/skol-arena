@@ -3,10 +3,10 @@ import { Engine } from "json-rules-engine";
 import {
   MATCH_HISTORY_FACT,
   countMatching,
+  createMatchCounter,
   registerMatchCountFact,
-  usesMatchCount,
 } from "../rules-match-count";
-import type { RuleConditions } from "@skol-arena/shared";
+import { usesMatchCount, type RuleConditions } from "@skol-arena/shared";
 
 const GOLD_WIN: RuleConditions = {
   all: [
@@ -39,6 +39,34 @@ describe("countMatching", () => {
 
   it("counts nothing over an empty history", async () => {
     expect(await countMatching([], GOLD_WIN)).toBe(0);
+  });
+});
+
+describe("createMatchCounter", () => {
+  it("evaluates a match once per sub-condition as the history grows", async () => {
+    let reads = 0;
+    const match = {
+      get isWinner() {
+        reads += 1;
+        return true;
+      },
+      newRank: "gold",
+    };
+    const count = createMatchCounter();
+
+    expect(await count([match], GOLD_WIN)).toBe(1);
+    const readsOnce = reads;
+    expect(await count([match, { isWinner: true, newRank: "gold" }], GOLD_WIN)).toBe(2);
+
+    expect(reads).toBe(readsOnce);
+  });
+
+  it("keeps the verdicts of different sub-conditions apart", async () => {
+    const count = createMatchCounter();
+    const losses: RuleConditions = { all: [{ fact: "isWinner", operator: "equal", value: false }] };
+
+    expect(await count(HISTORY, GOLD_WIN)).toBe(2);
+    expect(await count(HISTORY, losses)).toBe(1);
   });
 });
 

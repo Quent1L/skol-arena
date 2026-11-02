@@ -159,6 +159,16 @@ describe("RulesService — non-deterministic facts", () => {
       await expect(rulesService.create(rule, "admin-1")).rejects.toThrow("INVALID_MATCH_COUNT");
     });
 
+    it("rejects a list operator on a counter", async () => {
+      const rule = baseRule({ conditions: counter({ operator: "in" }) });
+      await expect(rulesService.create(rule, "admin-1")).rejects.toThrow("INVALID_OPERATOR_FOR_FACT");
+    });
+
+    it("rejects a random sub-condition on a message rule too", async () => {
+      const rule = baseRule({ type: "message", conditions: counter({ params: { conditions: randomCondition } }) });
+      await expect(rulesService.create(rule, "admin-1")).rejects.toThrow("INVALID_MATCH_COUNT");
+    });
+
     it("rejects a non-numeric operator on a counter", async () => {
       const rule = baseRule({ conditions: counter({ operator: "contains" }) });
       await expect(rulesService.create(rule, "admin-1")).rejects.toThrow("INVALID_OPERATOR_FOR_FACT");

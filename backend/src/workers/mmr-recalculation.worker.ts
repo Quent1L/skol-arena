@@ -7,6 +7,7 @@ import { rankedSeasonService } from '../services/ranked-season.service';
 import { webSocketService } from '../services/websocket.service';
 import { rulesEvaluationService } from '../services/rules-evaluation.service';
 import { badgeReconciliationService } from '../services/badge-reconciliation.service';
+import { rulesMatchHistoryService } from '../services/rules-match-history.service';
 import { seasonRewindService } from '../services/season-rewind.service';
 import { enqueueSeasonRewindGeneration } from '../services/mmr-job-queue.service';
 import { tournamentRepository } from '../repository/tournament.repository';
@@ -54,10 +55,8 @@ const finalizeMatchMmr: Task = async (rawPayload) => {
     await mmrAnimationEventService
       .persistRecalcEvents(tournamentId, cascadePlayerIds)
       .catch((err) => logger.error({ err }, '[Worker] finalization cascade animation event failed'));
-    await badgeReconciliationService
-      .reconcilePlayers(tournamentId, cascadePlayerIds)
-      .catch((err) => logger.error({ err }, '[Worker] finalization cascade badge reconciliation failed'));
   }
+  await syncBackdatedFinalization(matchId, tournamentId, [...mmrChanges.keys()], cascadePlayerIds);
 
   await refreshRankedCaches(tournamentId);
 
@@ -68,6 +67,39 @@ const finalizeMatchMmr: Task = async (rawPayload) => {
 
   logger.info({ matchId, tournamentId }, '[Worker] finalize_match_mmr done');
 };
+
+/**
+ * The live evaluation only saw the season up to this match. Anyone with later matches
+ * — its own players included, not just the cascade — had those snapshots invalidated
+ * and may have crossed a counted badge's threshold on one of them.
+ */
+async function syncBackdatedFinalization(
+  matchId: string,
+  tournamentId: string,
+  playerIds: string[],
+  cascadePlayerIds: string[],
+): Promise<void> {
+  if (playerIds.length === 0) return;
+  const match = await matchRepository.getByIdSimple(matchId);
+  const movedPlayerIds = match?.playedAt
+    ? await rulesMatchHistoryService
+        .refreshAfterBackdatedMatch(tournamentId, matchId, playerIds, match.playedAt)
+        .catch((err) => {
+          logger.error({ err }, '[Worker] finalization snapshot refresh failed');
+          return [];
+        })
+    : [];
+  await badgeReconciliationService
+    .reconcilePlayers(tournamentId, [...new Set([...movedPlayerIds, ...cascadePlayerIds])])
+    .catch((err) => logger.error({ err }, '[Worker] finalization cascade badge reconciliation failed'));
+}
+
+/** Rewrites the snapshots a history rebuild made stale: message counters read them too. */
+async function refreshMatchFacts(tournamentId: string, playerIds: string[], from?: Date): Promise<void> {
+  await rulesMatchHistoryService
+    .refreshPlayers(tournamentId, playerIds, from)
+    .catch((err) => logger.error({ err, tournamentId }, '[Worker] match facts refresh failed'));
+}
 
 const cancelMatchMmr: Task = async (rawPayload) => {
   const { matchId, tournamentId, cancelledMatchPlayedAt } = rawPayload as CancelMmrPayload;
@@ -92,6 +124,8 @@ const cancelMatchMmr: Task = async (rawPayload) => {
   await mmrAnimationEventService
     .persistRecalcEvents(tournamentId, [...mmrChanges.keys()])
     .catch((err) => logger.error({ err }, '[Worker] cascade recalc animation event failed'));
+
+  await refreshMatchFacts(tournamentId, [...mmrChanges.keys()], new Date(cancelledMatchPlayedAt));
 
   // MMR history (incl. streak snapshots) is now rebuilt for every affected
   // player — reconcile their badges (revoke now-invalid, award newly-valid).
@@ -132,6 +166,7 @@ const correctMatchMmr: Task = async (rawPayload) => {
     match.playedAt,
   );
   const directPlayerIds = [...mmrChanges].filter(([, c]) => c.reason === 'match_corrected').map(([id]) => id);
+  await refreshMatchFacts(tournamentId, [...mmrChanges.keys()], match.playedAt);
   await syncCorrectionAftermath(matchId, tournamentId, [...mmrChanges.keys()], directPlayerIds);
 
   await refreshRankedCaches(tournamentId);
@@ -225,6 +260,7 @@ async function runSeasonRecalculation(tournamentId: string): Promise<void> {
   const players = await playerMmrRepository.getAllPlayersBySeasonId(tournamentId);
 
   await mmrCalculationService.recalculateSeasonMmrDeterministic(tournamentId);
+  await refreshMatchFacts(tournamentId, players.map((p) => p.playerId));
 
   // History was rebuilt: re-sync animation events for the matches whose MMR
   // actually changed (no need to wait for a new match). Batched, no per-event

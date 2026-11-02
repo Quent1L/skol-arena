@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { db } from "../config/database";
 import { matches, matchPlayerFacts, mmrHistory } from "../db/schema";
 
@@ -70,6 +70,28 @@ export class MatchPlayerFactsRepository {
       )
       .orderBy(asc(matches.playedAt));
     return rows.map((r) => r.matchId);
+  }
+
+  /** The players' finalized ranked matches of the season, from `from` included when given. */
+  async listPlayersMatches(
+    seasonId: string,
+    playerIds: string[],
+    from?: Date,
+  ): Promise<{ matchId: string; playerId: string }[]> {
+    if (playerIds.length === 0) return [];
+    return db
+      .select({ matchId: mmrHistory.matchId, playerId: mmrHistory.playerId })
+      .from(mmrHistory)
+      .innerJoin(matches, eq(mmrHistory.matchId, matches.id))
+      .where(
+        and(
+          eq(mmrHistory.seasonId, seasonId),
+          inArray(mmrHistory.playerId, playerIds),
+          eq(matches.status, "finalized"),
+          from ? gte(matches.playedAt, from) : undefined,
+        ),
+      )
+      .orderBy(asc(matches.playedAt));
   }
 }
 

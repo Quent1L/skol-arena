@@ -1,14 +1,13 @@
-import { Engine } from "json-rules-engine";
+import type { Engine } from "json-rules-engine";
 import { rulesRepository } from "../repository/rules.repository";
 import { rulesContextService } from "./rules-context.service";
 import { playerMmrRepository } from "../repository/player-mmr.repository";
 import { rankedSeasonRepository } from "../repository/ranked-season.repository";
-import { RULE_OPERATORS } from "./rules-operators";
+import { createRulesEngine } from "./rules-operators";
 import { notificationService } from "./notification.service";
 import { webSocketService } from "./websocket.service";
 import { logger } from "../utils/logger";
 import { MATCH_HISTORY_FACT, registerMatchCountFact } from "./rules-match-count";
-import { rulesMatchHistoryService } from "./rules-match-history.service";
 import type { BadgeAction, BadgeRecurrence, MatchSubmittedContext, RuleConditions } from "@skol-arena/shared";
 
 type Facts = Record<string, unknown>;
@@ -66,10 +65,7 @@ function toBadgeRule(rule: { id: string; conditions: unknown; action: unknown })
  */
 export class BadgeReconciliationService {
   private buildEngine(rules: BadgeRule[]): Engine {
-    const engine = new Engine([], { allowUndefinedFacts: true });
-    // Same operators as the live evaluation: without them a replay reads `contains`
-    // on a text fact as always false and fails outright on the line-up operators.
-    for (const operator of RULE_OPERATORS) engine.addOperator(operator);
+    const engine = createRulesEngine();
     registerMatchCountFact(engine);
     for (const rule of rules) {
       engine.addRule({
@@ -93,20 +89,6 @@ export class BadgeReconciliationService {
       if (ruleId) ids.add(ruleId);
     }
     return ids;
-  }
-
-  /**
-   * Rebuilds a past match's facts and refreshes their snapshot on the way: the replay
-   * is what repairs the snapshots after a cascade and backfills those that predate them.
-   */
-  private async replayMatch(matchId: string, seasonId: string) {
-    const replayed = await rulesContextService.buildMatchSubmittedContexts(matchId, true);
-    if (replayed.playedAt) {
-      await rulesMatchHistoryService
-        .save(matchId, seasonId, replayed.playedAt, replayed.contexts)
-        .catch((err) => logger.error({ err, matchId }, "[BadgeReconcile] saving match facts failed"));
-    }
-    return replayed;
   }
 
   /** Reconcile all badges for the given players within a single season. */
@@ -141,7 +123,7 @@ export class BadgeReconciliationService {
     const desired = new Map<string, EarningMatch>();
     const history: Facts[] = [];
     for (const row of ordered) {
-      const { contexts, playedAt } = await this.replayMatch(row.matchId, seasonId);
+      const { contexts, playedAt } = await rulesContextService.buildMatchSubmittedContexts(row.matchId, true);
       const ctx = contexts.find((c) => c.playerId === playerId);
       if (!ctx) continue;
       history.push(ctx.context as unknown as Facts);
@@ -194,7 +176,7 @@ export class BadgeReconciliationService {
       const matchIds = await playerMmrRepository.getSeasonMatchIdsOrdered(season.id);
       const histories = new Map<string, Facts[]>();
       for (const matchId of matchIds) {
-        const { contexts, playedAt } = await this.replayMatch(matchId, season.id);
+        const { contexts, playedAt } = await rulesContextService.buildMatchSubmittedContexts(matchId, true);
         for (const ctx of contexts) {
           const history = histories.get(ctx.playerId) ?? [];
           history.push(ctx.context as unknown as Facts);
