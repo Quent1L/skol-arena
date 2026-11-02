@@ -3,12 +3,13 @@ import { rulesRepository } from "../repository/rules.repository";
 import { firingKey, ruleFiringRepository, type RuleFiringDraft } from "../repository/rule-firing.repository";
 import { rulesContextService } from "./rules-context.service";
 import { createRulesEngine } from "./rules-operators";
-import { MATCH_HISTORY_FACT, registerMatchCountFact } from "./rules-match-count";
+import { DISCIPLINE_HISTORY_FACT, MATCH_HISTORY_FACT, registerMatchCountFact } from "./rules-match-count";
 import { rulesMatchHistoryService } from "./rules-match-history.service";
 import { logger } from "../utils/logger";
 import {
   EVENT_FACT_CATALOG,
   RULES_ENGINE_VERSION,
+  usesDisciplineWindow,
   usesMatchCount,
   type BadgeAction,
   type MatchSubmittedContext,
@@ -35,12 +36,15 @@ interface EngineBundle {
   byId: Map<string, EvaluableRule>;
   /** Some rule counts matches: each player's season history must be loaded. */
   needsHistory: boolean;
+  /** Some rule counts across seasons: the discipline's history must be loaded too. */
+  needsDisciplineHistory: boolean;
 }
 
 /** The match being evaluated, as every player's evaluation needs it. */
 interface EvaluatedMatch {
   matchId: string;
   seasonId: string | null;
+  disciplineId: string | null;
   playedAt?: Date;
 }
 
@@ -137,7 +141,7 @@ export class RulesEvaluationService {
 
     for (const { playerId, context } of contexts) {
       const evaluation = await this.evaluateForPlayer(
-        { matchId, seasonId: seasonId ?? null, playedAt },
+        { matchId, seasonId: seasonId ?? null, disciplineId, playedAt },
         playerId,
         context,
         engineBundle,
@@ -172,10 +176,20 @@ export class RulesEvaluationService {
   }
 
   /** The player's season so far, or null when it cannot be known. */
-  private async historyFacts({ seasonId, playedAt }: EvaluatedMatch, playerId: string): Promise<Facts | null> {
-    if (!seasonId || !playedAt) return null;
+  private async historyFacts(
+    { seasonId, disciplineId, playedAt }: EvaluatedMatch,
+    playerId: string,
+    wholeDiscipline: boolean,
+  ): Promise<Facts | null> {
+    if (!seasonId || !playedAt || (wholeDiscipline && !disciplineId)) return null;
     try {
-      return { [MATCH_HISTORY_FACT]: await rulesMatchHistoryService.loadSeason(seasonId, playerId, playedAt) };
+      const facts: Facts = {
+        [MATCH_HISTORY_FACT]: await rulesMatchHistoryService.loadSeason(seasonId, playerId, playedAt),
+      };
+      if (wholeDiscipline) {
+        facts[DISCIPLINE_HISTORY_FACT] = await rulesMatchHistoryService.loadDiscipline(disciplineId!, playerId, playedAt);
+      }
+      return facts;
     } catch (err) {
       logger.error({ err, seasonId, playerId }, "[Rules] loading match history failed");
       return null;
@@ -217,7 +231,9 @@ export class RulesEvaluationService {
     // `randomRoll` is drawn here rather than in the context service: that service
     // must stay deterministic so badge reconciliation can replay past matches.
     const facts: Facts = { ...(context as unknown as Facts), randomRoll: Math.floor(Math.random() * 100) };
-    const history = engineBundle.needsHistory ? await this.historyFacts(evaluated, playerId) : {};
+    const history = engineBundle.needsHistory
+      ? await this.historyFacts(evaluated, playerId, engineBundle.needsDisciplineHistory)
+      : {};
     const candidates = await this.runEngine(engineBundle, { ...facts, ...history });
     // Without a history every count reads 0, which `matchCount < 5` would take for a
     // true result on a veteran: counting rules sit this one out, the others still run.
@@ -297,7 +313,12 @@ export class RulesEvaluationService {
       byId.set(rule.id, rule);
       engine.addRule({ conditions: rule.conditions as never, event: { type: "rule_matched", params: { ruleId: rule.id } } });
     }
-    return { engine, byId, needsHistory: rules.some((r) => usesMatchCount(r.conditions)) };
+    return {
+      engine,
+      byId,
+      needsHistory: rules.some((r) => usesMatchCount(r.conditions)),
+      needsDisciplineHistory: rules.some((r) => usesDisciplineWindow(r.conditions)),
+    };
   }
 
   private async runEngine(

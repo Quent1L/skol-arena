@@ -5,6 +5,7 @@ import {
   NON_DETERMINISTIC_FACTS,
   OPERATORS_BY_TYPE,
   TRIGGER_EVENTS,
+  usesDisciplineWindow,
   type AvailableBadge,
   type BadgeHolder,
   type BadgeAction,
@@ -114,6 +115,17 @@ function assertValidMatchCount(leaf: ConditionLeaf, nested: boolean): RuleCondit
   return conditions;
 }
 
+/**
+ * A discipline-wide count needs a discipline to span, and only suits a lifetime badge:
+ * once the threshold is passed, a seasonal one would be won again every season on the
+ * first match played.
+ */
+function assertDisciplineWindowAllowed(conditions: RuleConditions, scope: string, action: RuleAction): void {
+  if (!usesDisciplineWindow(conditions)) return;
+  const seasonalBadge = action.type === "badge" && (action.recurrence ?? "per_season") !== "once";
+  if (scope !== "discipline" || seasonalBadge) throw new BadRequestError(ErrorCode.INVALID_MATCH_COUNT);
+}
+
 function compareHolders(a: BadgeHolder, b: BadgeHolder): number {
   return (
     Number(b.earnedHere) - Number(a.earnedHere) ||
@@ -135,6 +147,7 @@ export class RulesService {
 
   async create(data: CreateRuleData, createdBy: string) {
     this.validateRule(data.triggerEvent, data.conditions, data.scope, data.disciplineId ?? null, data.type);
+    assertDisciplineWindowAllowed(data.conditions, data.scope, data.action);
     const rule = await rulesRepository.create({ ...(data as CreateRuleRow), createdBy });
     // Do NOT recompute now: a reconciliation pass can be long and the admin may
     // keep editing. Just flag it dirty — the nightly cron (or a manual trigger)
@@ -155,6 +168,11 @@ export class RulesService {
       // null, which must not fall back to the stored one.
       data.disciplineId !== undefined ? data.disciplineId : existing.disciplineId,
       data.type ?? existing.type,
+    );
+    assertDisciplineWindowAllowed(
+      data.conditions ?? (existing.conditions as RuleConditions),
+      data.scope ?? existing.scope,
+      data.action ?? (existing.action as RuleAction),
     );
     const rule = await rulesRepository.update(id, data);
     // Flag dirty for the nightly/manual recompute (deactivation keeps badges, so skip).

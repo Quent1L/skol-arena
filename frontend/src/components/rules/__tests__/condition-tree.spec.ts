@@ -76,6 +76,17 @@ describe('match counter', () => {
     expect(toConditions(fromConditions(counted))).toEqual(counted)
   })
 
+  it('keeps the discipline window through a round-trip and a date restore', () => {
+    const career: RuleConditions = {
+      fact: 'matchCount',
+      params: { window: 'discipline', conditions: { all: [] } },
+      operator: 'equal',
+      value: 1,
+    }
+    expect(toConditions(fromConditions(career))).toEqual(career)
+    expect(restoreDateValues(career)).toEqual(career)
+  })
+
   it('restores dates inside the sub-conditions', () => {
     expect(restoreDateValues(convertStringDatesToJS(structuredClone(counted)))).toEqual(counted)
   })

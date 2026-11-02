@@ -1,6 +1,7 @@
 import http from '@/config/ApiConfig'
 import type {
   AvailableBadge,
+  BadgeProgress,
   ClientPlayerBadge,
   ClientRule,
   ClientRuleFiringDetail,
@@ -92,6 +93,13 @@ export const rulesApi = {
       { params: options },
     )
     return response.data.badges
+  },
+
+  async getBadgeProgress(tournamentId: string): Promise<BadgeProgress[]> {
+    const response = await http.get<{ progress: BadgeProgress[] }>(
+      `/api/tournaments/${tournamentId}/badge-progress`,
+    )
+    return response.data.progress
   },
 
   async getBadgeCount(id: string): Promise<number> {

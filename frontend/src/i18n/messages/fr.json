@@ -284,6 +284,10 @@
     "times": "×{count}",
     "title": "Détenteurs : {badge}"
   },
+  "badgeProgress": {
+    "allSeasons": "toutes saisons",
+    "count": "{current} / {target}"
+  },
   "badgeRevealAnimation": {
     "continue": "Continuer",
     "newBadge": "Nouveau badge"
@@ -385,7 +389,11 @@
   "conditionCount": {
     "comparison": "Ce nombre doit être",
     "matchesLabel": "matchs",
-    "title": "Nombre de matchs de la saison où…"
+    "title": "Nombre de matchs où…",
+    "windowDiscipline": "Toutes les saisons de la discipline",
+    "windowHint": "Toutes les saisons : réservé aux règles liées à une discipline, et aux badges « une fois à vie ».",
+    "windowLabel": "Compter sur",
+    "windowSeason": "La saison du match"
   },
   "conditionGroup": {
     "addCondition": "Condition",

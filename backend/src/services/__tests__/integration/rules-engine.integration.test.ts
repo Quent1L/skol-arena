@@ -9,6 +9,7 @@ const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 import { rulesContextService } from "../../rules-context.service";
 import { rulesEvaluationService } from "../../rules-evaluation.service";
 import { rulesMatchHistoryService } from "../../rules-match-history.service";
+import { badgeProgressService } from "../../badge-progress.service";
 import {
   tournaments,
   appUsers,
@@ -897,6 +898,96 @@ describe("Rules engine — line-up facts & random gating (integration)", () => {
       const outputs = await rulesEvaluationService.evaluateMatchSubmitted(second, seasonId);
 
       expect(outputs.get(playerIds[0])).toBeUndefined();
+    });
+
+    describe("over a whole discipline", () => {
+      const careerWins: RuleConditions = {
+        all: [
+          {
+            fact: "matchCount",
+            params: { window: "discipline", conditions: { all: [{ fact: "isWinner", operator: "equal", value: true }] } },
+            operator: "greaterThanInclusive",
+            value: 2,
+          },
+        ],
+      };
+
+      /** A discipline of its own per test: the file's players keep their matches between tests. */
+      async function freshDiscipline(): Promise<string> {
+        const name = `Career ${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const [discipline] = await testDb.insert(disciplines).values({ name }).returning();
+        return discipline.id;
+      }
+
+      async function seasonInDiscipline(discipline: string) {
+        const season = await createSeasonWithMatch();
+        await testDb.update(tournaments).set({ disciplineId: discipline }).where(eq(tournaments.id, season.seasonId));
+        return season;
+      }
+
+      it("keeps counting from one season to the next", async () => {
+        const career = await freshDiscipline();
+        const a = await seasonInDiscipline(career);
+        const b = await seasonInDiscipline(career);
+        await addMessageRule("Career", careerWins, ["Career"]);
+
+        expect((await rulesEvaluationService.evaluateMatchSubmitted(a.matchId, a.seasonId)).get(playerIds[0])).toBeUndefined();
+        const outputs = await rulesEvaluationService.evaluateMatchSubmitted(b.matchId, b.seasonId);
+
+        expect(outputs.get(playerIds[0])?.message).toBe("Career");
+      });
+
+      it("ignores the seasons of other disciplines", async () => {
+        const other = await seasonInDiscipline(await freshDiscipline());
+        const here = await seasonInDiscipline(await freshDiscipline());
+        await addMessageRule("Career", careerWins, ["Career"]);
+
+        await rulesEvaluationService.evaluateMatchSubmitted(other.matchId, other.seasonId);
+        const outputs = await rulesEvaluationService.evaluateMatchSubmitted(here.matchId, here.seasonId);
+
+        expect(outputs.get(playerIds[0])).toBeUndefined();
+      });
+
+      it("reports a player's progress over both windows", async () => {
+        const career = await freshDiscipline();
+        const a = await seasonInDiscipline(career);
+        const b = await seasonInDiscipline(career);
+        const [rule] = await testDb
+          .insert(rules)
+          .values({
+            triggerEvent: "match_submitted",
+            type: "badge",
+            scope: "discipline",
+            disciplineId: career,
+            name: "Career badge",
+            conditions: careerWins,
+            action: { type: "badge", icon: "i", label: "l", description: "d", recurrence: "once" },
+            isActive: true,
+            createdBy: adminId,
+          })
+          .returning();
+        await rulesEvaluationService.evaluateMatchSubmitted(a.matchId, a.seasonId);
+        await rulesEvaluationService.evaluateMatchSubmitted(b.matchId, b.seasonId);
+
+        const progress = await badgeProgressService.forPlayer(
+          { id: b.seasonId, disciplineId: career, mode: "ranked" },
+          playerIds[0],
+        );
+
+        expect(progress).toContainEqual({
+          ruleId: rule.id,
+          counters: [{ current: 2, target: 2, window: "discipline" }],
+        });
+      });
+
+      it("shows no progress outside a ranked season", async () => {
+        const { seasonId } = await seasonInDiscipline(disciplineId);
+        const progress = await badgeProgressService.forPlayer(
+          { id: seasonId, disciplineId, mode: "championship" },
+          playerIds[0],
+        );
+        expect(progress).toEqual([]);
+      });
     });
 
     it("freezes the snapshot from the match's history, not the player's live state", async () => {

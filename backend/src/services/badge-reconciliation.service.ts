@@ -7,8 +7,14 @@ import { createRulesEngine } from "./rules-operators";
 import { notificationService } from "./notification.service";
 import { webSocketService } from "./websocket.service";
 import { logger } from "../utils/logger";
-import { MATCH_HISTORY_FACT, registerMatchCountFact } from "./rules-match-count";
-import type { BadgeAction, BadgeRecurrence, MatchSubmittedContext, RuleConditions } from "@skol-arena/shared";
+import { DISCIPLINE_HISTORY_FACT, MATCH_HISTORY_FACT, registerMatchCountFact } from "./rules-match-count";
+import {
+  usesDisciplineWindow,
+  type BadgeAction,
+  type BadgeRecurrence,
+  type MatchSubmittedContext,
+  type RuleConditions,
+} from "@skol-arena/shared";
 
 type Facts = Record<string, unknown>;
 
@@ -38,6 +44,13 @@ interface DesiredAward extends EarningMatch {
  */
 function awardKey(recurrence: BadgeRecurrence, playerId: string, seasonId: string | null): string {
   return recurrence === "per_season" ? `${seasonId}:${playerId}` : playerId;
+}
+
+function appendTo(histories: Map<string, Facts[]>, key: string, facts: Facts): Facts[] {
+  const history = histories.get(key) ?? [];
+  history.push(facts);
+  histories.set(key, history);
+  return history;
 }
 
 function toBadgeRule(rule: { id: string; conditions: unknown; action: unknown }): BadgeRule {
@@ -79,10 +92,19 @@ export class BadgeReconciliationService {
   /**
    * `history` is the player's replayed season up to this match, included: the
    * `matchCount` condition counts over it, as the live evaluation does over the
-   * stored snapshots.
+   * stored snapshots. `disciplineHistory` is the same across seasons.
    */
-  private async matchedRuleIds(engine: Engine, context: MatchSubmittedContext, history: Facts[]): Promise<Set<string>> {
-    const { events } = await engine.run({ ...(context as unknown as Facts), [MATCH_HISTORY_FACT]: history });
+  private async matchedRuleIds(
+    engine: Engine,
+    context: MatchSubmittedContext,
+    history: Facts[],
+    disciplineHistory: Facts[] = [],
+  ): Promise<Set<string>> {
+    const { events } = await engine.run({
+      ...(context as unknown as Facts),
+      [MATCH_HISTORY_FACT]: history,
+      [DISCIPLINE_HISTORY_FACT]: disciplineHistory,
+    });
     const ids = new Set<string>();
     for (const event of events) {
       const ruleId = event.params?.ruleId as string | undefined;
@@ -102,12 +124,64 @@ export class BadgeReconciliationService {
     // No active badge rules → nothing to award; inactive-rule badges are kept.
     if (badgeRules.length === 0) return;
 
-    const engine = this.buildEngine(badgeRules);
+    const seasonRules = badgeRules.filter((r) => !usesDisciplineWindow(r.conditions));
+    const engine = this.buildEngine(seasonRules);
 
-    for (const playerId of playerIds) {
-      await this.reconcileOnePlayer(seasonId, playerId, engine, badgeRules).catch((err) =>
+    for (const playerId of seasonRules.length > 0 ? playerIds : []) {
+      await this.reconcileOnePlayer(seasonId, playerId, engine, seasonRules).catch((err) =>
         logger.error({ err, seasonId, playerId }, "[BadgeReconcile] player failed"),
       );
+    }
+
+    const disciplineRules = badgeRules.filter((r) => usesDisciplineWindow(r.conditions));
+    if (disciplineRules.length > 0 && season.disciplineId) {
+      await this.reconcileDisciplineRules(season.disciplineId, playerIds, disciplineRules);
+    }
+  }
+
+  /** A discipline-wide count spans seasons: one season's replay cannot decide it. */
+  private async reconcileDisciplineRules(disciplineId: string, playerIds: string[], rules: BadgeRule[]): Promise<void> {
+    const seasons = await rankedSeasonRepository.listSeasons({ disciplineId });
+    const engine = this.buildEngine(rules);
+    for (const playerId of playerIds) {
+      await this.reconcileDisciplinePlayer(seasons.map((s) => s.id), playerId, engine, rules).catch((err) =>
+        logger.error({ err, disciplineId, playerId }, "[BadgeReconcile] discipline player failed"),
+      );
+    }
+  }
+
+  private async reconcileDisciplinePlayer(
+    seasonIds: string[],
+    playerId: string,
+    engine: Engine,
+    rules: BadgeRule[],
+  ): Promise<void> {
+    const ruleById = new Map(rules.map((r) => [r.id, r]));
+    const desired = new Map<string, EarningMatch & { seasonId: string }>();
+    const bySeason = new Map<string, Facts[]>();
+    const all: Facts[] = [];
+    for (const { matchId, seasonId } of await playerMmrRepository.getSeasonsMatchesOrdered(seasonIds, playerId)) {
+      const { contexts, playedAt } = await rulesContextService.buildMatchSubmittedContexts(matchId, true);
+      const ctx = contexts.find((c) => c.playerId === playerId);
+      if (!ctx) continue;
+      const facts = ctx.context as unknown as Facts;
+      all.push(facts);
+      const seasonHistory = [...(bySeason.get(seasonId) ?? []), facts];
+      bySeason.set(seasonId, seasonHistory);
+      for (const ruleId of await this.matchedRuleIds(engine, ctx.context, seasonHistory, all)) {
+        if (!desired.has(ruleId)) desired.set(ruleId, { matchId, playedAt, seasonId });
+      }
+    }
+
+    const held = (await rulesRepository.listBadgesByPlayer(playerId)).filter((b) => ruleById.has(b.ruleId));
+    for (const badge of held) {
+      if (desired.has(badge.ruleId)) continue;
+      await rulesRepository.revokeBadge(playerId, badge.ruleId, undefined);
+      await this.notifyRevoked(playerId, ruleById.get(badge.ruleId)!.label);
+    }
+    const heldRuleIds = new Set(held.map((b) => b.ruleId));
+    for (const [ruleId, earning] of desired) {
+      if (!heldRuleIds.has(ruleId)) await this.award(playerId, ruleId, earning, earning.seasonId, ruleById.get(ruleId)!);
     }
   }
 
@@ -135,7 +209,8 @@ export class BadgeReconciliationService {
     // Only badges from this season whose rule is still active are in scope; a
     // deactivated rule's badges are intentionally kept.
     const current = await rulesRepository.listBadgesByPlayerAndSeason(playerId, seasonId);
-    const currentActive = current.filter((b) => b.rule.isActive && b.rule.type === "badge");
+    // `ruleById` leaves discipline-wide badges out: their own pass decides those.
+    const currentActive = current.filter((b) => b.rule.isActive && b.rule.type === "badge" && ruleById.has(b.ruleId));
     const heldRuleIds = new Set(currentActive.map((b) => b.ruleId));
 
     for (const badge of currentActive) {
@@ -168,27 +243,7 @@ export class BadgeReconciliationService {
       rule.scope === "discipline" && rule.disciplineId ? { disciplineId: rule.disciplineId } : undefined,
     );
 
-    // The awards a replay says should exist, keyed the way this recurrence defines
-    // sameness: a seasonal badge is earned once per season, a lifetime one once ever.
-    // In both cases the earliest matching match under that key is the one that earned it.
-    const desired = new Map<string, DesiredAward>();
-    for (const season of seasons) {
-      const matchIds = await playerMmrRepository.getSeasonMatchIdsOrdered(season.id);
-      const histories = new Map<string, Facts[]>();
-      for (const matchId of matchIds) {
-        const { contexts, playedAt } = await rulesContextService.buildMatchSubmittedContexts(matchId, true);
-        for (const ctx of contexts) {
-          const history = histories.get(ctx.playerId) ?? [];
-          history.push(ctx.context as unknown as Facts);
-          histories.set(ctx.playerId, history);
-          const key = awardKey(badgeRule.recurrence, ctx.playerId, season.id);
-          if (desired.has(key)) continue;
-          if ((await this.matchedRuleIds(engine, ctx.context, history)).has(rule.id)) {
-            desired.set(key, { playerId: ctx.playerId, seasonId: season.id, matchId, playedAt });
-          }
-        }
-      }
-    }
+    const desired = await this.desiredAwards(badgeRule, engine, seasons.map((s) => s.id));
 
     const existing = new Map(
       (await rulesRepository.listBadgeAwards(rule.id)).map((award) => [
@@ -212,6 +267,42 @@ export class BadgeReconciliationService {
       );
       await this.notifyRevoked(award.playerId, badgeRule.label, silent);
     }
+  }
+
+  /**
+   * The awards a replay says should exist, keyed the way this recurrence defines
+   * sameness: a seasonal badge is earned once per season, a lifetime one once ever.
+   * In both cases the earliest matching match under that key is the one that earned it.
+   */
+  private async desiredAwards(rule: BadgeRule, engine: Engine, seasonIds: string[]): Promise<Map<string, DesiredAward>> {
+    const desired = new Map<string, DesiredAward>();
+    const seasonHistories = new Map<string, Facts[]>();
+    const disciplineHistories = new Map<string, Facts[]>();
+    for (const { matchId, seasonId } of await this.replayOrder(rule, seasonIds)) {
+      const { contexts, playedAt } = await rulesContextService.buildMatchSubmittedContexts(matchId, true);
+      for (const ctx of contexts) {
+        const facts = ctx.context as unknown as Facts;
+        const seasonHistory = appendTo(seasonHistories, `${seasonId}:${ctx.playerId}`, facts);
+        const disciplineHistory = appendTo(disciplineHistories, ctx.playerId, facts);
+        const key = awardKey(rule.recurrence, ctx.playerId, seasonId);
+        if (desired.has(key)) continue;
+        if ((await this.matchedRuleIds(engine, ctx.context, seasonHistory, disciplineHistory)).has(rule.id)) {
+          desired.set(key, { playerId: ctx.playerId, seasonId, matchId, playedAt });
+        }
+      }
+    }
+    return desired;
+  }
+
+  /** A discipline-wide count needs true chronology across seasons, which may overlap. */
+  private async replayOrder(rule: BadgeRule, seasonIds: string[]): Promise<{ matchId: string; seasonId: string }[]> {
+    if (usesDisciplineWindow(rule.conditions)) return playerMmrRepository.getSeasonsMatchesOrdered(seasonIds);
+    const order: { matchId: string; seasonId: string }[] = [];
+    for (const seasonId of seasonIds) {
+      const matchIds = await playerMmrRepository.getSeasonMatchIdsOrdered(seasonId);
+      order.push(...matchIds.map((matchId) => ({ matchId, seasonId })));
+    }
+    return order;
   }
 
   /** Reconcile every active badge rule (full nightly pass). */

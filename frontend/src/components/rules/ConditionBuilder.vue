@@ -43,6 +43,8 @@ const props = defineProps<{
   outcomeReasons: OutcomeReason[]
   /** Discipline of a `scope: 'discipline'` rule — narrows the outcome pickers. */
   disciplineId?: string | null
+  /** The rule can count across seasons: discipline scope, and no seasonal badge. */
+  disciplineWindowAllowed?: boolean
 }>()
 const emit = defineEmits<{ 'update:modelValue': [value: RuleConditions] }>()
 
@@ -66,6 +68,10 @@ provide('disciplines', disciplines)
 provide('organisations', organisations)
 provide('outcomeTypes', scopedOutcomeTypes)
 provide('outcomeReasons', scopedOutcomeReasons)
+provide(
+  'disciplineWindowAllowed',
+  computed(() => props.disciplineWindowAllowed),
+)
 
 onMounted(async () => {
   const [d, o] = await Promise.all([disciplineApi.list(), organizationApi.list()])

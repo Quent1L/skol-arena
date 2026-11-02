@@ -36,7 +36,9 @@ export class RulesMatchHistoryService {
 
   /**
    * Rewrites what a backdated match invalidated: the players' matches played since.
-   * Returns the players who had any, the only ones whose history actually moved.
+   * Returns the players whose history actually moved: those who had any, plus those
+   * who played on in a later season of the discipline, whose snapshots still hold but
+   * whose discipline-wide counts just changed.
    */
   async refreshAfterBackdatedMatch(
     seasonId: string,
@@ -47,7 +49,8 @@ export class RulesMatchHistoryService {
     const rows = await matchPlayerFactsRepository.listPlayersMatches(seasonId, playerIds, playedAt);
     const later = rows.filter((r) => r.matchId !== matchId);
     await this.refreshMatches(later.map((r) => r.matchId), seasonId);
-    return [...new Set(later.map((r) => r.playerId))];
+    const active = await matchPlayerFactsRepository.listPlayersActiveInDisciplineSince(seasonId, playerIds, playedAt);
+    return [...new Set([...later.map((r) => r.playerId), ...active])];
   }
 
   /** One match at a time, each failure costing that match only until the next refresh. */
@@ -68,6 +71,13 @@ export class RulesMatchHistoryService {
     const missing = await matchPlayerFactsRepository.listMissingMatchIds(seasonId, playerId, upTo);
     for (const matchId of missing) await this.refreshMatch(matchId, seasonId);
     return matchPlayerFactsRepository.listForPlayerSeason(seasonId, playerId, upTo);
+  }
+
+  /** The same, over every season of a discipline. */
+  async loadDiscipline(disciplineId: string, playerId: string, upTo: Date): Promise<Facts[]> {
+    const missing = await matchPlayerFactsRepository.listMissingForDiscipline(disciplineId, playerId, upTo);
+    for (const { matchId, seasonId } of missing) await this.refreshMatch(matchId, seasonId);
+    return matchPlayerFactsRepository.listForPlayerDiscipline(disciplineId, playerId, upTo);
   }
 }
 

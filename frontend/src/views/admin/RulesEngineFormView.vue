@@ -113,6 +113,9 @@
           :outcome-types="outcomeTypes"
           :outcome-reasons="outcomeReasons"
           :discipline-id="form.scope === 'discipline' ? form.disciplineId : null"
+          :discipline-window-allowed="
+            form.scope === 'discipline' && (form.type === 'message' || badge.recurrence === 'once')
+          "
         />
       </UCard>
 

@@ -165,8 +165,26 @@ export const NON_DETERMINISTIC_FACTS = ["randomRoll"] as const;
  */
 export const MATCH_COUNT_FACT = "matchCount";
 
+/** How far back a counter looks: the match's season, or every season of its discipline. */
+export const MATCH_COUNT_WINDOWS = ["season", "discipline"] as const;
+export type MatchCountWindow = (typeof MATCH_COUNT_WINDOWS)[number];
+
 export interface MatchCountParams {
   conditions: RuleConditions;
+  /** Absent means `season`. */
+  window?: MatchCountWindow;
+}
+
+/** Every season counter of a condition tree. */
+export function matchCountLeaves(conditions: RuleConditions): ConditionLeaf[] {
+  if ("all" in conditions) return conditions.all.flatMap(matchCountLeaves);
+  if ("any" in conditions) return conditions.any.flatMap(matchCountLeaves);
+  return conditions.fact === MATCH_COUNT_FACT ? [conditions] : [];
+}
+
+/** Whether a condition tree counts over several seasons. */
+export function usesDisciplineWindow(conditions: RuleConditions): boolean {
+  return matchCountLeaves(conditions).some((leaf) => leaf.params?.window === "discipline");
 }
 
 /** Whether a condition tree uses the season counter anywhere. */
@@ -396,7 +414,9 @@ const conditionLeafSchema: z.ZodType<ConditionLeaf> = z.object({
   fact: z.string().min(1),
   operator: z.string().min(1),
   value: z.unknown(),
-  params: z.lazy(() => z.object({ conditions: ruleConditionsSchema })).optional(),
+  params: z
+    .lazy(() => z.object({ conditions: ruleConditionsSchema, window: z.enum(MATCH_COUNT_WINDOWS).optional() }))
+    .optional(),
 });
 
 export const ruleConditionsSchema: z.ZodType<RuleConditions> = z.lazy(() =>
@@ -524,6 +544,25 @@ export type AvailableBadge = z.infer<typeof availableBadgeSchema>;
 export const availableBadgesQuerySchema = z.object({
   withHolders: z.stringbool().optional(),
 });
+
+/** How far a player is along one counter of a badge. */
+export const badgeCounterProgressSchema = z
+  .object({
+    current: z.number().int(),
+    target: z.number().int(),
+    window: z.enum(MATCH_COUNT_WINDOWS),
+  })
+  .meta({ id: "BadgeCounterProgress" });
+
+export const badgeProgressSchema = z
+  .object({
+    ruleId: z.string(),
+    counters: z.array(badgeCounterProgressSchema),
+  })
+  .meta({ id: "BadgeProgress" });
+
+export type BadgeCounterProgress = z.infer<typeof badgeCounterProgressSchema>;
+export type BadgeProgress = z.infer<typeof badgeProgressSchema>;
 
 // ============================================
 // Inferred types

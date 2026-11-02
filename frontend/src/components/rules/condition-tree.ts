@@ -1,4 +1,8 @@
-import { MATCH_COUNT_FACT, type RuleConditions } from '@skol-arena/shared/types/index'
+import {
+  MATCH_COUNT_FACT,
+  type MatchCountWindow,
+  type RuleConditions,
+} from '@skol-arena/shared/types/index'
 import { toCalendarDate } from '@/utils/calendar-date'
 
 /**
@@ -9,7 +13,7 @@ export type BuilderNode =
   | { kind: 'group'; operator: 'all' | 'any'; children: BuilderNode[] }
   | { kind: 'leaf'; fact: string; operator: string; value: unknown }
   // The season counter: the number of matches meeting `where`, compared with `value`.
-  | { kind: 'count'; operator: string; value: unknown; where: GroupNode }
+  | { kind: 'count'; operator: string; value: unknown; where: GroupNode; window?: MatchCountWindow }
 
 export type GroupNode = { kind: 'group'; operator: 'all' | 'any'; children: BuilderNode[] }
 
@@ -70,7 +74,11 @@ export function toConditions(node: BuilderNode): RuleConditions {
   if (node.kind === 'count') {
     return {
       fact: MATCH_COUNT_FACT,
-      params: { conditions: toConditions(node.where) },
+      params: {
+        conditions: toConditions(node.where),
+        // The season is the default: stored rules keep the shape they always had.
+        ...(node.window === 'discipline' ? { window: node.window } : {}),
+      },
       operator: node.operator,
       value: node.value,
     }
@@ -93,6 +101,7 @@ export function fromConditions(conditions: RuleConditions | null | undefined): B
       operator: conditions.operator,
       value: conditions.value,
       where: ensureGroup(fromConditions(conditions.params?.conditions)),
+      window: conditions.params?.window,
     }
   }
   return { kind: 'leaf', fact: conditions.fact, operator: conditions.operator, value: conditions.value }
@@ -132,6 +141,6 @@ export function restoreDateValues(conditions: RuleConditions): RuleConditions {
   return {
     ...conditions,
     value: Array.isArray(value) ? value.map(restoreDateValue) : restoreDateValue(value),
-    ...(params ? { params: { conditions: restoreDateValues(params.conditions) } } : {}),
+    ...(params ? { params: { ...params, conditions: restoreDateValues(params.conditions) } } : {}),
   }
 }

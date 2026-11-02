@@ -313,6 +313,27 @@ export class PlayerMmrRepository {
     return rows.map((r) => r.matchId);
   }
 
+  /** Matches of several seasons in one chronological order, optionally one player's only. */
+  async getSeasonsMatchesOrdered(
+    seasonIds: string[],
+    playerId?: string,
+  ): Promise<{ matchId: string; seasonId: string }[]> {
+    if (seasonIds.length === 0) return [];
+    const rows = await db
+      .selectDistinct({ matchId: mmrHistory.matchId, seasonId: mmrHistory.seasonId, playedAt: matches.playedAt })
+      .from(mmrHistory)
+      .innerJoin(matches, eq(mmrHistory.matchId, matches.id))
+      .where(
+        and(
+          inArray(mmrHistory.seasonId, seasonIds),
+          eq(matches.status, "finalized"),
+          playerId ? eq(mmrHistory.playerId, playerId) : undefined,
+        ),
+      )
+      .orderBy(asc(matches.playedAt));
+    return rows.map(({ matchId, seasonId }) => ({ matchId, seasonId }));
+  }
+
   async getMmrHistoryForPlayerAndMatch(seasonId: string, playerId: string, matchId: string) {
     return await db.query.mmrHistory.findFirst({
       where: and(

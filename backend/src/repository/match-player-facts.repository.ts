@@ -1,6 +1,6 @@
-import { and, asc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gt, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { db } from "../config/database";
-import { matches, matchPlayerFacts, mmrHistory } from "../db/schema";
+import { matches, matchPlayerFacts, mmrHistory, tournaments } from "../db/schema";
 
 export interface MatchPlayerFactsRow {
   matchId: string;
@@ -70,6 +70,71 @@ export class MatchPlayerFactsRepository {
       )
       .orderBy(asc(matches.playedAt));
     return rows.map((r) => r.matchId);
+  }
+
+  /** Like `listForPlayerSeason`, over every season of a discipline. */
+  async listForPlayerDiscipline(disciplineId: string, playerId: string, upTo: Date): Promise<Record<string, unknown>[]> {
+    const rows = await db
+      .select({ facts: matchPlayerFacts.facts })
+      .from(matchPlayerFacts)
+      .innerJoin(matches, eq(matchPlayerFacts.matchId, matches.id))
+      .innerJoin(tournaments, eq(matchPlayerFacts.seasonId, tournaments.id))
+      .where(
+        and(
+          eq(tournaments.disciplineId, disciplineId),
+          eq(matchPlayerFacts.playerId, playerId),
+          eq(matches.status, "finalized"),
+          lte(matches.playedAt, upTo),
+        ),
+      )
+      .orderBy(asc(matches.playedAt));
+    return rows.map((r) => r.facts as Record<string, unknown>);
+  }
+
+  /** Like `listMissingMatchIds`, over every season of a discipline. */
+  async listMissingForDiscipline(
+    disciplineId: string,
+    playerId: string,
+    upTo: Date,
+  ): Promise<{ matchId: string; seasonId: string }[]> {
+    return db
+      .select({ matchId: mmrHistory.matchId, seasonId: mmrHistory.seasonId })
+      .from(mmrHistory)
+      .innerJoin(matches, eq(mmrHistory.matchId, matches.id))
+      .innerJoin(tournaments, eq(mmrHistory.seasonId, tournaments.id))
+      .leftJoin(
+        matchPlayerFacts,
+        and(eq(matchPlayerFacts.matchId, mmrHistory.matchId), eq(matchPlayerFacts.playerId, mmrHistory.playerId)),
+      )
+      .where(
+        and(
+          eq(tournaments.disciplineId, disciplineId),
+          eq(mmrHistory.playerId, playerId),
+          eq(matches.status, "finalized"),
+          lte(matches.playedAt, upTo),
+          isNull(matchPlayerFacts.matchId),
+        ),
+      )
+      .orderBy(asc(matches.playedAt));
+  }
+
+  /** Those of the players with a finalized match after `since` in the season's discipline. */
+  async listPlayersActiveInDisciplineSince(seasonId: string, playerIds: string[], since: Date): Promise<string[]> {
+    if (playerIds.length === 0) return [];
+    const rows = await db
+      .selectDistinct({ playerId: mmrHistory.playerId })
+      .from(mmrHistory)
+      .innerJoin(matches, eq(mmrHistory.matchId, matches.id))
+      .innerJoin(tournaments, eq(mmrHistory.seasonId, tournaments.id))
+      .where(
+        and(
+          sql`${tournaments.disciplineId} = (select t.discipline_id from tournaments t where t.id = ${seasonId})`,
+          inArray(mmrHistory.playerId, playerIds),
+          eq(matches.status, "finalized"),
+          gt(matches.playedAt, since),
+        ),
+      );
+    return rows.map((r) => r.playerId);
   }
 
   /** The players' finalized ranked matches of the season, from `from` included when given. */

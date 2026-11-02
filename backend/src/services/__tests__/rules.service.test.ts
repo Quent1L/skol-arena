@@ -159,6 +159,30 @@ describe("RulesService — non-deterministic facts", () => {
       await expect(rulesService.create(rule, "admin-1")).rejects.toThrow("INVALID_MATCH_COUNT");
     });
 
+    describe("discipline window", () => {
+      const params = { conditions: streakCondition, window: "discipline" };
+      const once = { type: "badge", icon: "i", label: "l", description: "d", recurrence: "once" } as const;
+      const scoped = { scope: "discipline", disciplineId: "d1" } as const;
+
+      it("accepts a lifetime badge or a message scoped to a discipline", async () => {
+        const conditions = counter({ params });
+        await rulesService.create(baseRule({ ...scoped, type: "badge", conditions, action: once }), "admin-1");
+        await rulesService.create(baseRule({ ...scoped, conditions }), "admin-1");
+        expect(mockRulesRepo.create).toHaveBeenCalledTimes(2);
+      });
+
+      it("rejects a rule without a discipline", async () => {
+        const rule = baseRule({ conditions: counter({ params }) });
+        await expect(rulesService.create(rule, "admin-1")).rejects.toThrow("INVALID_MATCH_COUNT");
+      });
+
+      it("rejects a seasonal badge, which would be won again every season", async () => {
+        const action = { ...once, recurrence: "per_season" } as const;
+        const rule = baseRule({ ...scoped, type: "badge", conditions: counter({ params }), action });
+        await expect(rulesService.create(rule, "admin-1")).rejects.toThrow("INVALID_MATCH_COUNT");
+      });
+    });
+
     it("rejects a list operator on a counter", async () => {
       const rule = baseRule({ conditions: counter({ operator: "in" }) });
       await expect(rulesService.create(rule, "admin-1")).rejects.toThrow("INVALID_OPERATOR_FOR_FACT");

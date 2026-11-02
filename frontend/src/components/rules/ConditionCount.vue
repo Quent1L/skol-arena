@@ -17,6 +17,22 @@
       />
     </div>
 
+    <UFormField
+      :label="t('conditionCount.windowLabel')"
+      :help="disciplineWindowAllowed ? undefined : t('conditionCount.windowHint')"
+      size="sm"
+      class="mb-3"
+    >
+      <USelectMenu
+        :model-value="node.window ?? 'season'"
+        :items="windowOptions"
+        value-key="value"
+        :search-input="false"
+        class="w-full sm:w-64"
+        @update:model-value="node.window = $event"
+      />
+    </UFormField>
+
     <!-- The sub-conditions a counted match must meet, rendered by the parent group. -->
     <slot />
 
@@ -43,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject, ref, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { MATCH_COUNT_OPERATORS } from '@skol-arena/shared/types/index'
 import type { BuilderNode } from './condition-tree'
@@ -52,6 +68,17 @@ const { t } = useI18n()
 
 const node = defineModel<Extract<BuilderNode, { kind: 'count' }>>({ required: true })
 defineEmits<{ remove: [] }>()
+
+const disciplineWindowAllowed = inject<Ref<boolean>>('disciplineWindowAllowed', ref(false))
+
+const windowOptions = computed(() => [
+  { label: t('conditionCount.windowSeason'), value: 'season' as const },
+  {
+    label: t('conditionCount.windowDiscipline'),
+    value: 'discipline' as const,
+    disabled: !disciplineWindowAllowed.value,
+  },
+])
 
 // A count compares like any number, so it reuses the number operators' labels.
 const operatorOptions = computed(() =>

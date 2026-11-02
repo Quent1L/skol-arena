@@ -30,7 +30,7 @@
           class="flex flex-col items-center text-center p-4 rounded-xl gap-2 transition-all hover:scale-[1.03] hover:shadow-md cursor-default"
           :class="isEarned(badge.ruleId)
             ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 hover:border-purple-400 dark:hover:border-purple-500'
-            : 'bg-slate-100 dark:bg-slate-800 opacity-50 hover:opacity-80'"
+            : ['bg-slate-100 dark:bg-slate-800', progressOf(badge).length ? '' : 'opacity-50 hover:opacity-80']"
         >
           <i
             :class="[badge.icon || 'fa fa-medal', isEarned(badge.ruleId) ? 'text-purple-600' : 'text-gray-400 dark:text-gray-500']"
@@ -52,6 +52,7 @@
               t('tournamentBadgesTab.alreadyEarnedIn', { seasons: previousSeasons(badge.ruleId).join(', ') })
             }}
           </div>
+          <BadgeProgressBars v-if="progressOf(badge).length" :counters="progressOf(badge)" />
           <BadgeHolders
             :holders="badge.holders ?? []"
             :badge-label="badge.label"
@@ -72,7 +73,13 @@ import { rulesApi } from '@/composables/rules/rules.api'
 import { useAuth } from '@/composables/useAuth'
 import { onWsEvent } from '@/composables/notification/notification.socket'
 import BadgeHolders from '@/components/rules/BadgeHolders.vue'
-import type { AvailableBadge, ClientPlayerBadge } from '@skol-arena/shared/types/index'
+import BadgeProgressBars from '@/components/rules/BadgeProgressBars.vue'
+import type {
+  AvailableBadge,
+  BadgeCounterProgress,
+  BadgeProgress,
+  ClientPlayerBadge,
+} from '@skol-arena/shared/types/index'
 
 const route = useRoute()
 const { appUser } = useAuth()
@@ -80,6 +87,7 @@ const { t } = useI18n()
 
 const availableBadges = ref<AvailableBadge[]>([])
 const playerBadges = ref<ClientPlayerBadge[]>([])
+const progress = ref<BadgeProgress[]>([])
 const loading = ref(true)
 
 const tournamentId = computed(() => route.params.id as string)
@@ -120,6 +128,13 @@ function previousSeasons(ruleId: string): string[] {
   return earnedElsewhere.value.get(ruleId) ?? []
 }
 
+/** Nothing left to chase once earned here, or for good when the badge is a lifetime one. */
+function progressOf(badge: AvailableBadge): BadgeCounterProgress[] {
+  const done = isEarned(badge.ruleId) || (badge.recurrence === 'once' && previousSeasons(badge.ruleId).length > 0)
+  if (done) return []
+  return progress.value.find((p) => p.ruleId === badge.ruleId)?.counters ?? []
+}
+
 function formatDate(date: Date | undefined): string {
   if (!date) return ''
   return new Date(date).toLocaleDateString('fr-FR')
@@ -132,12 +147,14 @@ function formatDate(date: Date | undefined): string {
 async function load({ silent = false } = {}) {
   if (!silent) loading.value = true
   try {
-    const [badges, earned] = await Promise.all([
+    const [badges, earned, counters] = await Promise.all([
       rulesApi.getAvailableBadges(tournamentId.value, { withHolders: true }),
       appUser.value ? rulesApi.getPlayerBadges(appUser.value.id) : Promise.resolve([]),
+      appUser.value ? rulesApi.getBadgeProgress(tournamentId.value) : Promise.resolve([]),
     ])
     availableBadges.value = badges
     playerBadges.value = earned
+    progress.value = counters
   } finally {
     loading.value = false
   }

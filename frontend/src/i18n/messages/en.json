@@ -284,6 +284,10 @@
     "times": "×{count}",
     "title": "Holders: {badge}"
   },
+  "badgeProgress": {
+    "allSeasons": "all seasons",
+    "count": "{current} / {target}"
+  },
   "badgeRevealAnimation": {
     "continue": "Continue",
     "newBadge": "New badge"
@@ -385,7 +389,11 @@
   "conditionCount": {
     "comparison": "This number must be",
     "matchesLabel": "matches",
-    "title": "Number of matches this season where…"
+    "title": "Number of matches where…",
+    "windowDiscipline": "Every season of the discipline",
+    "windowHint": "Every season: for discipline rules only, and for badges set to once only.",
+    "windowLabel": "Count over",
+    "windowSeason": "The match's season"
   },
   "conditionGroup": {
     "addCondition": "Add condition",

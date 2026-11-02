@@ -12,6 +12,9 @@ type MatchCounter = (history: Facts[], conditions: RuleConditions) => Promise<nu
  */
 export const MATCH_HISTORY_FACT = "__matchHistory";
 
+/** The same, over every season of the match's discipline. Only for `window: "discipline"`. */
+export const DISCIPLINE_HISTORY_FACT = "__disciplineHistory";
+
 /**
  * A counter remembering each match's verdict per sub-condition: a replay counts over
  * a history growing by one match at a time, and would otherwise re-evaluate all of it
@@ -59,16 +62,17 @@ export function countMatching(history: Facts[], conditions: RuleConditions): Pro
 
 /**
  * Teaches an engine the `matchCount` fact: it counts, in the history handed to the
- * run as `__matchHistory`, the matches meeting the leaf's `params.conditions`.
+ * run for the leaf's window, the matches meeting the leaf's `params.conditions`.
  * A run without a history (the simulator) counts nothing unless the caller passes
  * `matchCount` itself, which then wins as a plain runtime fact.
  */
 export function registerMatchCountFact(engine: Engine): void {
   const count = createMatchCounter();
   engine.addFact(MATCH_COUNT_FACT, async (params: unknown, almanac: Almanac) => {
-    const conditions = (params as Partial<MatchCountParams> | undefined)?.conditions;
+    const { conditions, window } = (params as Partial<MatchCountParams> | undefined) ?? {};
     if (!conditions) return 0;
-    const history = (await almanac.factValue<Facts[]>(MATCH_HISTORY_FACT).catch(() => undefined)) ?? [];
+    const fact = window === "discipline" ? DISCIPLINE_HISTORY_FACT : MATCH_HISTORY_FACT;
+    const history = (await almanac.factValue<Facts[]>(fact).catch(() => undefined)) ?? [];
     return count(history, conditions);
   });
 }

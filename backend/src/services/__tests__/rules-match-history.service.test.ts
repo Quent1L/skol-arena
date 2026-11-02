@@ -8,6 +8,7 @@ const mockRepo = {
   listPlayersMatches: mock((_s: any, _p: any, _f?: any) => Promise.resolve([] as any[])),
   listMissingMatchIds: mock((_s: any, _p: any, _u: any) => Promise.resolve([] as string[])),
   listForPlayerSeason: mock((_s: any, _p: any, _u: any) => Promise.resolve([] as any[])),
+  listPlayersActiveInDisciplineSince: mock((_s: any, _p: any, _d: any) => Promise.resolve([] as string[])),
 };
 mock.module("../../repository/match-player-facts.repository", () => ({ matchPlayerFactsRepository: mockRepo }));
 
@@ -78,5 +79,15 @@ describe("RulesMatchHistoryService", () => {
     expect(moved).toEqual(["p1"]);
     expect(mockContext.buildMatchSubmittedContexts).toHaveBeenCalledTimes(1);
     expect(mockContext.buildMatchSubmittedContexts).toHaveBeenCalledWith("later", true);
+  });
+
+  it("also reports players who played on in a later season of the discipline", async () => {
+    mockRepo.listPlayersMatches.mockResolvedValue([{ matchId: "backdated", playerId: "p1" }]);
+    mockRepo.listPlayersActiveInDisciplineSince.mockResolvedValueOnce(["p1"]);
+
+    const moved = await service.refreshAfterBackdatedMatch("s1", "backdated", ["p1", "p2"], PLAYED_AT);
+
+    expect(moved).toEqual(["p1"]);
+    expect(mockContext.buildMatchSubmittedContexts).not.toHaveBeenCalled();
   });
 });

@@ -26,6 +26,7 @@ import {
   canGenerateBracketResponseSchema,
   availableBadgeSchema,
   availableBadgesQuerySchema,
+  badgeProgressSchema,
   mutationResultSchema,
   tournamentRulesetSchema,
   tournamentEditabilitySchema,
@@ -36,6 +37,7 @@ import { createAppHono } from "../types/hono";
 import { rankedSeasonRepository } from "../repository/ranked-season.repository";
 import { playerStatsService } from "../services/player-stats.service";
 import { rulesService } from "../services/rules.service";
+import { badgeProgressService } from "../services/badge-progress.service";
 import { enqueueMmrSeasonRecalculation } from "../services/mmr-job-queue.service";
 
 const tournaments = createAppHono();
@@ -137,6 +139,33 @@ tournaments.get(
     await assertTournamentAccess(c.get("user")?.id, id);
     const tournament = await tournamentService.getTournamentById(id);
     return c.json(tournament);
+  }
+);
+
+// GET /tournaments/:id/badge-progress - the caller's progress towards the counted badges
+tournaments.get(
+  "/:id/badge-progress",
+  describe({
+    tags: TAGS,
+    summary: "Get the caller's progress towards a tournament's badges",
+    role: true,
+    notFound: true,
+    success: {
+      description: "One entry per earnable badge with a match counter, empty outside ranked seasons",
+      schema: z.object({ progress: z.array(badgeProgressSchema) }),
+    },
+  }),
+  tournamentIdParam,
+  async (c) => {
+    const viewerId = await resolveOptionalViewer(c);
+    const tournament = await tournamentService.getTournamentById(c.req.param("id")!);
+    await tournamentService.assertOrganizationAccess(tournament.organizationId, viewerId);
+    if (!viewerId) return c.json({ progress: [] });
+    const progress = await badgeProgressService.forPlayer(
+      { id: tournament.id, disciplineId: tournament.disciplineId ?? null, mode: tournament.mode },
+      viewerId,
+    );
+    return c.json({ progress });
   }
 );
 
