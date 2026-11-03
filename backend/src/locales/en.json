@@ -72,6 +72,8 @@
     "MATCH_INVALID_PLAYERS": "For flex teams, playerIdsA and playerIdsB are required",
     "MATCH_DUPLICATE_TEAMS": "Both teams cannot be identical",
     "MATCH_OVERLAPPING_PLAYERS": "{{playerName}} cannot be on both teams",
+    "MATCH_PLAYER_NOT_REGISTERED": "{{playerName}} is not registered for this competition",
+    "MATCH_PLAYER_REMOVED": "An organizer removed {{playerName}} from this competition, only they can register them again",
     "MATCH_INVALID_SCORE": "Scores cannot be negative",
     "MATCH_DRAW_NOT_ALLOWED": "Draws are not allowed in this tournament",
     "MATCH_SCORE_OUT_OF_RANGE": "Score is outside the allowed range for this tournament",

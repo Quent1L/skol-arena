@@ -72,6 +72,8 @@
     "MATCH_INVALID_PLAYERS": "Pour les équipes flexibles, playerIdsA et playerIdsB sont requis",
     "MATCH_DUPLICATE_TEAMS": "Les deux équipes ne peuvent pas être identiques",
     "MATCH_OVERLAPPING_PLAYERS": "{{playerName}} ne peut pas être dans les deux équipes",
+    "MATCH_PLAYER_NOT_REGISTERED": "{{playerName}} n'est pas inscrit à cette compétition",
+    "MATCH_PLAYER_REMOVED": "Un organisateur a retiré {{playerName}} de cette compétition, seul lui peut le réinscrire",
     "MATCH_INVALID_SCORE": "Les scores ne peuvent pas être négatifs",
     "MATCH_DRAW_NOT_ALLOWED": "Les matchs nuls ne sont pas autorisés dans ce tournoi",
     "MATCH_SCORE_OUT_OF_RANGE": "Le score est en dehors des limites autorisées pour ce tournoi",

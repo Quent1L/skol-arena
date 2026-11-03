@@ -1,117 +1,88 @@
-import { describe, it, expect, afterEach } from "bun:test";
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { matchInputValidator } from "../validators/match-input.validator";
+import { participantRepository } from "../../repository/participant.repository";
+import { userRepository } from "../../repository/user.repository";
 import { BadRequestError, ErrorCode } from "../../types/errors";
+import type { CreateMatchRequestData } from "@skol-arena/shared/types/index";
 
-const ORIGINAL_MAX_AGE = process.env.RANKED_MATCH_MAX_AGE_HOURS;
+let statuses: Record<string, string>;
 
-function setMaxAgeHours(value: string | undefined): void {
-  if (value === undefined) delete process.env.RANKED_MATCH_MAX_AGE_HOURS;
-  else process.env.RANKED_MATCH_MAX_AGE_HOURS = value;
-}
+const tournament = (mode: string) =>
+  ({ id: "t-1", mode, teamMode: "flex", minTeamSize: 1, maxTeamSize: 1 }) as any;
 
-function hoursAgo(hours: number): Date {
-  return new Date(Date.now() - hours * 60 * 60 * 1000);
-}
+const input = {
+  tournamentId: "t-1",
+  sides: [
+    { position: 1, playerIds: ["alice"] },
+    { position: 2, playerIds: ["bob"] },
+  ],
+} as CreateMatchRequestData;
 
-function expectTooOld(playedAt: Date | string | undefined, expectedHours: number): void {
+async function rejection(mode: string): Promise<BadRequestError | null> {
   try {
-    matchInputValidator.validateRankedPlayedAt(playedAt);
-    throw new Error("expected validateRankedPlayedAt to throw");
+    await matchInputValidator.validateMatchInput(input, tournament(mode));
+    return null;
   } catch (error) {
-    expect(error).toBeInstanceOf(BadRequestError);
-    const appError = error as BadRequestError;
-    expect(appError.code).toBe(ErrorCode.RANKED_MATCH_TOO_OLD);
-    expect(appError.details).toEqual({ hours: expectedHours });
+    if (error instanceof BadRequestError) return error;
+    throw error;
   }
 }
 
-describe("matchInputValidator.validateRankedPlayedAt", () => {
-  afterEach(() => setMaxAgeHours(ORIGINAL_MAX_AGE));
-
-  it("defaults to a 48h window when the variable is unset", () => {
-    setMaxAgeHours(undefined);
-
-    expect(() => matchInputValidator.validateRankedPlayedAt(hoursAgo(47))).not.toThrow();
-    expectTooOld(hoursAgo(49), 48);
-  });
-
-  it("honours a custom window", () => {
-    setMaxAgeHours("72");
-
-    expect(() => matchInputValidator.validateRankedPlayedAt(hoursAgo(60))).not.toThrow();
-    expectTooOld(hoursAgo(80), 72);
-  });
-
-  it("skips the age check entirely when set to 0", () => {
-    setMaxAgeHours("0");
-
-    expect(() => matchInputValidator.validateRankedPlayedAt(hoursAgo(24 * 365))).not.toThrow();
-  });
-
-  it("falls back to the default on an unparseable or negative value", () => {
-    setMaxAgeHours("not-a-number");
-    expectTooOld(hoursAgo(49), 48);
-
-    setMaxAgeHours("-5");
-    expectTooOld(hoursAgo(49), 48);
-  });
-
-  it("still requires a date, even with the window disabled", () => {
-    setMaxAgeHours("0");
-    expectTooOld(undefined, 0);
-
-    setMaxAgeHours(undefined);
-    expectTooOld(undefined, 48);
-  });
-
-  it("accepts an ISO string as well as a Date", () => {
-    setMaxAgeHours("48");
-
-    expect(() =>
-      matchInputValidator.validateRankedPlayedAt(hoursAgo(1).toISOString()),
-    ).not.toThrow();
-    expectTooOld(hoursAgo(100).toISOString(), 48);
-  });
+beforeEach(() => {
+  statuses = { alice: "active", bob: "active" };
+  (participantRepository as any).findStatuses = async (_t: string, ids: string[]) =>
+    new Map(ids.filter((id) => statuses[id]).map((id) => [id, statuses[id]]));
+  (userRepository as any).getById = async (id: string) => ({ id, displayName: id.toUpperCase() });
 });
 
-describe("matchInputValidator.collectRankedPlayedAt", () => {
-  afterEach(() => setMaxAgeHours(ORIGINAL_MAX_AGE));
+afterEach(() => {
+  delete (participantRepository as any).findStatuses;
+  delete (userRepository as any).getById;
+});
 
-  it("collects the same rule the create path enforces, instead of throwing", () => {
-    setMaxAgeHours(undefined);
+describe("MatchInputValidator player registrations", () => {
+  it("accepts players who all hold an active registration", async () => {
+    expect(await rejection("championship")).toBeNull();
+  });
+
+  it("refuses, with a translated reason, a player who left a championship", async () => {
+    statuses.bob = "withdrawn";
+
+    const error = await rejection("championship");
+
+    expect(error?.code).toBe(ErrorCode.MATCH_PLAYER_NOT_REGISTERED);
+    expect(error?.details).toEqual({ playerName: "BOB" });
+  });
+
+  it("refuses a player who never registered for a championship", async () => {
+    delete statuses.bob;
+    expect((await rejection("championship"))?.code).toBe(ErrorCode.MATCH_PLAYER_NOT_REGISTERED);
+  });
+
+  it("lets a ranked match bring back a player who left, or register a newcomer", async () => {
+    statuses.alice = "withdrawn";
+    delete statuses.bob;
+    expect(await rejection("ranked")).toBeNull();
+  });
+
+  it("refuses a player an organizer removed, ranked season included", async () => {
+    statuses.bob = "removed";
+
+    for (const mode of ["championship", "ranked"]) {
+      const error = await rejection(mode);
+      expect(error?.code).toBe(ErrorCode.MATCH_PLAYER_REMOVED);
+      expect(error?.details).toEqual({ playerName: "BOB" });
+    }
+  });
+
+  it("reports the refusal as a message in the dry run instead of throwing", async () => {
+    statuses.bob = "removed";
     const errors: string[] = [];
 
-    matchInputValidator.collectRankedPlayedAt(hoursAgo(49), errors);
+    await matchInputValidator.validateMatchInputForValidation(input, tournament("ranked"), errors);
 
     expect(errors).toHaveLength(1);
-    expect(errors[0]).toContain("48");
-  });
-
-  it("stays silent on a date inside the window", () => {
-    setMaxAgeHours("72");
-    const errors: string[] = [];
-
-    matchInputValidator.collectRankedPlayedAt(hoursAgo(60), errors);
-
-    expect(errors).toEqual([]);
-  });
-
-  it("stays silent when the window is disabled", () => {
-    setMaxAgeHours("0");
-    const errors: string[] = [];
-
-    matchInputValidator.collectRankedPlayedAt(hoursAgo(24 * 365), errors);
-
-    expect(errors).toEqual([]);
-  });
-
-  it("ignores a missing date — the dry run can precede the date step", () => {
-    setMaxAgeHours(undefined);
-    const errors: string[] = [];
-
-    matchInputValidator.collectRankedPlayedAt(undefined, errors);
-
-    expect(errors).toEqual([]);
+    expect(errors[0]).toContain("BOB");
   });
 });

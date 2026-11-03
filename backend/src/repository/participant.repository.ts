@@ -1,4 +1,4 @@
-import { eq, and, sql, ne } from "drizzle-orm";
+import { eq, and, sql, ne, inArray } from "drizzle-orm";
 import { db } from "../config/database";
 import { tournaments, tournamentParticipants } from "../db/schema";
 
@@ -8,6 +8,8 @@ import { tournaments, tournamentParticipants } from "../db/schema";
  * Note: tournamentParticipants tracks user REGISTRATION (who CAN play)
  *       tournamentEntries tracks match COMPOSITION (who DID play)
  */
+type ParticipantStatus = typeof tournamentParticipants.$inferSelect.status;
+
 export class ParticipantRepository {
   /**
    * Get tournament by ID
@@ -62,6 +64,27 @@ export class ParticipantRepository {
         )
       );
     return new Set(rows.map((row) => row.userId));
+  }
+
+  /**
+   * Registration status of each listed player who has one. A player missing from the map
+   * never registered.
+   */
+  async findStatuses(
+    tournamentId: string,
+    userIds: string[]
+  ): Promise<Map<string, ParticipantStatus>> {
+    if (userIds.length === 0) return new Map();
+    const rows = await db
+      .select({ userId: tournamentParticipants.userId, status: tournamentParticipants.status })
+      .from(tournamentParticipants)
+      .where(
+        and(
+          eq(tournamentParticipants.tournamentId, tournamentId),
+          inArray(tournamentParticipants.userId, userIds)
+        )
+      );
+    return new Map(rows.map((row) => [row.userId, row.status]));
   }
 
   /**

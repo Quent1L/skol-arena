@@ -1,5 +1,6 @@
 import { eq, and, ne, sql, count, inArray, or, lt, desc } from "drizzle-orm";
 import { db } from "../config/database";
+import { BadRequestError, ErrorCode } from "../types/errors";
 import {
   matches,
   matchSides,
@@ -10,7 +11,6 @@ import {
   teams,
   tournaments,
   appUsers,
-  tournamentParticipants,
 } from "../db/schema";
 import {
   type MatchStatus,
@@ -1198,54 +1198,20 @@ export class MatchRepository {
   }
 
   /**
-   * Validate that entries belong to tournament and players are registered
+   * Validate that the static teams belong to the tournament. Player registrations are
+   * checked by the match input validator, which knows the tournament mode.
    */
-  async validateEntriesForTournament(
-    tournamentId: string,
-    teamAId?: string,
-    teamBId?: string,
-    playerIdsA?: string[],
-    playerIdsB?: string[],
-  ) {
-    // For static teams: validate team IDs
-    if (teamAId) {
-      const teamA = await db.query.teams.findFirst({
-        where: and(eq(teams.id, teamAId), eq(teams.tournamentId, tournamentId)),
+  async validateEntriesForTournament(tournamentId: string, teamAId?: string, teamBId?: string) {
+    for (const teamId of [teamAId, teamBId]) {
+      if (!teamId) continue;
+      const team = await db.query.teams.findFirst({
+        where: and(eq(teams.id, teamId), eq(teams.tournamentId, tournamentId)),
       });
-      if (!teamA) {
-        throw new Error("TEAM_A_NOT_FOUND");
-      }
-    }
-
-    if (teamBId) {
-      const teamB = await db.query.teams.findFirst({
-        where: and(eq(teams.id, teamBId), eq(teams.tournamentId, tournamentId)),
-      });
-      if (!teamB) {
-        throw new Error("TEAM_B_NOT_FOUND");
-      }
+      if (!team) throw new BadRequestError(ErrorCode.MATCH_INVALID_TEAMS);
     }
 
     if (teamAId && teamBId && teamAId === teamBId) {
-      throw new Error("TEAMS_CANNOT_BE_SAME");
-    }
-
-    // For flex teams: validate player IDs
-    const allPlayerIds = [...(playerIdsA || []), ...(playerIdsB || [])];
-    if (allPlayerIds.length > 0) {
-      // Check all players are registered in tournamentParticipants
-      for (const playerId of allPlayerIds) {
-        const participant = await db.query.tournamentParticipants.findFirst({
-          where: and(
-            eq(tournamentParticipants.userId, playerId),
-            eq(tournamentParticipants.tournamentId, tournamentId),
-            eq(tournamentParticipants.status, "active"),
-          ),
-        });
-        if (!participant) {
-          throw new Error(`PLAYER_NOT_REGISTERED: ${playerId}`);
-        }
-      }
+      throw new BadRequestError(ErrorCode.MATCH_INVALID_TEAMS);
     }
   }
 

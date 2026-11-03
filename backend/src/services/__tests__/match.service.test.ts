@@ -23,6 +23,7 @@ import { notificationService } from "../notification.service";
 import { bracketRepository } from "../../repository/bracket.repository";
 import { bracketService } from "../bracket.service";
 import { teamRepository } from "../../repository/team.repository";
+import { participantRepository } from "../../repository/participant.repository";
 import { mmrCalculationService } from "../mmr-calculation.service";
 import { mmrAnimationEventService } from "../mmr-animation-event.service";
 import { standingsService } from "../standings.service";
@@ -172,6 +173,10 @@ beforeEach(() => {
   (standingsService as any).recalculatePointsInternal = async () => ({ updatedMatches: 0 });
   (standingsService as any).invalidateCache = async () => undefined;
 
+  // Every player holds an active registration unless a test says otherwise
+  (participantRepository as any).findStatuses = async (_t: string, ids: string[]) =>
+    new Map(ids.map((id) => [id, "active"]));
+
   // Mock getPlayerIdsForMatch and playerComputedDataRepository to prevent real DB calls
   repo.getPlayerIdsForMatch = async () => [];
   (playerComputedDataRepository as any).deleteMany = async () => undefined;
@@ -202,6 +207,7 @@ afterEach(() => {
   restore(mmrAnimationEventService);
   restore(standingsService);
   restore(playerComputedDataRepository);
+  restore(participantRepository);
   restore(rankedSeasonRepository);
   restore(rankedSeasonService);
   restore(tournamentStatsRepository);

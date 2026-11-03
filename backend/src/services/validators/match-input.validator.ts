@@ -1,7 +1,8 @@
 import { matchRepository } from "../../repository/match.repository";
 import { userRepository } from "../../repository/user.repository";
 import { teamRepository } from "../../repository/team.repository";
-import { BadRequestError, ErrorCode } from "../../types/errors";
+import { AppError, BadRequestError, ErrorCode } from "../../types/errors";
+import { participantRepository } from "../../repository/participant.repository";
 import type { CreateMatchRequestData as CreateMatchInput, MatchSideInput } from "@skol-arena/shared/types/index";
 import { t } from "../../utils/i18n-context";
 import { rankedMatchMaxAgeHours } from "../../config/ranked";
@@ -27,7 +28,7 @@ export class MatchInputValidator {
         if (tournament.teamMode === "static") {
             await this.validateStaticSides(sides, tournament);
         } else {
-            await this.validateFlexSides(sides, input.tournamentId);
+            await this.validateFlexSides(sides, tournament);
         }
     }
 
@@ -60,7 +61,7 @@ export class MatchInputValidator {
 
     private async validateFlexSides(
         sides: MatchSideInput[],
-        tournamentId: string
+        tournament: NonNullable<TournamentFromRepository>
     ): Promise<void> {
         for (const side of sides) {
             if (!side.playerIds || side.playerIds.length === 0) {
@@ -73,15 +74,40 @@ export class MatchInputValidator {
             throw new BadRequestError(ErrorCode.MATCH_OVERLAPPING_PLAYERS);
         }
 
-        for (const side of sides) {
-            await matchRepository.validateEntriesForTournament(
-                tournamentId,
-                undefined,
-                undefined,
-                side.playerIds,
-                []
-            );
+        await this.validatePlayersRegistered(tournament, allPlayerIds);
+    }
+
+    /**
+     * Every player needs an active registration. In a ranked season a player who never
+     * joined, or who left, is registered by the match itself (autoRegisterRankedPlayers);
+     * one an organizer removed is refused everywhere, only an organizer can add them back.
+     */
+    private async validatePlayersRegistered(
+        tournament: NonNullable<TournamentFromRepository>,
+        playerIds: string[]
+    ): Promise<void> {
+        const statuses = await participantRepository.findStatuses(tournament.id, playerIds);
+        for (const playerId of playerIds) {
+            const status = statuses.get(playerId);
+            if (status === "active") continue;
+            if (status === "removed") {
+                throw await this.playerError(ErrorCode.MATCH_PLAYER_REMOVED, playerId);
+            }
+            if (tournament.mode !== "ranked") {
+                throw await this.playerError(ErrorCode.MATCH_PLAYER_NOT_REGISTERED, playerId);
+            }
         }
+    }
+
+    private async playerError(code: ErrorCode, playerId: string): Promise<BadRequestError> {
+        const player = await userRepository.getById(playerId);
+        return new BadRequestError(code, { playerName: player?.displayName || playerId });
+    }
+
+    /** Dry-run helper: records a validation failure as a translated message. */
+    private collectError(error: unknown, errors: string[]): void {
+        if (!(error instanceof AppError)) throw error;
+        errors.push(t(`errors.${error.code}`, error.details ?? {}));
     }
 
     validateWinnerRequired(winnerPosition?: number | null, allowDraw = false): void {
@@ -171,7 +197,7 @@ export class MatchInputValidator {
     ): Promise<void> {
         if (input.allPlayerIds && input.allPlayerIds.length > 0) {
             await this.validateAllPlayerIdsForValidation(
-                input.allPlayerIds, input.tournamentId, tournament, errors
+                input.allPlayerIds, tournament, errors
             );
             return;
         }
@@ -182,13 +208,12 @@ export class MatchInputValidator {
         if (tournament.teamMode === "static") {
             await this.validateStaticSidesForValidation(sides, tournament, errors);
         } else {
-            await this.validateFlexSidesForValidation(sides, input.tournamentId, errors);
+            await this.validateFlexSidesForValidation(sides, tournament, errors);
         }
     }
 
     private async validateAllPlayerIdsForValidation(
         allPlayerIds: string[],
-        tournamentId: string,
         tournament: NonNullable<TournamentFromRepository>,
         errors: string[]
     ): Promise<void> {
@@ -203,13 +228,9 @@ export class MatchInputValidator {
             return;
         }
         try {
-            await matchRepository.validateEntriesForTournament(
-                tournamentId, undefined, undefined, allPlayerIds, []
-            );
+            await this.validatePlayersRegistered(tournament, allPlayerIds);
         } catch (error) {
-            errors.push(
-                error instanceof Error ? error.message : "Joueur non inscrit au tournoi"
-            );
+            this.collectError(error, errors);
         }
     }
 
@@ -227,9 +248,7 @@ export class MatchInputValidator {
                     teamId
                 );
             } catch (error) {
-                errors.push(
-                    error instanceof Error ? error.message : `Équipe invalide`
-                );
+                this.collectError(error, errors);
             }
         }
 
@@ -267,28 +286,16 @@ export class MatchInputValidator {
 
     private async validateFlexSidesForValidation(
         sides: MatchSideInput[],
-        tournamentId: string,
+        tournament: NonNullable<TournamentFromRepository>,
         errors: string[]
     ): Promise<void> {
-        for (let i = 0; i < sides.length; i++) {
-            const side = sides[i];
-            if (!side.playerIds || side.playerIds.length === 0) continue;
-
-            try {
-                await matchRepository.validateEntriesForTournament(
-                    tournamentId,
-                    undefined,
-                    undefined,
-                    side.playerIds,
-                    []
-                );
-            } catch (error) {
-                errors.push(
-                    error instanceof Error
-                        ? error.message
-                        : `Erreur de validation joueurs équipe ${i + 1}`
-                );
-            }
+        try {
+            await this.validatePlayersRegistered(
+                tournament,
+                [...new Set(sides.flatMap((s) => s.playerIds ?? []))]
+            );
+        } catch (error) {
+            this.collectError(error, errors);
         }
 
         if (sides.length >= 2) {
