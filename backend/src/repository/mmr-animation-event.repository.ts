@@ -37,6 +37,8 @@ export interface UpsertMmrAnimationEventData {
   message?: string | null;
 }
 
+type MatchPlayerRef = { id: string; displayName: string; shortName: string };
+
 export class MmrAnimationEventRepository {
   async upsert(data: UpsertMmrAnimationEventData) {
     const [row] = await db
@@ -111,15 +113,28 @@ export class MmrAnimationEventRepository {
       orderBy: (t, { asc }) => [asc(t.createdAt)],
     });
     if (events.length === 0) return events.map((e) => ({ ...e, opponents: [], teammates: [] }));
-    const matchIds = events.map((e) => e.matchId);
-    const { opponents, teammates } = await this.fetchMatchParticipants(matchIds, playerId);
-    const playedAtMap = await this.fetchPlayedAtByMatchIds(matchIds);
-    return events.map((e) => ({
-      ...e,
-      opponents: opponents.get(e.matchId) ?? [],
-      teammates: teammates.get(e.matchId) ?? [],
-      playedAt: playedAtMap.get(e.matchId),
-    }));
+    const context = await this.getMatchContext(playerId, events.map((e) => e.matchId));
+    return events.map((e) => ({ ...e, ...context(e.matchId) }));
+  }
+
+  /**
+   * Who the player faced and played with in each match, and when it was played: what
+   * the recap shows next to an MMR change. Shared by the pending fetch and the live
+   * WebSocket push, so an event reads the same whichever way it reached the client.
+   */
+  async getMatchContext(playerId: string, matchIds: string[]) {
+    const unique = [...new Set(matchIds)];
+    const [{ opponents, teammates }, playedAtMap] = unique.length
+      ? await Promise.all([
+          this.fetchMatchParticipants(unique, playerId),
+          this.fetchPlayedAtByMatchIds(unique),
+        ])
+      : [{ opponents: new Map(), teammates: new Map() }, new Map<string, Date>()];
+    return (matchId: string) => ({
+      opponents: (opponents.get(matchId) ?? []) as MatchPlayerRef[],
+      teammates: (teammates.get(matchId) ?? []) as MatchPlayerRef[],
+      playedAt: playedAtMap.get(matchId),
+    });
   }
 
   private async fetchMatchParticipants(

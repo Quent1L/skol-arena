@@ -38,6 +38,13 @@ const mockAnimRepo = {
   getOfficialEventDeltasByPlayer: mock(() => Promise.resolve(new Map<string, { id: string; mmrDelta: number; seenDelta: number }>())),
   getOfficialEventDeltasForPlayers: mock(() => Promise.resolve(new Map<string, Map<string, { id: string; mmrDelta: number; seenDelta: number }>>())),
   getPendingForPlayer: mock(() => Promise.resolve([] as any[])),
+  getMatchContext: mock((_playerId: string, _matchIds: string[]) =>
+    Promise.resolve((matchId: string) => ({
+      opponents: [{ id: `opp-${matchId}`, displayName: "Opponent", shortName: "OP" }],
+      teammates: [],
+      playedAt: undefined,
+    })),
+  ),
   markViewed: mock(() => Promise.resolve()),
   retireUnseenForMatch: mock((_seasonId: string, _matchId: string, _playerIds: string[]) => Promise.resolve()),
   clearMessageForMatch: mock((_seasonId: string, _matchId: string, _playerIds: string[]) => Promise.resolve()),
@@ -317,6 +324,22 @@ describe("theory: flood on the next match when events are stale", () => {
 
     expect(emitted()).toEqual([{ matchId: "m4", reason: "match_finalized" }]);
     expect(mockWs.send.mock.calls.length).toBe(1);
+  });
+
+  it("the live payload carries the match's players, like the pending fetch", async () => {
+    mockAnimRepo.getOfficialEventDeltasByPlayer.mockImplementation(() =>
+      Promise.resolve(new Map([
+        ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
+        ["m2", { id: "evt-m2", mmrDelta: -7, seenDelta: -7 }],
+        ["m3", { id: "evt-m3", mmrDelta: 12, seenDelta: 12 }],
+      ])),
+    );
+
+    await mmrAnimationEventService.createOfficialEventsAndBroadcast("m4", "season-1");
+
+    const payload = (mockWs.send.mock.calls[0] as any[])[1].data;
+    expect(payload.opponents).toEqual([{ id: "opp-m4", displayName: "Opponent", shortName: "OP" }]);
+    expect(payload.teammates).toEqual([]);
   });
 
   it("partial desync: only m2 changed → finalization emits m2 (recalculated) + m4", async () => {

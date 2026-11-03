@@ -248,7 +248,7 @@ export class MmrAnimationEventService {
           .catch((err) => logger.error({ err, matchId, playerId }, "[Rules] marking firing delivered failed"));
       }
 
-      this.broadcastEvents(playerId, tournamentId, events);
+      await this.broadcastEvents(playerId, tournamentId, events);
 
       // Badge reveal animations, chained after the MMR animation.
       for (const badge of ruleOutput?.badges ?? []) {
@@ -319,11 +319,23 @@ export class MmrAnimationEventService {
     return events;
   }
 
-  private broadcastEvents(playerId: string, tournamentId: string, events: MmrAnimationEventRecord[]): void {
+  // The live payload carries the same teammates, opponents and date as the pending
+  // fetch: a recap assembled from pushed events would otherwise show no faces until
+  // the page is reloaded.
+  private async broadcastEvents(
+    playerId: string,
+    tournamentId: string,
+    events: MmrAnimationEventRecord[],
+  ): Promise<void> {
+    if (events.length === 0) return;
+    const context = await mmrAnimationEventRepository.getMatchContext(
+      playerId,
+      events.map((event) => event.matchId),
+    );
     for (const event of events) {
       webSocketService.send(playerId, {
         event: "mmr_animation",
-        data: this.buildWsPayload(event, tournamentId),
+        data: { ...this.buildWsPayload(event, tournamentId), ...context(event.matchId) },
       });
     }
   }
