@@ -1,5 +1,34 @@
 # Changelog
 
+## [2.5.0](https://github.com/Quent1L/skol-arena/compare/2.4.1...2.5.0) (2026-11-03)
+
+### ✨ New Features
+
+* **badges:** open a badge card for its full description ([72a3679](https://github.com/Quent1L/skol-arena/commit/72a3679ca773cbce830150399b8e81ed1b5d13d1))
+* **rules:** add a season match counter condition ([31a1023](https://github.com/Quent1L/skol-arena/commit/31a1023157aae1a669b72168c1fe2e7d2d9741dc))
+* **rules:** count matches across a discipline and show badge progress ([2a8664d](https://github.com/Quent1L/skol-arena/commit/2a8664da8c7d12e9e6f0b9405e341d5c06c39be4))
+* **standings:** list players who left a competition as inactive ([41365de](https://github.com/Quent1L/skol-arena/commit/41365de2088263cad9694596f6cd50597ab51867))
+* **standings:** refresh open pages when the ranking changes without a match ([673c209](https://github.com/Quent1L/skol-arena/commit/673c209dc074d13a4e8b52bf7f134f5d4eafb831))
+
+### 🐛 Bug Fixes
+
+* **deps:** bump nodemailer to 10 and vite to 8.2.4 for security advisories ([4536112](https://github.com/Quent1L/skol-arena/commit/453611228772657882289b29e89d34e266aedd92))
+* **i18n:** keep the whole app in the chosen language ([b625583](https://github.com/Quent1L/skol-arena/commit/b625583c0e30257b744a7df569785619a6e97d59)), closes [#10](https://github.com/Quent1L/skol-arena/issues/10)
+* **match:** refuse unregistered or removed players with a clear error ([a2b42e3](https://github.com/Quent1L/skol-arena/commit/a2b42e31b9fadea113907c2d4f09f64a3d1b5f64))
+* **pwa:** let the dev service worker install ([9b18f31](https://github.com/Quent1L/skol-arena/commit/9b18f31da1822a34b17385b5cae03a996aa747d3))
+* **ranked:** show teammates and opponents in a live MMR recap ([89cd381](https://github.com/Quent1L/skol-arena/commit/89cd381fc946a33464e0b37c1160fe735420942e))
+* **rules:** keep match counter snapshots accurate ([590330e](https://github.com/Quent1L/skol-arena/commit/590330e7f212229b0c1a8fb6e371b0e81ffbb653))
+* **rules:** notify badge loss only when no award remains ([831d269](https://github.com/Quent1L/skol-arena/commit/831d2698e62a90580d9263d48acf08092a994593))
+* **rules:** register the custom operators in the badge reconciliation engine ([c76fece](https://github.com/Quent1L/skol-arena/commit/c76fece7bd3bb35756620125144822715738fe95))
+
+### ⚡ Performance
+
+* **rules:** keep match snapshots only while a rule counts matches ([4813c57](https://github.com/Quent1L/skol-arena/commit/4813c57b927b537524f2b73fe6c80cd121823074))
+
+### 📝 Documentation
+
+* **rules:** merge the two match counter release notes ([9b11b26](https://github.com/Quent1L/skol-arena/commit/9b11b2601234415d35494204104c2d5755dfbfe8))
+
 ## [2.4.1](https://github.com/Quent1L/skol-arena/compare/2.4.0...2.4.1) (2026-10-28)
 
 ### 🐛 Bug Fixes
