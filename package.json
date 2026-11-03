@@ -79,7 +79,7 @@
     "catalog": {
       "zod": "4.4.3",
       "better-auth": "1.6.23",
-      "typescript": "6.0.3"
+      "typescript": "7.0.2"
     }
   }
 }
