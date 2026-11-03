@@ -278,11 +278,11 @@
     "refreshing": "Actualisation…",
     "updated": "Mis à jour"
   },
-  "badgeHolders": {
-    "count": "{n} joueur | {n} joueurs",
+  "badgeDetail": {
+    "holders": "{n} détenteur | {n} détenteurs",
+    "noHolder": "Personne ne l'a encore obtenu.",
     "thisSeason": "Cette saison",
-    "times": "×{count}",
-    "title": "Détenteurs : {badge}"
+    "times": "×{count}"
   },
   "badgeProgress": {
     "allSeasons": "toutes saisons",
@@ -1141,6 +1141,7 @@
     "title": "Participants"
   },
   "playerBadges": {
+    "seeAll": "Tous les badges du tournoi",
     "title": "Badges",
     "unknownSeason": "Saison inconnue"
   },

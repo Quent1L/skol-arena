@@ -24,42 +24,45 @@
       </div>
 
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        <div
+        <BadgeDetailModal
           v-for="badge in availableBadges"
           :key="badge.ruleId"
-          class="flex flex-col items-center text-center p-4 rounded-xl gap-2 transition-all hover:scale-[1.03] hover:shadow-md cursor-default"
-          :class="isEarned(badge.ruleId)
-            ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 hover:border-purple-400 dark:hover:border-purple-500'
-            : ['bg-slate-100 dark:bg-slate-800', progressOf(badge).length ? '' : 'opacity-50 hover:opacity-80']"
+          :badge="badge"
+          :tournament-id="tournamentId"
         >
-          <i
-            :class="[badge.icon || 'fa fa-medal', isEarned(badge.ruleId) ? 'text-purple-600' : 'text-gray-400 dark:text-gray-500']"
-            class="text-3xl"
-          />
-          <div class="font-semibold text-sm leading-tight">{{ badge.label }}</div>
-          <div class="text-xs text-slate-500 line-clamp-2">{{ badge.description }}</div>
-          <span
-            v-if="badge.recurrence === 'once'"
-            class="text-[10px] uppercase tracking-wide font-bold text-amber-600 dark:text-amber-400"
+          <button
+            type="button"
+            class="h-full w-full flex flex-col items-center justify-center text-center p-4 rounded-xl gap-2 transition-all hover:scale-[1.03] hover:shadow-md cursor-pointer"
+            :class="isEarned(badge.ruleId)
+              ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 hover:border-purple-400 dark:hover:border-purple-500'
+              : ['bg-slate-100 dark:bg-slate-800', progressOf(badge).length ? '' : 'opacity-50 hover:opacity-80']"
           >
-            {{ t('tournamentBadgesTab.lifetimeBadge') }}
-          </span>
-          <div v-if="isEarned(badge.ruleId)" class="text-xs text-purple-600 dark:text-purple-400 font-medium">
-            <i class="fa fa-check mr-1" />{{ formatDate(getEarnedDate(badge.ruleId)) }}
-          </div>
-          <div v-else-if="previousSeasons(badge.ruleId).length" class="text-xs text-slate-500">
-            <i class="fa fa-clock-rotate-left mr-1" />{{
-              t('tournamentBadgesTab.alreadyEarnedIn', { seasons: previousSeasons(badge.ruleId).join(', ') })
-            }}
-          </div>
-          <BadgeProgressBars v-if="progressOf(badge).length" :counters="progressOf(badge)" />
-          <BadgeHolders
-            :holders="badge.holders ?? []"
-            :badge-label="badge.label"
-            :tournament-id="tournamentId"
-            class="mt-auto"
-          />
-        </div>
+            <i
+              :class="[badge.icon || 'fa fa-medal', isEarned(badge.ruleId) ? 'text-purple-600' : 'text-gray-400 dark:text-gray-500']"
+              class="text-3xl"
+            />
+            <div class="font-semibold text-sm leading-tight">{{ badge.label }}</div>
+            <span
+              v-if="badge.recurrence === 'once'"
+              class="text-[10px] uppercase tracking-wide font-bold text-amber-600 dark:text-amber-400"
+            >
+              {{ t('tournamentBadgesTab.lifetimeBadge') }}
+            </span>
+            <div v-if="isEarned(badge.ruleId)" class="text-xs text-purple-600 dark:text-purple-400 font-medium">
+              <i class="fa fa-check mr-1" />{{ formatDate(getEarnedDate(badge.ruleId)) }}
+            </div>
+            <div v-else-if="previousSeasons(badge.ruleId).length" class="text-xs text-slate-500">
+              <i class="fa fa-clock-rotate-left mr-1" />{{
+                t('tournamentBadgesTab.alreadyEarnedIn', { seasons: previousSeasons(badge.ruleId).join(', ') })
+              }}
+            </div>
+            <BadgeProgressBars v-if="progressOf(badge).length" :counters="progressOf(badge)" />
+            <div v-if="badge.holders?.length" class="mt-auto flex items-center gap-1.5">
+              <PlayerAvatarStack :players="badge.holders" size="xs" />
+              <span class="text-xs text-slate-500">{{ t('badgeDetail.holders', badge.holders.length) }}</span>
+            </div>
+          </button>
+        </BadgeDetailModal>
       </div>
     </div>
   </div>
@@ -72,7 +75,8 @@ import { useI18n } from 'vue-i18n'
 import { rulesApi } from '@/composables/rules/rules.api'
 import { useAuth } from '@/composables/useAuth'
 import { onWsEvent } from '@/composables/notification/notification.socket'
-import BadgeHolders from '@/components/rules/BadgeHolders.vue'
+import BadgeDetailModal from '@/components/rules/BadgeDetailModal.vue'
+import PlayerAvatarStack from '@/components/PlayerAvatarStack.vue'
 import BadgeProgressBars from '@/components/rules/BadgeProgressBars.vue'
 import type {
   AvailableBadge,
@@ -142,7 +146,7 @@ function formatDate(date: Date | undefined): string {
 
 /**
  * `silent` keeps the grid on screen: a live badge event refreshes it in place instead
- * of swapping in the spinner, which would also close an open holders list.
+ * of swapping in the spinner, which would also close an open badge card.
  */
 async function load({ silent = false } = {}) {
   if (!silent) loading.value = true

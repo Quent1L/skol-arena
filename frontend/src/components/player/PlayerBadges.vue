@@ -1,7 +1,19 @@
 <template>
-  <div v-if="grouped.length > 0" class="rounded-2xl p-4">
-    <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">{{ t('playerBadges.title') }}</div>
-    <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+  <div v-if="grouped.length > 0 || tournamentId" class="rounded-2xl p-4">
+    <div class="flex items-center justify-between gap-2 mb-3">
+      <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">{{ t('playerBadges.title') }}</div>
+      <UButton
+        v-if="tournamentId"
+        :to="`/tournaments/${tournamentId}/badges`"
+        icon="i-fa7-solid:medal"
+        color="neutral"
+        variant="ghost"
+        size="xs"
+        :label="t('playerBadges.seeAll')"
+        data-test="see-all-badges"
+      />
+    </div>
+    <div v-if="grouped.length > 0" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
       <UPopover v-for="group in grouped" :key="group.ruleId">
         <button
           type="button"
@@ -57,7 +69,11 @@ interface BadgeGroup {
   awards: ClientPlayerBadge[]
 }
 
-const props = defineProps<{ playerId: string }>()
+const props = defineProps<{
+  playerId: string
+  /** The competition being viewed: links to every badge it offers, earned or not. */
+  tournamentId?: string
+}>()
 
 const { t } = useI18n()
 

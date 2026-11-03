@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
+import { flushPromises, RouterLinkStub } from '@vue/test-utils'
 import type { ClientPlayerBadge } from '@skol-arena/shared'
 import { mountWithPlugins } from '@/test-support/mount'
 import PlayerBadges from '../PlayerBadges.vue'
@@ -27,9 +27,9 @@ function award(overrides: Partial<ClientPlayerBadge> = {}): ClientPlayerBadge {
   }
 }
 
-async function mountWith(badges: ClientPlayerBadge[]) {
+async function mountWith(badges: ClientPlayerBadge[], tournamentId?: string) {
   getPlayerBadges.mockResolvedValue(badges)
-  const wrapper = mountWithPlugins(PlayerBadges, { props: { playerId: 'p1' } })
+  const wrapper = mountWithPlugins(PlayerBadges, { props: { playerId: 'p1', tournamentId } })
   await flushPromises()
   return wrapper
 }
@@ -66,5 +66,21 @@ describe('PlayerBadges', () => {
   it('renders nothing when the player has no badge', async () => {
     const wrapper = await mountWith([])
     expect(wrapper.find('.grid').exists()).toBe(false)
+  })
+
+  it('links to every badge of the tournament being viewed', async () => {
+    const wrapper = await mountWith([award()], 'season-4')
+    expect(wrapper.findComponent(RouterLinkStub).props('to')).toBe('/tournaments/season-4/badges')
+  })
+
+  it('keeps the link when the player has no badge in a tournament', async () => {
+    const wrapper = await mountWith([], 'season-4')
+    expect(wrapper.find('[data-test="see-all-badges"]').exists()).toBe(true)
+    expect(wrapper.find('.grid').exists()).toBe(false)
+  })
+
+  it('has no link outside a tournament', async () => {
+    const wrapper = await mountWith([award()])
+    expect(wrapper.find('[data-test="see-all-badges"]').exists()).toBe(false)
   })
 })

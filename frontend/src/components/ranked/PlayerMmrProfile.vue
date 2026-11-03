@@ -352,7 +352,7 @@
     />
 
     <!-- Earned badges -->
-    <PlayerBadges :player-id="mmr.playerId" />
+    <PlayerBadges :player-id="mmr.playerId" :tournament-id="seasonId" />
   </div>
 </template>
 

@@ -278,11 +278,11 @@
     "refreshing": "Refreshing…",
     "updated": "Updated"
   },
-  "badgeHolders": {
-    "count": "{n} player | {n} players",
+  "badgeDetail": {
+    "holders": "{n} holder | {n} holders",
+    "noHolder": "Nobody has earned it yet.",
     "thisSeason": "This season",
-    "times": "×{count}",
-    "title": "Holders: {badge}"
+    "times": "×{count}"
   },
   "badgeProgress": {
     "allSeasons": "all seasons",
@@ -1141,6 +1141,7 @@
     "title": "Participants"
   },
   "playerBadges": {
+    "seeAll": "All tournament badges",
     "title": "Badges",
     "unknownSeason": "Unknown season"
   },
