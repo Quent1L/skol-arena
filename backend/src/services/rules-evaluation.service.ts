@@ -102,6 +102,10 @@ export function resolveDisplay(facts: Facts, displayNames: Map<string, string>):
   return out;
 }
 
+function countsMatches(rules: { conditions: unknown }[]): boolean {
+  return rules.some((r) => usesMatchCount(r.conditions as RuleConditions));
+}
+
 export class RulesEvaluationService {
   /**
    * Evaluates `match_submitted` rules for a finalized match (one pass per
@@ -113,10 +117,12 @@ export class RulesEvaluationService {
     const result = new Map<string, PlayerRulesOutput>();
     const { contexts, displayNames, playedAt } = await rulesContextService.buildMatchSubmittedContexts(matchId);
     if (contexts.length === 0) return result;
-    await this.saveSnapshot(matchId, seasonId);
 
     const disciplineId = contexts[0].context.discipline || null;
     const rules = await rulesRepository.listActiveByTrigger("match_submitted", disciplineId);
+    // Snapshots only serve the counter: without a rule using it, a missing one is
+    // backfilled lazily the day such a rule appears.
+    if (countsMatches(rules)) await this.saveSnapshot(matchId, seasonId);
     // A null disciplineId means the tournament carries none, and discipline-scoped
     // rules are then filtered out before evaluation — the single likeliest reason
     // for a rule that "never fires".
@@ -162,6 +168,11 @@ export class RulesEvaluationService {
 
     await this.recordFirings(matchId, firings, messageRuleByPlayer, result);
     return result;
+  }
+
+  /** Whether any active rule of the season's discipline counts matches. */
+  async seasonCountsMatches(disciplineId: string | null): Promise<boolean> {
+    return countsMatches(await rulesRepository.listActiveByTrigger("match_submitted", disciplineId));
   }
 
   /**

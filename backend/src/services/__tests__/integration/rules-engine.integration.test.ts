@@ -992,11 +992,23 @@ describe("Rules engine — line-up facts & random gating (integration)", () => {
 
     it("freezes the snapshot from the match's history, not the player's live state", async () => {
       const { seasonId, matchId: first } = await createSeasonWithMatch();
+      await addMessageRule("Two wins", winsAtLeast(2), ["Second win"]);
       const build = spyOn(rulesContextService, "buildMatchSubmittedContexts");
 
       await rulesEvaluationService.evaluateMatchSubmitted(first, seasonId);
 
       expect(build).toHaveBeenCalledWith(first, true);
+      build.mockRestore();
+    });
+
+    it("freezes no snapshot while no rule counts matches", async () => {
+      const { seasonId, matchId: first } = await createSeasonWithMatch();
+      await addMessageRule("Plain", { all: [{ fact: "isWinner", operator: "equal", value: true }] }, ["Plain"]);
+      const build = spyOn(rulesContextService, "buildMatchSubmittedContexts");
+
+      await rulesEvaluationService.evaluateMatchSubmitted(first, seasonId);
+
+      expect(build).not.toHaveBeenCalledWith(first, true);
       build.mockRestore();
     });
 

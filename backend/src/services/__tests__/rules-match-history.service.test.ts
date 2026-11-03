@@ -39,7 +39,7 @@ describe("RulesMatchHistoryService", () => {
 
     expect(mockContext.buildMatchSubmittedContexts).toHaveBeenCalledWith("m1", true);
     expect(mockRepo.upsertMany).toHaveBeenCalledWith([
-      { matchId: "m1", playerId: "p1", seasonId: "s1", playedAt: PLAYED_AT, facts: { newRank: "silver" } },
+      { matchId: "m1", playerId: "p1", seasonId: "s1", facts: { newRank: "silver" } },
     ]);
   });
 

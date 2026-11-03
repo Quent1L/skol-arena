@@ -157,21 +157,7 @@ export class BadgeReconciliationService {
     rules: BadgeRule[],
   ): Promise<void> {
     const ruleById = new Map(rules.map((r) => [r.id, r]));
-    const desired = new Map<string, EarningMatch & { seasonId: string }>();
-    const bySeason = new Map<string, Facts[]>();
-    const all: Facts[] = [];
-    for (const { matchId, seasonId } of await playerMmrRepository.getSeasonsMatchesOrdered(seasonIds, playerId)) {
-      const { contexts, playedAt } = await rulesContextService.buildMatchSubmittedContexts(matchId, true);
-      const ctx = contexts.find((c) => c.playerId === playerId);
-      if (!ctx) continue;
-      const facts = ctx.context as unknown as Facts;
-      all.push(facts);
-      const seasonHistory = [...(bySeason.get(seasonId) ?? []), facts];
-      bySeason.set(seasonId, seasonHistory);
-      for (const ruleId of await this.matchedRuleIds(engine, ctx.context, seasonHistory, all)) {
-        if (!desired.has(ruleId)) desired.set(ruleId, { matchId, playedAt, seasonId });
-      }
-    }
+    const desired = await this.desiredDisciplineAwards(seasonIds, playerId, engine);
 
     const held = (await rulesRepository.listBadgesByPlayer(playerId)).filter((b) => ruleById.has(b.ruleId));
     for (const badge of held) {
@@ -182,6 +168,29 @@ export class BadgeReconciliationService {
     for (const [ruleId, earning] of desired) {
       if (!heldRuleIds.has(ruleId)) await this.award(playerId, ruleId, earning, earning.seasonId, ruleById.get(ruleId)!);
     }
+  }
+
+  /** Replays the player's discipline in order: ruleId -> earliest match that earned it. */
+  private async desiredDisciplineAwards(
+    seasonIds: string[],
+    playerId: string,
+    engine: Engine,
+  ): Promise<Map<string, EarningMatch & { seasonId: string }>> {
+    const desired = new Map<string, EarningMatch & { seasonId: string }>();
+    const bySeason = new Map<string, Facts[]>();
+    const all: Facts[] = [];
+    for (const { matchId, seasonId } of await playerMmrRepository.getSeasonsMatchesOrdered(seasonIds, playerId)) {
+      const { contexts, playedAt } = await rulesContextService.buildMatchSubmittedContexts(matchId, true);
+      const ctx = contexts.find((c) => c.playerId === playerId);
+      if (!ctx) continue;
+      const facts = ctx.context as unknown as Facts;
+      all.push(facts);
+      const seasonHistory = appendTo(bySeason, seasonId, facts);
+      for (const ruleId of await this.matchedRuleIds(engine, ctx.context, seasonHistory, all)) {
+        if (!desired.has(ruleId)) desired.set(ruleId, { matchId, playedAt, seasonId });
+      }
+    }
+    return desired;
   }
 
   private async reconcileOnePlayer(
@@ -395,15 +404,15 @@ export class BadgeReconciliationService {
     silent = false,
   ): Promise<void> {
     const removed = await rulesRepository.revokeBadge(playerId, ruleId, seasonId);
-    if (removed === 0) return;
+    // A silent pass stays invisible: no push, no refetch, no notification.
+    if (removed === 0 || silent) return;
     // The season's badge list changed either way: the open screens refetch.
     webSocketService.send(playerId, { event: "badge_revoked", data: {} });
     if (await rulesRepository.holdsBadge(playerId, ruleId)) return;
-    await this.notifyRevoked(playerId, label, silent);
+    await this.notifyRevoked(playerId, label);
   }
 
-  private async notifyRevoked(playerId: string, label: string, silent = false): Promise<void> {
-    if (silent) return;
+  private async notifyRevoked(playerId: string, label: string): Promise<void> {
     await notificationService
       .send({
         userId: playerId,

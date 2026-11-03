@@ -1268,7 +1268,8 @@ export const matchPlayerFacts = pgTable(
     seasonId: uuid("season_id")
       .notNull()
       .references(() => tournaments.id, { onDelete: "cascade" }),
-    playedAt: timestamp("played_at", { withTimezone: true }).notNull(),
+    // No played_at copy: counts order and filter on matches.played_at, which a
+    // correction can move, so a copy here could only drift.
     facts: jsonb("facts").notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
@@ -1277,7 +1278,7 @@ export const matchPlayerFacts = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.matchId, table.playerId] }),
-    index("match_player_facts_season_player_idx").on(table.seasonId, table.playerId, table.playedAt),
+    index("match_player_facts_season_player_idx").on(table.seasonId, table.playerId),
   ],
 );
 

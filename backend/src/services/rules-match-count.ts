@@ -55,11 +55,6 @@ export function createMatchCounter(): MatchCounter {
   };
 }
 
-/** Number of past matches whose facts meet `conditions`. */
-export function countMatching(history: Facts[], conditions: RuleConditions): Promise<number> {
-  return createMatchCounter()(history, conditions);
-}
-
 /**
  * Teaches an engine the `matchCount` fact: it counts, in the history handed to the
  * run for the leaf's window, the matches meeting the leaf's `params.conditions`.

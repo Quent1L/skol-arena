@@ -328,15 +328,26 @@ export class MmrAnimationEventService {
     events: MmrAnimationEventRecord[],
   ): Promise<void> {
     if (events.length === 0) return;
-    const context = await mmrAnimationEventRepository.getMatchContext(
-      playerId,
-      events.map((event) => event.matchId),
-    );
+    const context = await this.matchContextOrEmpty(playerId, events);
     for (const event of events) {
       webSocketService.send(playerId, {
         event: "mmr_animation",
         data: { ...this.buildWsPayload(event, tournamentId), ...context(event.matchId) },
       });
+    }
+  }
+
+  // The faces are a nicety: a failed lookup must not cost this player their animation,
+  // nor the players after them in the loop their events. The pending fetch fills them in.
+  private async matchContextOrEmpty(playerId: string, events: MmrAnimationEventRecord[]) {
+    try {
+      return await mmrAnimationEventRepository.getMatchContext(
+        playerId,
+        events.map((event) => event.matchId),
+      );
+    } catch (err) {
+      logger.error({ err, playerId }, "[MMR] match context lookup failed, broadcasting without it");
+      return () => ({});
     }
   }
 

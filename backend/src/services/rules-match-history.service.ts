@@ -22,7 +22,6 @@ export class RulesMatchHistoryService {
         matchId,
         playerId,
         seasonId,
-        playedAt,
         facts: context as unknown as Facts,
       })),
     );
@@ -51,6 +50,15 @@ export class RulesMatchHistoryService {
     await this.refreshMatches(later.map((r) => r.matchId), seasonId);
     const active = await matchPlayerFactsRepository.listPlayersActiveInDisciplineSince(seasonId, playerIds, playedAt);
     return [...new Set([...later.map((r) => r.playerId), ...active])];
+  }
+
+  /**
+   * The cheap counterpart of `refreshAfterBackdatedMatch` while no rule counts matches:
+   * the snapshots a backdated match made stale are dropped instead of rebuilt, and the
+   * lazy backfill rebuilds them the day a counting rule needs them.
+   */
+  async dropAfterBackdatedMatch(seasonId: string, playerIds: string[], playedAt: Date): Promise<void> {
+    await matchPlayerFactsRepository.deleteForPlayersFrom(seasonId, playerIds, playedAt);
   }
 
   /** One match at a time, each failure costing that match only until the next refresh. */

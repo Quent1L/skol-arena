@@ -2,7 +2,6 @@ import { describe, it, expect } from "bun:test";
 import { Engine } from "json-rules-engine";
 import {
   MATCH_HISTORY_FACT,
-  countMatching,
   createMatchCounter,
   registerMatchCountFact,
 } from "../rules-match-count";
@@ -22,9 +21,9 @@ const HISTORY = [
   { isWinner: true, newRank: "gold" },
 ];
 
-describe("countMatching", () => {
+describe("createMatchCounter counting", () => {
   it("counts the matches meeting every sub-condition", async () => {
-    expect(await countMatching(HISTORY, GOLD_WIN)).toBe(2);
+    expect(await createMatchCounter()(HISTORY, GOLD_WIN)).toBe(2);
   });
 
   it("supports any-groups and the custom operators", async () => {
@@ -34,11 +33,11 @@ describe("countMatching", () => {
         { fact: "isWinner", operator: "equal", value: false },
       ],
     };
-    expect(await countMatching(HISTORY, conditions)).toBe(2);
+    expect(await createMatchCounter()(HISTORY, conditions)).toBe(2);
   });
 
   it("counts nothing over an empty history", async () => {
-    expect(await countMatching([], GOLD_WIN)).toBe(0);
+    expect(await createMatchCounter()([], GOLD_WIN)).toBe(0);
   });
 });
 

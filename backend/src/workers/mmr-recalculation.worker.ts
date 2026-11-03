@@ -69,9 +69,10 @@ const finalizeMatchMmr: Task = async (rawPayload) => {
 };
 
 /**
- * The live evaluation only saw the season up to this match. Anyone with later matches
- * — its own players included, not just the cascade — had those snapshots invalidated
- * and may have crossed a counted badge's threshold on one of them.
+ * The live evaluation only saw the season up to this match. When a rule counts
+ * matches, anyone with later matches — its own players included, not just the
+ * cascade — had those snapshots invalidated and may have crossed a counted badge's
+ * threshold on one of them. Otherwise only the cascade's badges can have moved.
  */
 async function syncBackdatedFinalization(
   matchId: string,
@@ -80,18 +81,25 @@ async function syncBackdatedFinalization(
   cascadePlayerIds: string[],
 ): Promise<void> {
   if (playerIds.length === 0) return;
-  const match = await matchRepository.getByIdSimple(matchId);
-  const movedPlayerIds = match?.playedAt
-    ? await rulesMatchHistoryService
-        .refreshAfterBackdatedMatch(tournamentId, matchId, playerIds, match.playedAt)
-        .catch((err) => {
-          logger.error({ err }, '[Worker] finalization snapshot refresh failed');
-          return [];
-        })
-    : [];
+  const movedPlayerIds = await syncLaterSnapshots(matchId, tournamentId, playerIds).catch((err) => {
+    logger.error({ err }, '[Worker] finalization snapshot refresh failed');
+    return [];
+  });
   await badgeReconciliationService
     .reconcilePlayers(tournamentId, [...new Set([...movedPlayerIds, ...cascadePlayerIds])])
     .catch((err) => logger.error({ err }, '[Worker] finalization cascade badge reconciliation failed'));
+}
+
+/** Returns the players whose counted history moved: none while no rule counts matches. */
+async function syncLaterSnapshots(matchId: string, tournamentId: string, playerIds: string[]): Promise<string[]> {
+  const match = await matchRepository.getByIdSimple(matchId);
+  if (!match?.playedAt) return [];
+  const season = await rankedSeasonRepository.getSeasonWithConfig(tournamentId);
+  if (await rulesEvaluationService.seasonCountsMatches(season?.disciplineId ?? null)) {
+    return rulesMatchHistoryService.refreshAfterBackdatedMatch(tournamentId, matchId, playerIds, match.playedAt);
+  }
+  await rulesMatchHistoryService.dropAfterBackdatedMatch(tournamentId, playerIds, match.playedAt);
+  return [];
 }
 
 /** Rewrites the snapshots a history rebuild made stale: message counters read them too. */

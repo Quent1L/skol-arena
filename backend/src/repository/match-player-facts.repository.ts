@@ -6,7 +6,6 @@ export interface MatchPlayerFactsRow {
   matchId: string;
   playerId: string;
   seasonId: string;
-  playedAt: Date;
   facts: Record<string, unknown>;
 }
 
@@ -21,7 +20,6 @@ export class MatchPlayerFactsRepository {
         target: [matchPlayerFacts.matchId, matchPlayerFacts.playerId],
         set: {
           seasonId: sql`excluded.season_id`,
-          playedAt: sql`excluded.played_at`,
           facts: sql`excluded.facts`,
         },
       });
@@ -116,6 +114,23 @@ export class MatchPlayerFactsRepository {
         ),
       )
       .orderBy(asc(matches.playedAt));
+  }
+
+  /** Drops the players' season snapshots of the matches played from `from` on, included. */
+  async deleteForPlayersFrom(seasonId: string, playerIds: string[], from: Date): Promise<void> {
+    if (playerIds.length === 0) return;
+    await db
+      .delete(matchPlayerFacts)
+      .where(
+        and(
+          eq(matchPlayerFacts.seasonId, seasonId),
+          inArray(matchPlayerFacts.playerId, playerIds),
+          inArray(
+            matchPlayerFacts.matchId,
+            db.select({ id: matches.id }).from(matches).where(gte(matches.playedAt, from)),
+          ),
+        ),
+      );
   }
 
   /** Those of the players with a finalized match after `since` in the season's discipline. */

@@ -379,6 +379,19 @@ describe("BadgeReconciliationService.reconcileRule", () => {
     expect(mockWs.send).not.toHaveBeenCalled();
   });
 
+  it("revokes without pushing anything when the pass is silent", async () => {
+    mockRulesRepo.getById.mockResolvedValue(STREAK_RULE as any);
+    mockPlayerMmrRepo.getSeasonMatchIdsOrdered.mockResolvedValue(["m1"] as any);
+    mockContextService.buildMatchSubmittedContexts.mockResolvedValue(ctx("p1", 0) as any);
+    mockRulesRepo.listBadgeAwards.mockResolvedValue([{ playerId: "p1", seasonId: "season-1" }] as any);
+
+    await service.reconcileRule("r1", true);
+
+    expect(mockRulesRepo.revokeBadge).toHaveBeenCalledWith("p1", "r1", "season-1");
+    expect(mockNotify.send).not.toHaveBeenCalled();
+    expect(mockWs.send).not.toHaveBeenCalled();
+  });
+
   it("changes nothing on a second pass over an already reconciled rule", async () => {
     mockRulesRepo.getById.mockResolvedValue(STREAK_RULE as any);
     mockPlayerMmrRepo.getSeasonMatchIdsOrdered.mockResolvedValue(["m1"] as any);

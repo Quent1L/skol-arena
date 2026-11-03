@@ -342,6 +342,19 @@ describe("theory: flood on the next match when events are stale", () => {
     expect(payload.teammates).toEqual([]);
   });
 
+  it("still pushes every player's event when the players lookup fails for one", async () => {
+    setSelectResult([{ playerId: "p1" }, { playerId: "p2" }]);
+    mockPlayerMmrRepo.getMmrHistoryOrdered.mockImplementation(() => Promise.resolve([historyRow("m4", 20)]));
+    mockAnimRepo.getOfficialEventDeltasByPlayer.mockImplementation(() => Promise.resolve(new Map()));
+    mockAnimRepo.getMatchContext.mockImplementationOnce(() => Promise.reject(new Error("db down")));
+
+    await mmrAnimationEventService.createOfficialEventsAndBroadcast("m4", "season-1");
+
+    const recipients = mockWs.send.mock.calls.map((call) => (call as any[])[0]);
+    expect(recipients).toEqual(["p1", "p2"]);
+    expect((mockWs.send.mock.calls[0] as any[])[1].data.matchId).toBe("m4");
+  });
+
   it("partial desync: only m2 changed → finalization emits m2 (recalculated) + m4", async () => {
     mockAnimRepo.getOfficialEventDeltasByPlayer.mockImplementation(() =>
       Promise.resolve(new Map([
