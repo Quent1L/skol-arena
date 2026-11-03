@@ -41,7 +41,7 @@
     "@tiptap/extension-text-align": "^3.30.2",
     "@tiptap/starter-kit": "^3.30.2",
     "@tiptap/vue-3": "^3.30.2",
-    "@vueuse/core": "^14.4.0",
+    "@vueuse/core": "^15.0.0",
     "better-auth": "catalog:",
     "chart.js": "^4.5.1",
     "date-fns": "^4.4.0",
