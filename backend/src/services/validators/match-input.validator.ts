@@ -221,9 +221,13 @@ export class MatchInputValidator {
         const max = tournament.maxTeamSize * 2;
         if (allPlayerIds.length < min || allPlayerIds.length > max) {
             errors.push(
-                `Le match nécessite entre ${min} et ${max} joueurs ` +
-                `(${tournament.minTeamSize}-${tournament.maxTeamSize} par équipe), ` +
-                `${allPlayerIds.length} sélectionné(s)`
+                t(`errors.${ErrorCode.MATCH_PLAYER_COUNT_INVALID}`, {
+                    min,
+                    max,
+                    minTeamSize: tournament.minTeamSize,
+                    maxTeamSize: tournament.maxTeamSize,
+                    count: allPlayerIds.length,
+                })
             );
             return;
         }

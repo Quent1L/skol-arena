@@ -127,6 +127,7 @@
     "TEAM_SIZE_INVALID": "La taille de l'équipe ne respecte pas les limites du tournoi",
     "TEAM_HAS_MATCH": "Cette équipe a déjà un match et ne peut plus être modifiée",
     "PLAYER_SCHEDULE_CONFLICT": "{{playerName}} est déjà engagé dans un autre match à cette heure-ci — la téléportation est prévue pour la prochaine version",
+    "MATCH_PLAYER_COUNT_INVALID": "Le match nécessite entre {{min}} et {{max}} joueurs ({{minTeamSize}}-{{maxTeamSize}} par équipe), {{count}} sélectionné(s)",
     "RANKED_MATCH_TOO_OLD": "Les matchs ranked doivent être déclarés dans les {{hours}}h suivant leur dispute",
     "RANDOM_NOT_ALLOWED_ON_BADGE": "Le tirage aléatoire ne peut pas être utilisé dans une règle de type badge",
     "INVALID_OPERATOR_FOR_FACT": "Cet opérateur ne s'applique pas à cette variable : la condition ne pourrait jamais être vraie",
@@ -211,5 +212,11 @@
     "RESULT_CORRECTED": "{{authorName}} a corrigé le résultat : {{previousScore}} → {{newScore}}.",
     "RESULT_CORRECTED_BY_ADMIN": "{{authorName}} (organisateur) a corrigé le résultat : {{previousScore}} → {{newScore}}.",
     "MATCH_CANCELLED": "{{authorName}} a annulé le match."
+  },
+  "messages": {
+    "MATCH_DELETED": "Match supprimé avec succès",
+    "TOURNAMENT_LEFT": "Vous avez quitté le tournoi avec succès",
+    "PLAYER_FALLBACK": "Joueur {{id}}",
+    "INVITATION_CODE_REQUIRED_TO_ACTIVATE": "Vous devez soumettre un code d'invitation pour activer votre compte."
   }
 }

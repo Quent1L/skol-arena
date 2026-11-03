@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vmsg } from "./validation-messages";
 import { validationModeSchema } from "./enums";
 import {
   baseSeasonFormSchema,
@@ -365,7 +366,9 @@ const rankedSeasonAutomationFields = {
     .min(3)
     .max(100)
     .refine((value) => value.includes(SEASON_NUMBER_PLACEHOLDER), {
-      message: `Le gabarit doit contenir ${SEASON_NUMBER_PLACEHOLDER}`,
+      ...vmsg("validation.nameTemplatePlaceholder", {
+        placeholder: SEASON_NUMBER_PLACEHOLDER,
+      }),
     }),
   carryParticipants: z.boolean(),
   participantsMinMatches: z.number().int().min(0).max(50),
@@ -393,7 +396,7 @@ export const AUTOMATION_DEFAULTS: RankedSeasonAutomationInput = {
   enabled: true,
   mode: "chain",
   durationDays: 30,
-  nameTemplate: `Saison ${SEASON_NUMBER_PLACEHOLDER}`,
+  nameTemplate: `Season ${SEASON_NUMBER_PLACEHOLDER}`,
   carryParticipants: true,
   participantsMinMatches: 0,
   carryTiers: true,
@@ -527,16 +530,16 @@ export type UpdateRankedSeasonFormData = z.infer<
 export const createRankedSeasonSchema = z
   .object({
     name: z
-      .string({ message: "Le nom est requis" })
-      .min(3, "Le nom doit contenir au moins 3 caractères")
-      .max(100, "Le nom ne peut pas dépasser 100 caractères"),
+      .string(vmsg("validation.nameRequired"))
+      .min(3, vmsg("validation.nameMin3"))
+      .max(100, vmsg("validation.nameMax100")),
     description: z
       .string()
-      .max(500, "La description ne peut pas dépasser 500 caractères")
+      .max(500, vmsg("validation.descriptionMax500"))
       .optional(),
     disciplineId: z
-      .string({ message: "La discipline est requise" })
-      .uuid("ID de discipline invalide"),
+      .string(vmsg("validation.disciplineRequired"))
+      .uuid(vmsg("validation.invalidDisciplineId")),
     startDate: z
       .string()
       .datetime()
@@ -546,13 +549,13 @@ export const createRankedSeasonSchema = z
       .datetime()
       .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
     minTeamSize: z
-      .number({ message: "La taille minimale de l'équipe est requise" })
+      .number(vmsg("validation.minTeamSizeRequired"))
       .int()
-      .min(1, "La taille minimale est 1"),
+      .min(1, vmsg("validation.teamSizeMin1")),
     maxTeamSize: z
-      .number({ message: "La taille maximale de l'équipe est requise" })
+      .number(vmsg("validation.maxTeamSizeRequired"))
       .int()
-      .min(1, "La taille minimale est 1"),
+      .min(1, vmsg("validation.teamSizeMin1")),
     rulesId: z.string().uuid().nullable().optional(),
     organizationId: z.string().uuid().nullable().optional(),
     allowDraw: z.boolean().default(true).optional(),
@@ -572,12 +575,12 @@ export const createRankedSeasonSchema = z
 export const updateRankedSeasonSchema = z.object({
   name: z
     .string()
-    .min(3, "Le nom doit contenir au moins 3 caractères")
-    .max(100, "Le nom ne peut pas dépasser 100 caractères")
+    .min(3, vmsg("validation.nameMin3"))
+    .max(100, vmsg("validation.nameMax100"))
     .optional(),
   description: z
     .string()
-    .max(500, "La description ne peut pas dépasser 500 caractères")
+    .max(500, vmsg("validation.descriptionMax500"))
     .optional(),
   startDate: z
     .string()

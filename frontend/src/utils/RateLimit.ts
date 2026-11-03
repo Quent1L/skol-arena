@@ -43,8 +43,8 @@ export function retryAfterFrom(
 /**
  * What to show a throttled user, in their own locale.
  *
- * Never the server's sentence: Better Auth's is hardcoded English, and ours follows
- * the browser's Accept-Language rather than the locale picked inside the app.
+ * Never the server's sentence: Better Auth's is hardcoded English, and neither says
+ * how long the wait is.
  */
 export function rateLimitMessage(retryAfter: number | null): string {
   const { t } = i18n.global

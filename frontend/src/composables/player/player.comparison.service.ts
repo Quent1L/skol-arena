@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { i18n } from '@/i18n'
 import { playerApi } from './player.api'
 import type {
   PlayerProfile,
@@ -55,8 +56,7 @@ export function usePlayerComparisonService() {
       if (current !== requestId) return
       clearComparison()
       requestId = current
-      error.value =
-        err instanceof Error ? err.message : 'Erreur lors du chargement de la comparaison'
+      error.value = err instanceof Error ? err.message : i18n.global.t('loadErrors.comparison')
     } finally {
       if (current === requestId) loading.value = false
     }

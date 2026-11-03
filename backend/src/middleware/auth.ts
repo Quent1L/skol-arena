@@ -4,6 +4,7 @@ import { userService } from "../services/user.service";
 import { userRepository } from "../repository/user.repository";
 import type { AppVariablesOptional } from "../types/hono";
 import { logger } from "../utils/logger";
+import { t } from "../utils/i18n-context";
 
 type AppContext = Context<{
   Variables: AppVariablesOptional;
@@ -47,7 +48,7 @@ export async function requireAuth(c: AppContext, next: () => Promise<void>) {
         {
           error: {
             code: "USER_DEACTIVATED",
-            message: "Votre compte a été désactivé.",
+            message: t("errors.USER_DEACTIVATED"),
           },
         },
         403
@@ -64,7 +65,7 @@ export async function requireAuth(c: AppContext, next: () => Promise<void>) {
         {
           error: {
             code: "INVITATION_CODE_REQUIRED",
-            message: "Vous devez soumettre un code d'invitation pour activer votre compte."
+            message: t("messages.INVITATION_CODE_REQUIRED_TO_ACTIVATE"),
           }
         },
         403 // Forbidden (authenticated but not authorized)

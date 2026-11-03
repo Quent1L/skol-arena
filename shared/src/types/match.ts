@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vmsg } from "./validation-messages";
 import {
   type MatchStatus,
   type MatchFinalizationReason,
@@ -218,7 +219,7 @@ const matchSidesSchema = z
   .array(matchSideInputSchema)
   .length(2)
   .refine((sides) => sides[0].position !== sides[1].position, {
-    message: "Les camps doivent occuper les positions 1 et 2",
+    ...vmsg("validation.sidesPositions"),
   });
 
 /**
@@ -232,17 +233,17 @@ export type WritableMatchStatus = z.infer<typeof writableMatchStatusSchema>;
 const winnerPositionSchema = z.number().int().min(1).max(2).nullable().optional();
 
 export const createMatchSchema = z.object({
-  tournamentId: z.string().uuid("ID de tournoi invalide"),
+  tournamentId: z.string().uuid(vmsg("validation.invalidTournamentId")),
   round: z.number().int().min(1).optional(),
   sides: matchSidesSchema.optional(),
   status: writableMatchStatusSchema.optional(),
   scoreA: z.number().int().min(0).nullable().optional(),
   scoreB: z.number().int().min(0).nullable().optional(),
   reportProof: z.string().optional(),
-  outcomeTypeId: z.string().uuid("ID de type de résultat invalide").optional(),
+  outcomeTypeId: z.string().uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
   outcomeReasonId: z
     .string()
-    .uuid("ID de raison de résultat invalide")
+    .uuid(vmsg("validation.invalidOutcomeReasonId"))
     .optional(),
   winnerPosition: winnerPositionSchema,
   playedAt: z.string().datetime().optional(),
@@ -255,23 +256,23 @@ export const updateMatchSchema = z.object({
   status: writableMatchStatusSchema.optional(),
   reportProof: z.string().optional(),
   playedAt: z.string().datetime(),
-  outcomeTypeId: z.string().uuid("ID de type de résultat invalide").optional(),
+  outcomeTypeId: z.string().uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
   outcomeReasonId: z
     .string()
-    .uuid("ID de raison de résultat invalide")
+    .uuid(vmsg("validation.invalidOutcomeReasonId"))
     .optional(),
   winnerPosition: winnerPositionSchema,
 });
 
 export const reportMatchResultSchema = z.object({
-  scoreA: z.number().int().min(0, "Le score doit être positif"),
-  scoreB: z.number().int().min(0, "Le score doit être positif"),
+  scoreA: z.number().int().min(0, vmsg("validation.scoreNonNegative")),
+  scoreB: z.number().int().min(0, vmsg("validation.scoreNonNegative")),
   reportProof: z.string().optional(),
   winnerPosition: winnerPositionSchema,
-  outcomeTypeId: z.string().uuid("ID de type de résultat invalide").optional(),
+  outcomeTypeId: z.string().uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
   outcomeReasonId: z
     .string()
-    .uuid("ID de raison de résultat invalide")
+    .uuid(vmsg("validation.invalidOutcomeReasonId"))
     .optional(),
 });
 
@@ -408,7 +409,7 @@ export const postMatchMessageSchema = z.object({
   body: z
     .string()
     .trim()
-    .min(1, "Le message ne peut pas être vide")
+    .min(1, vmsg("validation.messageNotEmpty"))
     .max(MATCH_MESSAGE_MAX_LENGTH),
 });
 
@@ -438,11 +439,11 @@ export type ClientMatchMessage = z.infer<typeof clientMatchMessageSchema>;
 export const clientMatchMessageListSchema = z.array(clientMatchMessageSchema);
 
 export const validateMatchSchema = z.object({
-  tournamentId: z.string().uuid("ID de tournoi invalide"),
+  tournamentId: z.string().uuid(vmsg("validation.invalidTournamentId")),
   round: z.number().int().min(1).optional(),
   sides: z.array(matchSideInputSchema).min(1).optional(),
   allPlayerIds: z.array(z.string().uuid()).optional(),
-  matchId: z.string().uuid("ID de match invalide").optional(),
+  matchId: z.string().uuid(vmsg("validation.invalidMatchId")).optional(),
   playedAt: z.string().datetime().optional(),
 });
 

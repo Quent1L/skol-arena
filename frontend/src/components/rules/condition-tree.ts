@@ -17,9 +17,9 @@ export type BuilderNode =
 
 export type GroupNode = { kind: 'group'; operator: 'all' | 'any'; children: BuilderNode[] }
 
+/** A palette block; its label is `conditionPalette.items.<paletteType>`. */
 export type PaletteItem = {
   paletteType: 'leaf' | 'group-all' | 'group-any' | 'count'
-  label: string
 }
 
 /** Option for player-reference facts (winnerId / loserId). */
@@ -29,10 +29,10 @@ export interface PlayerOption {
 }
 
 export const PALETTE_ITEMS: PaletteItem[] = [
-  { paletteType: 'leaf', label: 'Condition' },
-  { paletteType: 'group-all', label: 'Groupe ET' },
-  { paletteType: 'group-any', label: 'Groupe OU' },
-  { paletteType: 'count', label: 'Compteur de matchs' },
+  { paletteType: 'leaf' },
+  { paletteType: 'group-all' },
+  { paletteType: 'group-any' },
+  { paletteType: 'count' },
 ]
 
 export function emptyLeaf(): BuilderNode {

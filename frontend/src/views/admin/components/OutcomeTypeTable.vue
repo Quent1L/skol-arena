@@ -1,9 +1,9 @@
 <template>
   <div>
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <h2 class="text-lg font-semibold text-highlighted">Types de résultat</h2>
+      <h2 class="text-lg font-semibold text-highlighted">{{ t('outcomeTypeAdmin.title') }}</h2>
       <UButton
-        label="Ajouter un type"
+        :label="t('outcomeTypeAdmin.addType')"
         icon="i-fa7-solid:plus"
         size="sm"
         @click="emit('add-outcome-type')"
@@ -16,7 +16,7 @@
       :columns="columns"
       :loading="loading"
       :get-row-id="(row: OutcomeType) => row.id"
-      empty="Aucun type de résultat"
+      :empty="t('outcomeTypeAdmin.emptyTypes')"
       :ui="{ td: 'whitespace-normal' }"
     >
       <template #expand-cell="{ row }">
@@ -25,7 +25,7 @@
           color="neutral"
           variant="ghost"
           size="sm"
-          :aria-label="`Raisons pour ${row.original.name}`"
+          :aria-label="t('outcomeTypeAdmin.reasonsFor', { name: row.original.name })"
           :aria-expanded="row.getIsExpanded()"
           @click="row.toggleExpanded()"
         />
@@ -35,8 +35,8 @@
           <span class="font-medium" :class="{ 'opacity-60': row.original.archivedAt }">
             {{ row.original.name }}
           </span>
-          <UBadge v-if="row.original.isDefault" label="Par défaut" color="success" variant="subtle" />
-          <UBadge v-if="row.original.archivedAt" label="Archivé" color="neutral" variant="subtle" />
+          <UBadge v-if="row.original.isDefault" :label="t('outcomeTypeAdmin.default')" color="success" variant="subtle" />
+          <UBadge v-if="row.original.archivedAt" :label="t('outcomeTypeAdmin.archived')" color="neutral" variant="subtle" />
         </div>
         <!-- The numeric columns are hidden on phones: keep their values reachable. -->
         <p class="mt-1 text-xs text-muted sm:hidden">
@@ -50,9 +50,11 @@
       <template #expanded="{ row }">
         <div class="space-y-3 py-2 sm:ps-10">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <h3 class="text-sm font-semibold">Raisons pour "{{ row.original.name }}"</h3>
+            <h3 class="text-sm font-semibold">
+              {{ t('outcomeTypeAdmin.reasonsFor', { name: row.original.name }) }}
+            </h3>
             <UButton
-              label="Ajouter une raison"
+              :label="t('outcomeTypeAdmin.addReason')"
               icon="i-fa7-solid:plus"
               size="xs"
               variant="soft"
@@ -72,7 +74,9 @@
               <RowActions :actions="reasonActions(row.original, reason)" />
             </li>
           </ul>
-          <p v-else class="text-sm text-muted">Aucune raison de résultat</p>
+          <p v-else class="text-sm text-muted">
+            {{ t('outcomeTypeAdmin.emptyReasons') }}
+          </p>
         </div>
       </template>
     </UTable>
@@ -81,6 +85,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { TableColumn } from '@nuxt/ui'
 import RowActions, { type RowAction } from '@/components/ui/RowActions.vue'
 import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/admin/table-columns'
@@ -95,6 +100,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { t } = useI18n()
 
 const emit = defineEmits<{
   'add-outcome-type': []
@@ -121,29 +127,33 @@ const outcomeReasonsByType = computed(() => {
   return map
 })
 
-const columns: TableColumn<OutcomeType>[] = [
+const columns = computed<TableColumn<OutcomeType>[]>(() => [
   { id: 'expand', meta: { class: { th: 'w-0', td: 'w-0' } } },
-  { accessorKey: 'name', header: sortableHeader('Nom') },
-  { accessorKey: 'points', header: 'Pts / résultat', meta: hiddenBelow('sm') },
-  { accessorKey: 'mmrMultiplier', header: 'MMR multiplier', meta: hiddenBelow('sm') },
+  { accessorKey: 'name', header: sortableHeader(t('common.name')) },
+  { accessorKey: 'points', header: t('outcomeTypeAdmin.pointsColumn'), meta: hiddenBelow('sm') },
+  {
+    accessorKey: 'mmrMultiplier',
+    header: t('outcomeTypeAdmin.mmrMultiplier'),
+    meta: hiddenBelow('sm'),
+  },
   { id: 'actions', meta: ACTIONS_COLUMN_META },
-]
+])
 
 function typeActions(outcomeType: OutcomeType): RowAction[] {
   return [
     {
-      label: 'Modifier',
+      label: t('common.edit'),
       icon: 'i-fa7-solid:pen',
       onSelect: () => emit('edit-outcome-type', outcomeType),
     },
     {
-      label: 'Restaurer',
+      label: t('outcomeTypeAdmin.restore'),
       icon: 'i-fa7-solid:rotate-left',
       hidden: !outcomeType.archivedAt,
       onSelect: () => emit('restore-outcome-type', outcomeType),
     },
     {
-      label: 'Supprimer',
+      label: t('common.delete'),
       icon: 'i-fa7-solid:trash',
       color: 'error',
       hidden: !!outcomeType.archivedAt,
@@ -155,12 +165,12 @@ function typeActions(outcomeType: OutcomeType): RowAction[] {
 function reasonActions(outcomeType: OutcomeType, reason: OutcomeReason): RowAction[] {
   return [
     {
-      label: 'Modifier',
+      label: t('common.edit'),
       icon: 'i-fa7-solid:pen',
       onSelect: () => emit('edit-outcome-reason', outcomeType, reason),
     },
     {
-      label: 'Supprimer',
+      label: t('common.delete'),
       icon: 'i-fa7-solid:trash',
       color: 'error',
       onSelect: () => emit('delete-outcome-reason', reason),
@@ -186,7 +196,7 @@ async function loadOutcomeReasonsForType(outcomeTypeId: string) {
     await props.loadOutcomeReasons(outcomeTypeId)
     loadedOutcomeTypeIds.value.add(outcomeTypeId)
   } catch (err) {
-    console.error('Erreur lors du chargement des raisons:', err)
+    console.error('Failed to load outcome reasons:', err)
   }
 }
 

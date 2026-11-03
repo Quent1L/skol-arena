@@ -26,7 +26,7 @@ import ui from '@nuxt/ui/vue-plugin'
 import { errorService } from './composables/useErrorService'
 import { checkVersion } from './composables/pwa/pwa.update'
 import { isStaleChunkError, recoverFromStaleChunk } from './composables/pwa/stale-chunk'
-import { i18n, getInitialLocale } from './i18n'
+import { i18n } from './i18n'
 
 // Deployment detection: these checks only raise a flag, they never reload.
 // Navigation is what applies the update (see router/index.ts), so input in
@@ -57,8 +57,8 @@ document.documentElement.classList.add('dark')
 // Errors will be logged to the console until the Toast is available
 errorService.install()
 
-// Apply the initial language (localStorage) to <html>
-document.documentElement.lang = getInitialLocale()
+// Apply the initial language (stored choice, else the browser's) to <html>
+document.documentElement.lang = i18n.global.locale.value
 
 // Create the Vue application
 const app = createApp(App)

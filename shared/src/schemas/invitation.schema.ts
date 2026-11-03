@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vmsg } from "../types/validation-messages";
 
 export const generateInvitationCodeSchema = z.object({
   maxUses: z.number().int().min(1).optional().default(1),
@@ -8,11 +9,11 @@ export const generateInvitationCodeSchema = z.object({
 });
 
 export const validateInvitationCodeSchema = z.object({
-  code: z.string().regex(/^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/, "Format du code invalide"),
+  code: z.string().regex(/^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/, vmsg("validation.invalidCodeFormat")),
 });
 
 export const consumeInvitationCodeSchema = z.object({
-  code: z.string().regex(/^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/, "Format du code invalide"),
+  code: z.string().regex(/^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/, vmsg("validation.invalidCodeFormat")),
 });
 
 export type GenerateInvitationCodeInput = z.infer<typeof generateInvitationCodeSchema>;

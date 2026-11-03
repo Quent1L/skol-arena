@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { i18n } from '@/i18n'
 import { tournamentStatsApi } from './tournament-stats.api'
 import type { TournamentStats } from '@skol-arena/shared'
 
@@ -13,8 +14,7 @@ export function useTournamentStatsService() {
     try {
       stats.value = await tournamentStatsApi.getStats(tournamentId)
     } catch (err: unknown) {
-      error.value =
-        err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques'
+      error.value = err instanceof Error ? err.message : i18n.global.t('loadErrors.stats')
     } finally {
       loading.value = false
     }

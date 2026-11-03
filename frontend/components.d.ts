@@ -56,6 +56,7 @@ declare module 'vue' {
     InfoTooltip: typeof import('./src/components/InfoTooltip.vue')['default']
     IntroCard: typeof import('./src/components/rewind/cards/IntroCard.vue')['default']
     LeaderboardTierList: typeof import('./src/components/ranked/LeaderboardTierList.vue')['default']
+    LocaleSwitcher: typeof import('./src/components/LocaleSwitcher.vue')['default']
     LogoFillGauge: typeof import('./src/components/brand/LogoFillGauge.vue')['default']
     LowSampleBadge: typeof import('./src/components/stats/LowSampleBadge.vue')['default']
     MatchBalanceBar: typeof import('./src/components/match/MatchBalanceBar.vue')['default']

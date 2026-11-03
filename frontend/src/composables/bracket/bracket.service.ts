@@ -40,10 +40,10 @@ export function useBracketService() {
         return null
       }
 
-      error.value = err instanceof Error ? err.message : 'Error loading bracket'
+      error.value = err instanceof Error ? err.message : t('bracketService.errors.loadFailed')
       toast.add({
         severity: 'error',
-        summary: 'Error',
+        summary: t('common.error'),
         detail: error.value,
         life: 5000,
       })
@@ -64,10 +64,10 @@ export function useBracketService() {
       currentParticipants.value = result.currentParticipants ?? 0
       return result
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : 'Error checking bracket eligibility'
+      const errorMsg = err instanceof Error ? err.message : t('bracketService.errors.eligibilityFailed')
       toast.add({
         severity: 'error',
-        summary: 'Error',
+        summary: t('common.error'),
         detail: errorMsg,
         life: 5000,
       })
@@ -88,14 +88,14 @@ export function useBracketService() {
 
       toast.add({
         severity: 'success',
-        summary: 'Bracket Generated',
-        detail: 'The tournament bracket has been successfully generated',
+        summary: t('bracketService.toast.generateSuccessSummary'),
+        detail: t('bracketService.toast.generateSuccessDetail'),
         life: 5000,
       })
 
       return data
     } catch (err: unknown) {
-      let detail = err instanceof Error ? err.message : 'Error generating bracket'
+      let detail = err instanceof Error ? err.message : t('bracketService.errors.generateFailed')
       if (err instanceof Error && (err as Error & { cause?: unknown }).cause === 'CHAMPIONSHIP_PARTICIPANTS_WITHOUT_MATCHES') {
         const participants = ((err as Error & { details?: { participants?: Array<{ name: string }> } }).details?.participants) ?? []
         const names = participants.map((p) => p.name).join(', ')
@@ -140,7 +140,7 @@ export function useBracketService() {
 
       return data
     } catch (err: unknown) {
-      let detail = err instanceof Error ? err.message : 'Error regenerating bracket'
+      let detail = err instanceof Error ? err.message : t('bracketService.errors.regenerateFailed')
       if (err instanceof Error && (err as Error & { cause?: unknown }).cause === 'CHAMPIONSHIP_PARTICIPANTS_WITHOUT_MATCHES') {
         const participants = ((err as Error & { details?: { participants?: Array<{ name: string }> } }).details?.participants) ?? []
         const names = participants.map((p) => p.name).join(', ')
@@ -174,15 +174,15 @@ export function useBracketService() {
 
       toast.add({
         severity: 'success',
-        summary: 'Bracket Deleted',
-        detail: 'The tournament bracket has been successfully deleted',
+        summary: t('bracketService.toast.deleteSuccessSummary'),
+        detail: t('bracketService.toast.deleteSuccessDetail'),
         life: 5000,
       })
     } catch (err: unknown) {
-      error.value = err instanceof Error ? err.message : 'Error deleting bracket'
+      error.value = err instanceof Error ? err.message : t('bracketService.errors.deleteFailed')
       toast.add({
         severity: 'error',
-        summary: 'Deletion Failed',
+        summary: t('bracketService.toast.deleteFailedSummary'),
         detail: error.value,
         life: 5000,
       })

@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { rulesApi, type BadgeReconciliationStatus, type CatalogFact, type RuleListFilters } from './rules.api'
 import type {
@@ -22,9 +22,20 @@ export function useRulesService() {
   const { t } = useI18n()
   const rules = ref<ClientRule[]>([])
   const currentRule = ref<ClientRule | null>(null)
-  const catalog = ref<CatalogFact[]>([])
+  const rawCatalog = ref<CatalogFact[]>([])
+  // Fact labels in the viewer's language, re-rendered on a language switch. The
+  // server's label stays the fallback for a fact this build has no key for.
+  const catalog = computed<CatalogFact[]>(() =>
+    rawCatalog.value.map((f) => ({ ...f, label: factLabel(f) })),
+  )
   const loading = ref(false)
   const error = ref<string | null>(null)
+
+  function factLabel(fact: CatalogFact): string {
+    const key = `rulesFacts.${fact.key}`
+    const label = t(key)
+    return label === key ? fact.label : label
+  }
 
   async function loadRules(filters: RuleListFilters = {}) {
     loading.value = true
@@ -54,7 +65,7 @@ export function useRulesService() {
     try {
       const result = await rulesApi.getCatalog(triggerEvent)
       // The `matchDate` sample is a `YYYY-MM-DD` string the interceptor revived too.
-      catalog.value = result.facts.map((f) => ({
+      rawCatalog.value = result.facts.map((f) => ({
         ...f,
         sample: restoreDateValue(f.sample),
       }))

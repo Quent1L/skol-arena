@@ -1,6 +1,9 @@
 <template>
   <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full">
+      <div class="flex justify-end mb-4">
+        <LocaleSwitcher />
+      </div>
       <div class="text-center mb-8 text-white">
         <SkolLogo :width="240" class="mx-auto" />
         <p class="mt-2">{{ t('forgotPasswordView.subtitle') }}</p>
@@ -66,6 +69,7 @@
 
 <script setup lang="ts">
 import SkolLogo from '@/components/brand/SkolLogo.vue'
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import { reactive, ref } from 'vue'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useI18n } from 'vue-i18n'

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vmsg } from "./validation-messages";
 import { userRoleEnum, userRoleSchema } from "./enums";
 import { displayNameRegex } from "../schemas/user.schema";
 
@@ -127,7 +128,7 @@ export const adminUpdateUserSchema = z
     email: z.email().optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
-    message: "At least one field must be provided",
+    ...vmsg("validation.atLeastOneField"),
   });
 
 export type AdminUpdateUserInput = z.infer<typeof adminUpdateUserSchema>;

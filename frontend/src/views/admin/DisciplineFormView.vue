@@ -273,7 +273,7 @@ async function handleOutcomeTypeSubmit(values: {
     editingOutcomeType.value = null
     await refreshDrift()
   } catch (err) {
-    console.error('Erreur lors de la sauvegarde du type de résultat:', err)
+    console.error('Failed to save the outcome type:', err)
   }
 }
 
@@ -396,7 +396,7 @@ async function onSubmit({ data: values }: FormSubmitEvent<CreateDisciplineReques
       router.replace(`/admin/disciplines/${created.id}`)
     }
   } catch (err) {
-    console.error('Erreur lors de la sauvegarde:', err)
+    console.error('Failed to save:', err)
   }
 }
 

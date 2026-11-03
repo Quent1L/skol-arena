@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vmsg } from "./validation-messages";
 import {
   type TournamentMode,
   type TeamMode,
@@ -193,20 +194,20 @@ export const createTournamentFormSchema = baseTournamentFormSchema
 // Base schema for tournament data
 const baseTournamentDataSchema = z.object({
   name: z
-    .string({ message: "Le nom est requis" })
-    .min(3, "Le nom doit contenir au moins 3 caractères")
-    .max(100, "Le nom ne peut pas dépasser 100 caractères"),
+    .string(vmsg("validation.nameRequired"))
+    .min(3, vmsg("validation.nameMin3"))
+    .max(100, vmsg("validation.nameMax100")),
   description: z.string().optional(),
   mode: tournamentModeSchema,
   teamMode: teamModeSchema,
   minTeamSize: z
-    .number({ message: "La taille minimale de l'équipe est requise" })
+    .number(vmsg("validation.minTeamSizeRequired"))
     .int()
-    .min(1, "La taille minimale est 1"),
+    .min(1, vmsg("validation.teamSizeMin1")),
   maxTeamSize: z
-    .number({ message: "La taille maximale de l'équipe est requise" })
+    .number(vmsg("validation.maxTeamSizeRequired"))
     .int()
-    .min(1, "La taille minimale est 1"),
+    .min(1, vmsg("validation.teamSizeMin1")),
   scoringConfig: tournamentScoringConfigInputSchema.optional(),
   championshipConfig: championshipConfigInputSchema.optional(),
   allowDraw: z.boolean().default(true).optional(),
@@ -219,7 +220,7 @@ const baseTournamentDataSchema = z.object({
     .string()
     .datetime()
     .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
-  disciplineId: z.string().uuid("ID de discipline invalide").optional(),
+  disciplineId: z.string().uuid(vmsg("validation.invalidDisciplineId")).optional(),
   minScore: z.number().int().min(0).nullable().optional(),
   maxScore: z.number().int().min(0).nullable().optional(),
   organizationId: z.string().uuid().optional().nullable(),
@@ -251,14 +252,14 @@ export const updateTournamentSchema = z
   .object({
     name: z
       .string()
-      .min(3, "Le nom doit contenir au moins 3 caractères")
-      .max(100, "Le nom ne peut pas dépasser 100 caractères")
+      .min(3, vmsg("validation.nameMin3"))
+      .max(100, vmsg("validation.nameMax100"))
       .optional(),
     description: z.string().optional(),
     mode: tournamentModeSchema.optional(),
     teamMode: teamModeSchema.optional(),
-    minTeamSize: z.number().int().min(1, "La taille minimale est 1").optional(),
-    maxTeamSize: z.number().int().min(1, "La taille minimale est 1").optional(),
+    minTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
+    maxTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
     scoringConfig: tournamentScoringConfigInputSchema.optional(),
     championshipConfig: championshipConfigInputSchema.optional(),
     allowDraw: z.boolean().optional(),

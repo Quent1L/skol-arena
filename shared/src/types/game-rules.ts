@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vmsg } from "./validation-messages";
 
 // ============================================
 // Types and interfaces for game rules
@@ -33,19 +34,19 @@ export interface ClientGameRule extends Omit<GameRule, "createdAt" | "updatedAt"
 
 export const createGameRuleSchema = z.object({
   title: z
-    .string({ message: "Le titre est requis" })
-    .min(2, "Le titre doit contenir au moins 2 caractères")
-    .max(200, "Le titre ne peut pas dépasser 200 caractères"),
-  content: z.string({ message: "Le contenu est requis" }).min(1, "Le contenu est requis"),
+    .string(vmsg("validation.titleRequired"))
+    .min(2, vmsg("validation.titleMin2"))
+    .max(200, vmsg("validation.titleMax200")),
+  content: z.string(vmsg("validation.contentRequired")).min(1, vmsg("validation.contentRequired")),
 });
 
 export const updateGameRuleSchema = z.object({
   title: z
     .string()
-    .min(2, "Le titre doit contenir au moins 2 caractères")
-    .max(200, "Le titre ne peut pas dépasser 200 caractères")
+    .min(2, vmsg("validation.titleMin2"))
+    .max(200, vmsg("validation.titleMax200"))
     .optional(),
-  content: z.string().min(1, "Le contenu est requis").optional(),
+  content: z.string().min(1, vmsg("validation.contentRequired")).optional(),
 });
 
 // ============================================

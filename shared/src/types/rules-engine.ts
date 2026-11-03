@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vmsg } from "./validation-messages";
 
 // ============================================
 // Rules engine — contextual messages & badges
@@ -111,43 +112,45 @@ export interface FactDefinition {
   ref?: "player" | "time" | "discipline" | "site" | "weekday" | "outcomeType" | "outcomeReason";
 }
 
+// `label` is the English fallback: the admin UI renders `rulesFacts.<key>` in the
+// viewer's language.
 export const MATCH_SUBMITTED_FACTS: FactDefinition[] = [
-  { key: "playerId", label: "Joueur concerné", type: "string", sample: "", ref: "player" },
-  { key: "teammateIds", label: "Coéquipiers", type: "stringList", sample: [], ref: "player" },
-  { key: "opponentIds", label: "Adversaires", type: "stringList", sample: [], ref: "player" },
-  { key: "winnerIds", label: "Camp vainqueur", type: "stringList", sample: [], ref: "player" },
-  { key: "loserIds", label: "Camp perdant", type: "stringList", sample: [], ref: "player" },
-  { key: "isWinner", label: "Le joueur est vainqueur", type: "boolean", sample: true },
-  { key: "scoreWinner", label: "Score du vainqueur", type: "number", sample: 2 },
-  { key: "scoreLoser", label: "Score du perdant", type: "number", sample: 1 },
-  { key: "matchScore", label: "Score du match", type: "string", sample: "2-1" },
-  // Wording follows the rest of the app ("Type de résultat" / "Raison du résultat",
-  // cf. the match entry screen and the discipline settings), not the DB naming.
-  { key: "outcomeType", label: "Type de résultat", type: "string", sample: "", ref: "outcomeType" },
-  { key: "outcomeTypeName", label: "Nom du type de résultat", type: "string", sample: "Forfait" },
-  { key: "isDefaultOutcome", label: "Résultat par défaut", type: "boolean", sample: true },
-  { key: "outcomeReason", label: "Raison du résultat", type: "string", sample: "", ref: "outcomeReason" },
-  { key: "outcomeReasonName", label: "Nom de la raison du résultat", type: "string", sample: "Blessure" },
-  { key: "mmrDelta", label: "Variation de MMR", type: "number", sample: 18 },
-  { key: "newMmr", label: "Nouveau MMR", type: "number", sample: 1218 },
-  { key: "previousMmr", label: "MMR précédent", type: "number", sample: 1200 },
-  { key: "newRank", label: "Nouveau rang", type: "string", sample: "gold" },
-  { key: "previousRank", label: "Rang précédent", type: "string", sample: "silver" },
-  { key: "rankChanged", label: "Rang modifié", type: "boolean", sample: true },
-  { key: "rankUp", label: "Montée de rang", type: "boolean", sample: true },
-  { key: "rankDown", label: "Descente de rang", type: "boolean", sample: false },
-  { key: "winStreak", label: "Série de victoires", type: "number", sample: 3 },
-  { key: "lossStreak", label: "Série de défaites", type: "number", sample: 0 },
-  { key: "isPlacementMatch", label: "Match de placement", type: "boolean", sample: false },
-  { key: "matchCountThisSeason", label: "Matchs cette saison", type: "number", sample: 12 },
-  { key: "opponentRank", label: "Rang de l'adversaire", type: "string", sample: "gold" },
-  { key: "matchHour", label: "Heure du match (0-23)", type: "number", sample: 21 },
-  { key: "matchMinuteOfDay", label: "Horaire du match (précis)", type: "number", sample: 1290, ref: "time" },
-  { key: "matchDayOfWeek", label: "Jour de la semaine", type: "number", sample: 6, ref: "weekday" },
-  { key: "matchDate", label: "Date du match (AAAA-MM-JJ)", type: "date", sample: "2026-06-12" },
+  { key: "playerId", label: "Player concerned", type: "string", sample: "", ref: "player" },
+  { key: "teammateIds", label: "Teammates", type: "stringList", sample: [], ref: "player" },
+  { key: "opponentIds", label: "Opponents", type: "stringList", sample: [], ref: "player" },
+  { key: "winnerIds", label: "Winning side", type: "stringList", sample: [], ref: "player" },
+  { key: "loserIds", label: "Losing side", type: "stringList", sample: [], ref: "player" },
+  { key: "isWinner", label: "The player won", type: "boolean", sample: true },
+  { key: "scoreWinner", label: "Winner's score", type: "number", sample: 2 },
+  { key: "scoreLoser", label: "Loser's score", type: "number", sample: 1 },
+  { key: "matchScore", label: "Match score", type: "string", sample: "2-1" },
+  // Wording follows the rest of the app (cf. the match entry screen and the
+  // discipline settings), not the DB naming.
+  { key: "outcomeType", label: "Outcome type", type: "string", sample: "", ref: "outcomeType" },
+  { key: "outcomeTypeName", label: "Outcome type name", type: "string", sample: "Forfait" },
+  { key: "isDefaultOutcome", label: "Default outcome", type: "boolean", sample: true },
+  { key: "outcomeReason", label: "Outcome reason", type: "string", sample: "", ref: "outcomeReason" },
+  { key: "outcomeReasonName", label: "Outcome reason name", type: "string", sample: "Blessure" },
+  { key: "mmrDelta", label: "MMR change", type: "number", sample: 18 },
+  { key: "newMmr", label: "New MMR", type: "number", sample: 1218 },
+  { key: "previousMmr", label: "Previous MMR", type: "number", sample: 1200 },
+  { key: "newRank", label: "New rank", type: "string", sample: "gold" },
+  { key: "previousRank", label: "Previous rank", type: "string", sample: "silver" },
+  { key: "rankChanged", label: "Rank changed", type: "boolean", sample: true },
+  { key: "rankUp", label: "Rank up", type: "boolean", sample: true },
+  { key: "rankDown", label: "Rank down", type: "boolean", sample: false },
+  { key: "winStreak", label: "Win streak", type: "number", sample: 3 },
+  { key: "lossStreak", label: "Loss streak", type: "number", sample: 0 },
+  { key: "isPlacementMatch", label: "Placement match", type: "boolean", sample: false },
+  { key: "matchCountThisSeason", label: "Matches this season", type: "number", sample: 12 },
+  { key: "opponentRank", label: "Opponent's rank", type: "string", sample: "gold" },
+  { key: "matchHour", label: "Match hour (0-23)", type: "number", sample: 21 },
+  { key: "matchMinuteOfDay", label: "Match time (exact)", type: "number", sample: 1290, ref: "time" },
+  { key: "matchDayOfWeek", label: "Day of the week", type: "number", sample: 6, ref: "weekday" },
+  { key: "matchDate", label: "Match date (YYYY-MM-DD)", type: "date", sample: "2026-06-12" },
   { key: "discipline", label: "Discipline", type: "string", sample: "", ref: "discipline" },
-  { key: "site", label: "Organisation", type: "string", sample: "", ref: "site" },
-  { key: "randomRoll", label: "Tirage aléatoire (0-99)", type: "number", sample: 50 },
+  { key: "site", label: "Organization", type: "string", sample: "", ref: "site" },
+  { key: "randomRoll", label: "Random roll (0-99)", type: "number", sample: 50 },
 ];
 
 /**
@@ -430,16 +433,16 @@ export const ruleConditionsSchema: z.ZodType<RuleConditions> = z.lazy(() =>
 export const messageActionSchema = z.object({
   type: z.literal("message"),
   variants: z
-    .array(z.string().min(1, "La variante ne peut pas être vide"))
-    .min(1, "Au moins une variante est requise")
+    .array(z.string().min(1, vmsg("validation.variantNotEmpty")))
+    .min(1, vmsg("validation.variantRequired"))
     .max(10, "10 variantes maximum"),
 });
 
 export const badgeActionSchema = z.object({
   type: z.literal("badge"),
   icon: z.string().min(1, "L'icône est requise"),
-  label: z.string().min(1, "Le label est requis").max(60),
-  description: z.string().min(1, "La description est requise").max(200),
+  label: z.string().min(1, vmsg("validation.labelRequired")).max(60),
+  description: z.string().min(1, vmsg("validation.descriptionRequired")).max(200),
   // Defaulted rather than required: a rule authored before v3 carries no
   // recurrence, and the v2 → v3 patch is what stamps the stored rows.
   recurrence: z.enum(BADGE_RECURRENCES).default("per_season"),
@@ -453,7 +456,7 @@ export const createRuleSchema = z.object({
   scope: z.enum(["global", "discipline"]),
   disciplineId: z.string().uuid().nullable().optional(),
   priority: z.number().int().default(0),
-  name: z.string().min(2, "Le nom est requis").max(120),
+  name: z.string().min(2, vmsg("validation.nameRequired")).max(120),
   description: z.string().max(500).nullable().optional(),
   conditions: ruleConditionsSchema,
   action: ruleActionSchema,

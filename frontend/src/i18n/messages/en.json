@@ -312,12 +312,22 @@
   "bracketService": {
     "errors": {
       "participantsWithoutMatches": "Some participants have played no matches in the selected championship",
-      "participantsWithoutMatchesNamed": "These participants have played no matches in the championship: {names}"
+      "participantsWithoutMatchesNamed": "These participants have played no matches in the championship: {names}",
+      "loadFailed": "Error loading bracket",
+      "eligibilityFailed": "Error checking bracket eligibility",
+      "generateFailed": "Error generating bracket",
+      "regenerateFailed": "Error regenerating bracket",
+      "deleteFailed": "Error deleting bracket"
     },
     "toast": {
       "generateFailedSummary": "Generation failed",
       "regenerateSuccessDetail": "The bracket has been regenerated successfully",
-      "regenerateSuccessSummary": "Bracket regenerated"
+      "regenerateSuccessSummary": "Bracket regenerated",
+      "generateSuccessSummary": "Bracket generated",
+      "generateSuccessDetail": "The tournament bracket has been successfully generated",
+      "deleteSuccessSummary": "Bracket deleted",
+      "deleteSuccessDetail": "The tournament bracket has been successfully deleted",
+      "deleteFailedSummary": "Deletion failed"
     }
   },
   "bracketView": {
@@ -406,7 +416,13 @@
     "operatorOr": "OR"
   },
   "conditionPalette": {
-    "blocksLabel": "Blocks (drag & drop)"
+    "blocksLabel": "Blocks (drag & drop)",
+    "items": {
+      "leaf": "Condition",
+      "group-all": "AND group",
+      "group-any": "OR group",
+      "count": "Match counter"
+    }
   },
   "conditionRow": {
     "booleanFalse": "False",
@@ -2711,5 +2727,109 @@
     "organizations": "Organizations",
     "invitations": "Invitations",
     "maintenance": "Maintenance"
+  },
+  "validation": {
+    "atLeastOneField": "At least one field must be provided",
+    "contentRequired": "Content is required",
+    "descriptionMax500": "Description cannot exceed 500 characters",
+    "descriptionRequired": "Description is required",
+    "disciplineRequired": "Discipline is required",
+    "endDateRequired": "End date is required",
+    "invalidCodeFormat": "Invalid code format",
+    "invalidDisciplineId": "Invalid discipline ID",
+    "invalidMatchId": "Invalid match ID",
+    "invalidOutcomeReasonId": "Invalid outcome reason ID",
+    "invalidOutcomeTypeId": "Invalid outcome type ID",
+    "invalidPlayerId": "Invalid player ID",
+    "invalidTeamId": "Invalid team ID",
+    "invalidTournamentId": "Invalid tournament ID",
+    "labelRequired": "Label is required",
+    "maxTeamSizeGteMin": "Maximum size must be greater than or equal to the minimum size",
+    "maxTeamSizeRequired": "Maximum team size is required",
+    "messageNotEmpty": "Message cannot be empty",
+    "minScoreLteMax": "Minimum score must be less than or equal to the maximum score",
+    "minTeamSizeRequired": "Minimum team size is required",
+    "nameMax100": "Name cannot exceed 100 characters",
+    "nameMin3": "Name must be at least 3 characters",
+    "nameNotEmpty": "Name cannot be empty",
+    "nameRequired": "Name is required",
+    "nameTemplatePlaceholder": "The template must contain {placeholder}",
+    "scoreNonNegative": "Score cannot be negative",
+    "sidesPositions": "Sides must take positions 1 and 2",
+    "startBeforeEnd": "Start date must be before end date",
+    "startDateRequired": "Start date is required",
+    "teamSizeMin1": "Minimum size is 1",
+    "titleMax200": "Title cannot exceed 200 characters",
+    "titleMin2": "Title must be at least 2 characters",
+    "titleRequired": "Title is required",
+    "variantNotEmpty": "Variant cannot be empty",
+    "variantRequired": "At least one variant is required"
+  },
+  "rulesFacts": {
+    "playerId": "Player concerned",
+    "teammateIds": "Teammates",
+    "opponentIds": "Opponents",
+    "winnerIds": "Winning side",
+    "loserIds": "Losing side",
+    "isWinner": "The player won",
+    "scoreWinner": "Winner's score",
+    "scoreLoser": "Loser's score",
+    "matchScore": "Match score",
+    "outcomeType": "Outcome type",
+    "outcomeTypeName": "Outcome type name",
+    "isDefaultOutcome": "Default outcome",
+    "outcomeReason": "Outcome reason",
+    "outcomeReasonName": "Outcome reason name",
+    "mmrDelta": "MMR change",
+    "newMmr": "New MMR",
+    "previousMmr": "Previous MMR",
+    "newRank": "New rank",
+    "previousRank": "Previous rank",
+    "rankChanged": "Rank changed",
+    "rankUp": "Rank up",
+    "rankDown": "Rank down",
+    "winStreak": "Win streak",
+    "lossStreak": "Loss streak",
+    "isPlacementMatch": "Placement match",
+    "matchCountThisSeason": "Matches this season",
+    "opponentRank": "Opponent's rank",
+    "matchHour": "Match hour (0-23)",
+    "matchMinuteOfDay": "Match time (exact)",
+    "matchDayOfWeek": "Day of the week",
+    "matchDate": "Match date (YYYY-MM-DD)",
+    "discipline": "Discipline",
+    "site": "Organization",
+    "randomRoll": "Random roll (0-99)"
+  },
+  "outcomeTypeAdmin": {
+    "title": "Outcome types",
+    "addType": "Add a type",
+    "emptyTypes": "No outcome type",
+    "reasonsFor": "Reasons for “{name}”",
+    "default": "Default",
+    "archived": "Archived",
+    "addReason": "Add a reason",
+    "emptyReasons": "No outcome reason",
+    "pointsColumn": "Pts / result",
+    "mmrMultiplier": "MMR multiplier",
+    "restore": "Restore",
+    "pointsPerResult": "Points per result",
+    "countsForMmr": "Counts for MMR",
+    "defaultType": "Default type",
+    "editTypeTitle": "Edit outcome type",
+    "addTypeTitle": "Add an outcome type",
+    "editReasonTitle": "Edit outcome reason",
+    "addReasonTitle": "Add an outcome reason"
+  },
+  "tournamentDetailMenu": {
+    "recalculatePoints": "Recalculate points",
+    "clearCache": "Clear cache",
+    "leave": "Leave"
+  },
+  "loadErrors": {
+    "profile": "Error loading the profile",
+    "stats": "Error loading statistics",
+    "comparison": "Error loading the comparison",
+    "users": "Error loading users"
   }
 }

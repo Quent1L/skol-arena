@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vmsg } from "./validation-messages";
 import { validationModeSchema } from "./enums";
 
 // ============================================
@@ -11,23 +12,23 @@ import { validationModeSchema } from "./enums";
 
 export const baseSeasonFormSchema = z.object({
   name: z
-    .string({ message: "Le nom est requis" })
-    .min(3, "Le nom doit contenir au moins 3 caractères")
-    .max(100, "Le nom ne peut pas dépasser 100 caractères"),
+    .string(vmsg("validation.nameRequired"))
+    .min(3, vmsg("validation.nameMin3"))
+    .max(100, vmsg("validation.nameMax100")),
   description: z.string().optional(),
   disciplineId: z
-    .string({ message: "La discipline est requise" })
-    .uuid("ID de discipline invalide"),
-  startDate: z.date({ message: "La date de début est requise" }),
-  endDate: z.date({ message: "La date de fin est requise" }),
+    .string(vmsg("validation.disciplineRequired"))
+    .uuid(vmsg("validation.invalidDisciplineId")),
+  startDate: z.date(vmsg("validation.startDateRequired")),
+  endDate: z.date(vmsg("validation.endDateRequired")),
   minTeamSize: z
-    .number({ message: "La taille minimale de l'équipe est requise" })
+    .number(vmsg("validation.minTeamSizeRequired"))
     .int()
-    .min(1, "La taille minimale est 1"),
+    .min(1, vmsg("validation.teamSizeMin1")),
   maxTeamSize: z
-    .number({ message: "La taille maximale de l'équipe est requise" })
+    .number(vmsg("validation.maxTeamSizeRequired"))
     .int()
-    .min(1, "La taille minimale est 1"),
+    .min(1, vmsg("validation.teamSizeMin1")),
   rulesId: z.string().uuid().nullable().optional(),
   organizationId: z.string().uuid().nullable().optional(),
   scoreEnabled: z.boolean().optional(),
@@ -65,7 +66,7 @@ export const dateRangePredicate = (data: {
 };
 
 export const dateRangeError = {
-  message: "La date de début doit être antérieure à la date de fin",
+  ...vmsg("validation.startBeforeEnd"),
   path: ["endDate"],
 };
 
@@ -78,8 +79,7 @@ export const teamSizePredicate = (data: {
 };
 
 export const teamSizeError = {
-  message:
-    "La taille maximale doit être supérieure ou égale à la taille minimale",
+  ...vmsg("validation.maxTeamSizeGteMin"),
   path: ["maxTeamSize"],
 };
 
@@ -95,6 +95,6 @@ export const scoreRangePredicate = (data: {
 };
 
 export const scoreRangeError = {
-  message: "Le score minimum doit être inférieur ou égal au score maximum",
+  ...vmsg("validation.minScoreLteMax"),
   path: ["maxScore"],
 };

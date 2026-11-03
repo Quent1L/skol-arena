@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { i18n } from '@/i18n'
 import { userApi, type UserResponse } from './user.api'
 
 export function useUserService() {
@@ -19,10 +20,10 @@ export function useUserService() {
 
       return result
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erreur lors du chargement des utilisateurs'
+      const message = err instanceof Error ? err.message : i18n.global.t('loadErrors.users')
       error.value = message
 
-      console.error('Erreur lors du chargement des utilisateurs:', err)
+      console.error('Failed to load users:', err)
       return []
     } finally {
       loading.value = false

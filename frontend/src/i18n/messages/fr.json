@@ -312,12 +312,22 @@
   "bracketService": {
     "errors": {
       "participantsWithoutMatches": "Certains participants n'ont joué aucun match dans le championnat sélectionné",
-      "participantsWithoutMatchesNamed": "Ces participants n'ont joué aucun match dans le championnat : {names}"
+      "participantsWithoutMatchesNamed": "Ces participants n'ont joué aucun match dans le championnat : {names}",
+      "loadFailed": "Erreur lors du chargement du tableau",
+      "eligibilityFailed": "Erreur lors de la vérification de l'éligibilité au tableau",
+      "generateFailed": "Erreur lors de la génération du tableau",
+      "regenerateFailed": "Erreur lors de la regénération du tableau",
+      "deleteFailed": "Erreur lors de la suppression du tableau"
     },
     "toast": {
       "generateFailedSummary": "Génération impossible",
       "regenerateSuccessDetail": "Le tournoi a été regénéré avec succès",
-      "regenerateSuccessSummary": "Bracket regénéré"
+      "regenerateSuccessSummary": "Bracket regénéré",
+      "generateSuccessSummary": "Bracket généré",
+      "generateSuccessDetail": "Le tableau du tournoi a été généré avec succès",
+      "deleteSuccessSummary": "Bracket supprimé",
+      "deleteSuccessDetail": "Le tableau du tournoi a été supprimé avec succès",
+      "deleteFailedSummary": "Suppression impossible"
     }
   },
   "bracketView": {
@@ -406,7 +416,13 @@
     "operatorOr": "OU"
   },
   "conditionPalette": {
-    "blocksLabel": "Blocs (glisser-déposer)"
+    "blocksLabel": "Blocs (glisser-déposer)",
+    "items": {
+      "leaf": "Condition",
+      "group-all": "Groupe ET",
+      "group-any": "Groupe OU",
+      "count": "Compteur de matchs"
+    }
   },
   "conditionRow": {
     "booleanFalse": "Faux",
@@ -2711,5 +2727,109 @@
     "organizations": "Organisations",
     "invitations": "Invitations",
     "maintenance": "Maintenance"
+  },
+  "validation": {
+    "atLeastOneField": "Au moins un champ doit être renseigné",
+    "contentRequired": "Le contenu est requis",
+    "descriptionMax500": "La description ne peut pas dépasser 500 caractères",
+    "descriptionRequired": "La description est requise",
+    "disciplineRequired": "La discipline est requise",
+    "endDateRequired": "La date de fin est requise",
+    "invalidCodeFormat": "Format du code invalide",
+    "invalidDisciplineId": "ID de discipline invalide",
+    "invalidMatchId": "ID de match invalide",
+    "invalidOutcomeReasonId": "ID de raison de résultat invalide",
+    "invalidOutcomeTypeId": "ID de type de résultat invalide",
+    "invalidPlayerId": "ID de joueur invalide",
+    "invalidTeamId": "ID d'équipe invalide",
+    "invalidTournamentId": "ID de tournoi invalide",
+    "labelRequired": "Le label est requis",
+    "maxTeamSizeGteMin": "La taille maximale doit être supérieure ou égale à la taille minimale",
+    "maxTeamSizeRequired": "La taille maximale de l'équipe est requise",
+    "messageNotEmpty": "Le message ne peut pas être vide",
+    "minScoreLteMax": "Le score minimum doit être inférieur ou égal au score maximum",
+    "minTeamSizeRequired": "La taille minimale de l'équipe est requise",
+    "nameMax100": "Le nom ne peut pas dépasser 100 caractères",
+    "nameMin3": "Le nom doit contenir au moins 3 caractères",
+    "nameNotEmpty": "Le nom ne peut pas être vide",
+    "nameRequired": "Le nom est requis",
+    "nameTemplatePlaceholder": "Le gabarit doit contenir {placeholder}",
+    "scoreNonNegative": "Le score doit être positif",
+    "sidesPositions": "Les camps doivent occuper les positions 1 et 2",
+    "startBeforeEnd": "La date de début doit être antérieure à la date de fin",
+    "startDateRequired": "La date de début est requise",
+    "teamSizeMin1": "La taille minimale est 1",
+    "titleMax200": "Le titre ne peut pas dépasser 200 caractères",
+    "titleMin2": "Le titre doit contenir au moins 2 caractères",
+    "titleRequired": "Le titre est requis",
+    "variantNotEmpty": "La variante ne peut pas être vide",
+    "variantRequired": "Au moins une variante est requise"
+  },
+  "rulesFacts": {
+    "playerId": "Joueur concerné",
+    "teammateIds": "Coéquipiers",
+    "opponentIds": "Adversaires",
+    "winnerIds": "Camp vainqueur",
+    "loserIds": "Camp perdant",
+    "isWinner": "Le joueur est vainqueur",
+    "scoreWinner": "Score du vainqueur",
+    "scoreLoser": "Score du perdant",
+    "matchScore": "Score du match",
+    "outcomeType": "Type de résultat",
+    "outcomeTypeName": "Nom du type de résultat",
+    "isDefaultOutcome": "Résultat par défaut",
+    "outcomeReason": "Raison du résultat",
+    "outcomeReasonName": "Nom de la raison du résultat",
+    "mmrDelta": "Variation de MMR",
+    "newMmr": "Nouveau MMR",
+    "previousMmr": "MMR précédent",
+    "newRank": "Nouveau rang",
+    "previousRank": "Rang précédent",
+    "rankChanged": "Rang modifié",
+    "rankUp": "Montée de rang",
+    "rankDown": "Descente de rang",
+    "winStreak": "Série de victoires",
+    "lossStreak": "Série de défaites",
+    "isPlacementMatch": "Match de placement",
+    "matchCountThisSeason": "Matchs cette saison",
+    "opponentRank": "Rang de l'adversaire",
+    "matchHour": "Heure du match (0-23)",
+    "matchMinuteOfDay": "Horaire du match (précis)",
+    "matchDayOfWeek": "Jour de la semaine",
+    "matchDate": "Date du match (AAAA-MM-JJ)",
+    "discipline": "Discipline",
+    "site": "Organisation",
+    "randomRoll": "Tirage aléatoire (0-99)"
+  },
+  "outcomeTypeAdmin": {
+    "title": "Types de résultat",
+    "addType": "Ajouter un type",
+    "emptyTypes": "Aucun type de résultat",
+    "reasonsFor": "Raisons pour « {name} »",
+    "default": "Par défaut",
+    "archived": "Archivé",
+    "addReason": "Ajouter une raison",
+    "emptyReasons": "Aucune raison de résultat",
+    "pointsColumn": "Pts / résultat",
+    "mmrMultiplier": "Multiplicateur MMR",
+    "restore": "Restaurer",
+    "pointsPerResult": "Points par résultat",
+    "countsForMmr": "Compte pour le MMR",
+    "defaultType": "Type par défaut",
+    "editTypeTitle": "Modifier le type de résultat",
+    "addTypeTitle": "Ajouter un type de résultat",
+    "editReasonTitle": "Modifier la raison de résultat",
+    "addReasonTitle": "Ajouter une raison de résultat"
+  },
+  "tournamentDetailMenu": {
+    "recalculatePoints": "Recalculer les points",
+    "clearCache": "Vider le cache",
+    "leave": "Quitter"
+  },
+  "loadErrors": {
+    "profile": "Erreur lors du chargement du profil",
+    "stats": "Erreur lors du chargement des statistiques",
+    "comparison": "Erreur lors du chargement de la comparaison",
+    "users": "Erreur lors du chargement des utilisateurs"
   }
 }

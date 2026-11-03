@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vmsg } from "./validation-messages";
 
 // ============================================
 // Types for tournament entries (entry-based system)
@@ -150,10 +151,10 @@ export interface ClientMatchResultModel extends Omit<MatchResultModel, 'reported
 // ============================================
 
 export const createTournamentEntrySchema = z.object({
-  tournamentId: z.string().uuid("ID de tournoi invalide"),
+  tournamentId: z.string().uuid(vmsg("validation.invalidTournamentId")),
   entryType: entryTypeSchema,
-  teamId: z.string().uuid("ID d'équipe invalide").optional(),
-  playerIds: z.array(z.string().uuid("ID de joueur invalide")).min(1),
+  teamId: z.string().uuid(vmsg("validation.invalidTeamId")).optional(),
+  playerIds: z.array(z.string().uuid(vmsg("validation.invalidPlayerId"))).min(1),
 });
 
 export type CreateTournamentEntryData = z.infer<typeof createTournamentEntrySchema>;

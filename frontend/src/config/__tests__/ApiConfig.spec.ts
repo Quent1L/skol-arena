@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import http, { API_VERSION, API_VERSION_HEADER } from '@/config/ApiConfig'
+import { i18n } from '@/i18n'
 
 /**
  * The version header is what pins this client to an API major, so a request that
@@ -40,5 +41,29 @@ describe('ApiConfig version negotiation', () => {
 
   it('pins a major version, not the app version', () => {
     expect(API_VERSION).toMatch(/^v\d+$/)
+  })
+})
+
+describe('ApiConfig language', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } })),
+    )
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    i18n.global.locale.value = 'fr'
+  })
+
+  // The server renders its messages in Accept-Language: it must be the app's
+  // language, not the browser's.
+  it('asks the server for the language picked in the app', async () => {
+    i18n.global.locale.value = 'en'
+    await http.get('/api/config')
+
+    const [, init] = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0]!
+    expect(new Headers((init as RequestInit).headers).get('accept-language')).toBe('en')
   })
 })

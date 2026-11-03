@@ -295,7 +295,7 @@ async function onSubmit({ data: values }: FormSubmitEvent<TournamentFormState>) 
     }
     router.push('/admin/tournaments')
   } catch (err) {
-    console.error('Erreur lors de la sauvegarde:', err)
+    console.error('Failed to save:', err)
   }
 }
 
