@@ -77,11 +77,18 @@ precacheAndRoute(manifest)
 //
 // Left out: the server's own pages (`/api/*`: SSO callbacks, the API reference) and
 // any URL naming a file (`/version.json`, an icon opened in a tab).
-registerRoute(
-  new NavigationRoute(createHandlerBoundToURL('index.html'), {
-    denylist: [/^\/api\//, /^[^?]*\/[^/?]*\.[^/?]*(\?.*)?$/],
-  }),
-)
+//
+// Production only: the dev worker gets an empty manifest, and createHandlerBoundToURL
+// throws `non-precached-url` for a URL missing from the precache — at evaluation, so
+// the whole worker failed to install under `bun run dev`. The dev server always
+// serves a fresh index.html anyway, there is no stale shell to guard against.
+if (import.meta.env.PROD) {
+  registerRoute(
+    new NavigationRoute(createHandlerBoundToURL('index.html'), {
+      denylist: [/^\/api\//, /^[^?]*\/[^/?]*\.[^/?]*(\?.*)?$/],
+    }),
+  )
+}
 
 // Service worker for push notifications
 
