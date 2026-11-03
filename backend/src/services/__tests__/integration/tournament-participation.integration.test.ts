@@ -201,16 +201,49 @@ describe("Tournament Participation Integration Tests", () => {
       expect(participation).toBeUndefined(); // Should not find active participation
     });
 
-    it("should prevent leaving ongoing tournament", async () => {
-      // Change tournament status to ongoing
+    it("should let a player leave an ongoing championship and list them as inactive", async () => {
       await testDb
         .update(tournaments)
         .set({ status: "ongoing" })
         .where(eq(tournaments.id, testTournamentId));
 
+      await tournamentService.leaveTournament(testUserId, testTournamentId);
+
+      const inactive = await participantRepository.findInactivePlayerIds(testTournamentId);
+      expect([...inactive]).toEqual([testUserId]);
+    });
+
+    it("should prevent leaving an ongoing bracket", async () => {
+      await testDb
+        .update(tournaments)
+        .set({ status: "ongoing", mode: "bracket" })
+        .where(eq(tournaments.id, testTournamentId));
+
       await expect(
         tournamentService.leaveTournament(testUserId, testTournamentId),
       ).rejects.toThrow();
+    });
+
+    it("should make a player who left active again when they rejoin", async () => {
+      await tournamentService.leaveTournament(testUserId, testTournamentId);
+      await tournamentService.joinTournament(testUserId, { tournamentId: testTournamentId });
+
+      const inactive = await participantRepository.findInactivePlayerIds(testTournamentId);
+      expect(inactive.size).toBe(0);
+    });
+
+    it("should refuse a rejoin after an organizer removal", async () => {
+      const participation = await participantRepository.findParticipationByUserAndTournament(
+        testUserId,
+        testTournamentId,
+      );
+      await participantRepository.markRemoved(participation!.id);
+
+      await expect(
+        tournamentService.joinTournament(testUserId, { tournamentId: testTournamentId }),
+      ).rejects.toThrow("PARTICIPANT_REMOVED");
+      const inactive = await participantRepository.findInactivePlayerIds(testTournamentId);
+      expect([...inactive]).toEqual([testUserId]);
     });
 
     it("should prevent leaving finished tournament", async () => {

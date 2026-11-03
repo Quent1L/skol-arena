@@ -1,5 +1,7 @@
 import { standingsRepository } from "../repository/standings.repository";
 import { matchSidesRepository } from "../repository/match-sides.repository";
+import { participantRepository } from "../repository/participant.repository";
+import { partitionInactive } from "../utils/inactive-players";
 import { tournamentService } from "./tournament.service";
 import { tournamentRulesetService } from "./tournament-ruleset.service";
 import { NotFoundError, ForbiddenError, ErrorCode } from "../types/errors";
@@ -50,20 +52,34 @@ type PlayerPointRow = {
 export class StandingsService {
   async getOfficialStandings(tournamentId: string): Promise<StandingsResult> {
     const cached = await standingsRepository.getComputedData(tournamentId, "standings:official");
-    if (cached) return cached;
+    if (cached) return this.withInactivePlayersLast(tournamentId, cached);
     const result = await this.calculateStandings(tournamentId, ["finalized"]);
     await standingsRepository.setComputedData(tournamentId, "standings:official", result);
-    return result;
+    return this.withInactivePlayersLast(tournamentId, result);
   }
 
   async getProvisionalStandings(tournamentId: string): Promise<StandingsResult> {
     const cached = await standingsRepository.getComputedData(tournamentId, "standings:provisional");
-    if (cached) return cached;
+    if (cached) return this.withInactivePlayersLast(tournamentId, cached);
     // 'disputed' counts too: a contested result keeps its provisional value until it is
     // arbitrated, otherwise a match would drop out of the table and come back later.
     const result = await this.calculateStandings(tournamentId, PROVISIONAL_MATCH_STATUSES);
     await standingsRepository.setComputedData(tournamentId, "standings:provisional", result);
-    return result;
+    return this.withInactivePlayersLast(tournamentId, result);
+  }
+
+  /**
+   * Applied when serving, never cached: leaving or coming back then shows up at once
+   * without recomputing anything, and the cached numbers stay those the matches gave.
+   * Flex rows are players; static rows are teams, which have no registration of their own
+   * and are left in place.
+   */
+  private async withInactivePlayersLast(
+    tournamentId: string,
+    result: StandingsResult,
+  ): Promise<StandingsResult> {
+    const inactiveIds = await participantRepository.findInactivePlayerIds(tournamentId);
+    return { standings: partitionInactive(result.standings, inactiveIds, (row) => row.id) };
   }
 
   async invalidateCache(tournamentId: string): Promise<void> {

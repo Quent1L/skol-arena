@@ -573,6 +573,7 @@ export class TournamentService {
 
     this.validateTournamentOpenForJoin(tournament);
     await this.checkNotAlreadyRegistered(userId, data.tournamentId);
+    await this.checkNotRemoved(userId, data.tournamentId);
 
     const participation = await participantRepository.createParticipation(
       userId,
@@ -628,6 +629,19 @@ export class TournamentService {
   }
 
   /**
+   * A player an organizer removed cannot register again by themselves
+   */
+  private async checkNotRemoved(userId: string, tournamentId: string) {
+    const participation = await participantRepository.findParticipationAnyStatus(
+      userId,
+      tournamentId,
+    );
+    if (participation?.status === "removed") {
+      throw new ForbiddenError(ErrorCode.PARTICIPANT_REMOVED);
+    }
+  }
+
+  /**
    * Admin adds a participant to tournament
    */
   async adminAddParticipant(
@@ -674,8 +688,7 @@ export class TournamentService {
       throw new NotFoundError(ErrorCode.TOURNAMENT_NOT_FOUND);
     }
 
-    // Don't allow leaving ongoing or finished tournaments
-    if (["ongoing", "finished"].includes(tournament.status)) {
+    if (!this.canLeaveAtStatus(tournament.mode, tournament.status)) {
       throw new BadRequestError(ErrorCode.CANNOT_LEAVE_ONGOING_TOURNAMENT);
     }
 
@@ -690,10 +703,21 @@ export class TournamentService {
       throw new BadRequestError(ErrorCode.NOT_REGISTERED);
     }
 
-    // Remove participation
+    // Soft delete: the player's results stay in the standings, listed as inactive
     await participantRepository.deleteParticipation(participation.id);
 
     return { message: "Vous avez quitté le tournoi avec succès" };
+  }
+
+  /**
+   * A championship or a ranked season can be left until it is finished: the player's
+   * results stay and their row moves to the inactive section. A bracket cannot be left
+   * once it has started, its tree would lose a branch.
+   */
+  private canLeaveAtStatus(mode: TournamentMode, status: TournamentStatus): boolean {
+    if (status === "finished") return false;
+    if (mode === "championship" || mode === "ranked") return true;
+    return status !== "ongoing";
   }
 
   /**
@@ -726,7 +750,7 @@ export class TournamentService {
       throw new NotFoundError(ErrorCode.NOT_REGISTERED);
     }
 
-    await participantRepository.hardDeleteParticipation(participation.id);
+    await participantRepository.markRemoved(participation.id);
 
     return { success: true };
   }

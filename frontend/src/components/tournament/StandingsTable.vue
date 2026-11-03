@@ -122,6 +122,13 @@
             <li><span>{{ t('standingsTable.provisional') }}</span> — {{ t('standingsTable.provisionalDesc') }}</li>
           </ul>
         </section>
+
+        <section>
+          <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
+            {{ t('standingsTable.inactiveSection') }}
+          </h3>
+          <p class="text-xs">{{ t('standingsTable.inactiveSectionHint') }}</p>
+        </section>
       </div>
       </template>
     </UModal>

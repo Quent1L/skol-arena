@@ -22,10 +22,18 @@ mock.module("../../repository/player-mmr.repository", () => ({
   playerMmrRepository: mockPlayerMmrRepo,
 }));
 
+let inactivePlayerIds = new Set<string>();
+
+mock.module("../../repository/participant.repository", () => ({
+  participantRepository: {
+    findInactivePlayerIds: mock(() => Promise.resolve(inactivePlayerIds)),
+  },
+}));
+
 const { RankedSeasonService } = await import("../ranked-season.service");
 
-function player(currentMmr: number, matchesPlayed = 10) {
-  return { currentMmr, matchesPlayed };
+function player(currentMmr: number, matchesPlayed = 10, playerId = `p-${currentMmr}`) {
+  return { currentMmr, matchesPlayed, playerId };
 }
 
 describe("recalculateTierMinMmr", () => {
@@ -45,6 +53,7 @@ describe("recalculateTierMinMmr", () => {
       Promise.resolve({ placementMatches: 0 }),
     );
     mockPlayerMmrRepo.getAllPlayersBySeasonId.mockImplementation(() => Promise.resolve([]));
+    inactivePlayerIds = new Set();
     service = new RankedSeasonService();
   });
 
@@ -116,6 +125,26 @@ describe("recalculateTierMinMmr", () => {
         player(100, 4),
       ]),
     );
+    await service.recalculateTierMinMmr("s1", 1000);
+    expect(mockRankedRepo.upsertRankTier.mock.calls[0][2]).toEqual({ minMmr: 1200 });
+  });
+
+  it("ignores players who left the season: they hold no rank anymore", async () => {
+    mockRankedRepo.getRankTiers.mockImplementation(() =>
+      Promise.resolve([{ level: 2, percentile: 0.5 }]),
+    );
+    // Without the filter the two departed 100s would drag the boundary down to 900.
+    mockPlayerMmrRepo.getAllPlayersBySeasonId.mockImplementation(() =>
+      Promise.resolve([
+        player(1200),
+        player(800),
+        player(1500),
+        player(900),
+        player(100, 10, "gone-1"),
+        player(100, 10, "gone-2"),
+      ]),
+    );
+    inactivePlayerIds = new Set(["gone-1", "gone-2"]);
     await service.recalculateTierMinMmr("s1", 1000);
     expect(mockRankedRepo.upsertRankTier.mock.calls[0][2]).toEqual({ minMmr: 1200 });
   });

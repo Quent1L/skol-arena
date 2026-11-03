@@ -52,6 +52,7 @@ declare module 'vue' {
     GeneralInfoSection: typeof import('./src/components/forms/sections/GeneralInfoSection.vue')['default']
     GenerateBracketDialog: typeof import('./src/components/bracket/GenerateBracketDialog.vue')['default']
     H2HRivalries: typeof import('./src/components/player/H2HRivalries.vue')['default']
+    InactivePlayersList: typeof import('./src/components/ranked/InactivePlayersList.vue')['default']
     InfoTooltip: typeof import('./src/components/InfoTooltip.vue')['default']
     IntroCard: typeof import('./src/components/rewind/cards/IntroCard.vue')['default']
     LeaderboardTierList: typeof import('./src/components/ranked/LeaderboardTierList.vue')['default']

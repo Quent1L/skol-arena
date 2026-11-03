@@ -254,6 +254,48 @@ describe('RankedLeaderboard', () => {
     })
   })
 
+  // A player who left keeps their MMR but holds no rank: listed last, apart.
+  describe('players who left the season', () => {
+    const gone = makePlayerMmr({
+      currentMmr: 1600,
+      matchesPlayed: 12,
+      inactive: true,
+      player: { id: 'u4', displayName: 'Dana', shortName: 'DA' },
+    })
+
+    function mountWithInactive() {
+      return mountBoard({ players: [...players, gone], placementMatches: 5 })
+    }
+
+    it('lists them in an inactive section after the tiers, with their MMR', () => {
+      const wrapper = mountWithInactive()
+      const text = wrapper.text()
+      expect(text.indexOf('Gold')).toBeLessThan(text.indexOf('rankedLeaderboard.inactiveSection'))
+      const row = wrapper.find('[data-testid="inactive-player-row"]')
+      expect(row.text()).toContain('Dana')
+      expect(row.text()).toContain('1600')
+      expect(row.find('.w-5').text()).toBe('—')
+    })
+
+    it('does not shift the ranks of active players', () => {
+      const wrapper = mountWithInactive()
+      const rankOf = (name: string) =>
+        wrapper
+          .findAllComponents(RouterLinkStub)
+          .find((r) => r.text().includes(name))!
+          .find('.w-5')
+          .text()
+      // Dana would be 1st on their MMR: they take nobody's place.
+      expect(rankOf('Alice')).toBe('1')
+      expect(rankOf('Bob')).toBe('2')
+    })
+
+    it('no section when everyone is still active', () => {
+      const wrapper = mountBoard({ players })
+      expect(wrapper.find('[data-testid="inactive-players"]').exists()).toBe(false)
+    })
+  })
+
   // On mobile the views are neighboring panels in a draggable track, not a single
   // render: they're all mounted together so the finger can drag between them.
   describe('mobile', () => {

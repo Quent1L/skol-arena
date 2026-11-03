@@ -191,6 +191,8 @@ export const clientPlayerMmrSchema = playerMmrSchema
       .array(z.object({ outcome: z.enum(["win", "loss", "draw"]) }))
       .optional(),
     opponentQuality: opponentQualityStatsSchema.optional(),
+    /** The player left the season: MMR kept, listed after the active players, no rank. */
+    inactive: z.boolean().optional(),
   })
   .meta({ id: "ClientPlayerMmr" });
 

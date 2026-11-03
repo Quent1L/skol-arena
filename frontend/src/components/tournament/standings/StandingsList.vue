@@ -49,19 +49,34 @@
       <div class="w-10 text-right">{{ t('standingsTable.ptsUnit') }}</div>
     </div>
 
+    <template v-for="(entry, index) in entries" :key="entry.id">
+    <!-- Players who left keep their results but no position: the server lists them last. -->
     <div
-      v-for="(entry, index) in entries"
-      :key="entry.id"
+      v-if="index === firstInactiveIndex"
+      class="flex items-center gap-2 px-4 pt-4 pb-2 border-t border-dashed border-white/10 text-[10px] font-bold uppercase tracking-wide text-gray-500"
+      data-testid="standings-inactive-header"
+    >
+      <i class="fa fa-user-slash" />
+      <span>{{ t('standingsTable.inactiveSection') }}</span>
+      <InfoTooltip :text="t('standingsTable.inactiveSectionHint')" />
+    </div>
+    <div
       class="flex items-center border-t border-white/5 transition-colors"
-      :class="entry.id === currentUserId ? 'bg-primary-900/30 hover:bg-primary-800/40' : 'hover:bg-white/5'"
-      data-testid="standings-row"
+      :class="[
+        entry.id === currentUserId ? 'bg-primary-900/30 hover:bg-primary-800/40' : 'hover:bg-white/5',
+        { 'opacity-60': entry.inactive },
+      ]"
+      :data-testid="entry.inactive ? 'standings-inactive-row' : 'standings-row'"
     >
       <component
         :is="teamMode === 'flex' ? RouterLink : 'div'"
         v-bind="teamMode === 'flex' ? { to: playerLink(entry.id, tournamentId) } : {}"
         class="flex flex-1 min-w-0 items-center gap-3 pl-4 py-2.5 md:pr-4"
       >
-        <div class="w-5 text-center text-xs font-bold shrink-0" :class="rankClass(index)">
+        <div v-if="entry.inactive" class="w-5 text-center text-xs font-bold shrink-0 text-gray-600">
+          —
+        </div>
+        <div v-else class="w-5 text-center text-xs font-bold shrink-0" :class="rankClass(index)">
           {{ index + 1 }}
         </div>
 
@@ -81,6 +96,11 @@
               v-if="entry.id === currentUserId"
               class="text-[9px] font-bold text-primary-400 uppercase tracking-wide shrink-0"
               >{{ t('rankedLeaderboard.you') }}</span
+            >
+            <span
+              v-if="entry.inactive"
+              class="text-[9px] font-bold text-gray-400 uppercase tracking-wide shrink-0"
+              >{{ t('standingsTable.inactive') }}</span
             >
           </div>
           <div class="flex items-center gap-2 text-[10px] text-gray-400 tabular-nums">
@@ -135,20 +155,23 @@
         </template>
       </UPopover>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import type { StandingsEntry } from '@skol-arena/shared'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
+import InfoTooltip from '@/components/InfoTooltip.vue'
 import TiebreakerDetails from '@/components/tournament/standings/TiebreakerDetails.vue'
 import QualityBreakdown from '@/components/tournament/standings/QualityBreakdown.vue'
 import { formatPercent, formatRatio } from '@/components/tournament/standings/standings-format'
 import { playerLink } from '@/utils/player-link'
 
-defineProps<{
+const props = defineProps<{
   entries: StandingsEntry[]
   title: string
   tournamentId: string
@@ -163,6 +186,9 @@ defineProps<{
 const emit = defineEmits<{ 'show-info': [] }>()
 
 const { t } = useI18n()
+
+/** Inactive rows come last from the server, so the active ranks stay 1..N. */
+const firstInactiveIndex = computed(() => props.entries.findIndex((entry) => entry.inactive))
 
 const PODIUM_CLASSES = ['text-yellow-500', 'text-gray-300', 'text-orange-500']
 

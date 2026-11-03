@@ -159,10 +159,23 @@ describe('useTournamentService', () => {
       expect(canLeaveTournament({ status: 'draft' } as TournamentResponse)).toBe(true)
     })
 
-    it('impossible while ongoing or finished', () => {
+    it('a started bracket cannot be left', () => {
       const { canLeaveTournament } = useTournamentService()
-      expect(canLeaveTournament({ status: 'ongoing' } as TournamentResponse)).toBe(false)
-      expect(canLeaveTournament({ status: 'finished' } as TournamentResponse)).toBe(false)
+      expect(canLeaveTournament({ mode: 'bracket', status: 'ongoing' } as TournamentResponse)).toBe(false)
+    })
+
+    it('a championship or a ranked season can be left while ongoing', () => {
+      const { canLeaveTournament } = useTournamentService()
+      for (const mode of ['championship', 'ranked'] as const) {
+        expect(canLeaveTournament({ mode, status: 'ongoing' } as TournamentResponse)).toBe(true)
+      }
+    })
+
+    it('nothing can be left once finished', () => {
+      const { canLeaveTournament } = useTournamentService()
+      for (const mode of ['championship', 'ranked', 'bracket'] as const) {
+        expect(canLeaveTournament({ mode, status: 'finished' } as TournamentResponse)).toBe(false)
+      }
     })
   })
 

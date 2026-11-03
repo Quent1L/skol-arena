@@ -62,6 +62,26 @@ describe('StandingsTable', () => {
     expect(wrapper.text()).toContain('Bob')
   })
 
+  it('players who left: listed after a separate header, no rank, points kept', async () => {
+    standings.value = [
+      ...standings.value,
+      makeStandingRow({ id: 'p3', name: 'Carol', shortName: 'CA', points: 12, matchesPlayed: 4, inactive: true }),
+    ]
+    const wrapper = await mountTable()
+    expect(wrapper.findAll('[data-testid="standings-row"]')).toHaveLength(2)
+    expect(wrapper.find('[data-testid="standings-inactive-header"]').exists()).toBe(true)
+    const row = wrapper.find('[data-testid="standings-inactive-row"]')
+    expect(row.text()).toContain('Carol')
+    expect(row.text()).toContain('12')
+    expect(row.text()).toContain('—')
+    expect(row.text()).toContain('standingsTable.inactive')
+  })
+
+  it('no inactive header when everyone is still active', async () => {
+    const wrapper = await mountTable()
+    expect(wrapper.find('[data-testid="standings-inactive-header"]').exists()).toBe(false)
+  })
+
   it('flex mode: rows link to the player profile', async () => {
     const wrapper = await mountTable({ teamMode: 'flex' })
     const links = wrapper.findAllComponents(RouterLinkStub)

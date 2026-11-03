@@ -64,6 +64,7 @@
     "ALREADY_REGISTERED": "Vous êtes déjà inscrit à ce tournoi",
     "NOT_REGISTERED": "Vous n'êtes pas inscrit à ce tournoi",
     "CANNOT_LEAVE_ONGOING_TOURNAMENT": "Impossible de quitter un tournoi en cours ou terminé",
+    "PARTICIPANT_REMOVED": "Un organisateur vous a retiré de cette compétition, seul lui peut vous réinscrire",
     "MATCH_INVALID_STATUS": "Statut du match invalide",
     "MATCH_ALREADY_CONFIRMED": "Impossible de modifier un match confirmé",
     "MATCH_CANNOT_BE_DELETED": "Impossible de supprimer un match confirmé",

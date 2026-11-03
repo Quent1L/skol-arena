@@ -36,6 +36,11 @@ export const standingsEntrySchema = z
     winRate: z.number(),
     /** Keyed by opponent id. */
     headToHead: z.record(z.string(), headToHeadRecordSchema),
+    /**
+     * The player left the competition. Their row keeps every number it earned but is
+     * listed after the active ones and takes no rank.
+     */
+    inactive: z.boolean().optional(),
   })
   .meta({ id: "StandingsEntry" });
 

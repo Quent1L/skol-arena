@@ -1311,6 +1311,8 @@
     }
   },
   "rankedLeaderboard": {
+    "inactiveSection": "Inactifs",
+    "inactiveUnranked": "Ont quitté la saison",
     "matchPlural": "{number} matchs",
     "matchSingular": "{number} match",
     "modeAverage": "Moyenne",
@@ -1957,6 +1959,9 @@
     "directConfrontationsTeams": "résultats entre les équipes à égalité",
     "draw": "Match nul",
     "howRankingTooltip": "Comment est calculé le classement ?",
+    "inactive": "Inactif",
+    "inactiveSection": "Inactifs",
+    "inactiveSectionHint": "Joueurs qui ont quitté la compétition. Leurs résultats restent affichés, mais ils n'occupent plus de place au classement.",
     "loss": "Défaite",
     "noMatchesPlayed": "Aucun match joué",
     "noStandings": "Aucun classement disponible pour le moment",

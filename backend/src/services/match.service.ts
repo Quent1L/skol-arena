@@ -194,13 +194,13 @@ export class MatchService {
   private async autoRegisterRankedPlayers(input: CreateMatchInput): Promise<void> {
     const allPlayerIds = (input.sides ?? []).flatMap((s) => s.playerIds ?? [])
     for (const playerId of allPlayerIds) {
-      const existing = await participantRepository.findParticipationByUserAndTournament(
+      const existing = await participantRepository.findParticipationAnyStatus(
         playerId,
         input.tournamentId,
       )
-      if (!existing) {
-        await participantRepository.createParticipation(playerId, input.tournamentId)
-      }
+      // A player who left comes back by playing; one an organizer removed does not
+      if (existing?.status === 'active' || existing?.status === 'removed') continue
+      await participantRepository.createParticipation(playerId, input.tournamentId)
     }
   }
 

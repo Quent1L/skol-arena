@@ -62,18 +62,21 @@ export function sortBySeasonMetric(
 // A player still doing their placement matches is not ranked: their MMR is
 // unsettled, so showing it next to settled ones would read as a real standing.
 // They are listed apart instead, with their placement progress only.
-export function splitByPlacement<T extends { matchesPlayed: number }>(
+// A player who left the season is not ranked either: they keep their MMR but are
+// listed last, whatever their placement progress.
+export function splitByPlacement<T extends { matchesPlayed: number; inactive?: boolean }>(
   players: T[],
   placementMatches: number,
-): { placed: T[]; inPlacement: T[] } {
-  if (placementMatches <= 0) return { placed: players, inPlacement: [] }
+): { placed: T[]; inPlacement: T[]; inactive: T[] } {
   const placed: T[] = []
   const inPlacement: T[] = []
+  const inactive: T[] = []
   for (const player of players) {
-    if (player.matchesPlayed >= placementMatches) placed.push(player)
+    if (player.inactive) inactive.push(player)
+    else if (player.matchesPlayed >= placementMatches) placed.push(player)
     else inPlacement.push(player)
   }
-  return { placed, inPlacement }
+  return { placed, inPlacement, inactive }
 }
 
 export function getWeeklyMmrGain(

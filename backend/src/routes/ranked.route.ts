@@ -9,7 +9,6 @@ import { mmrCalculationService } from "../services/mmr-calculation.service";
 import { seasonRewindService } from "../services/season-rewind.service";
 import { playerMmrRepository } from "../repository/player-mmr.repository";
 import { rankedSeasonRepository } from "../repository/ranked-season.repository";
-import { rankedCacheRepository } from "../repository/ranked-cache.repository";
 import { userRepository } from "../repository/user.repository";
 import {
   createRankedSeasonSchema,
@@ -405,11 +404,8 @@ ranked.get(
       throw new NotFoundError(ErrorCode.SEASON_NOT_FOUND);
     }
     const placementMatches = season.rankedConfig?.placementMatches ?? 0;
-    const cached = await rankedCacheRepository.getOfficial(id);
-    if (cached) return c.json({ players: cached.players, placementMatches });
-    await rankedSeasonService.computeAndCacheOfficial(id);
-    const fresh = await rankedCacheRepository.getOfficial(id);
-    return c.json({ players: fresh?.players ?? [], placementMatches });
+    const players = await rankedSeasonService.getLeaderboard(id, "official");
+    return c.json({ players, placementMatches });
   }
 );
 
@@ -429,11 +425,8 @@ ranked.get(
       throw new NotFoundError(ErrorCode.SEASON_NOT_FOUND);
     }
     const placementMatches = season.rankedConfig?.placementMatches ?? 0;
-    const cached = await rankedCacheRepository.getProvisional(id);
-    if (cached) return c.json({ players: cached.players, placementMatches });
-    await rankedSeasonService.computeAndCacheProvisional(id);
-    const fresh = await rankedCacheRepository.getProvisional(id);
-    return c.json({ players: fresh?.players ?? [], placementMatches });
+    const players = await rankedSeasonService.getLeaderboard(id, "provisional");
+    return c.json({ players, placementMatches });
   }
 );
 

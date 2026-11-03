@@ -146,6 +146,15 @@
         :current-user-id="props.currentUserId"
         :tournament-id="props.tournamentId"
       />
+
+      <!-- Players who left the season: MMR kept, no rank. -->
+      <InactivePlayersList
+        v-if="inactivePlayers.length"
+        :players="inactivePlayers"
+        :value-of="displayMmr"
+        :current-user-id="props.currentUserId"
+        :tournament-id="props.tournamentId"
+      />
     </div>
   </template>
 </template>
@@ -171,6 +180,7 @@ import {
 import { useServerLabels } from '@/i18n/serverLabels'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import PlacementPlayersList from '@/components/ranked/PlacementPlayersList.vue'
+import InactivePlayersList from '@/components/ranked/InactivePlayersList.vue'
 import RecentFormBadges from '@/components/player/RecentFormBadges.vue'
 import {
   TIER_BAR_CLASS as TIER_BAR,
@@ -199,14 +209,13 @@ const props = defineProps<{
 const isSeasonMode = computed(() => props.metric !== 'current')
 
 // Season views (peak/average) are already restricted to players past the
-// placement threshold server-side, so everything they carry is ranked.
+// placement threshold server-side, so only the players who left are set apart.
 const split = computed(() =>
-  isSeasonMode.value
-    ? { placed: props.players, inPlacement: [] }
-    : splitByPlacement(props.players, props.placementMatches ?? 0),
+  splitByPlacement(props.players, isSeasonMode.value ? 0 : (props.placementMatches ?? 0)),
 )
 const rankedPlayers = computed(() => split.value.placed)
 const inPlacement = computed(() => split.value.inPlacement)
+const inactivePlayers = computed(() => split.value.inactive)
 
 // The ranked value of this view: current MMR, or the season aggregate.
 function displayMmr(player: ClientPlayerMmr): number {

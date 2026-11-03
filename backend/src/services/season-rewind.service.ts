@@ -19,6 +19,8 @@ import {
 } from "@skol-arena/shared/types/index";
 import { db } from "../config/database";
 import { playerMmrRepository } from "../repository/player-mmr.repository";
+import { participantRepository } from "../repository/participant.repository";
+import { partitionInactive } from "../utils/inactive-players";
 import { rankedSeasonRepository } from "../repository/ranked-season.repository";
 import { rulesRepository } from "../repository/rules.repository";
 import {
@@ -131,12 +133,15 @@ export class SeasonRewindService {
       return;
     }
 
-    const [history, sides, players, badges] = await Promise.all([
+    const [history, sides, rankedPlayers, badges, inactiveIds] = await Promise.all([
       seasonRewindRepository.getSeasonHistoryOrdered(seasonId),
       seasonRewindRepository.getSeasonSides(seasonId),
       playerMmrRepository.getBySeasonOrdered(seasonId),
       rulesRepository.listBadgesBySeason(seasonId),
+      participantRepository.findInactivePlayerIds(seasonId),
     ]);
+    // Players who left the season finish behind everyone who stayed, as on the leaderboard
+    const players = partitionInactive(rankedPlayers, inactiveIds, (row) => row.playerId);
 
     const replay = replaySeason(history, sides);
     const context = this.buildContext(season, players);

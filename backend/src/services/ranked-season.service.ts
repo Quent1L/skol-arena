@@ -10,6 +10,8 @@ import type {
 import { tournamentRepository } from "../repository/tournament.repository";
 import { userRepository } from "../repository/user.repository";
 import { rankedCacheRepository } from "../repository/ranked-cache.repository";
+import { participantRepository } from "../repository/participant.repository";
+import { partitionInactive } from "../utils/inactive-players";
 import { seasonRewindRepository } from "../repository/season-rewind.repository";
 import {
   calculateMatchMmr,
@@ -909,12 +911,15 @@ export class RankedSeasonService {
 
     const config = await rankedSeasonRepository.getConfigByTournamentId(seasonId);
     const placementMatches = config?.placementMatches ?? 0;
-    const allPlayers =
-      await playerMmrRepository.getAllPlayersBySeasonId(seasonId);
+    const [allPlayers, inactiveIds] = await Promise.all([
+      playerMmrRepository.getAllPlayersBySeasonId(seasonId),
+      participantRepository.findInactivePlayerIds(seasonId),
+    ]);
     // Players still in placement are not ranked, so they must not shape the
-    // percentile boundaries either: their MMR is by definition unsettled.
+    // percentile boundaries either: their MMR is by definition unsettled. Players who
+    // left the season hold no rank anymore and are left out for the same reason.
     const sorted = allPlayers
-      .filter((p) => p.matchesPlayed >= placementMatches)
+      .filter((p) => p.matchesPlayed >= placementMatches && !inactiveIds.has(p.playerId))
       .map((p) => p.currentMmr)
       .sort((a, b) => a - b);
     const n = sorted.length;
@@ -1029,11 +1034,33 @@ export class RankedSeasonService {
       throw new BadRequestError(ErrorCode.TOURNAMENT_INVALID_STATUS);
     }
 
-    const [players, stats] = await Promise.all([
+    const [players, stats, inactiveIds] = await Promise.all([
       playerMmrRepository.getBySeasonOrdered(seasonId),
       playerMmrRepository.getSeasonMmrStats(seasonId, season.rankedConfig?.placementMatches ?? 0),
+      participantRepository.findInactivePlayerIds(seasonId),
     ]);
-    return mergeSeasonMmrStats(players as ClientPlayerMmr[], stats);
+    const merged = mergeSeasonMmrStats(players as ClientPlayerMmr[], stats);
+    return partitionInactive(merged, inactiveIds, (row) => row.playerId);
+  }
+
+  /**
+   * The cached leaderboard, with the players who left the season flagged and moved last.
+   * The flag is applied when serving, never cached: leaving or coming back shows at once
+   * and the cached MMR stays the one the matches gave.
+   */
+  async getLeaderboard(seasonId: string, kind: "official" | "provisional"): Promise<ClientPlayerMmr[]> {
+    const read = () =>
+      kind === "official"
+        ? rankedCacheRepository.getOfficial(seasonId)
+        : rankedCacheRepository.getProvisional(seasonId);
+    let cached = await read();
+    if (!cached) {
+      if (kind === "official") await this.computeAndCacheOfficial(seasonId);
+      else await this.computeAndCacheProvisional(seasonId);
+      cached = await read();
+    }
+    const inactiveIds = await participantRepository.findInactivePlayerIds(seasonId);
+    return partitionInactive(cached?.players ?? [], inactiveIds, (row) => row.playerId);
   }
 
   // The season leaderboard transposed: one player, every season they have a rated

@@ -274,9 +274,12 @@ export function useTournamentService() {
   /**
    * Check if tournament allows leaving
    */
+  // Mirrors the backend: a championship or a ranked season can be left until it is
+  // finished (the player's results stay, listed as inactive); a started bracket cannot.
   function canLeaveTournament(tournament: TournamentResponse | null): boolean {
-    if (!tournament) return false
-    return !['ongoing', 'finished'].includes(tournament.status)
+    if (!tournament || tournament.status === 'finished') return false
+    if (tournament.mode === 'championship' || tournament.mode === 'ranked') return true
+    return tournament.status !== 'ongoing'
   }
 
   /**

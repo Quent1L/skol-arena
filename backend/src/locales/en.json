@@ -64,6 +64,7 @@
     "ALREADY_REGISTERED": "You are already registered for this tournament",
     "NOT_REGISTERED": "You are not registered for this tournament",
     "CANNOT_LEAVE_ONGOING_TOURNAMENT": "Cannot leave an ongoing or finished tournament",
+    "PARTICIPANT_REMOVED": "An organizer removed you from this competition, only they can register you again",
     "MATCH_INVALID_STATUS": "Invalid match status",
     "MATCH_ALREADY_CONFIRMED": "Cannot modify a confirmed match",
     "MATCH_CANNOT_BE_DELETED": "Cannot delete a confirmed match",

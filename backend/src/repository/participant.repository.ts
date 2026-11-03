@@ -1,4 +1,4 @@
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, ne } from "drizzle-orm";
 import { db } from "../config/database";
 import { tournaments, tournamentParticipants } from "../db/schema";
 
@@ -32,6 +32,36 @@ export class ParticipantRepository {
         eq(tournamentParticipants.status, "active")
       ),
     });
+  }
+
+  /**
+   * Registration row whatever its status, to tell a player who left on their own
+   * (`withdrawn`) from one an organizer removed (`removed`)
+   */
+  async findParticipationAnyStatus(userId: string, tournamentId: string) {
+    return await db.query.tournamentParticipants.findFirst({
+      where: and(
+        eq(tournamentParticipants.tournamentId, tournamentId),
+        eq(tournamentParticipants.userId, userId)
+      ),
+    });
+  }
+
+  /**
+   * Ids of the players who registered and then left or were removed. Their matches stay,
+   * so standings and leaderboards keep their row, flagged inactive.
+   */
+  async findInactivePlayerIds(tournamentId: string): Promise<Set<string>> {
+    const rows = await db
+      .select({ userId: tournamentParticipants.userId })
+      .from(tournamentParticipants)
+      .where(
+        and(
+          eq(tournamentParticipants.tournamentId, tournamentId),
+          ne(tournamentParticipants.status, "active")
+        )
+      );
+    return new Set(rows.map((row) => row.userId));
   }
 
   /**
@@ -116,11 +146,13 @@ export class ParticipantRepository {
   }
 
   /**
-   * Hard delete participation (for admin purposes)
+   * Organizer removal (soft delete): the player's results stay in the standings, flagged
+   * inactive, and only an organizer can bring them back
    */
-  async hardDeleteParticipation(participationId: string) {
+  async markRemoved(participationId: string) {
     await db
-      .delete(tournamentParticipants)
+      .update(tournamentParticipants)
+      .set({ status: "removed" })
       .where(eq(tournamentParticipants.id, participationId));
   }
 }

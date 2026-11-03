@@ -157,12 +157,21 @@ mock.module("../../repository/tournament-ruleset.repository", () => ({
   },
 }));
 
+let inactivePlayerIds = new Set<string>();
+
+mock.module("../../repository/participant.repository", () => ({
+  participantRepository: {
+    findInactivePlayerIds: mock(() => Promise.resolve(inactivePlayerIds)),
+  },
+}));
+
 import { standingsService } from "../standings.service";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function resetMocks() {
   rulesetOutcomes = [];
+  inactivePlayerIds = new Set();
   mockRepo.getTournamentWithScoring.mockImplementation(() => Promise.resolve(DEFAULT_TOURNAMENT));
   mockRepo.getMatchesWithSides.mockImplementation((_id: string, _statuses: string[]) => Promise.resolve([]));
   mockRepo.getPlayerPointsForStandings.mockImplementation((_id: string, _statuses: string[]) => Promise.resolve([]));
@@ -411,6 +420,39 @@ describe("StandingsService", () => {
     beforeEach(() => {
       mockRepo.getTournamentWithScoring.mockImplementation(() => Promise.resolve(flexTournament));
       mockRepo.getTournamentEntries.mockImplementation(() => Promise.resolve(flexEntries));
+    });
+
+    it("a player who left is listed last, flagged inactive, with the points they earned", async () => {
+      mockRepo.getPlayerPointsForStandings.mockImplementation(() =>
+        Promise.resolve([makeFlexMatchWithPoints("m1", "A", ["p-a1", "p-a2"], ["p-b1", "p-b2"], 3, 1, 3, 0)]),
+      );
+      inactivePlayerIds = new Set(["p-a1"]);
+
+      const { standings } = await standingsService.getOfficialStandings("tournament-1");
+
+      const last = standings[standings.length - 1];
+      expect(last.id).toBe("p-a1");
+      expect(last.inactive).toBe(true);
+      expect(last.points).toBe(3);
+      expect(standings[0].id).toBe("p-a2");
+      expect(standings.filter((row) => row.inactive)).toHaveLength(1);
+    });
+
+    it("the inactive flag is applied on a cache hit and never written to the cache", async () => {
+      mockRepo.getPlayerPointsForStandings.mockImplementation(() =>
+        Promise.resolve([makeFlexMatchWithPoints("m1", "A", ["p-a1", "p-a2"], ["p-b1", "p-b2"], 3, 1, 3, 0)]),
+      );
+      inactivePlayerIds = new Set(["p-a1"]);
+      await standingsService.getOfficialStandings("tournament-1");
+
+      const written = (mockRepo.setComputedData.mock.calls.at(-1) as any[])[2];
+      expect(written.standings.some((row: any) => row.inactive)).toBe(false);
+
+      mockRepo.getComputedData.mockImplementation(() => Promise.resolve(written));
+      inactivePlayerIds = new Set(["p-b1"]);
+      const { standings } = await standingsService.getOfficialStandings("tournament-1");
+      expect(standings[standings.length - 1].id).toBe("p-b1");
+      expect(standings.find((row) => row.id === "p-a1")?.inactive).toBeUndefined();
     });
 
     it("side A win: all A players earn 3 pts", async () => {

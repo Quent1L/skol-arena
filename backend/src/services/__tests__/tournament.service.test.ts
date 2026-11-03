@@ -92,6 +92,8 @@ beforeEach(() => {
     ({ id: _id }) as any;
   partRepo.deleteParticipation = async () => undefined;
   partRepo.findTournamentParticipants = async () => [];
+  partRepo.findParticipationAnyStatus = async () => undefined as any;
+  partRepo.markRemoved = async () => undefined;
 
   orgRepo = organizationRepository as unknown as Partial<OrganizationRepository>;
   orgRepo.isMember = async () => false;
@@ -799,15 +801,70 @@ describe("TournamentService - basic flows", () => {
     }
   });
 
-  it("leaveTournament should throw BadRequestError when tournament ongoing or finished", async () => {
+  it("leaveTournament should throw BadRequestError when a bracket is ongoing", async () => {
+    partRepo.findTournamentById = async () =>
+      ({ id: "t-1", mode: "bracket", status: "ongoing" }) as any;
+    await expect(tournamentService.leaveTournament("u-1", "t-1")).rejects.toBeInstanceOf(
+      BadRequestError,
+    );
+  });
+
+  it("leaveTournament should throw BadRequestError once a competition is finished", async () => {
+    for (const mode of ["championship", "ranked", "bracket"]) {
+      partRepo.findTournamentById = async () =>
+        ({ id: "t-1", mode, status: "finished" }) as any;
+      await expect(tournamentService.leaveTournament("u-1", "t-1")).rejects.toBeInstanceOf(
+        BadRequestError,
+      );
+    }
+  });
+
+  it("leaveTournament lets a player leave an ongoing championship or ranked season", async () => {
+    partRepo.findParticipationByUserAndTournament = async () => ({ id: "p-1" }) as any;
+    for (const mode of ["championship", "ranked"]) {
+      partRepo.findTournamentById = async () =>
+        ({ id: "t-1", mode, status: "ongoing" }) as any;
+      let withdrawn: string | null = null;
+      partRepo.deleteParticipation = async (id: string) => {
+        withdrawn = id;
+      };
+      await tournamentService.leaveTournament("u-1", "t-1");
+      expect(withdrawn as string | null).toBe("p-1");
+    }
+  });
+
+  it("joinTournament refuses a player an organizer removed", async () => {
     partRepo.findTournamentById = async () =>
       ({ id: "t-1", status: "ongoing" }) as any;
-    try {
-      await tournamentService.leaveTournament("u-1", "t-1");
-      throw new Error("Expected BadRequestError");
-    } catch (err) {
-      expect(err).toBeInstanceOf(BadRequestError);
-    }
+    partRepo.findParticipationAnyStatus = async () =>
+      ({ id: "p-1", status: "removed" }) as any;
+    await expect(
+      tournamentService.joinTournament("u-1", { tournamentId: "t-1" } as JoinTournamentRequest),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("adminRemoveParticipant keeps the row, marked removed, so the results stay listed", async () => {
+    tourRepo.isUserTournamentAdmin = async () => true;
+    partRepo.findParticipationByUserAndTournament = async () => ({ id: "p-9" }) as any;
+    let removed: string | null = null;
+    partRepo.markRemoved = async (id: string) => {
+      removed = id;
+    };
+    await tournamentService.adminRemoveParticipant("admin-1", "t-1", "u-9");
+    expect(removed as string | null).toBe("p-9");
+  });
+
+  it("joinTournament lets a player who left come back", async () => {
+    partRepo.findTournamentById = async () =>
+      ({ id: "t-1", status: "ongoing" }) as any;
+    partRepo.findParticipationAnyStatus = async () =>
+      ({ id: "p-1", status: "withdrawn" }) as any;
+    partRepo.findParticipationWithDetails = async () =>
+      ({ id: "p-1", userId: "u-1", tournamentId: "t-1" }) as any;
+    const res = await tournamentService.joinTournament("u-1", {
+      tournamentId: "t-1",
+    } as JoinTournamentRequest);
+    expect(res!.userId).toBe("u-1");
   });
 
   it("leaveTournament should throw BadRequestError when not registered", async () => {

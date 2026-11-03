@@ -257,7 +257,18 @@ describe('splitByPlacement', () => {
   })
 
   it('tolerates an empty list', () => {
-    expect(splitByPlacement([], 5)).toEqual({ placed: [], inPlacement: [] })
+    expect(splitByPlacement([], 5)).toEqual({ placed: [], inPlacement: [], inactive: [] })
+  })
+
+  it('sets players who left apart, whatever their placement progress', () => {
+    const gone = (id: string, matchesPlayed: number) => ({ ...player(id, matchesPlayed), inactive: true })
+    const { placed, inPlacement, inactive } = splitByPlacement(
+      [player('a', 10), gone('x', 10), player('b', 1), gone('y', 1)],
+      5,
+    )
+    expect(placed.map((p) => p.player?.id)).toEqual(['a'])
+    expect(inPlacement.map((p) => p.player?.id)).toEqual(['b'])
+    expect(inactive.map((p) => p.player?.id)).toEqual(['x', 'y'])
   })
 })
 

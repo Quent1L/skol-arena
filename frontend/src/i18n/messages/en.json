@@ -1311,6 +1311,8 @@
     }
   },
   "rankedLeaderboard": {
+    "inactiveSection": "Inactive",
+    "inactiveUnranked": "Left the season",
     "matchPlural": "{number} matches",
     "matchSingular": "{number} match",
     "modeAverage": "Average",
@@ -1957,6 +1959,9 @@
     "directConfrontationsTeams": "results between tied teams",
     "draw": "Draw",
     "howRankingTooltip": "How is the ranking calculated?",
+    "inactive": "Inactive",
+    "inactiveSection": "Inactive",
+    "inactiveSectionHint": "Players who left the competition. Their results stay visible, but they no longer hold a place in the standings.",
     "loss": "Loss",
     "noMatchesPlayed": "No matches played",
     "noStandings": "No standings available",
