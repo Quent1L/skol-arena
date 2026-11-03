@@ -1,0 +1,34 @@
+# Dependabot version updates, all raised against `beta` (never `main`).
+#
+# Automatic security-update PRs are disabled in the repository settings on purpose:
+# GitHub always opens those against the default branch and ignores `target-branch`.
+# Vulnerable dependencies still raise alerts, and their fix arrives through the weekly
+# version-update PRs below.
+version: 2
+updates:
+  - package-ecosystem: "bun"
+    # Root of the Bun workspace: covers backend, frontend, shared and docs via bun.lock.
+    directory: "/"
+    target-branch: "beta"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    # chore(deps) is releasable per scripts/release-gate.ts.
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "beta"
+    schedule:
+      interval: "monthly"
+    groups:
+      actions:
+        patterns: ["*"]
+    # ci never releases.
+    commit-message:
+      prefix: "ci"
