@@ -159,6 +159,8 @@ interface Props {
   /** False when matches need no validation: every result is official at once. */
   showProvisionalToggle?: boolean
   currentUserId?: string
+  /** Bumped when the standings changed server-side: the views already shown refetch. */
+  refreshKey?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -221,6 +223,11 @@ function prefetchModes(values: string[]) {
 // rows between the two. Immediate, because the view can be restored from the URL
 // rather than picked here.
 watch(mode, loadMode, { immediate: true })
+
+watch(
+  () => props.refreshKey,
+  () => [...loaded].forEach(loadMode),
+)
 
 function listPropsFor(value: StandingsMode) {
   const source = sources[value]

@@ -57,6 +57,9 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
   // its own paging and filters, so it cannot be reloaded from here — it watches this
   // and refetches the range it already shows.
   const matchesRefreshKey = ref(0)
+  // Same idea for the championship standings: StandingsTable owns its data and
+  // refetches the views it already shows when this moves.
+  const standingsRefreshKey = ref(0)
   // Week the cached weeklyMmrLeaders belongs to, so a session left open across the
   // Monday rollover doesn't keep rendering last week's movers.
   const weeklyMmrWeekStart = ref<number | null>(null)
@@ -392,6 +395,8 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
     if (!tournamentId.value) return
     await backgroundRefresh.run(async () => {
       const promises: Promise<unknown>[] = [reloadLeaderboard()]
+      // Already shown once: it must not stay on a ranking that has moved since.
+      if (rankedProvisionalLeaderboard.value.length) promises.push(loadProvisionalLeaderboard())
       if (playerMmr.value !== null) promises.push(reloadPlayerProfile())
       if (tournamentStats.value !== null) promises.push(reloadStats())
       if (weeklyMmrLeaders.value !== null) promises.push(reloadWeeklyMmrLeaders())
@@ -458,6 +463,7 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
     rankedSeasonMmrLoading,
     isLeaderboardRecalculating,
     matchesRefreshKey,
+    standingsRefreshKey,
     profileChartHistory,
     playerCareer,
     playerCareerPeak,

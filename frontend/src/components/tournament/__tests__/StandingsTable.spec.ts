@@ -118,6 +118,27 @@ describe('StandingsTable', () => {
     expect(loadProvisionalStandings).toHaveBeenCalledTimes(1)
   })
 
+  it('refreshKey bump: refetches every view already shown, and only those', async () => {
+    const wrapper = await mountTable({ refreshKey: 0 })
+    await wrapper.find('[data-test="subtab-provisional"]').trigger('click')
+    await flushPromises()
+    vi.clearAllMocks()
+
+    await wrapper.setProps({ refreshKey: 1 })
+    await flushPromises()
+    expect(loadOfficialStandings).toHaveBeenCalledTimes(1)
+    expect(loadProvisionalStandings).toHaveBeenCalledTimes(1)
+  })
+
+  it('refreshKey bump before the provisional view was opened: official only', async () => {
+    const wrapper = await mountTable({ refreshKey: 0 })
+    vi.clearAllMocks()
+    await wrapper.setProps({ refreshKey: 1 })
+    await flushPromises()
+    expect(loadOfficialStandings).toHaveBeenCalledTimes(1)
+    expect(loadProvisionalStandings).not.toHaveBeenCalled()
+  })
+
   it('mobile: the same views sit in the draggable track used by ranked', async () => {
     isMobile.value = true
     const wrapper = await mountTable()

@@ -207,7 +207,7 @@ const TournamentDetailMobile = defineAsyncComponent(
 import TournamentDetailSkeleton from '@/components/tournament/TournamentDetailSkeleton.vue'
 import BackgroundRefreshIndicator from '@/components/ui/BackgroundRefreshIndicator.vue'
 import PageTitleBar from '@/components/ui/PageTitleBar.vue'
-import type { MmrAnimationWsPayload, BadgeAnimationWsPayload, MmrRecapReadyPayload } from '@skol-arena/shared'
+import type { MmrAnimationWsPayload, BadgeAnimationWsPayload, MmrRecapReadyPayload, StandingsUpdatedEvent } from '@skol-arena/shared'
 import OverflowMenuButton from '@/components/OverflowMenuButton.vue'
 import { onWsEvent, onWsOpen, sendWsMessage, useNotificationSocket } from '@/composables/notification/notification.socket'
 import { useMMrAnimationQueue } from '@/composables/ranked/useMMrAnimationQueue'
@@ -369,6 +369,17 @@ onMounted(async () => {
         if ((data as { seasonId: string }).seasonId !== tournamentId.value) return
         store.isLeaderboardRecalculating = false
         store.refreshAfterLeaderboardUpdate()
+      }),
+    )
+  }
+
+  if (store.tournament?.mode === 'championship') {
+    // A player left, came back or was removed, or the cache was cleared: the
+    // standings changed without any match event.
+    offWsHandlers.push(
+      onWsEvent('standings_updated', (data) => {
+        if ((data as StandingsUpdatedEvent['data']).tournamentId !== tournamentId.value) return
+        store.standingsRefreshKey += 1
       }),
     )
   }

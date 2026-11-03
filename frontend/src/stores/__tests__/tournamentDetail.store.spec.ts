@@ -52,6 +52,8 @@ const loadWeeklyMmrLeaders = vi.fn(async (seasonId: string) => {
   } as unknown as WeeklyMmrLeaders
 })
 const loadLeaderboard = vi.fn()
+const provisionalLeaderboardRef = ref<unknown[]>([])
+const loadProvisionalLeaderboard = vi.fn()
 const loadPlayerMmr = vi.fn(async () => {
   playerMmrRef.value = { currentMmr: 1000 }
   return []
@@ -63,7 +65,7 @@ vi.mock('@/composables/ranked/ranked.service', async (importOriginal) => {
     getCurrentWeekStart: actual.getCurrentWeekStart,
     useRankedService: () => ({
       leaderboard: leaderboardRef,
-      provisionalLeaderboard: ref([]),
+      provisionalLeaderboard: provisionalLeaderboardRef,
       seasonMmrLeaderboard: ref([]),
       tiers: ref([]),
       playerMmr: playerMmrRef,
@@ -73,7 +75,7 @@ vi.mock('@/composables/ranked/ranked.service', async (importOriginal) => {
       provisionalLoading: ref(false),
       seasonMmrLoading: ref(false),
       loadLeaderboard,
-      loadProvisionalLeaderboard: vi.fn(),
+      loadProvisionalLeaderboard,
       loadSeasonMmrLeaderboard: vi.fn(),
       loadPlayerMmr,
       loadWeeklyMmrLeaders,
@@ -113,6 +115,7 @@ beforeEach(() => {
   vi.setSystemTime(WEDNESDAY)
   setActivePinia(createPinia())
   tournamentRef.value = { mode: 'ranked' }
+  provisionalLeaderboardRef.value = []
   weeklyMmrLeadersRef.value = null
   playerMmrRef.value = null
   leaderboardRef.value = []
@@ -275,6 +278,19 @@ describe('useTournamentDetailStore — background refresh indicator', () => {
     expect(loadStats).toHaveBeenCalledTimes(1)
     expect(loadWeeklyMmrLeaders).toHaveBeenCalledTimes(1)
     expect(store.justRefreshed).toBe(true)
+  })
+
+  it('refreshAfterLeaderboardUpdate reloads the provisional leaderboard only once it was shown', async () => {
+    const store = useTournamentDetailStore()
+    await store.initialize('tournament-a')
+    vi.clearAllMocks()
+
+    await store.refreshAfterLeaderboardUpdate()
+    expect(loadProvisionalLeaderboard).not.toHaveBeenCalled()
+
+    provisionalLeaderboardRef.value = [{ playerId: 'u1' }]
+    await store.refreshAfterLeaderboardUpdate()
+    expect(loadProvisionalLeaderboard).toHaveBeenCalledWith('tournament-a')
   })
 
   it('bumps the match list key on both refresh paths', async () => {

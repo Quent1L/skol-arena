@@ -8,6 +8,7 @@ import { tournamentRulesetService } from "./tournament-ruleset.service";
 import { standingsService } from "./standings.service";
 import { playerStatsService } from "./player-stats.service";
 import { enqueueMmrSeasonRecalculation } from "./mmr-job-queue.service";
+import { notifyRankingChanged } from "./ranking-notifier";
 import {
   type CreateTournamentInput,
   type UpdateTournamentInput,
@@ -579,6 +580,8 @@ export class TournamentService {
       userId,
       data.tournamentId,
     );
+    // A player coming back leaves the inactive section
+    notifyRankingChanged(tournament);
 
     return await participantRepository.findParticipationWithDetails(
       participation.id,
@@ -670,6 +673,7 @@ export class TournamentService {
       targetUserId,
       tournamentId,
     );
+    notifyRankingChanged(tournament);
 
     return await participantRepository.findParticipationWithDetails(
       participation.id,
@@ -705,6 +709,7 @@ export class TournamentService {
 
     // Soft delete: the player's results stay in the standings, listed as inactive
     await participantRepository.deleteParticipation(participation.id);
+    notifyRankingChanged(tournament);
 
     return { message: "Vous avez quitté le tournoi avec succès" };
   }
@@ -751,6 +756,9 @@ export class TournamentService {
     }
 
     await participantRepository.markRemoved(participation.id);
+
+    const tournament = await participantRepository.findTournamentById(tournamentId);
+    if (tournament) notifyRankingChanged(tournament);
 
     return { success: true };
   }

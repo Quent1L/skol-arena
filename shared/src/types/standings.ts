@@ -51,3 +51,12 @@ export const standingsResultSchema = z
   .meta({ id: "StandingsResult" });
 
 export type StandingsResult = z.infer<typeof standingsResultSchema>;
+
+/**
+ * WebSocket event: a championship's standings changed without a match (a player left,
+ * came back or was removed, or the cache was cleared). Pages refetch on it.
+ */
+export type StandingsUpdatedEvent = {
+  event: "standings_updated";
+  data: { tournamentId: string };
+};

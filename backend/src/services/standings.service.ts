@@ -2,6 +2,7 @@ import { standingsRepository } from "../repository/standings.repository";
 import { matchSidesRepository } from "../repository/match-sides.repository";
 import { participantRepository } from "../repository/participant.repository";
 import { partitionInactive } from "../utils/inactive-players";
+import { notifyRankingChanged } from "./ranking-notifier";
 import { tournamentService } from "./tournament.service";
 import { tournamentRulesetService } from "./tournament-ruleset.service";
 import { NotFoundError, ForbiddenError, ErrorCode } from "../types/errors";
@@ -644,6 +645,9 @@ export class StandingsService {
     const canManage = await tournamentService.canManageTournament(tournamentId, userId);
     if (!canManage) throw new ForbiddenError(ErrorCode.FORBIDDEN);
     await standingsRepository.deleteComputedData(tournamentId);
+    // Open pages would otherwise keep showing what they fetched before the clear
+    const tournament = await participantRepository.findTournamentById(tournamentId);
+    if (tournament) notifyRankingChanged(tournament);
   }
 
   // ── Recalculate ──────────────────────────────────────────────────────

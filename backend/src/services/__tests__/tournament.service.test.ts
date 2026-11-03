@@ -25,6 +25,7 @@ import { tournamentRulesetService } from "../tournament-ruleset.service";
 import { matchRepository } from "../../repository/match.repository";
 import { standingsService } from "../standings.service";
 import { playerStatsService } from "../player-stats.service";
+import { webSocketService } from "../websocket.service";
 import {
   NotFoundError,
   BadRequestError,
@@ -817,6 +818,23 @@ describe("TournamentService - basic flows", () => {
         BadRequestError,
       );
     }
+  });
+
+  it("leaveTournament tells the open pages that the standings changed", async () => {
+    partRepo.findTournamentById = async () =>
+      ({ id: "t-1", mode: "championship", status: "ongoing" }) as any;
+    partRepo.findParticipationByUserAndTournament = async () => ({ id: "p-1" }) as any;
+    const sent: unknown[] = [];
+    const original = webSocketService.broadcastToTournament;
+    webSocketService.broadcastToTournament = (_id: string, data: unknown) => {
+      sent.push(data);
+    };
+    try {
+      await tournamentService.leaveTournament("u-1", "t-1");
+    } finally {
+      webSocketService.broadcastToTournament = original;
+    }
+    expect(sent).toEqual([{ event: "standings_updated", data: { tournamentId: "t-1" } }]);
   });
 
   it("leaveTournament lets a player leave an ongoing championship or ranked season", async () => {

@@ -82,6 +82,7 @@
           :show-provisional-toggle="store.tournament!.validationMode !== 'none'"
           :tournament-config="toStandingsConfig(store.tournament!)"
           :current-user-id="store.appUser?.id"
+          :refresh-key="store.standingsRefreshKey"
         />
       </div>
 
