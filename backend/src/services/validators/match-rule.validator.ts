@@ -4,6 +4,7 @@ import { userRepository } from "../../repository/user.repository";
 import { BadRequestError, ConflictError, ErrorCode } from "../../types/errors";
 import type { CreateMatchRequestData as CreateMatchInput } from "@skol-arena/shared/types/index";
 import type { ChampionshipConfig } from "@skol-arena/shared/types/index";
+import { t } from "../../utils/i18n-context";
 
 type TournamentFromRepository = Awaited<
     ReturnType<typeof matchRepository.getTournament>
@@ -187,7 +188,7 @@ export class MatchRuleValidator {
 
     private async getPlayerName(playerId: string): Promise<string> {
         const player = await userRepository.getById(playerId);
-        return player?.displayName || `Joueur ${playerId.substring(0, 8)}`;
+        return player?.displayName || t("messages.PLAYER_FALLBACK", { id: playerId.substring(0, 8) });
     }
 }
 

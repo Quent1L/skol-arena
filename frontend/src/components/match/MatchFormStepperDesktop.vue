@@ -62,7 +62,9 @@
               :match-id="props.matchId"
               :players="participants"
               :next-label="
-                isFutureDate && isLastStepBeforeResult ? 'Programmer le match' : undefined
+                isFutureDate && isLastStepBeforeResult
+                  ? t('matchFormStepperMobile.scheduleMatch')
+                  : undefined
               "
               @previous="activeStep = 'when'"
               @next="goToStepFromParticipants"
@@ -80,7 +82,7 @@
               :teams="teams"
               :played-at="formState.playedAt"
               :match-id="props.matchId"
-              :next-label="isFutureDate ? 'Programmer le match' : undefined"
+              :next-label="isFutureDate ? t('matchFormStepperMobile.scheduleMatch') : undefined"
               @previous="activeStep = 'when'"
               @next="goToStepAfterTeams"
             />
@@ -95,7 +97,7 @@
               :player-names="playersMap"
               :played-at="formState.playedAt"
               :match-id="props.matchId"
-              :next-label="isFutureDate ? 'Programmer le match' : undefined"
+              :next-label="isFutureDate ? t('matchFormStepperMobile.scheduleMatch') : undefined"
               :standings="standings"
               :allow-draw="tournament?.allowDraw ?? false"
               :is-ranked="tournament?.mode === 'ranked'"

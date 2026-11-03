@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { i18n } from '@/i18n'
 import { playerApi } from './player.api'
 import type {
   PlayerProfile,
@@ -18,7 +19,7 @@ export function usePlayerService() {
     try {
       player.value = await playerApi.getProfile(playerId)
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Erreur lors du chargement du profil'
+      error.value = err instanceof Error ? err.message : i18n.global.t('loadErrors.profile')
     }
   }
 
@@ -27,7 +28,7 @@ export function usePlayerService() {
       const result = await playerApi.getTournaments(playerId)
       availableTournaments.value = result.tournaments
     } catch (err) {
-      console.error('Erreur lors du chargement des tournois:', err)
+      console.error('Failed to load player tournaments:', err)
     }
   }
 
@@ -39,7 +40,7 @@ export function usePlayerService() {
       player.value = result.player
       stats.value = result.stats
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques'
+      error.value = err instanceof Error ? err.message : i18n.global.t('loadErrors.stats')
       stats.value = null
     } finally {
       loading.value = false

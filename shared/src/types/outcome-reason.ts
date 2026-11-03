@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vmsg } from "./validation-messages";
 
 // ============================================
 // Types and interfaces for outcome reasons
@@ -39,19 +40,19 @@ export interface UpdateOutcomeReasonInput {
 // ============================================
 
 export const createOutcomeReasonSchema = z.object({
-  outcomeTypeId: z.string().uuid("ID de type de résultat invalide"),
+  outcomeTypeId: z.string().uuid(vmsg("validation.invalidOutcomeTypeId")),
   name: z
-    .string({ message: "Le nom est requis" })
-    .min(1, "Le nom ne peut pas être vide")
-    .max(100, "Le nom ne peut pas dépasser 100 caractères"),
+    .string(vmsg("validation.nameRequired"))
+    .min(1, vmsg("validation.nameNotEmpty"))
+    .max(100, vmsg("validation.nameMax100")),
 });
 
 export const updateOutcomeReasonSchema = z.object({
-  outcomeTypeId: z.string().uuid("ID de type de résultat invalide").optional(),
+  outcomeTypeId: z.string().uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
   name: z
     .string()
-    .min(1, "Le nom ne peut pas être vide")
-    .max(100, "Le nom ne peut pas dépasser 100 caractères")
+    .min(1, vmsg("validation.nameNotEmpty"))
+    .max(100, vmsg("validation.nameMax100"))
     .optional(),
 });
 

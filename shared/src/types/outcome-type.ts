@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vmsg } from "./validation-messages";
 import { disciplineSchema } from "./discipline";
 
 // ============================================
@@ -59,11 +60,11 @@ export interface UpdateOutcomeTypeInput {
 // ============================================
 
 export const createOutcomeTypeSchema = z.object({
-  disciplineId: z.string().uuid("ID de discipline invalide"),
+  disciplineId: z.string().uuid(vmsg("validation.invalidDisciplineId")),
   name: z
-    .string({ message: "Le nom est requis" })
-    .min(1, "Le nom ne peut pas être vide")
-    .max(100, "Le nom ne peut pas dépasser 100 caractères"),
+    .string(vmsg("validation.nameRequired"))
+    .min(1, vmsg("validation.nameNotEmpty"))
+    .max(100, vmsg("validation.nameMax100")),
   isDefault: z.boolean().optional(),
   scoreCountsForMmr: z.boolean().optional(),
   points: z.number().int().min(0).default(3),
@@ -71,11 +72,11 @@ export const createOutcomeTypeSchema = z.object({
 });
 
 export const updateOutcomeTypeSchema = z.object({
-  disciplineId: z.string().uuid("ID de discipline invalide").optional(),
+  disciplineId: z.string().uuid(vmsg("validation.invalidDisciplineId")).optional(),
   name: z
     .string()
-    .min(1, "Le nom ne peut pas être vide")
-    .max(100, "Le nom ne peut pas dépasser 100 caractères")
+    .min(1, vmsg("validation.nameNotEmpty"))
+    .max(100, vmsg("validation.nameMax100"))
     .optional(),
   isDefault: z.boolean().optional(),
   scoreCountsForMmr: z.boolean().optional(),

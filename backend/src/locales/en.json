@@ -127,6 +127,7 @@
     "TEAM_SIZE_INVALID": "Team size does not meet the tournament limits",
     "TEAM_HAS_MATCH": "This team already has a match and cannot be modified",
     "PLAYER_SCHEDULE_CONFLICT": "{{playerName}} is already in another match at this exact time — bilocation isn't on the feature list yet!",
+    "MATCH_PLAYER_COUNT_INVALID": "The match needs between {{min}} and {{max}} players ({{minTeamSize}}-{{maxTeamSize}} per team), {{count}} selected",
     "RANKED_MATCH_TOO_OLD": "Ranked matches must be reported within {{hours}} hours of being played",
     "RANDOM_NOT_ALLOWED_ON_BADGE": "The random roll cannot be used in a badge rule",
     "INVALID_OPERATOR_FOR_FACT": "This operator does not apply to this variable: the condition could never be true",
@@ -211,5 +212,11 @@
     "RESULT_CORRECTED": "{{authorName}} corrected the result: {{previousScore}} → {{newScore}}.",
     "RESULT_CORRECTED_BY_ADMIN": "{{authorName}} (organizer) corrected the result: {{previousScore}} → {{newScore}}.",
     "MATCH_CANCELLED": "{{authorName}} cancelled the match."
+  },
+  "messages": {
+    "MATCH_DELETED": "Match deleted successfully",
+    "TOURNAMENT_LEFT": "You have left the tournament",
+    "PLAYER_FALLBACK": "Player {{id}}",
+    "INVITATION_CODE_REQUIRED_TO_ACTIVATE": "You need to submit an invitation code to activate your account."
   }
 }

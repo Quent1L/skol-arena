@@ -1,6 +1,9 @@
 <template>
   <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full">
+      <div class="flex justify-end mb-4">
+        <LocaleSwitcher />
+      </div>
       <div class="text-center mb-8">
         <SkolLogo :width="240" class="mx-auto" />
         <p class="mt-2">{{ t('registerView.subtitle') }}</p>
@@ -67,6 +70,7 @@
 
 <script setup lang="ts">
 import SkolLogo from '@/components/brand/SkolLogo.vue'
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'

@@ -1,17 +1,17 @@
 <template>
   <UModal
     :open="visible"
-    :title="editing ? 'Modifier la raison de résultat' : 'Ajouter une raison de résultat'"
+    :title="editing ? t('outcomeTypeAdmin.editReasonTitle') : t('outcomeTypeAdmin.addReasonTitle')"
     @update:open="(open) => emit('update:visible', open)"
   >
     <template #body>
       <UForm :schema="formSchema" :state="state" class="space-y-4" @submit="onSubmit">
-        <UFormField name="name" label="Nom" required>
+        <UFormField name="name" :label="t('common.name')" required>
           <UInput v-model="state.name" autofocus class="w-full" />
         </UFormField>
         <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <UButton
-            label="Annuler"
+            :label="t('common.cancel')"
             color="neutral"
             variant="ghost"
             class="justify-center"
@@ -19,7 +19,7 @@
           />
           <UButton
             type="submit"
-            label="Enregistrer"
+            :label="t('common.save')"
             icon="i-fa7-solid:check"
             class="justify-center"
             :loading="loading"
@@ -32,7 +32,9 @@
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { z } from 'zod'
+import { vmsg } from '@skol-arena/shared'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { OutcomeReason } from '@skol-arena/shared/types/outcome-reason'
 
@@ -43,6 +45,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { t } = useI18n()
 
 const emit = defineEmits<{
   'update:visible': [value: boolean]
@@ -51,9 +54,9 @@ const emit = defineEmits<{
 
 const formSchema = z.object({
   name: z
-    .string({ message: 'Le nom est requis' })
-    .min(1, 'Le nom ne peut pas être vide')
-    .max(100, 'Le nom ne peut pas dépasser 100 caractères'),
+    .string(vmsg('validation.nameRequired'))
+    .min(1, vmsg('validation.nameNotEmpty'))
+    .max(100, vmsg('validation.nameMax100')),
 })
 type FormValues = z.infer<typeof formSchema>
 

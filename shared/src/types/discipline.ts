@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { vmsg } from "./validation-messages";
 
 // ============================================
 // Types and interfaces for disciplines
@@ -70,9 +71,9 @@ export interface UpdateDisciplineInput {
 
 export const createDisciplineSchema = z.object({
   name: z
-    .string({ message: "Le nom est requis" })
-    .min(1, "Le nom ne peut pas être vide")
-    .max(100, "Le nom ne peut pas dépasser 100 caractères"),
+    .string(vmsg("validation.nameRequired"))
+    .min(1, vmsg("validation.nameNotEmpty"))
+    .max(100, vmsg("validation.nameMax100")),
   icon: z.string().nullish(),
   scoreInstructions: z.string().max(500).nullish(),
   teamInteractionMode: z.enum(TEAM_INTERACTION_MODES).nullish(),
@@ -81,8 +82,8 @@ export const createDisciplineSchema = z.object({
 export const updateDisciplineSchema = z.object({
   name: z
     .string()
-    .min(1, "Le nom ne peut pas être vide")
-    .max(100, "Le nom ne peut pas dépasser 100 caractères")
+    .min(1, vmsg("validation.nameNotEmpty"))
+    .max(100, vmsg("validation.nameMax100"))
     .optional(),
   icon: z.string().nullish(),
   scoreInstructions: z.string().max(500).nullish(),

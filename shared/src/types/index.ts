@@ -35,6 +35,7 @@ export * from "./rewind";
 export * from "./tournament-stats";
 export * from "./organization";
 export * from "./app-config";
+export * from "./validation-messages";
 
 // ============================================
 // Types utilitaires

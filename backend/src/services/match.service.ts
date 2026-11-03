@@ -601,7 +601,7 @@ export class MatchService {
     await notificationService.deleteActionsByMatchId(id)
     await matchRepository.delete(id)
 
-    return { success: true, message: 'Match supprimé avec succès' }
+    return { success: true, message: t('messages.MATCH_DELETED') }
   }
 
   async reportMatchResult(id: string, input: ReportMatchResultInput, reportedBy: string) {
@@ -980,12 +980,12 @@ export class MatchService {
     try {
       const tournament = await this.getTournamentForValidation(input)
       if (!tournament) {
-        errors.push('Tournoi non trouvé')
+        errors.push(t('errors.TOURNAMENT_NOT_FOUND'))
         return { valid: false, errors, warnings }
       }
 
       if (!this.isTournamentOpenForMatches(tournament)) {
-        errors.push('Le tournoi doit être ouvert ou en cours pour créer des matchs')
+        errors.push(t('errors.TOURNAMENT_INVALID_STATUS'))
         return { valid: false, errors, warnings }
       }
 
@@ -1037,7 +1037,7 @@ export class MatchService {
       input.matchId,
     )
     if (conflict) {
-      errors.push(`${conflict.playerName} a déjà un match à cette date et heure`)
+      errors.push(t('errors.PLAYER_SCHEDULE_CONFLICT', { playerName: conflict.playerName }))
     }
   }
 

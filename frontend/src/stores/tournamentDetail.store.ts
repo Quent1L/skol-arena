@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { i18n } from '@/i18n'
 import { defineStore } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
@@ -138,25 +139,29 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
           ? `/admin/ranked/${tournamentId.value}/edit`
           : `/admin/tournaments/${tournamentId.value}/edit`
       items.push({
-        label: 'Modifier',
+        label: i18n.global.t('common.edit'),
         icon: 'i-fa7-solid:pencil',
         command: () => router.push(editPath),
       })
       if (tournament.value?.mode) {
         items.push({
-          label: 'Recalculer les points',
+          label: i18n.global.t('tournamentDetailMenu.recalculatePoints'),
           icon: 'i-fa7-solid:calculator',
           command: () => recalculatePoints(),
         })
       }
       items.push({
-        label: 'Vider le cache',
+        label: i18n.global.t('tournamentDetailMenu.clearCache'),
         icon: 'i-fa7-solid:trash-can',
         command: () => clearCache(),
       })
     }
     if (isAuthenticated.value && isParticipant.value && canLeaveTournament.value) {
-      items.push({ label: 'Quitter', icon: 'i-fa7-solid:user-minus', command: () => leaveTournament() })
+      items.push({
+        label: i18n.global.t('tournamentDetailMenu.leave'),
+        icon: 'i-fa7-solid:user-minus',
+        command: () => leaveTournament(),
+      })
     }
     return items
   })

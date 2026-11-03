@@ -3,7 +3,9 @@
  */
 
 import { z } from 'zod'
-import { i18n } from '@/i18n'
+import { vmsg } from '@skol-arena/shared'
+// Installs the translator vmsg resolves its keys with.
+import '@/i18n'
 
 // Simple regex to validate the email
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -14,12 +16,12 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export const loginSchema = z.object({
   email: z
     .string()
-    .min(1, i18n.global.t('authSchema.validation.emailRequired'))
-    .regex(emailRegex, i18n.global.t('authSchema.validation.emailInvalid')),
+    .min(1, vmsg('authSchema.validation.emailRequired'))
+    .regex(emailRegex, vmsg('authSchema.validation.emailInvalid')),
   password: z
     .string()
-    .min(1, i18n.global.t('authSchema.validation.passwordRequired'))
-    .min(8, i18n.global.t('authSchema.validation.passwordMinLength')),
+    .min(1, vmsg('authSchema.validation.passwordRequired'))
+    .min(8, vmsg('authSchema.validation.passwordMinLength')),
 })
 
 /**
@@ -29,17 +31,17 @@ export const registerSchema = z
   .object({
     email: z
       .string()
-      .min(1, i18n.global.t('authSchema.validation.emailRequired'))
-      .regex(emailRegex, i18n.global.t('authSchema.validation.emailInvalid')),
+      .min(1, vmsg('authSchema.validation.emailRequired'))
+      .regex(emailRegex, vmsg('authSchema.validation.emailInvalid')),
     name: z.string().optional(),
     password: z
       .string()
-      .min(1, i18n.global.t('authSchema.validation.passwordRequired'))
-      .min(8, i18n.global.t('authSchema.validation.passwordMinLength')),
-    passwordConfirm: z.string().min(1, i18n.global.t('authSchema.validation.passwordConfirmRequired')),
+      .min(1, vmsg('authSchema.validation.passwordRequired'))
+      .min(8, vmsg('authSchema.validation.passwordMinLength')),
+    passwordConfirm: z.string().min(1, vmsg('authSchema.validation.passwordConfirmRequired')),
   })
   .refine((data) => data.password === data.passwordConfirm, {
-    message: i18n.global.t('authSchema.validation.passwordsMismatch'),
+    ...vmsg('authSchema.validation.passwordsMismatch'),
     path: ['passwordConfirm'],
   })
 
@@ -49,8 +51,8 @@ export const registerSchema = z
 export const forgotPasswordSchema = z.object({
   email: z
     .string()
-    .min(1, i18n.global.t('authSchema.validation.emailRequired'))
-    .regex(emailRegex, i18n.global.t('authSchema.validation.emailInvalid')),
+    .min(1, vmsg('authSchema.validation.emailRequired'))
+    .regex(emailRegex, vmsg('authSchema.validation.emailInvalid')),
 })
 
 /**
@@ -60,12 +62,12 @@ export const resetPasswordSchema = z
   .object({
     password: z
       .string()
-      .min(1, i18n.global.t('authSchema.validation.passwordRequired'))
-      .min(8, i18n.global.t('authSchema.validation.passwordMinLength')),
-    passwordConfirm: z.string().min(1, i18n.global.t('authSchema.validation.passwordConfirmRequired')),
+      .min(1, vmsg('authSchema.validation.passwordRequired'))
+      .min(8, vmsg('authSchema.validation.passwordMinLength')),
+    passwordConfirm: z.string().min(1, vmsg('authSchema.validation.passwordConfirmRequired')),
   })
   .refine((data) => data.password === data.passwordConfirm, {
-    message: i18n.global.t('authSchema.validation.passwordsMismatch'),
+    ...vmsg('authSchema.validation.passwordsMismatch'),
     path: ['passwordConfirm'],
   })
 
@@ -74,15 +76,15 @@ export const resetPasswordSchema = z
  */
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, i18n.global.t('authSchema.validation.currentPasswordRequired')),
+    currentPassword: z.string().min(1, vmsg('authSchema.validation.currentPasswordRequired')),
     newPassword: z
       .string()
-      .min(1, i18n.global.t('authSchema.validation.newPasswordRequired'))
-      .min(8, i18n.global.t('authSchema.validation.passwordMinLength')),
-    passwordConfirm: z.string().min(1, i18n.global.t('authSchema.validation.passwordConfirmRequired')),
+      .min(1, vmsg('authSchema.validation.newPasswordRequired'))
+      .min(8, vmsg('authSchema.validation.passwordMinLength')),
+    passwordConfirm: z.string().min(1, vmsg('authSchema.validation.passwordConfirmRequired')),
   })
   .refine((data) => data.newPassword === data.passwordConfirm, {
-    message: i18n.global.t('authSchema.validation.passwordsMismatch'),
+    ...vmsg('authSchema.validation.passwordsMismatch'),
     path: ['passwordConfirm'],
   })
 

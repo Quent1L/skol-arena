@@ -35,6 +35,7 @@ import {
 } from "../types/errors";
 import { sanitizeOptionalRichText } from "../utils/sanitize-html";
 import { gameRulesRepository } from "../repository/game-rules.repository";
+import { t } from "../utils/i18n-context";
 
 export class TournamentService {
   /**
@@ -711,7 +712,7 @@ export class TournamentService {
     await participantRepository.deleteParticipation(participation.id);
     notifyRankingChanged(tournament);
 
-    return { message: "Vous avez quitté le tournoi avec succès" };
+    return { message: t("messages.TOURNAMENT_LEFT") };
   }
 
   /**

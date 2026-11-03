@@ -20,6 +20,8 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:5173',
+    // The specs assert French copy; a first visit now follows the browser language
+    locale: 'fr-FR',
     // Disables the PWA service worker (dev-dist) during runs
     serviceWorkers: 'block',
     trace: 'retain-on-failure',

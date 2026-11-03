@@ -3,6 +3,7 @@ import { convertStringDatesToJS } from '@/utils/DateUtils'
 import { NETWORK_ERROR, isTransientStatus } from '@/utils/HttpErrors'
 import { isRateLimited, rateLimitMessage, retryAfterFrom } from '@/utils/RateLimit'
 import { apiBaseURL } from './api-base'
+import { i18n } from '@/i18n'
 export { apiBaseURL }
 
 /**
@@ -22,7 +23,13 @@ const http = xior.create({
 })
 
 http.interceptors.request.use((config) => {
-  config.headers = { ...config.headers, [API_VERSION_HEADER]: API_VERSION }
+  // The server renders its messages in this language: the one picked in the app,
+  // not the browser's own Accept-Language.
+  config.headers = {
+    ...config.headers,
+    [API_VERSION_HEADER]: API_VERSION,
+    'accept-language': i18n.global.locale.value,
+  }
 
   return config
 })
@@ -41,8 +48,7 @@ http.interceptors.response.use(
     // mark it so callers never mistake it for an auth refusal.
     const cause = apiError?.code ?? (isTransientStatus(status) ? NETWORK_ERROR : undefined)
     // A throttled call is the one case where the server's own sentence is dropped:
-    // it is written in the browser's Accept-Language, not the locale picked in the
-    // app, and it says nothing about how long the wait is.
+    // Better Auth's is hardcoded English, and it says nothing about how long the wait is.
     const rateLimited = isRateLimited({ status, code: apiError?.code, details: apiError?.details })
     const message = rateLimited
       ? rateLimitMessage(retryAfterFrom({ details: apiError?.details }, error.response?.headers))
