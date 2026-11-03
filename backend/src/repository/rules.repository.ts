@@ -185,7 +185,7 @@ export class RulesRepository {
    * to drop every award of the rule (lifetime badges, rule deletion). Passing `null`
    * explicitly targets the awards whose season is unknown.
    */
-  async revokeBadge(playerId: string, ruleId: string, seasonId?: string | null): Promise<void> {
+  async revokeBadge(playerId: string, ruleId: string, seasonId?: string | null): Promise<number> {
     const seasonFilter =
       seasonId === undefined
         ? undefined
@@ -193,9 +193,23 @@ export class RulesRepository {
           ? isNull(playerBadges.seasonId)
           : eq(playerBadges.seasonId, seasonId);
 
-    await db
+    // The count of removed awards: zero means another pass already took the badge,
+    // and the player must not be told twice that they lost it.
+    const removed = await db
       .delete(playerBadges)
-      .where(and(eq(playerBadges.playerId, playerId), eq(playerBadges.ruleId, ruleId), seasonFilter));
+      .where(and(eq(playerBadges.playerId, playerId), eq(playerBadges.ruleId, ruleId), seasonFilter))
+      .returning({ id: playerBadges.id });
+    return removed.length;
+  }
+
+  /** Whether the player holds any award of the rule, whatever the season. */
+  async holdsBadge(playerId: string, ruleId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ id: playerBadges.id })
+      .from(playerBadges)
+      .where(and(eq(playerBadges.playerId, playerId), eq(playerBadges.ruleId, ruleId)))
+      .limit(1);
+    return !!row;
   }
 
   /** Badges a player was awarded during the given season. */

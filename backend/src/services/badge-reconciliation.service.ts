@@ -176,8 +176,7 @@ export class BadgeReconciliationService {
     const held = (await rulesRepository.listBadgesByPlayer(playerId)).filter((b) => ruleById.has(b.ruleId));
     for (const badge of held) {
       if (desired.has(badge.ruleId)) continue;
-      await rulesRepository.revokeBadge(playerId, badge.ruleId, undefined);
-      await this.notifyRevoked(playerId, ruleById.get(badge.ruleId)!.label);
+      await this.revoke(playerId, badge.ruleId, undefined, ruleById.get(badge.ruleId)!.label);
     }
     const heldRuleIds = new Set(held.map((b) => b.ruleId));
     for (const [ruleId, earning] of desired) {
@@ -217,8 +216,7 @@ export class BadgeReconciliationService {
       if (desired.has(badge.ruleId)) continue;
       // Scoped to this season: whatever the player earned in their other seasons was
       // replayed by its own pass and is none of this one's business.
-      await rulesRepository.revokeBadge(playerId, badge.ruleId, seasonId);
-      await this.notifyRevoked(playerId, (badge.rule.action as BadgeAction).label);
+      await this.revoke(playerId, badge.ruleId, seasonId, (badge.rule.action as BadgeAction).label);
     }
 
     for (const [ruleId, earning] of desired) {
@@ -260,12 +258,13 @@ export class BadgeReconciliationService {
       if (desired.has(key)) continue;
       // A lifetime badge is revoked outright; a seasonal one only loses the season
       // whose replay stopped matching.
-      await rulesRepository.revokeBadge(
+      await this.revoke(
         award.playerId,
         rule.id,
         badgeRule.recurrence === "per_season" ? award.seasonId : undefined,
+        badgeRule.label,
+        silent,
       );
-      await this.notifyRevoked(award.playerId, badgeRule.label, silent);
     }
   }
 
@@ -346,6 +345,7 @@ export class BadgeReconciliationService {
     const holders = await rulesRepository.listBadgeHolderPlayerIds(ruleId);
     for (const playerId of holders) {
       await this.notifyRevoked(playerId, label);
+      webSocketService.send(playerId, { event: "badge_revoked", data: {} });
     }
   }
 
@@ -382,6 +382,26 @@ export class BadgeReconciliationService {
     webSocketService.send(playerId, { event: "badge_awarded", data: { ruleId } });
   }
 
+  /**
+   * Removes an award and tells the player only when they actually lost the badge.
+   * A seasonal badge revoked in one season is still held from the others, and a
+   * revocation another pass already made removes nothing: neither is a loss.
+   */
+  private async revoke(
+    playerId: string,
+    ruleId: string,
+    seasonId: string | null | undefined,
+    label: string,
+    silent = false,
+  ): Promise<void> {
+    const removed = await rulesRepository.revokeBadge(playerId, ruleId, seasonId);
+    if (removed === 0) return;
+    // The season's badge list changed either way: the open screens refetch.
+    webSocketService.send(playerId, { event: "badge_revoked", data: {} });
+    if (await rulesRepository.holdsBadge(playerId, ruleId)) return;
+    await this.notifyRevoked(playerId, label, silent);
+  }
+
   private async notifyRevoked(playerId: string, label: string, silent = false): Promise<void> {
     if (silent) return;
     await notificationService
@@ -394,7 +414,6 @@ export class BadgeReconciliationService {
         requiresAction: false,
       })
       .catch((err) => logger.error({ err, playerId }, "[BadgeReconcile] revoke notify failed"));
-    webSocketService.send(playerId, { event: "badge_revoked", data: {} });
   }
 }
 

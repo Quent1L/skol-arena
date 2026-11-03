@@ -12,7 +12,8 @@ const mockRulesRepo = {
   listBadgeHolderPlayerIds: mock((_r: any) => Promise.resolve([] as string[])),
   listBadgeAwards: mock((_r: any) => Promise.resolve([] as any[])),
   awardBadge: mock((_p: any, _r: any, _m: any, _s: any, _rec: any, _at?: any) => Promise.resolve({ id: "badge-1" } as any)),
-  revokeBadge: mock((_p: any, _r: any, _s?: any) => Promise.resolve()),
+  revokeBadge: mock((_p: any, _r: any, _s?: any) => Promise.resolve(1)),
+  holdsBadge: mock((_p: any, _r: any) => Promise.resolve(false)),
   markBadgesViewed: mock((_ids: any, _p: any) => Promise.resolve()),
   getReconciliationState: mock(() =>
     Promise.resolve({ dirty: false, silentNextRun: false, lastRunAt: null } as any),
@@ -117,7 +118,7 @@ function resetAll() {
     mockRulesRepo.getById, mockRulesRepo.list, mockRulesRepo.listActiveByTrigger,
     mockRulesRepo.listBadgesByPlayerAndSeason, mockRulesRepo.listBadgeHolderPlayerIds,
     mockRulesRepo.listBadgeAwards,
-    mockRulesRepo.awardBadge, mockRulesRepo.revokeBadge, mockRulesRepo.markBadgesViewed,
+    mockRulesRepo.awardBadge, mockRulesRepo.revokeBadge, mockRulesRepo.holdsBadge, mockRulesRepo.markBadgesViewed,
     mockRulesRepo.getReconciliationState, mockRulesRepo.clearDirtyAndStampRun,
     mockContextService.buildMatchSubmittedContexts,
     mockPlayerMmrRepo.getMmrHistoryOrdered, mockPlayerMmrRepo.getSeasonMatchIdsOrdered,
@@ -128,6 +129,8 @@ function resetAll() {
   mockRulesRepo.list.mockResolvedValue([] as any);
   mockRulesRepo.listBadgeAwards.mockResolvedValue([] as any);
   mockRulesRepo.awardBadge.mockResolvedValue({ id: "badge-1" } as any);
+  mockRulesRepo.revokeBadge.mockResolvedValue(1);
+  mockRulesRepo.holdsBadge.mockResolvedValue(false);
   mockRulesRepo.getReconciliationState.mockResolvedValue({
     dirty: false,
     silentNextRun: false,
@@ -171,6 +174,34 @@ describe("BadgeReconciliationService.reconcilePlayers", () => {
     expect(mockRulesRepo.revokeBadge).toHaveBeenCalledWith("p1", "r1", "season-1");
     expect(mockRulesRepo.awardBadge).not.toHaveBeenCalled();
     expect(mockNotify.send).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not tell the player they lost a seasonal badge they still hold from another season", async () => {
+    mockRulesRepo.listActiveByTrigger.mockResolvedValue([STREAK_RULE] as any);
+    mockPlayerMmrRepo.getMmrHistoryOrdered.mockResolvedValue([{ matchId: "m1" }] as any);
+    mockContextService.buildMatchSubmittedContexts.mockResolvedValue(ctx("p1", 1) as any);
+    mockRulesRepo.listBadgesByPlayerAndSeason.mockResolvedValue([{ ruleId: "r1", rule: STREAK_RULE }] as any);
+    mockRulesRepo.holdsBadge.mockResolvedValue(true);
+
+    await service.reconcilePlayers("season-1", ["p1"]);
+
+    expect(mockRulesRepo.revokeBadge).toHaveBeenCalledWith("p1", "r1", "season-1");
+    expect(mockNotify.send).not.toHaveBeenCalled();
+    // The season's badge list still changed: open screens must refetch.
+    expect(mockWs.send).toHaveBeenCalledWith("p1", { event: "badge_revoked", data: {} });
+  });
+
+  it("sends nothing when the award was already gone", async () => {
+    mockRulesRepo.listActiveByTrigger.mockResolvedValue([STREAK_RULE] as any);
+    mockPlayerMmrRepo.getMmrHistoryOrdered.mockResolvedValue([{ matchId: "m1" }] as any);
+    mockContextService.buildMatchSubmittedContexts.mockResolvedValue(ctx("p1", 1) as any);
+    mockRulesRepo.listBadgesByPlayerAndSeason.mockResolvedValue([{ ruleId: "r1", rule: STREAK_RULE }] as any);
+    mockRulesRepo.revokeBadge.mockResolvedValue(0);
+
+    await service.reconcilePlayers("season-1", ["p1"]);
+
+    expect(mockNotify.send).not.toHaveBeenCalled();
+    expect(mockWs.send).not.toHaveBeenCalled();
   });
 
   it("awards a counted badge on the match that reaches the count", async () => {
@@ -306,6 +337,22 @@ describe("BadgeReconciliationService.reconcileRule", () => {
     expect(mockRulesRepo.awardBadge).not.toHaveBeenCalled();
     expect(mockRulesRepo.revokeBadge).toHaveBeenCalledTimes(1);
     expect(mockRulesRepo.revokeBadge).toHaveBeenCalledWith("p1", "r1", "season-9");
+  });
+
+  it("keeps quiet when a seasonal revocation leaves the player another season's award", async () => {
+    mockRulesRepo.getById.mockResolvedValue(STREAK_RULE as any);
+    mockPlayerMmrRepo.getSeasonMatchIdsOrdered.mockResolvedValue(["m1"] as any);
+    mockContextService.buildMatchSubmittedContexts.mockResolvedValue(ctx("p1", 5) as any);
+    mockRulesRepo.listBadgeAwards.mockResolvedValue([
+      { playerId: "p1", seasonId: "season-1" },
+      { playerId: "p1", seasonId: "season-9" },
+    ] as any);
+    mockRulesRepo.holdsBadge.mockResolvedValue(true);
+
+    await service.reconcileRule("r1");
+
+    expect(mockRulesRepo.holdsBadge).toHaveBeenCalledWith("p1", "r1");
+    expect(mockNotify.send).not.toHaveBeenCalled();
   });
 
   it("revokes a lifetime badge outright, not season by season", async () => {
