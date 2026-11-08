@@ -116,7 +116,7 @@ describe("tournamentStatsService.getStats", () => {
     repo.getMatchesWithSidesAndPlayers.mockImplementation(async () => duos);
 
     const flex = await tournamentStatsService.getStats("t1");
-    expect(flex.bestTeams.entries.length).toBe(2);
+    expect(flex.bestTeams.entries).toHaveLength(2);
     expect(flex.bestDuoPlayers.entries.length).toBeGreaterThan(0);
 
     repo.getTournamentMode.mockImplementation(async () => ({ ...flexInfo, teamMode: "static" }));
