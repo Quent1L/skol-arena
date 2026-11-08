@@ -157,7 +157,7 @@ export function omittedTiedWithLast<T>(
   shown: RankedEntry<T>[],
   omitted: RankedEntry<T>[],
 ): T[] {
-  const lastRank = shown[shown.length - 1]?.rank;
+  const lastRank = shown.at(-1)?.rank;
   if (lastRank === undefined) return [];
   return omitted.filter((entry) => entry.rank === lastRank).map((entry) => entry.item);
 }

@@ -241,7 +241,7 @@ export class RulesService {
     const rows = await ruleFiringRepository.feed({ ...query, cursor, limit: query.limit + 1 });
     const hasMore = rows.length > query.limit;
     const page = hasMore ? rows.slice(0, query.limit) : rows;
-    const last = page[page.length - 1];
+    const last = page.at(-1)!;
     return {
       items: page.map(toFeedItem),
       nextCursor: hasMore && last ? encodeFeedCursor(last) : null,

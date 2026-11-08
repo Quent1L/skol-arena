@@ -75,10 +75,10 @@ const props = defineProps<{
 }>()
 
 /** Same list as MOBILE_SUB_TABS in TournamentDetailView: these get the title bar. */
-const MOBILE_SUB_TABS = ['teams', 'badges']
+const MOBILE_SUB_TABS = new Set(['teams', 'badges'])
 
 const isMobileSubPage = computed(
-  () => props.variant === 'mobile' && MOBILE_SUB_TABS.includes(props.tab ?? ''),
+  () => props.variant === 'mobile' && MOBILE_SUB_TABS.has(props.tab ?? ''),
 )
 </script>
 

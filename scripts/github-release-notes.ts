@@ -9,7 +9,7 @@ import { changelogUrl } from './site'
  */
 export function extractChangelogSection(changelog: string, version: string): string {
   const lines = changelog.split(/\r?\n/)
-  const heading = new RegExp(`^##? \\[?${version.replaceAll('.', '\\.')}\\]?[ (]`)
+  const heading = new RegExp(String.raw`^##? \[?${version.replaceAll('.', String.raw`\.`)}\]?[ (]`)
   const start = lines.findIndex((line) => heading.test(`${line} `))
   if (start === -1) return ''
   const rest = lines.slice(start + 1)

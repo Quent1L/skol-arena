@@ -545,13 +545,9 @@ export const createRankedSeasonSchema = z
               : "validation.invalidDisciplineId",
           ),
       }),
-    startDate: z
-      .string()
-      .datetime()
+    startDate: z.iso.datetime()
       .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
-    endDate: z
-      .string()
-      .datetime()
+    endDate: z.iso.datetime()
       .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
     minTeamSize: z
       .number(vmsg("validation.minTeamSizeRequired"))
@@ -587,14 +583,10 @@ export const updateRankedSeasonSchema = z.object({
     .string()
     .max(500, vmsg("validation.descriptionMax500"))
     .optional(),
-  startDate: z
-    .string()
-    .datetime()
+  startDate: z.iso.datetime()
     .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
     .optional(),
-  endDate: z
-    .string()
-    .datetime()
+  endDate: z.iso.datetime()
     .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
     .optional(),
   rulesId: z.uuid().nullable().optional(),

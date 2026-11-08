@@ -409,7 +409,7 @@ export class PlayerMmrRepository {
       }
     }
 
-    return { mmr: rows[rows.length - 1].mmrAfter, wins, losses, draws, winStreak, maxWinStreak, lossStreak, maxLossStreak };
+    return { mmr: rows.at(-1)!.mmrAfter, wins, losses, draws, winStreak, maxWinStreak, lossStreak, maxLossStreak };
   }
 
   async preloadOpponentHistories(

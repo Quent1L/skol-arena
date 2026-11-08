@@ -1,5 +1,5 @@
 export function formatRatio(ratio: number): string {
-  if (!isFinite(ratio)) return '∞'
+  if (!Number.isFinite(ratio)) return '∞'
   return ratio.toFixed(2)
 }
 

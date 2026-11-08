@@ -193,14 +193,12 @@ export class BadgeReconciliationService {
     return desired;
   }
 
-  private async reconcileOnePlayer(
+  /** Desired set: ruleId -> earliest matching match (chronological). */
+  private async earliestEarnings(
     seasonId: string,
     playerId: string,
     engine: Engine,
-    badgeRules: BadgeRule[],
-  ): Promise<void> {
-    const ruleById = new Map(badgeRules.map((r) => [r.id, r]));
-    // Desired set: ruleId -> earliest matching match (chronological).
+  ): Promise<Map<string, EarningMatch>> {
     const ordered = await playerMmrRepository.getMmrHistoryOrdered(seasonId, playerId);
     const desired = new Map<string, EarningMatch>();
     const history: Facts[] = [];
@@ -213,6 +211,17 @@ export class BadgeReconciliationService {
         if (!desired.has(ruleId)) desired.set(ruleId, { matchId: row.matchId, playedAt });
       }
     }
+    return desired;
+  }
+
+  private async reconcileOnePlayer(
+    seasonId: string,
+    playerId: string,
+    engine: Engine,
+    badgeRules: BadgeRule[],
+  ): Promise<void> {
+    const ruleById = new Map(badgeRules.map((r) => [r.id, r]));
+    const desired = await this.earliestEarnings(seasonId, playerId, engine);
 
     // Only badges from this season whose rule is still active are in scope; a
     // deactivated rule's badges are intentionally kept.

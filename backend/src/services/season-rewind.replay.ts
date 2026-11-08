@@ -299,6 +299,19 @@ function addToTally(
   store.set(key, tally);
 }
 
+function recordTeammates(
+  state: ReplayState,
+  team: string[],
+  outcomes: Map<string, MmrHistoryOutcome>,
+): void {
+  for (let i = 0; i < team.length; i++) {
+    for (let j = i + 1; j < team.length; j++) {
+      const outcome = outcomes.get(team[i]!);
+      if (outcome) addToTally(state.duos, team[i]!, team[j]!, outcome, "shared");
+    }
+  }
+}
+
 function recordPairs(
   state: ReplayState,
   sides: Map<number, string[]>,
@@ -307,14 +320,8 @@ function recordPairs(
   const teamA = sides.get(1) ?? [];
   const teamB = sides.get(2) ?? [];
 
-  for (const team of [teamA, teamB]) {
-    for (let i = 0; i < team.length; i++) {
-      for (let j = i + 1; j < team.length; j++) {
-        const outcome = outcomes.get(team[i]!);
-        if (outcome) addToTally(state.duos, team[i]!, team[j]!, outcome, "shared");
-      }
-    }
-  }
+  recordTeammates(state, teamA, outcomes);
+  recordTeammates(state, teamB, outcomes);
 
   for (const a of teamA) {
     for (const b of teamB) {

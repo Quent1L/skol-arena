@@ -131,8 +131,8 @@ export const bracketConfigSchema = z.object({
   totalParticipants: z.number().int().positive(),
   roundsCount: z.number().int().positive(),
   hasBronzeMatch: z.boolean(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
 });
 
 export const bracketRoundSchema = z.object({
@@ -144,7 +144,7 @@ export const bracketRoundSchema = z.object({
   translationParams: z.record(z.string(), z.number()).nullish(),
   bracketType: bracketRoundTypeSchema,
   matchesCount: z.number().int().min(0),
-  createdAt: z.string().datetime(),
+  createdAt: z.iso.datetime(),
 });
 
 export const bracketSeedSchema = z.object({
@@ -153,7 +153,7 @@ export const bracketSeedSchema = z.object({
   entryId: z.uuid(),
   seedNumber: z.number().int().positive(),
   seedingScore: z.number().int().optional(),
-  createdAt: z.string().datetime(),
+  createdAt: z.iso.datetime(),
 });
 
 export const bracketMatchMetadataSchema = z.object({
@@ -164,7 +164,7 @@ export const bracketMatchMetadataSchema = z.object({
   winnerToMatchId: z.uuid().optional(),
   loserToMatchId: z.uuid().optional(),
   isByeMatch: z.boolean(),
-  createdAt: z.string().datetime(),
+  createdAt: z.iso.datetime(),
 });
 
 export const canGenerateBracketResponseSchema = z

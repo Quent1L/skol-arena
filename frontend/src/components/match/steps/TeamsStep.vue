@@ -84,10 +84,10 @@ const validating = ref(false)
 const errors = ref<string[]>([])
 
 function availableTeamsFor(position: number): ClientTeam[] {
-  const otherTeamIds = sidesModel.value
-    .filter((s) => s.position !== position && s.teamId)
-    .map((s) => s.teamId!)
-  return props.teams.filter((t) => !otherTeamIds.includes(t.id))
+  const otherTeamIds = new Set(
+    sidesModel.value.filter((s) => s.position !== position && s.teamId).map((s) => s.teamId!),
+  )
+  return props.teams.filter((t) => !otherTeamIds.has(t.id))
 }
 
 function teamMembers(teamId: string) {

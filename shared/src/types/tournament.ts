@@ -212,13 +212,9 @@ const baseTournamentDataSchema = z.object({
   championshipConfig: championshipConfigInputSchema.optional(),
   allowDraw: z.boolean().default(true).optional(),
   scoreEnabled: z.boolean().default(true).optional(),
-  startDate: z
-    .string()
-    .datetime()
+  startDate: z.iso.datetime()
     .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
-  endDate: z
-    .string()
-    .datetime()
+  endDate: z.iso.datetime()
     .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
   disciplineId: z.uuid(vmsg("validation.invalidDisciplineId")).optional(),
   minScore: z.number().int().min(0).nullable().optional(),
@@ -264,14 +260,10 @@ export const updateTournamentSchema = z
     championshipConfig: championshipConfigInputSchema.optional(),
     allowDraw: z.boolean().optional(),
     scoreEnabled: z.boolean().optional(),
-    startDate: z
-      .string()
-      .datetime()
+    startDate: z.iso.datetime()
       .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
       .optional(),
-    endDate: z
-      .string()
-      .datetime()
+    endDate: z.iso.datetime()
       .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
       .optional(),
     status: tournamentStatusSchema.optional(),

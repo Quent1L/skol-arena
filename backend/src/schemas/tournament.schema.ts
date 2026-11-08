@@ -1,10 +1,3 @@
-import {
-  joinTournamentSchema,
-  type JoinTournamentRequest,
-  adminAddParticipantSchema,
-  type AdminAddParticipantRequest,
-} from "@skol-arena/shared/types/index";
-
 // Re-export schemas and types from the shared package
 export {
   tournamentModeSchema,
@@ -28,4 +21,4 @@ export {
   type JoinTournamentRequest,
   adminAddParticipantSchema,
   type AdminAddParticipantRequest,
-};
+} from "@skol-arena/shared/types/index";

@@ -69,7 +69,7 @@ function specOptions(version: ApiVersion): Partial<GenerateSpecOptions> {
   };
 }
 
-const OPERATION_KEYS = ["get", "put", "post", "delete", "options", "head", "patch", "trace"];
+const OPERATION_KEYS = new Set(["get", "put", "post", "delete", "options", "head", "patch", "trace"]);
 
 type Operation = {
   parameters?: { name?: string }[];
@@ -98,7 +98,7 @@ function documentVersionHeader(paths: Paths, version: ApiVersion): void {
 
   for (const pathItem of Object.values(paths)) {
     for (const [key, operation] of Object.entries(pathItem)) {
-      if (!OPERATION_KEYS.includes(key)) continue;
+      if (!OPERATION_KEYS.has(key)) continue;
       const existing = operation.parameters ?? [];
       if (existing.some((p) => p?.name === API_VERSION_REQUEST_HEADER)) continue;
       operation.parameters = [parameter, ...existing];
@@ -139,7 +139,7 @@ function documentAuthentication(paths: Paths): void {
     const honoPath = path.replace(/\{([^{}]+)\}/g, ":$1");
 
     for (const [key, operation] of Object.entries(pathItem)) {
-      if (!OPERATION_KEYS.includes(key)) continue;
+      if (!OPERATION_KEYS.has(key)) continue;
       const responses = operation.responses ?? {};
       operation.responses = responses;
 
@@ -167,7 +167,7 @@ const AUTO_NAMED = /^__schema\d+$/;
 function fingerprint(value: unknown): string {
   const json = JSON.stringify(value);
   let hash = 5381;
-  for (let i = 0; i < json.length; i++) hash = ((hash * 33) ^ json.charCodeAt(i)) >>> 0;
+  for (let i = 0; i < json.length; i++) hash = ((hash * 33) ^ json.codePointAt(i)!) >>> 0;
   return hash.toString(36);
 }
 
@@ -200,6 +200,26 @@ function rewriteRefs(node: unknown, renames: Map<string, string>): void {
  * every conversion, so two unrelated routes both produce a "__schema0" and one would
  * otherwise silently overwrite the other.
  */
+function hoistDefinitionsOf(value: Node, defs: Node, schemas: Node): void {
+  const renames = new Map<string, string>();
+
+  for (const [name, definition] of Object.entries(defs)) {
+    const finalName = AUTO_NAMED.test(name) ? `Inline${fingerprint(definition)}` : name;
+    if (finalName !== name) renames.set(name, finalName);
+
+    const existing = schemas[finalName];
+    if (existing && JSON.stringify(existing) !== JSON.stringify(definition)) {
+      // Two different shapes claiming one name would make the document lie
+      // about whichever endpoint lost the race.
+      throw new Error(`Conflicting OpenAPI schema definitions for "${finalName}"`);
+    }
+    schemas[finalName] = definition;
+  }
+
+  delete value["$defs"];
+  if (renames.size > 0) rewriteRefs(value, renames);
+}
+
 function hoistDefinitions(root: Node, schemas: Node): void {
   const visit = (value: unknown): void => {
     if (Array.isArray(value)) {
@@ -209,27 +229,7 @@ function hoistDefinitions(root: Node, schemas: Node): void {
     if (!isNode(value)) return;
 
     const defs = value["$defs"];
-    if (isNode(defs)) {
-      const renames = new Map<string, string>();
-
-      for (const [name, definition] of Object.entries(defs)) {
-        const finalName = AUTO_NAMED.test(name)
-          ? `Inline${fingerprint(definition)}`
-          : name;
-        if (finalName !== name) renames.set(name, finalName);
-
-        const existing = schemas[finalName];
-        if (existing && JSON.stringify(existing) !== JSON.stringify(definition)) {
-          // Two different shapes claiming one name would make the document lie
-          // about whichever endpoint lost the race.
-          throw new Error(`Conflicting OpenAPI schema definitions for "${finalName}"`);
-        }
-        schemas[finalName] = definition;
-      }
-
-      delete value["$defs"];
-      if (renames.size > 0) rewriteRefs(value, renames);
-    }
+    if (isNode(defs)) hoistDefinitionsOf(value, defs, schemas);
 
     Object.values(value).forEach(visit);
   };

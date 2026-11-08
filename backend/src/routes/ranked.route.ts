@@ -579,7 +579,7 @@ ranked.get(
     notFound: true,
     success: { description: "Gainers and losers over the week", schema: weeklyMmrLeadersSchema },
   }),
-  validate("query", z.object({ from: z.string().datetime().optional() })),
+  validate("query", z.object({ from: z.iso.datetime().optional() })),
   async (c) => {
     const id = c.req.param("id")!;
     const season = await rankedSeasonRepository.getSeasonWithConfig(id);

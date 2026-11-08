@@ -420,8 +420,8 @@ const initialValues = ref<FormValues | null>(null)
 
 function sameValue(a: unknown, b: unknown): boolean {
   if (a instanceof Date || b instanceof Date) {
-    const ta = a instanceof Date ? a.getTime() : NaN
-    const tb = b instanceof Date ? b.getTime() : NaN
+    const ta = a instanceof Date ? a.getTime() : Number.NaN
+    const tb = b instanceof Date ? b.getTime() : Number.NaN
     return ta === tb
   }
   // The form normalises "no value" to null, the payload may carry undefined.

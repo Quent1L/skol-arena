@@ -6,13 +6,13 @@ import { z } from "zod";
  * endpoint it is given, so an endpoint outside this list would let a caller aim the
  * server at any URL, internal ones included.
  */
-const SUBDOMAINS = "([a-z0-9-]+\\.)*";
+const SUBDOMAINS = String.raw`([a-z0-9-]+\.)*`;
 const PUSH_SERVICE_HOSTS = [
-  "fcm\\.googleapis\\.com",
-  "android\\.googleapis\\.com",
-  `${SUBDOMAINS}push\\.services\\.mozilla\\.com`,
-  `${SUBDOMAINS}push\\.apple\\.com`,
-  `${SUBDOMAINS}notify\\.windows\\.com`,
+  String.raw`fcm\.googleapis\.com`,
+  String.raw`android\.googleapis\.com`,
+  SUBDOMAINS + String.raw`push\.services\.mozilla\.com`,
+  SUBDOMAINS + String.raw`push\.apple\.com`,
+  SUBDOMAINS + String.raw`notify\.windows\.com`,
 ];
 export const PUSH_SERVICE_HOSTNAME = new RegExp(`^(${PUSH_SERVICE_HOSTS.join("|")})$`, "i");
 

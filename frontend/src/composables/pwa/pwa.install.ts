@@ -11,7 +11,7 @@ const dismissed = ref(isDismissedRecently())
 function isDismissedRecently(): boolean {
   const stored = localStorage.getItem(DISMISS_KEY)
   if (!stored) return false
-  return Date.now() - parseInt(stored, 10) < DISMISS_DURATION_MS
+  return Date.now() - Number.parseInt(stored, 10) < DISMISS_DURATION_MS
 }
 
 function dismissBanner() {

@@ -243,7 +243,7 @@ export const createMatchSchema = z.object({
   outcomeTypeId: z.uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
   outcomeReasonId: z.uuid(vmsg("validation.invalidOutcomeReasonId")).optional(),
   winnerPosition: winnerPositionSchema,
-  playedAt: z.string().datetime().optional(),
+  playedAt: z.iso.datetime().optional(),
 });
 
 export const updateMatchSchema = z.object({
@@ -252,7 +252,7 @@ export const updateMatchSchema = z.object({
   scoreB: z.number().int().min(0).nullable().optional(),
   status: writableMatchStatusSchema.optional(),
   reportProof: z.string().optional(),
-  playedAt: z.string().datetime(),
+  playedAt: z.iso.datetime(),
   outcomeTypeId: z.uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
   outcomeReasonId: z.uuid(vmsg("validation.invalidOutcomeReasonId")).optional(),
   winnerPosition: winnerPositionSchema,
@@ -307,14 +307,14 @@ export const POST_FINALIZATION_DISPUTE_DAYS = 7;
  */
 export const SELF_AMEND_WINDOW_HOURS = 48;
 
-const SELF_VALIDATED_REASONS: (MatchFinalizationReason | null | undefined)[] = [
+const SELF_VALIDATED_REASONS: ReadonlySet<MatchFinalizationReason | null | undefined> = new Set([
   "auto_validation",
   "trust_score",
-];
+]);
 
 /** A result nobody but its author signed: the timer or their trust score settled it. */
 export function isSelfValidatedReason(reason: MatchFinalizationReason | null | undefined): boolean {
-  return SELF_VALIDATED_REASONS.includes(reason);
+  return SELF_VALIDATED_REASONS.has(reason);
 }
 
 /**
@@ -360,7 +360,7 @@ export interface FinalizedAmendRights {
   denial: FinalizedAmendDenial | null;
 }
 
-const AMENDABLE_MODES = ["championship", "ranked"];
+const AMENDABLE_MODES = new Set(["championship", "ranked"]);
 const denied = (denial: FinalizedAmendDenial): FinalizedAmendRights => ({
   canCorrect: false,
   canCancel: false,
@@ -379,7 +379,7 @@ export function getFinalizedAmendRights(
   actor: FinalizedAmendActor,
   now: Date = new Date(),
 ): FinalizedAmendRights {
-  if (match.status !== "finalized" || !AMENDABLE_MODES.includes(match.mode ?? "")) {
+  if (match.status !== "finalized" || !AMENDABLE_MODES.has(match.mode ?? "")) {
     return denied("not_amendable");
   }
   if (actor.canManage) return { canCorrect: true, canCancel: true, isArbitration: true, denial: null };
@@ -435,7 +435,7 @@ export const validateMatchSchema = z.object({
   sides: z.array(matchSideInputSchema).min(1).optional(),
   allPlayerIds: z.array(z.uuid()).optional(),
   matchId: z.uuid(vmsg("validation.invalidMatchId")).optional(),
-  playedAt: z.string().datetime().optional(),
+  playedAt: z.iso.datetime().optional(),
 });
 
 export type ValidateMatchRequestData = z.infer<typeof validateMatchSchema>;

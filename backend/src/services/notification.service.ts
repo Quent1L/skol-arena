@@ -205,7 +205,7 @@ export const notificationService = {
     const pending = await notificationActionService.resolvePendingActions(page);
     const { total, unread } = await notificationRepository.countForUser(userId);
 
-    const last = page[page.length - 1];
+    const last = page.at(-1)!;
 
     return {
       data: page.map(({ matchId: _matchId, ...n }) => ({

@@ -512,7 +512,7 @@ export class MmrCalculationService {
       }
       await playerMmrRepository.createMmrHistoryBatch(historyBatch);
 
-      const last = page[page.length - 1];
+      const last = page.at(-1)!;
       cursor = { playedAt: last.playedAt, id: last.id };
 
       if (page.length < pageSize) break;

@@ -57,24 +57,24 @@ const SIDE_OPERATOR_REMAP: Record<string, string> = {
   notIn: "containsNone",
 };
 
+function migrateChildren(nodes: RuleConditions[]): RuleConditions[] | { disable: string } {
+  const children: RuleConditions[] = [];
+  for (const child of nodes) {
+    const migrated = migrateSideConditions(child);
+    if (typeof migrated === "object" && "disable" in migrated) return migrated;
+    children.push(migrated);
+  }
+  return children;
+}
+
 function migrateSideConditions(node: RuleConditions): RuleConditions | { disable: string } {
   if ("all" in node) {
-    const children: RuleConditions[] = [];
-    for (const child of node.all) {
-      const migrated = migrateSideConditions(child);
-      if (typeof migrated === "object" && "disable" in migrated) return migrated;
-      children.push(migrated);
-    }
-    return { all: children };
+    const children = migrateChildren(node.all);
+    return "disable" in children ? children : { all: children };
   }
   if ("any" in node) {
-    const children: RuleConditions[] = [];
-    for (const child of node.any) {
-      const migrated = migrateSideConditions(child);
-      if (typeof migrated === "object" && "disable" in migrated) return migrated;
-      children.push(migrated);
-    }
-    return { any: children };
+    const children = migrateChildren(node.any);
+    return "disable" in children ? children : { any: children };
   }
 
   const fact = SIDE_FACT_RENAME[node.fact];
