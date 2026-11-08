@@ -3,6 +3,19 @@ import { db } from "../config/database";
 import { notifications, notificationStatus } from "../db/schema";
 import { CreateNotification } from "@skol-arena/shared";
 
+/** Deletes the given notifications (status rows cascade) and hands the rows back. */
+async function deleteNotificationRows<T extends { id: string }>(rows: T[]): Promise<T[]> {
+  if (rows.length > 0) {
+    await db.delete(notifications).where(
+      inArray(
+        notifications.id,
+        rows.map((row) => row.id),
+      ),
+    );
+  }
+  return rows;
+}
+
 export const notificationRepository = {
   async create(data: CreateNotification) {
     return await db.transaction(async (tx) => {
@@ -365,16 +378,7 @@ export const notificationRepository = {
         ),
       );
 
-    if (toDelete.length === 0) return toDelete;
-
-    await db.delete(notifications).where(
-      inArray(
-        notifications.id,
-        toDelete.map((notif) => notif.id),
-      ),
-    );
-
-    return toDelete;
+    return deleteNotificationRows(toDelete);
   },
 
   /**
@@ -397,16 +401,7 @@ export const notificationRepository = {
         ),
       );
 
-    if (toDelete.length === 0) return toDelete;
-
-    await db.delete(notifications).where(
-      inArray(
-        notifications.id,
-        toDelete.map((notif) => notif.id),
-      ),
-    );
-
-    return toDelete;
+    return deleteNotificationRows(toDelete);
   },
 
   async deleteActionsByMatchId(matchId: string) {
@@ -422,15 +417,6 @@ export const notificationRepository = {
       );
 
     // Cascade handles the notification_status rows
-    if (toDelete.length === 0) return toDelete;
-
-    await db.delete(notifications).where(
-      inArray(
-        notifications.id,
-        toDelete.map((notif) => notif.id),
-      ),
-    );
-
-    return toDelete;
+    return deleteNotificationRows(toDelete);
   },
 };

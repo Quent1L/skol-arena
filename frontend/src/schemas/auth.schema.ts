@@ -8,7 +8,7 @@ import { vmsg } from '@skol-arena/shared'
 import '@/i18n'
 
 // Simple regex to validate the email
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const emailRegex = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/
 
 /**
  * Validation schema for login

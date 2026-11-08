@@ -18,6 +18,7 @@ import type { GenerateBracketInput } from "@skol-arena/shared";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type * as schema from "../db/schema";
 import { t } from "../utils/i18n-context";
+import { shuffled } from "../utils/random";
 
 type DbTransaction = NodePgDatabase<typeof schema> | typeof db;
 import {
@@ -481,9 +482,9 @@ export class BracketService {
     entries: Awaited<ReturnType<typeof entryRepository.getByTournament>>
   ): BracketSeedData[] {
     // Shuffle entries randomly
-    const shuffled = [...entries].sort(() => Math.random() - 0.5);
+    const shuffledEntries = shuffled(entries);
 
-    return shuffled.map((entry, index) => ({
+    return shuffledEntries.map((entry, index) => ({
       entryId: entry.id,
       seedNumber: index + 1,
     }));
@@ -531,7 +532,7 @@ export class BracketService {
     seeded.sort((a, b) => a.seedNumber - b.seedNumber);
 
     // Randomly assign unseeded entries to remaining slots
-    const shuffledUnseeded = [...unseeded].sort(() => Math.random() - 0.5);
+    const shuffledUnseeded = shuffled(unseeded);
     const unseededSeeds = shuffledUnseeded.map((entry, index) => ({
       entryId: entry.id,
       seedNumber: seeded.length + index + 1,

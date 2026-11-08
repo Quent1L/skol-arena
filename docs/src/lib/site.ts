@@ -41,6 +41,8 @@ export const SITE = {
  */
 export function canonicalUrl(pathname: string, site: URL | undefined): string {
   const origin = site ?? new URL('https://skol-arena.com')
-  const trimmed = pathname.replace(/\/+$/, '')
+  let end = pathname.length
+  while (end > 0 && pathname[end - 1] === '/') end--
+  const trimmed = pathname.slice(0, end)
   return new URL(trimmed || '/', origin).href
 }

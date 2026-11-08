@@ -22,7 +22,7 @@ const RELOAD_GUARD_KEY = 'skol.staleChunkReload'
 let recovering = false
 
 export function isStaleChunkError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error ?? '')
+  const message = error instanceof Error ? error.message : String(error as string)
   return STALE_CHUNK_MESSAGES.some((needle) => message.includes(needle))
 }
 

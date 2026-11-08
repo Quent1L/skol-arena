@@ -136,7 +136,7 @@ async function sessionCookieScheme(): Promise<Node> {
  */
 function documentAuthentication(paths: Paths): void {
   for (const [path, pathItem] of Object.entries(paths)) {
-    const honoPath = path.replace(/\{([^}]+)\}/g, ":$1");
+    const honoPath = path.replace(/\{([^{}]+)\}/g, ":$1");
 
     for (const [key, operation] of Object.entries(pathItem)) {
       if (!OPERATION_KEYS.includes(key)) continue;

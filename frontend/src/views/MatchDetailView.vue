@@ -685,7 +685,8 @@ const actionItems = computed<OverflowMenuItem[]>(() => {
  * colon. The meta strip stacks the label above the value, where that colon reads as a typo.
  */
 function metaLabel(key: string): string {
-  return t(key).replace(/\s*:\s*$/, '')
+  const label = t(key).trimEnd()
+  return (label.endsWith(':') ? label.slice(0, -1) : label).trimEnd()
 }
 
 const metaItems = computed<{ icon: string; label: string; value: string }[]>(() => {

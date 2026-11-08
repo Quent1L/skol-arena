@@ -223,9 +223,11 @@ app.get(
         webSocketService.handleConnection(ws, appUserId);
       },
       async onMessage(event, _ws) {
+        // Binary frames never carried JSON: they used to fail the parse below.
+        if (typeof event.data !== "string") return;
         let raw: unknown;
         try {
-          raw = JSON.parse(String(event.data));
+          raw = JSON.parse(event.data);
         } catch {
           return;
         }

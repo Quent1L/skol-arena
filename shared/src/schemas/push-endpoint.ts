@@ -6,8 +6,15 @@ import { z } from "zod";
  * endpoint it is given, so an endpoint outside this list would let a caller aim the
  * server at any URL, internal ones included.
  */
-export const PUSH_SERVICE_HOSTNAME =
-  /^(fcm\.googleapis\.com|android\.googleapis\.com|([a-z0-9-]+\.)*push\.services\.mozilla\.com|([a-z0-9-]+\.)*push\.apple\.com|([a-z0-9-]+\.)*notify\.windows\.com)$/i;
+const SUBDOMAINS = "([a-z0-9-]+\\.)*";
+const PUSH_SERVICE_HOSTS = [
+  "fcm\\.googleapis\\.com",
+  "android\\.googleapis\\.com",
+  `${SUBDOMAINS}push\\.services\\.mozilla\\.com`,
+  `${SUBDOMAINS}push\\.apple\\.com`,
+  `${SUBDOMAINS}notify\\.windows\\.com`,
+];
+export const PUSH_SERVICE_HOSTNAME = new RegExp(`^(${PUSH_SERVICE_HOSTS.join("|")})$`, "i");
 
 export const pushEndpointSchema = z
   .url({ protocol: /^https$/, hostname: PUSH_SERVICE_HOSTNAME })

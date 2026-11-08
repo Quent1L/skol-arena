@@ -17,7 +17,9 @@ function slug(text) {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .split('-')
+    .filter(Boolean)
+    .join('-')
 }
 
 function changelogVersion(fileURL) {

@@ -1,3 +1,4 @@
+import { randomBelow } from "../utils/random";
 import type { Engine } from "json-rules-engine";
 import { rulesRepository } from "../repository/rules.repository";
 import { firingKey, ruleFiringRepository, type RuleFiringDraft } from "../repository/rule-firing.repository";
@@ -60,7 +61,7 @@ interface PlayerEvaluation {
 export function interpolate(template: string, facts: Facts): string {
   return template.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, key: string) => {
     const value = facts[key];
-    return value === undefined || value === null ? "" : String(value);
+    return value === undefined || value === null ? "" : String(value as string | number | boolean);
   });
 }
 
@@ -72,12 +73,12 @@ function selectWinner<T extends { priority: number }>(candidates: T[]): T | null
   if (candidates.length === 0) return null;
   const maxPriority = Math.max(...candidates.map((c) => c.priority));
   const top = candidates.filter((c) => c.priority === maxPriority);
-  return top[Math.floor(Math.random() * top.length)];
+  return top[randomBelow(top.length)];
 }
 
 /** Returns the index too: the stats panel reports which variant actually went out. */
 function pickVariant(action: MessageAction): { index: number; template: string } {
-  const index = Math.floor(Math.random() * action.variants.length);
+  const index = randomBelow(action.variants.length);
   return { index, template: action.variants[index] };
 }
 
@@ -241,7 +242,7 @@ export class RulesEvaluationService {
     const { matchId, seasonId, playedAt } = evaluated;
     // `randomRoll` is drawn here rather than in the context service: that service
     // must stay deterministic so badge reconciliation can replay past matches.
-    const facts: Facts = { ...(context as unknown as Facts), randomRoll: Math.floor(Math.random() * 100) };
+    const facts: Facts = { ...(context as unknown as Facts), randomRoll: randomBelow(100) };
     const history = engineBundle.needsHistory
       ? await this.historyFacts(evaluated, playerId, engineBundle.needsDisciplineHistory)
       : {};

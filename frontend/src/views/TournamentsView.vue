@@ -235,7 +235,7 @@ const firstName = computed(() => {
 
 // Drawn once when the view is created rather than inside the computed, so the
 // greeting does not reshuffle on every unrelated re-render.
-const greetingKey = GREETING_KEYS[Math.floor(Math.random() * GREETING_KEYS.length)]
+const greetingKey = GREETING_KEYS[crypto.getRandomValues(new Uint32Array(1))[0] % GREETING_KEYS.length]
 const greeting = computed(() =>
   t(`tournamentsView.greetings.${greetingKey}`, { name: firstName.value }),
 )

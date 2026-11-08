@@ -45,9 +45,9 @@ export interface Note {
 
 const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
 // `![alt](cible "titre")`, `[texte](cible)` et `<img src="cible">` : seule la cible bouge.
-const MD_LINK = /(!?\[[^\]]*\]\()([^)\s]+)((?:\s+"[^"]*")?\))/g
+const MD_LINK = /(!?\[[^\][]*\]\()([^)\s]+)((?:[ \t]+"[^"]*")?\))/g
 const HTML_IMG = /(<img\b[^>]*?\bsrc=["'])([^"']+)(["'])/g
-const MD_IMAGE_TARGET = /!\[[^\]]*\]\(([^)\s]+)/g
+const MD_IMAGE_TARGET = /!\[[^\][]*\]\(([^)\s]+)/g
 const HTML_IMG_TARGET = /<img\b[^>]*?\bsrc=["']([^"']+)["']/g
 
 function readFrontmatter(raw: string): Record<string, string> {

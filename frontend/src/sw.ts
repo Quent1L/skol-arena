@@ -85,7 +85,7 @@ precacheAndRoute(manifest)
 if (import.meta.env.PROD) {
   registerRoute(
     new NavigationRoute(createHandlerBoundToURL('index.html'), {
-      denylist: [/^\/api\//, /^[^?]*\/[^/?]*\.[^/?]*(\?.*)?$/],
+      denylist: [/^\/api\//, /^[^?]*\.[^/?.]*(\?.*)?$/],
     }),
   )
 }

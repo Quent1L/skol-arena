@@ -33,7 +33,7 @@ export function useNotificationText() {
     // which turns the stored ISO string into a Date before it reaches us.
     let date: Date | null = null
     if (raw instanceof Date) date = raw
-    else if (ISO_DATE.test(String(raw))) date = new Date(String(raw))
+    else if (typeof raw === 'string' && ISO_DATE.test(raw)) date = new Date(raw)
     if (!date || Number.isNaN(date.getTime())) return raw // legacy pre-formatted string
 
     return new Intl.DateTimeFormat(locale.value, {
