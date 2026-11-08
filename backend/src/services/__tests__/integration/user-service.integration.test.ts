@@ -34,10 +34,10 @@ describe("userService admin operations (integration)", () => {
   });
 
   it("updates a profile, and refuses an unknown one", async () => {
-    const renamed = await userService.updateProfile(player, { displayName: "Renamed Player" });
+    const renamed = await userService.updateProfile(player, { displayName: "Renamed Player", shortName: "REN" });
     expect(renamed?.displayName).toBe("Renamed Player");
-    expect((await userService.updateProfile(player, { displayName: "Renamed Player" }))?.displayName).toBe("Renamed Player");
-    await expect(userService.updateProfile(MISSING, { displayName: "x" })).rejects.toBeInstanceOf(NotFoundError);
+    expect((await userService.updateProfile(player, { displayName: "Renamed Player", shortName: "REN" }))?.displayName).toBe("Renamed Player");
+    await expect(userService.updateProfile(MISSING, { displayName: "x", shortName: "X" })).rejects.toBeInstanceOf(NotFoundError);
   });
 
   it("searches, lists, and aggregates for the admin screens", async () => {
