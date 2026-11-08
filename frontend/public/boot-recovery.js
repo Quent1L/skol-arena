@@ -22,6 +22,7 @@
       var last = JSON.parse(sessionStorage.getItem(KEY) || 'null')
       return last && Date.now() - last.at < WINDOW_MS ? last.attempts : 0
     } catch (e) {
+      void e
       return 0
     }
   }
@@ -30,6 +31,7 @@
     try {
       sessionStorage.setItem(KEY, JSON.stringify({ attempts: attempts, at: Date.now() }))
     } catch (e) {
+      void e
       // Private mode: without the guard, one reload is all we allow ourselves.
     }
   }
