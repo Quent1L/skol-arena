@@ -102,21 +102,21 @@ describe("matchRepository (integration)", () => {
 
   describe("listing", () => {
     it("filters by tournament, status and player", async () => {
-      expect((await matchRepository.list({ tournamentId })).length).toBe(3);
+      expect(await matchRepository.list({ tournamentId })).toHaveLength(3);
       expect(await matchRepository.list({ tournamentId: otherTournamentId })).toEqual([]);
-      expect((await matchRepository.list({ tournamentId, status: "finalized" })).length).toBe(1);
-      expect((await matchRepository.list({ playerId: dan })).length).toBe(2);
+      expect(await matchRepository.list({ tournamentId, status: "finalized" })).toHaveLength(1);
+      expect(await matchRepository.list({ playerId: dan })).toHaveLength(2);
       expect(await matchRepository.list({ playerId: admin })).toEqual([]);
       expect((await matchRepository.list()).length).toBeGreaterThanOrEqual(3);
     });
 
     it("paginates match cards with a total, filtered by player and status", async () => {
       const page = await matchRepository.listMatchCards({ tournamentId, limit: 2, offset: 0 }, null);
-      expect(page.data.length).toBe(2);
+      expect(page.data).toHaveLength(2);
       expect(page.total).toBe(3);
 
       const mine = await matchRepository.listMatchCards({ playerIds: `${ann},${bob}`, limit: 10, offset: 0 }, null);
-      expect(mine.data.length).toBe(2);
+      expect(mine.data).toHaveLength(2);
 
       const finalized = await matchRepository.listMatchCards({ status: "finalized", limit: 10, offset: 0 }, null);
       expect(finalized.data.every((c) => c.status === "finalized")).toBe(true);

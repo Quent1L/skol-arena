@@ -146,7 +146,7 @@ describe("playerMmrRepository (integration)", () => {
 
   it("deletes history from a date, then wholesale, and rating rows", async () => {
     await repo.deleteMmrHistoryForPlayer(seasonId, ann, new Date("2099-01-01"));
-    expect((await repo.getMmrHistoryOrdered(seasonId, ann)).length).toBe(3);
+    expect(await repo.getMmrHistoryOrdered(seasonId, ann)).toHaveLength(3);
     await repo.deleteMmrHistoryForPlayer(seasonId, ann, t2);
     expect((await repo.getMmrHistoryOrdered(seasonId, ann)).map((r) => r.matchId)).toEqual([m1]);
     await repo.deleteMmrHistoryForPlayer(seasonId, ann);

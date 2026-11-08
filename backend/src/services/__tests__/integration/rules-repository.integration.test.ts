@@ -96,7 +96,7 @@ describe("rulesRepository (integration)", () => {
       expect(await repo.awardBadge(ann, seasonal, null, seasonB, "per_season")).not.toBeNull();
       const badges = await repo.listBadgesByPlayer(ann);
       expect(badges.find((b) => b.awardedAt.getTime() === past.getTime())?.ruleId).toBe(seasonal);
-      expect(badges.length).toBe(3);
+      expect(badges).toHaveLength(3);
     });
 
     it("lists badges by season and player, with holders", async () => {
