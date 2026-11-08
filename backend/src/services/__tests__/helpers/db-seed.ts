@@ -21,6 +21,20 @@ type TestDb = PgliteDatabase<typeof schema>;
 let counter = 0;
 const unique = (label: string) => `${label}-${Date.now()}-${counter++}-${Math.random().toString(16).slice(2, 6)}`;
 
+export interface MatchSeed {
+  tournamentId: string;
+  entryA: string;
+  entryB: string;
+  scoreA?: number;
+  scoreB?: number;
+  status?: (typeof matches.$inferInsert)["status"];
+  winnerSide?: "A" | "B" | null;
+  playedAt?: Date;
+  createdBy?: string;
+  reportedBy?: string;
+  finalized?: boolean;
+}
+
 export function makeSeeder(db: TestDb) {
   async function createUser(name: string, extra: Partial<typeof appUsers.$inferInsert> = {}) {
     const suffix = unique(name);
@@ -63,19 +77,6 @@ export function makeSeeder(db: TestDb) {
     return entry!.id;
   }
 
-  interface MatchSeed {
-    tournamentId: string;
-    entryA: string;
-    entryB: string;
-    scoreA?: number;
-    scoreB?: number;
-    status?: (typeof matches.$inferInsert)["status"];
-    winnerSide?: "A" | "B" | null;
-    playedAt?: Date;
-    createdBy?: string;
-    reportedBy?: string;
-    finalized?: boolean;
-  }
 
   async function createMatch(seed: MatchSeed) {
     const [match] = await db
