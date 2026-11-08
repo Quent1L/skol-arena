@@ -22,7 +22,8 @@ changes rather than churn.
 ## Avatars
 
 Seven of the twelve players have a picture, the others keep their initials, so
-the screenshots show both. The images are in `avatars/`, committed, and the seed
+the screenshots show both. The images are committed in `backend/src/demo/avatars/` — shared with the
+[demo data](/docs/deployment#demo-data), which bundles them into the Docker image — and the seed
 pushes them through the real upload pipeline (`avatarService.setAvatar`), so they
 are resized and stored exactly as a player's own upload would be. The scripts pin
 `AVATAR_STORAGE=postgres` so the seed and the backend read the same store whatever
@@ -88,13 +89,13 @@ zoom view behind it.
 
 ## Screens
 
-| File          | Route                              |
-| ------------- | ---------------------------------- |
-| `tournaments` | `/`                                |
-| `standings`   | `/tournaments/<championship>/standings` |
-| `ranked`      | `/tournaments/<season>/standings`  |
-| `bracket`     | `/tournaments/<cup>/bracket`       |
-| `player`      | `/players/<id>`                    |
-| `match`       | `/matches/<id>` (awaiting confirmation) |
+| File             | Route                                          |
+| ---------------- | ---------------------------------------------- |
+| `tournaments`    | `/`                                            |
+| `standings`      | `/tournaments/<championship>/standings`        |
+| `ranked`         | `/tournaments/<season>/standings`              |
+| `bracket`        | `/tournaments/<cup>/bracket`                   |
+| `player`         | `/players/<id>`                                |
+| `match`          | `/matches/<id>` (awaiting confirmation)        |
 | `season-profile` | `/tournaments/<season>/stats?statsSub=profile` |
 | `season-stats`   | `/tournaments/<season>/stats?statsSub=global`  |

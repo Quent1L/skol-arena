@@ -155,6 +155,51 @@ empty database:
    cleartext in the logs, so treat those logs as a secret until you have replaced
    it.
 
+## Demo data
+
+To try Skol Arena without entering anything by hand, start it with
+`INIT_DEMO_DATA=true`. On first boot, the server fills the empty database with a club
+that has been playing for a few months:
+
+- **16 players**, some with an avatar, including a super admin and a tournament admin;
+- **three disciplines**: Pool (8-ball) — with three ways to end a match: standard win,
+  win on foul (black ball potted early, scratch on the black…) and forfeit (no-show,
+  withdrawal) — table football and darts;
+- **six competitions**: an ongoing pool league, last season's finished one, a ranked
+  season with its ladder and tiers, a cup bracket waiting for its final, a table
+  football league played by fixed teams of two, and a darts open still taking
+  registrations;
+- **close to 300 matches**, a few of them waiting for your confirmation and one disputed.
+
+The repository ships a ready-made Compose file for it:
+
+```bash
+docker compose -f docker-compose.demo.yml up
+```
+
+Then open `http://localhost:3000/login?native=true` and sign in with the credentials
+printed in the logs:
+
+```bash
+docker compose -f docker-compose.demo.yml logs app | grep "DEMO CREDENTIALS"
+```
+
+The super admin is `alex@skol.demo`. Every other player signs in with their first name
+(`ava@skol.demo`, `noah@skol.demo`…) and the same password, `SkolDemo123!`, so you can
+switch sides and confirm a match as the opponent. Dates follow the day the container
+starts, so the data always looks current.
+
+The variable is a no-op on a database that already holds anything — users,
+disciplines or competitions: the server logs that it skipped the demo and starts
+normally, so leaving it set does no harm on restart. To start over, drop the
+database volume (`docker compose -f docker-compose.demo.yml down -v`) and start again.
+
+The demo replaces the [initial super-admin](#first-boot): since the database is no
+longer empty once the demo is loaded, no random admin password is generated.
+
+**Never set it on an instance open to the internet**: every demo account shares a
+published password, the super admin included.
+
 ## Accent-insensitive search (`unaccent`)
 
 Player and user searches (the comparison page, the admin user list, the live player
