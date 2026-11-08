@@ -20,7 +20,6 @@ import {
   type BuilderNode,
   type PlayerOption,
 } from './condition-tree'
-import type { RuleConditions } from '@skol-arena/shared/types/index'
 import type { CatalogFact } from '@/composables/rules/rules.api'
 import { disciplineApi } from '@/composables/discipline/discipline.api'
 import { organizationApi } from '@/composables/organization/organization.api'
@@ -29,6 +28,7 @@ import type {
   OrganizationWithMemberCount,
   OutcomeType,
   OutcomeReason,
+  RuleConditions,
 } from '@skol-arena/shared/types/index'
 
 const props = defineProps<{

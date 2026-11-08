@@ -128,15 +128,16 @@ const typeStyle = computed(() => TYPE_STYLES[props.notif.type] ?? FALLBACK_STYLE
 const icon = computed(() => typeStyle.value.icon)
 const accent = computed(() => typeStyle.value.accent)
 
+const cardTransition = computed(() => {
+  if (committed.value) return 'transform 0.24s ease-in'
+  return isSnapping.value ? SNAP_BACK : 'none'
+})
+
 const cardStyle = computed(() => ({
   transform: committed.value
     ? 'translateX(-110%)'
     : `translateX(${-Math.max(0, swipeOffset.value)}px)`,
-  transition: committed.value
-    ? 'transform 0.24s ease-in'
-    : isSnapping.value
-      ? SNAP_BACK
-      : 'none',
+  transition: cardTransition.value,
 }))
 
 const swipeProgress = computed(() =>

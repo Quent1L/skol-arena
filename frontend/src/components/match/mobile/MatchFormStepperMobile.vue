@@ -421,11 +421,7 @@ async function submitMatch() {
     status: isScheduled ? 'scheduled' : 'reported',
     scoreA: isScheduled ? 0 : (formState.value.scorePerSide[1] ?? 0),
     scoreB: isScheduled ? 0 : (formState.value.scorePerSide[2] ?? 0),
-    winnerPosition: isScheduled
-      ? null
-      : formState.value.winnerPosition === 0
-        ? null
-        : formState.value.winnerPosition,
+    winnerPosition: isScheduled || formState.value.winnerPosition === 0 ? null : formState.value.winnerPosition,
     outcomeTypeId: isScheduled ? undefined : (formState.value.outcomeTypeId ?? undefined),
     outcomeReasonId: isScheduled ? undefined : (formState.value.outcomeReasonId ?? undefined),
   }

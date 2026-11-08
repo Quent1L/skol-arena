@@ -358,11 +358,8 @@ export function useMatchService() {
         // Withdrawing after finalization changes nothing about the result, so it does
         // not promise the round will re-open the way the pre-finalization one does.
         const withdrawing = options?.withdrawingDispute === true
-        const key = withdrawing
-          ? postFinalization
-            ? 'withdrawPostDispute'
-            : 'withdrawDispute'
-          : 'agreeSuccess'
+        const withdrawKey = postFinalization ? 'withdrawPostDispute' : 'withdrawDispute'
+        const key = withdrawing ? withdrawKey : 'agreeSuccess'
         toast.add({
           severity: 'success',
           summary: t(`matchService.toast.${key}Summary`),

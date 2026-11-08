@@ -208,9 +208,14 @@ function canonical(value: unknown): string {
   const entries = Object.entries(value as Record<string, unknown>)
     // `undefined` and an absent key mean the same thing here; jsonb drops both.
     .filter(([, v]) => v !== undefined)
-    .sort(([l], [r]) => (l < r ? -1 : l > r ? 1 : 0));
+    .sort(([l], [r]) => compareKeys(l, r));
 
   return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;
+}
+
+function compareKeys(l: string, r: string): number {
+  if (l < r) return -1;
+  return l > r ? 1 : 0;
 }
 
 /** Outcome types offered at match entry: archived ones resolve but are not selectable. */

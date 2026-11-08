@@ -2,6 +2,7 @@ import { playerStatsRepository } from "../repository/player-stats.repository";
 import { matchSidesRepository } from "../repository/match-sides.repository";
 import { playerComputedDataRepository } from "../repository/player-computed-data.repository";
 import { NotFoundError, ErrorCode } from "../types/errors";
+import { compareCodeUnits } from "../utils/compare";
 import { MIN_WEIGHTED_RATE_MATCHES, rankByWeightedRate, TOP_WEIGHTED_RATE } from "./stats-ranking";
 import type {
   PlayerProfile,
@@ -191,7 +192,7 @@ const TOP_RELATIONS = TOP_WEIGHTED_RATE;
 export function compareRelations(a: PlayerRelationStat, b: PlayerRelationStat): number {
   if (a.wins !== b.wins) return b.wins - a.wins;
   if (a.losses !== b.losses) return a.losses - b.losses;
-  return a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0;
+  return compareCodeUnits(a.playerId, b.playerId);
 }
 
 /**

@@ -34,6 +34,7 @@ import type {
   OutcomeTypeLeaderboard,
 } from "@skol-arena/shared";
 import { winRatePercent } from "../utils/win-rate";
+import { compareCodeUnits } from "../utils/compare";
 
 /** How many names an "and N others" tooltip carries before the count speaks alone. */
 const MAX_OMITTED_NAMES = 20;
@@ -103,7 +104,7 @@ const TOP_BEST_PLAYERS = 5;
  */
 function compareBestPlayers(a: Unranked<BestDuoEntry>, b: Unranked<BestDuoEntry>): number {
   if (a.wins !== b.wins) return b.wins - a.wins;
-  return a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0;
+  return compareCodeUnits(a.playerId, b.playerId);
 }
 
 /**
@@ -278,7 +279,7 @@ export function computeBestTeams(matchesData: MatchData[], allowDraw = true): Be
     teams,
     rate,
     played,
-    (a, b) => b.wins - a.wins || (a.entryId < b.entryId ? -1 : a.entryId > b.entryId ? 1 : 0),
+    (a, b) => b.wins - a.wins || compareCodeUnits(a.entryId, b.entryId),
     Number.POSITIVE_INFINITY,
   );
   const ranked = assignCompetitionRanks(sorted, weightedRateTie(rate, played));
@@ -550,7 +551,7 @@ function rankByRate(candidates: LeaderCandidate[]): OutcomeTypeLeaderboard {
  */
 function compareLeaders(a: LeaderCandidate, b: LeaderCandidate): number {
   if (a.count !== b.count) return b.count - a.count;
-  return a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0;
+  return compareCodeUnits(a.playerId, b.playerId);
 }
 
 export function computeOutcomeTypeFunStats(

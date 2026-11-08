@@ -3,6 +3,7 @@ import type {
   CreateRankTierInput,
   UpdateRankTierInput,
   TierScalingMode,
+  TournamentStatus,
 } from "@skol-arena/shared/types/index";
 import { db } from "../config/database";
 import i18next, { SUPPORTED_LANGUAGES } from "../config/i18n";
@@ -18,7 +19,6 @@ import {
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import type * as schema from "../db/schema";
-import type { TournamentStatus } from "@skol-arena/shared/types/index";
 import { organizationVisibilityCondition } from "./organization-visibility";
 
 type DbTransaction = NodePgDatabase<typeof schema> | typeof db;

@@ -186,12 +186,9 @@ export class RulesRepository {
    * explicitly targets the awards whose season is unknown.
    */
   async revokeBadge(playerId: string, ruleId: string, seasonId?: string | null): Promise<number> {
-    const seasonFilter =
-      seasonId === undefined
-        ? undefined
-        : seasonId === null
-          ? isNull(playerBadges.seasonId)
-          : eq(playerBadges.seasonId, seasonId);
+    let seasonFilter;
+    if (seasonId === null) seasonFilter = isNull(playerBadges.seasonId);
+    else if (seasonId !== undefined) seasonFilter = eq(playerBadges.seasonId, seasonId);
 
     // The count of removed awards: zero means another pass already took the badge,
     // and the player must not be told twice that they lost it.

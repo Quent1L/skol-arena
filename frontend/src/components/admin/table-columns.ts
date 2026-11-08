@@ -15,12 +15,9 @@ export interface LabelledHeader {
 export function sortableHeader<T>(label: string) {
   const render = ({ column }: { column: Column<T> }) => {
     const sorted = column.getIsSorted()
-    const icon =
-      sorted === 'asc'
-        ? 'i-fa7-solid:arrow-up-short-wide'
-        : sorted === 'desc'
-          ? 'i-fa7-solid:arrow-down-wide-short'
-          : 'i-fa7-solid:sort'
+    let icon = 'i-fa7-solid:sort'
+    if (sorted === 'asc') icon = 'i-fa7-solid:arrow-up-short-wide'
+    else if (sorted === 'desc') icon = 'i-fa7-solid:arrow-down-wide-short'
     return h(UButton, {
       color: 'neutral',
       variant: 'ghost',

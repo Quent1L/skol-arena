@@ -31,7 +31,9 @@ export function useNotificationText() {
 
     // The xior interceptor and the WebSocket handler both run convertStringDatesToJS,
     // which turns the stored ISO string into a Date before it reaches us.
-    const date = raw instanceof Date ? raw : ISO_DATE.test(String(raw)) ? new Date(String(raw)) : null
+    let date: Date | null = null
+    if (raw instanceof Date) date = raw
+    else if (ISO_DATE.test(String(raw))) date = new Date(String(raw))
     if (!date || Number.isNaN(date.getTime())) return raw // legacy pre-formatted string
 
     return new Intl.DateTimeFormat(locale.value, {

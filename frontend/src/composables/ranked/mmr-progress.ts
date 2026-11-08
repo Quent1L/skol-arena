@@ -104,9 +104,14 @@ function makeSegment(
     mmrTo,
     fromPct: percentIn(mmrFrom, bounds),
     toPct: percentIn(mmrTo, bounds),
-    direction: mmrTo > mmrFrom ? 'up' : mmrTo < mmrFrom ? 'down' : 'flat',
+    direction: directionOf(mmrFrom, mmrTo),
     isFinal,
   }
+}
+
+function directionOf(from: number, to: number): MmrBarDirection {
+  if (to > from) return 'up'
+  return to < from ? 'down' : 'flat'
 }
 
 function resolveTier(
@@ -167,7 +172,8 @@ export function buildMmrBarSegments(
   return path.map((tier, index) => {
     const isFinal = index === path.length - 1
     const bounds = getTierBounds(tier, tiers)
-    const mmrTo = isFinal ? mmrAfter : goingUp ? bounds.max : bounds.min
+    const edge = goingUp ? bounds.max : bounds.min
+    const mmrTo = isFinal ? mmrAfter : edge
     const segment = makeSegment(tier, cursor, mmrTo, tiers, isFinal)
     cursor = mmrTo
     return segment

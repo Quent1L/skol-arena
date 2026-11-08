@@ -58,7 +58,9 @@ const emit = defineEmits<{ close: [confirmed: boolean] }>()
 
 const { t } = useI18n()
 
-const iconClass = computed(() =>
-  props.color === 'primary' ? 'text-primary' : props.color === 'error' ? 'text-error' : 'text-warning',
-)
+const ICON_CLASSES: Record<string, string> = {
+  primary: 'text-primary',
+  error: 'text-error',
+}
+const iconClass = computed(() => ICON_CLASSES[props.color ?? ''] ?? 'text-warning')
 </script>

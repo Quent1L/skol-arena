@@ -66,6 +66,11 @@ type PlayerCareerMmrStatsRawRow = {
   matches_played: number;
 };
 
+function legacyOutcome(delta: number): 'win' | 'loss' | 'draw' {
+  if (delta > 0) return 'win';
+  return delta < 0 ? 'loss' : 'draw';
+}
+
 export class PlayerMmrRepository {
   async getBySeasonAndPlayer(seasonId: string, playerId: string) {
     return await db.query.playerMmr.findFirst({
@@ -110,7 +115,7 @@ export class PlayerMmrRepository {
         } else {
           // Legacy rows without a stored outcome: fall back to delta sign
           const delta = Number(row.mmr_delta);
-          outcome = delta > 0 ? 'win' : delta < 0 ? 'loss' : 'draw';
+          outcome = legacyOutcome(delta);
         }
         list.push({ outcome });
         resultsByPlayer.set(row.player_id, list);

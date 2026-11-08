@@ -1,6 +1,7 @@
 import { STRONGER_OPPONENT_MMR_GAP } from "@skol-arena/shared/types/index";
 import type { MmrChartPoint, MmrHistoryOutcome } from "@skol-arena/shared/types/index";
 import type { SeasonHistoryRow, SeasonSideRow } from "../repository/season-rewind.repository";
+import { compareCodeUnits } from "../utils/compare";
 
 /**
  * Chronological replay of a finished season.
@@ -370,7 +371,7 @@ export function compareStanding(source: StandingSource, aId: string, bId: string
     if (a.matchesPlayed !== b.matchesPlayed) return a.matchesPlayed - b.matchesPlayed;
   }
 
-  return aId < bId ? -1 : aId > bId ? 1 : 0;
+  return compareCodeUnits(aId, bId);
 }
 
 /**

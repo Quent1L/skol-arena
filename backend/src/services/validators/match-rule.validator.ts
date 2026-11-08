@@ -2,8 +2,10 @@ import { matchRepository } from "../../repository/match.repository";
 import { teamRepository } from "../../repository/team.repository";
 import { userRepository } from "../../repository/user.repository";
 import { BadRequestError, ConflictError, ErrorCode } from "../../types/errors";
-import type { CreateMatchRequestData as CreateMatchInput } from "@skol-arena/shared/types/index";
-import type { ChampionshipConfig } from "@skol-arena/shared/types/index";
+import type {
+  ChampionshipConfig,
+  CreateMatchRequestData as CreateMatchInput,
+} from "@skol-arena/shared/types/index";
 import { t } from "../../utils/i18n-context";
 
 type TournamentFromRepository = Awaited<
