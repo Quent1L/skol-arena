@@ -34,6 +34,7 @@ import { normalizeAuthRateLimitResponse } from "./utils/auth-rate-limit";
 import { runMigrations } from "./utils/migrate";
 import { detectAccentFolding } from "./utils/accent-folding";
 import { initializeAdminIfNeeded } from "./utils/init-admin";
+import { initializeDemoDataIfRequested } from "./utils/init-demo-data";
 import {
   clearStaleRecalcMarkers,
   recalculateOutdatedRankedSeasons,
@@ -52,9 +53,12 @@ await detectAccentFolding();
 // Rules are data, so they migrate like the schema does: forward-only, at startup,
 // before anything can read or validate them against the current fact catalog.
 await migrateStoredRules();
-await initializeAdminIfNeeded();
 // Fails the boot when a filesystem avatar store is missing its volume or is read-only.
+// Ahead of the demo data, which uploads avatars.
 await initAvatarStorage();
+// Before the bootstrap admin: the demo brings its own super admin.
+await initializeDemoDataIfRequested();
+await initializeAdminIfNeeded();
 // Avatars left in another store after AVATAR_STORAGE changed: warns, never blocks.
 await avatarStorageMigrationService.detectMismatch();
 

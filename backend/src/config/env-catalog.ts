@@ -24,6 +24,7 @@ export const ENV_CATALOG: readonly EnvEntry[] = [
   { name: "LOG_FORMAT", group: "server", secret: false },
   { name: "APP_TIMEZONE", group: "server", secret: false },
   { name: "INITIAL_ADMIN_EMAIL", group: "server", secret: false },
+  { name: "INIT_DEMO_DATA", group: "server", secret: false },
   { name: "API_DOCS_ENABLED", group: "server", secret: false },
   { name: "RANKED_MATCH_MAX_AGE_HOURS", group: "server", secret: false },
   { name: "RATE_LIMIT_ENABLED", group: "server", secret: false },

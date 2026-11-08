@@ -10,6 +10,11 @@ does not cover them.
 - `seed-showcase.ts` — data for the docs screenshots. Run through `docs`'s
   `bun run shots:seed`. See `docs/screenshots/README.md`.
 
+The showcase seed is built on the same blocks as the **demo data** — `src/demo/`, loaded
+at server startup when `INIT_DEMO_DATA=true` on an empty database (see
+`src/utils/init-demo-data.ts` and the Deployment docs). Those blocks live under `src/`
+rather than here because the demo has to ship in the bundled server.
+
 ---
 
 # Bulk match generator

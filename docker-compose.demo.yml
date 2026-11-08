@@ -1,0 +1,39 @@
+# Try Skol Arena with demo data: players, disciplines, competitions and matches.
+#
+#   docker compose -f docker-compose.demo.yml up
+#
+# Then sign in at http://localhost:3000/login?native=true — the credentials are in
+# the logs (grep "DEMO CREDENTIALS"). Start over with `down -v`.
+#
+# For trying the product only: every demo account shares a published password.
+# See https://skol-arena.com/docs/deployment#demo-data
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: skol
+      POSTGRES_PASSWORD: skol-demo
+      POSTGRES_DB: skol_arena
+    volumes:
+      - skol-demo-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U skol -d skol_arena']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: quent1l/skol-arena:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgres://skol:skol-demo@db:5432/skol_arena
+      BETTER_AUTH_SECRET: demo-only-secret-do-not-use-in-production
+      BETTER_AUTH_URL: http://localhost:3000
+      INIT_DEMO_DATA: 'true'
+
+volumes:
+  skol-demo-db:

@@ -21,50 +21,41 @@ import { runMigrations } from "../src/utils/migrate";
 import { db } from "../src/config/database";
 import {
   user,
-  account,
-  appUsers,
-  disciplines,
-  outcomeTypes,
-  outcomeReasons,
-  tournaments,
   tournamentScoringConfigs,
   championshipConfigs,
-  tournamentParticipants,
-  tournamentRulesets,
-  tournamentEntries,
-  tournamentEntryPlayers,
-  matches,
-  matchSides,
-  matchResults,
-  matchConfirmations,
   rankedSeasonConfigs,
   rankTiers,
   bracketConfigs,
   bracketRounds,
-  bracketMatchMetadata,
 } from "../src/db/schema";
 import { eq } from "drizzle-orm";
-import { join } from "node:path";
 import { newId } from "../src/utils/uuid";
 import { avatarService } from "../src/services/avatar.service";
-import { tournamentRulesetRepository } from "../src/repository/tournament-ruleset.repository";
 import { standingsService } from "../src/services/standings.service";
 import { mmrCalculationService } from "../src/services/mmr-calculation.service";
 import { bracketService } from "../src/services/bracket.service";
 import { rankedSeasonService } from "../src/services/ranked-season.service";
+import { readAvatar, type AvatarName } from "../src/demo/avatars";
+import { buildPairings as pairUp, createRandom, favouredWins as favoured } from "../src/demo/random";
+import {
+  createAccount,
+  createCompetition,
+  createDiscipline,
+  insertMatch as insertSeededMatch,
+  outcomeOf,
+  playBracketRound,
+  type MatchStatus,
+} from "../src/demo/builders";
 
 // ---------------------------------------------------------------------------
 // Deterministic randomness
 // ---------------------------------------------------------------------------
 
-let lcgState = 20260823;
-function rand(): number {
-  lcgState = (lcgState * 1664525 + 1013904223) % 4294967296;
-  return lcgState / 4294967296;
-}
-function randInt(minInclusive: number, maxInclusive: number): number {
-  return minInclusive + Math.floor(rand() * (maxInclusive - minInclusive + 1));
-}
+// The building blocks are shared with the demo data (src/demo/), the seed and the
+// draws are this script's own: same seed, same screenshots.
+const random = createRandom(20260823);
+const rand = random.next;
+const randInt = random.int;
 
 // ---------------------------------------------------------------------------
 // Identities
@@ -179,29 +170,15 @@ async function seedUsers() {
     })),
   ];
 
+  const passwordHash = await hashPassword(PASSWORD);
   for (const def of defs) {
-    const authId = `showcase-auth-${def.key}`;
-    const appId = newId();
-
-    await db.insert(user).values({
-      id: authId,
+    const appId = await createAccount({
+      authId: `showcase-auth-${def.key}`,
       name: def.name,
       email: def.email,
-      emailVerified: true,
-    });
-    await db.insert(account).values({
-      id: newId(),
-      providerId: "credential",
-      accountId: def.email,
-      userId: authId,
-      password: await hashPassword(PASSWORD),
-    });
-    await db.insert(appUsers).values({
-      id: appId,
-      externalId: authId,
-      displayName: def.name,
       shortName: def.short,
       role: def.role,
+      passwordHash,
       // Enough reports behind them that the app shows an established player,
       // not someone on their first match.
       trustScoreCount: def.role === "player" ? randInt(4, 18) : 0,
@@ -218,14 +195,13 @@ async function seedUsers() {
 /**
  * Players with a picture, the rest keep their initials: a real club is a mix of
  * both, and the screenshots should show the fallback as much as the avatar.
- * The files live with the capture pipeline, see docs/screenshots/README.md.
+ * The files live in src/demo/avatars/, shared with the demo data.
  */
-const AVATAR_KEYS = ["theo", "ilyas", "camille", "marta", "anais", "lucas", "nina"];
-const AVATAR_DIR = join(import.meta.dir, "../../docs/screenshots/avatars");
+const AVATAR_KEYS: AvatarName[] = ["theo", "ilyas", "camille", "marta", "anais", "lucas", "nina"];
 
 async function seedAvatars() {
   for (const key of AVATAR_KEYS) {
-    const bytes = await Bun.file(join(AVATAR_DIR, `${key}.png`)).bytes();
+    const bytes = await readAvatar(key);
     // The real upload pipeline: same resize, same variants, same storage keys.
     await avatarService.setAvatar(id(key), bytes);
   }
@@ -243,64 +219,34 @@ async function seedDiscipline(
   icon: string,
   scoreInstructions: string,
 ): Promise<DisciplineIds> {
-  const disciplineId = newId();
-  const standardId = newId();
-  const overtimeId = newId();
-  const forfeitId = newId();
-
-  await db.insert(disciplines).values({
-    id: disciplineId,
+  const seeded = await createDiscipline({
     name,
     icon,
     scoreInstructions,
     teamInteractionMode: "INDIVIDUAL",
-  });
-  await db.insert(outcomeTypes).values([
-    {
-      id: standardId,
-      disciplineId,
-      name: "Standard win",
-      isDefault: true,
-      points: 3,
-      mmrMultiplier: 1,
-    },
-    {
-      id: overtimeId,
-      disciplineId,
-      name: "Overtime win",
-      isDefault: false,
-      points: 3,
+    outcomes: [
+      { name: "Standard win", isDefault: true },
       // A game decided in overtime was close, so it moves the rating less than
       // a clean win. This is the mmrMultiplier knob the docs describe.
-      mmrMultiplier: 0.8,
-    },
-    {
-      id: forfeitId,
-      disciplineId,
-      name: "Forfeit",
-      isDefault: false,
-      points: 3,
-      mmrMultiplier: 1,
+      { name: "Overtime win", mmrMultiplier: 0.8 },
       // The whole point of the setting: a walkover moves the standings but
       // leaves nobody's rating touched.
-      scoreCountsForMmr: false,
-    },
-  ]);
-  await db.insert(outcomeReasons).values([
-    { id: newId(), outcomeTypeId: forfeitId, name: "No-show" },
-    { id: newId(), outcomeTypeId: forfeitId, name: "Withdrawal" },
-  ]);
-
-  return { discipline: disciplineId, standard: standardId, overtime: overtimeId, forfeit: forfeitId };
+      { name: "Forfeit", scoreCountsForMmr: false, reasons: ["No-show", "Withdrawal"] },
+    ],
+  });
+  return {
+    discipline: seeded.id,
+    standard: outcomeOf(seeded, "Standard win").id,
+    overtime: outcomeOf(seeded, "Overtime win").id,
+    forfeit: outcomeOf(seeded, "Forfeit").id,
+  };
 }
 
 // ---------------------------------------------------------------------------
 // Matches
 // ---------------------------------------------------------------------------
 
-type MatchStatus = "finalized" | "reported" | "disputed";
-
-/** Insert a 1v1 flex match: two single-player entries, two sides, one result. */
+/** A 1v1 flex match, on the shared builder. */
 async function insertMatch(opts: {
   tournamentId: string;
   outcomeTypeId: string;
@@ -312,73 +258,18 @@ async function insertMatch(opts: {
   status?: MatchStatus;
   reportedBy?: string;
 }): Promise<string> {
-  const matchId = newId();
-  const entryA = newId();
-  const entryB = newId();
-  const status = opts.status ?? "finalized";
-  const winnerSide =
-    opts.scoreA > opts.scoreB ? "A" : opts.scoreB > opts.scoreA ? "B" : null;
-
-  await db.insert(tournamentEntries).values([
-    { id: entryA, tournamentId: opts.tournamentId, entryType: "PLAYER" },
-    { id: entryB, tournamentId: opts.tournamentId, entryType: "PLAYER" },
-  ]);
-  await db.insert(tournamentEntryPlayers).values([
-    { entryId: entryA, playerId: opts.playerA },
-    { entryId: entryB, playerId: opts.playerB },
-  ]);
-
-  const reportedBy = opts.reportedBy ?? opts.playerA;
-
-  await db.insert(matches).values({
-    id: matchId,
+  return insertSeededMatch({
     tournamentId: opts.tournamentId,
-    status,
-    playedAt: opts.playedAt,
-    winnerSide,
+    sides: [
+      { playerIds: [opts.playerA], score: opts.scoreA },
+      { playerIds: [opts.playerB], score: opts.scoreB },
+    ],
     outcomeTypeId: opts.outcomeTypeId,
-    createdBy: reportedBy,
-    createdAt: opts.playedAt,
-    confirmationDeadline:
-      status === "finalized"
-        ? null
-        : new Date(opts.playedAt.getTime() + 48 * 3_600_000),
+    playedAt: opts.playedAt,
+    status: opts.status,
+    reportedBy: opts.reportedBy ?? opts.playerA,
+    contestationReason: "Last goal was scored after the buzzer.",
   });
-  await db.insert(matchSides).values([
-    { matchId, entryId: entryA, position: 1, score: opts.scoreA },
-    { matchId, entryId: entryB, position: 2, score: opts.scoreB },
-  ]);
-  await db.insert(matchResults).values({
-    matchId,
-    reportedBy,
-    reportedAt: opts.playedAt,
-    finalizedBy: status === "finalized" ? reportedBy : null,
-    finalizedAt: status === "finalized" ? opts.playedAt : null,
-    finalizationReason: status === "finalized" ? "consensus" : null,
-  });
-
-  // The reporter implicitly confirms their own report; that is what makes the
-  // opposite side the one the app is waiting on.
-  await db.insert(matchConfirmations).values({
-    matchId,
-    playerId: reportedBy,
-    isConfirmed: true,
-    sidePosition: reportedBy === opts.playerA ? 1 : 2,
-  });
-
-  if (status === "disputed") {
-    const other = reportedBy === opts.playerA ? opts.playerB : opts.playerA;
-    await db.insert(matchConfirmations).values({
-      matchId,
-      playerId: other,
-      isConfirmed: false,
-      isContested: true,
-      contestationReason: "Last goal was scored after the buzzer.",
-      sidePosition: other === opts.playerA ? 1 : 2,
-    });
-  }
-
-  return matchId;
 }
 
 /** Table football score: winner reaches 10, loser lands somewhere below. */
@@ -388,33 +279,16 @@ function drawScore(strongerWins: boolean): [number, number] {
 }
 
 /**
- * Round-robin-ish schedule: every pair meets at most `meetings` times, and the
- * result is drawn from the two hidden strengths so the standings end up ordered
- * but not perfectly.
+ * Round-robin-ish schedule: every pair meets at most `meetings` times, in an
+ * unpredictable order.
  */
 function buildPairings(playerIds: string[], meetings: number) {
-  const pairs: [string, string][] = [];
-  for (let round = 0; round < meetings; round++) {
-    for (let i = 0; i < playerIds.length; i++) {
-      for (let j = i + 1; j < playerIds.length; j++) {
-        pairs.push([playerIds[i]!, playerIds[j]!]);
-      }
-    }
-  }
-  // Fisher-Yates on the seeded LCG: chronological order stays unpredictable.
-  for (let i = pairs.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [pairs[i], pairs[j]] = [pairs[j]!, pairs[i]!];
-  }
-  return pairs;
+  return pairUp(random, playerIds, meetings);
 }
 
+/** Result drawn from the two hidden strengths: ordered standings, but not perfectly. */
 function favouredWins(playerA: string, playerB: string): boolean {
-  const a = strengthOf.get(playerA) ?? 0.5;
-  const b = strengthOf.get(playerB) ?? 0.5;
-  // Logistic on the strength gap: a gap of 0.3 wins about 3 times out of 4.
-  const pA = 1 / (1 + Math.exp(-(a - b) * 6));
-  return rand() < pA;
+  return favoured(random, strengthOf.get(playerA) ?? 0.5, strengthOf.get(playerB) ?? 0.5);
 }
 
 // ---------------------------------------------------------------------------
@@ -438,27 +312,30 @@ async function seedChampionship(opts: {
   const tournamentId = newId();
   const playerIds = opts.playerKeys.map(id);
 
-  await db.insert(tournaments).values({
-    id: tournamentId,
-    name: opts.name,
-    description: opts.description,
-    mode: "championship",
-    teamMode: "flex",
-    status: opts.status,
-    minTeamSize: 1,
-    maxTeamSize: 1,
-    scoreEnabled: true,
-    allowDraw: false,
-    minScore: 0,
-    maxScore: 10,
-    validationMode: "strict",
-    validationTimerHours: 48,
-    startDate: dateStr(daysAgo(opts.startDaysAgo)),
-    endDate: dateStr(daysAgo(opts.endDaysAgo)),
-    disciplineId: opts.discipline.discipline,
-    createdBy: id(ADMIN.key),
-    createdAt: daysAgo(opts.startDaysAgo + 3),
-  });
+  await createCompetition(
+    {
+      id: tournamentId,
+      name: opts.name,
+      description: opts.description,
+      mode: "championship",
+      teamMode: "flex",
+      status: opts.status,
+      minTeamSize: 1,
+      maxTeamSize: 1,
+      scoreEnabled: true,
+      allowDraw: false,
+      minScore: 0,
+      maxScore: 10,
+      validationMode: "strict",
+      validationTimerHours: 48,
+      startDate: dateStr(daysAgo(opts.startDaysAgo)),
+      endDate: dateStr(daysAgo(opts.endDaysAgo)),
+      disciplineId: opts.discipline.discipline,
+      createdBy: id(ADMIN.key),
+      createdAt: daysAgo(opts.startDaysAgo + 3),
+    },
+    playerIds,
+  );
   await db.insert(tournamentScoringConfigs).values({
     tournamentId,
     pointPerVictory: 3,
@@ -471,18 +348,6 @@ async function seedChampionship(opts: {
     maxTimesWithSamePartner: 2,
     maxTimesWithSameOpponent: 2,
   });
-  await db.insert(tournamentParticipants).values(
-    playerIds.map((playerId) => ({ tournamentId, userId: playerId })),
-  );
-  await db
-    .insert(tournamentRulesets)
-    .values({
-      tournamentId,
-      payload: await tournamentRulesetRepository.buildPayloadForDiscipline(
-        opts.discipline.discipline,
-      ),
-    })
-    .onConflictDoNothing();
 
   const pairs = buildPairings(playerIds, 2).slice(0, opts.matchCount);
   // Matches are spread from the start date up to today, never past it: a season
@@ -561,32 +426,35 @@ async function seedRankedSeason(discipline: DisciplineIds): Promise<string> {
   const seasonId = newId();
   const playerIds = PLAYERS.map((p) => id(p.key));
 
-  await db.insert(tournaments).values({
-    id: seasonId,
-    name: "Ranked Season 4",
-    description:
-      "Continuous ladder play. Face anyone, any time, and the rating follows you across the season.",
-    mode: "ranked",
-    teamMode: "flex",
-    status: "ongoing",
-    minTeamSize: 1,
-    maxTeamSize: 1,
-    scoreEnabled: true,
-    allowDraw: false,
-    minScore: 0,
-    maxScore: 10,
-    // No confirmation step: a ranked result counts the moment it is reported.
-    // This is also what keeps the Official/Provisional switch off the standings
-    // screenshot — TournamentStandingsTab only renders it when the mode is not
-    // "none".
-    validationMode: "none",
-    validationTimerHours: 48,
-    startDate: dateStr(daysAgo(74)),
-    endDate: dateStr(daysAgo(-16)),
-    disciplineId: discipline.discipline,
-    createdBy: id(ADMIN.key),
-    createdAt: daysAgo(78),
-  });
+  await createCompetition(
+    {
+      id: seasonId,
+      name: "Ranked Season 4",
+      description:
+        "Continuous ladder play. Face anyone, any time, and the rating follows you across the season.",
+      mode: "ranked",
+      teamMode: "flex",
+      status: "ongoing",
+      minTeamSize: 1,
+      maxTeamSize: 1,
+      scoreEnabled: true,
+      allowDraw: false,
+      minScore: 0,
+      maxScore: 10,
+      // No confirmation step: a ranked result counts the moment it is reported.
+      // This is also what keeps the Official/Provisional switch off the standings
+      // screenshot — TournamentStandingsTab only renders it when the mode is not
+      // "none".
+      validationMode: "none",
+      validationTimerHours: 48,
+      startDate: dateStr(daysAgo(74)),
+      endDate: dateStr(daysAgo(-16)),
+      disciplineId: discipline.discipline,
+      createdBy: id(ADMIN.key),
+      createdAt: daysAgo(78),
+    },
+    playerIds,
+  );
   await db.insert(rankedSeasonConfigs).values({
     tournamentId: seasonId,
     baseMmr: 1000,
@@ -600,18 +468,6 @@ async function seedRankedSeason(discipline: DisciplineIds): Promise<string> {
     { seasonId, level: 4, name: "Platinum", percentile: 0.82, minMmr: 1300, subRanks: 3, iconClass: "fa fa-gem" },
     { seasonId, level: 5, name: "Diamond", percentile: 0.94, minMmr: 1500, subRanks: 1, iconClass: "fa fa-crown" },
   ]);
-  await db.insert(tournamentParticipants).values(
-    playerIds.map((playerId) => ({ tournamentId: seasonId, userId: playerId })),
-  );
-  await db
-    .insert(tournamentRulesets)
-    .values({
-      tournamentId: seasonId,
-      payload: await tournamentRulesetRepository.buildPayloadForDiscipline(
-        discipline.discipline,
-      ),
-    })
-    .onConflictDoNothing();
 
   const pairs = buildPairings(playerIds, 2).slice(0, 84);
   const matchIds: string[] = [];
@@ -696,41 +552,32 @@ async function seedBracket(discipline: DisciplineIds): Promise<string> {
   ];
   const playerIds = playerKeys.map(id);
 
-  await db.insert(tournaments).values({
-    id: tournamentId,
-    name: "Friday Night Cup",
-    description:
-      "Single elimination night, eight players, bronze match included.",
-    mode: "bracket",
-    teamMode: "flex",
-    status: "ongoing",
-    minTeamSize: 1,
-    maxTeamSize: 1,
-    scoreEnabled: true,
-    allowDraw: false,
-    minScore: 0,
-    maxScore: 10,
-    validationMode: "strict",
-    validationTimerHours: 48,
-    startDate: dateStr(daysAgo(4)),
-    endDate: dateStr(daysAgo(-3)),
-    disciplineId: discipline.discipline,
-    createdBy: id(ADMIN.key),
-    createdAt: daysAgo(11),
-  });
-  await db.insert(tournamentScoringConfigs).values({ tournamentId });
-  await db.insert(tournamentParticipants).values(
-    playerIds.map((playerId) => ({ tournamentId, userId: playerId })),
+  await createCompetition(
+    {
+      id: tournamentId,
+      name: "Friday Night Cup",
+      description:
+        "Single elimination night, eight players, bronze match included.",
+      mode: "bracket",
+      teamMode: "flex",
+      status: "ongoing",
+      minTeamSize: 1,
+      maxTeamSize: 1,
+      scoreEnabled: true,
+      allowDraw: false,
+      minScore: 0,
+      maxScore: 10,
+      validationMode: "strict",
+      validationTimerHours: 48,
+      startDate: dateStr(daysAgo(4)),
+      endDate: dateStr(daysAgo(-3)),
+      disciplineId: discipline.discipline,
+      createdBy: id(ADMIN.key),
+      createdAt: daysAgo(11),
+    },
+    playerIds,
   );
-  await db
-    .insert(tournamentRulesets)
-    .values({
-      tournamentId,
-      payload: await tournamentRulesetRepository.buildPayloadForDiscipline(
-        discipline.discipline,
-      ),
-    })
-    .onConflictDoNothing();
+  await db.insert(tournamentScoringConfigs).values({ tournamentId });
 
   // Built by the real service so the rounds, the seeds and the winner links are
   // exactly what the app would have produced.
@@ -760,70 +607,14 @@ async function seedBracket(discipline: DisciplineIds): Promise<string> {
     .sort((a, b) => a.roundNumber - b.roundNumber);
 
   for (const round of mainRounds.slice(0, 2)) {
-    await playBracketRound(round.id, discipline.standard, daysAgo(4 - round.roundNumber, 20, 30));
+    await playBracketRound(round.id, daysAgo(4 - round.roundNumber, 20, 30), (playerA, playerB) => {
+      const [scoreA, scoreB] = drawScore(favouredWins(playerA, playerB));
+      return { scoreA, scoreB, outcomeTypeId: discipline.standard };
+    });
   }
 
   console.log('Seeded bracket "Friday Night Cup" (quarters and semis played)');
   return tournamentId;
-}
-
-/** Finalizes every match of one bracket round and feeds the winners forward. */
-async function playBracketRound(
-  bracketRoundId: string,
-  outcomeTypeId: string,
-  playedAt: Date,
-) {
-  const metadata = await db.query.bracketMatchMetadata.findMany({
-    where: eq(bracketMatchMetadata.bracketRoundId, bracketRoundId),
-    orderBy: (m, { asc }) => [asc(m.matchNumber)],
-  });
-
-  for (const meta of metadata) {
-    const sides = await db.query.matchSides.findMany({
-      where: eq(matchSides.matchId, meta.matchId),
-      orderBy: (s, { asc }) => [asc(s.position)],
-    });
-    if (sides.length !== 2) continue;
-
-    const playerOf = async (entryId: string) => {
-      const row = await db.query.tournamentEntryPlayers.findFirst({
-        where: eq(tournamentEntryPlayers.entryId, entryId),
-      });
-      if (!row) throw new Error(`Bracket entry ${entryId} has no player`);
-      return row.playerId;
-    };
-    const playerA = await playerOf(sides[0]!.entryId);
-    const playerB = await playerOf(sides[1]!.entryId);
-    const [scoreA, scoreB] = drawScore(favouredWins(playerA, playerB));
-    const winnerSide = scoreA > scoreB ? "A" : "B";
-
-    await db
-      .update(matchSides)
-      .set({ score: scoreA })
-      .where(eq(matchSides.id, sides[0]!.id));
-    await db
-      .update(matchSides)
-      .set({ score: scoreB })
-      .where(eq(matchSides.id, sides[1]!.id));
-    await db
-      .update(matches)
-      .set({ status: "finalized", winnerSide, playedAt, outcomeTypeId })
-      .where(eq(matches.id, meta.matchId));
-    await db
-      .insert(matchResults)
-      .values({
-        matchId: meta.matchId,
-        reportedBy: playerA,
-        reportedAt: playedAt,
-        finalizedBy: playerA,
-        finalizedAt: playedAt,
-        finalizationReason: "consensus",
-      })
-      .onConflictDoNothing();
-
-    await bracketService.advanceWinnerToNextRound(meta.matchId);
-    await bracketService.advanceLoserToNextRound(meta.matchId);
-  }
 }
 
 // ---------------------------------------------------------------------------
