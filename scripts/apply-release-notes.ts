@@ -53,8 +53,11 @@ const HTML_IMG_TARGET = /<img\b[^>]*?\bsrc=["']([^"']+)["']/g
 function readFrontmatter(raw: string): Record<string, string> {
   const fields: Record<string, string> = {}
   for (const line of raw.split(/\r?\n/)) {
-    const match = /^([A-Za-z]+):[ \t]*(.*)$/.exec(line)
-    if (match) fields[match[1]] = match[2].trim().replace(/^(["'])(.*)\1$/, '$2')
+    const colon = line.indexOf(':')
+    const key = line.slice(0, colon)
+    if (colon > 0 && /^[A-Za-z]+$/.test(key)) {
+      fields[key] = line.slice(colon + 1).trim().replace(/^(["'])(.*)\1$/, '$2')
+    }
   }
   return fields
 }
