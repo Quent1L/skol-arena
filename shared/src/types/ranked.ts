@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { vmsg } from "./validation-messages";
+import { translateValidation, vmsg } from "./validation-messages";
 import { validationModeSchema } from "./enums";
 import {
   baseSeasonFormSchema,
@@ -482,9 +482,9 @@ const rankedSeasonExtraFields = {
   usePreviousMmr: z.boolean(),
   softResetFactor: z.number().min(0).max(1),
   allowAsymmetricMatches: z.boolean(),
-  sourceTierSeasonId: z.string().uuid().nullable().optional(),
+  sourceTierSeasonId: z.uuid().nullable().optional(),
   tierScalingMode: z.enum(["keep", "percentile"]),
-  sourceMmrSeasonId: z.string().uuid().nullable().optional(),
+  sourceMmrSeasonId: z.uuid().nullable().optional(),
 };
 
 export const baseRankedSeasonFormSchema =
@@ -498,9 +498,9 @@ export const baseRankedSeasonUpdateFormSchema =
     usePreviousMmr: z.boolean().optional(),
     softResetFactor: z.number().min(0).max(1).optional(),
     allowAsymmetricMatches: z.boolean().optional(),
-    sourceTierSeasonId: z.string().uuid().nullable().optional(),
+    sourceTierSeasonId: z.uuid().nullable().optional(),
     tierScalingMode: z.enum(["keep", "percentile"]).optional(),
-    sourceMmrSeasonId: z.string().uuid().nullable().optional(),
+    sourceMmrSeasonId: z.uuid().nullable().optional(),
   });
 
 export const createRankedSeasonFormSchema = baseRankedSeasonFormSchema
@@ -537,9 +537,14 @@ export const createRankedSeasonSchema = z
       .string()
       .max(500, vmsg("validation.descriptionMax500"))
       .optional(),
-    disciplineId: z
-      .string(vmsg("validation.disciplineRequired"))
-      .uuid(vmsg("validation.invalidDisciplineId")),
+    disciplineId: z.uuid({
+        error: (issue) =>
+          translateValidation(
+            issue.input === undefined
+              ? "validation.disciplineRequired"
+              : "validation.invalidDisciplineId",
+          ),
+      }),
     startDate: z
       .string()
       .datetime()
@@ -556,8 +561,8 @@ export const createRankedSeasonSchema = z
       .number(vmsg("validation.maxTeamSizeRequired"))
       .int()
       .min(1, vmsg("validation.teamSizeMin1")),
-    rulesId: z.string().uuid().nullable().optional(),
-    organizationId: z.string().uuid().nullable().optional(),
+    rulesId: z.uuid().nullable().optional(),
+    organizationId: z.uuid().nullable().optional(),
     allowDraw: z.boolean().default(true).optional(),
     // Score configuration
     scoreEnabled: z.boolean().default(true).optional(),
@@ -592,8 +597,8 @@ export const updateRankedSeasonSchema = z.object({
     .datetime()
     .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
     .optional(),
-  rulesId: z.string().uuid().nullable().optional(),
-  organizationId: z.string().uuid().nullable().optional(),
+  rulesId: z.uuid().nullable().optional(),
+  organizationId: z.uuid().nullable().optional(),
   allowDraw: z.boolean().optional(),
   scoreEnabled: z.boolean().optional(),
   minScore: z.number().int().min(0).nullable().optional(),
@@ -604,9 +609,9 @@ export const updateRankedSeasonSchema = z.object({
   usePreviousMmr: z.boolean().optional(),
   softResetFactor: z.number().min(0).max(1).optional(),
   allowAsymmetricMatches: z.boolean().optional(),
-  sourceTierSeasonId: z.string().uuid().nullable().optional(),
+  sourceTierSeasonId: z.uuid().nullable().optional(),
   tierScalingMode: z.enum(["keep", "percentile"]).optional(),
-  sourceMmrSeasonId: z.string().uuid().nullable().optional(),
+  sourceMmrSeasonId: z.uuid().nullable().optional(),
   validationMode: validationModeSchema.optional(),
   validationTimerHours: z.number().int().min(1).max(168).nullable().optional(),
 });
@@ -731,14 +736,14 @@ export type MmrRecapReadyEvent = {
  */
 export const mmrSnapshotRequestSchema = z
   .object({
-    playerIds: z.array(z.string().uuid()).min(1).max(32),
+    playerIds: z.array(z.uuid()).min(1).max(32),
     at: z.iso.datetime(),
   })
   .meta({ id: "MmrSnapshotRequest" });
 
 export const mmrSnapshotEntrySchema = z
   .object({
-    playerId: z.string().uuid(),
+    playerId: z.uuid(),
     mmr: z.number().int(),
     /** Still in placement at that date — the MMR is not yet representative. */
     isPlacement: z.boolean(),

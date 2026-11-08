@@ -40,7 +40,7 @@ export interface UpdateOutcomeReasonInput {
 // ============================================
 
 export const createOutcomeReasonSchema = z.object({
-  outcomeTypeId: z.string().uuid(vmsg("validation.invalidOutcomeTypeId")),
+  outcomeTypeId: z.uuid(vmsg("validation.invalidOutcomeTypeId")),
   name: z
     .string(vmsg("validation.nameRequired"))
     .min(1, vmsg("validation.nameNotEmpty"))
@@ -48,7 +48,7 @@ export const createOutcomeReasonSchema = z.object({
 });
 
 export const updateOutcomeReasonSchema = z.object({
-  outcomeTypeId: z.string().uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
+  outcomeTypeId: z.uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
   name: z
     .string()
     .min(1, vmsg("validation.nameNotEmpty"))

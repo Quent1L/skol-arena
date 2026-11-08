@@ -76,7 +76,7 @@ teams.post(
     conflict: true,
     success: { description: "The team after the join", schema: clientTeamSchema },
   }),
-  validate("json", z.object({ userId: z.string().uuid().optional() })),
+  validate("json", z.object({ userId: z.uuid().optional() })),
   async (c) => {
     const tournamentId = c.req.param("id")!;
     const teamId = c.req.param("teamId")!;
@@ -104,7 +104,7 @@ teams.delete(
     notFound: true,
     success: { description: "Removal outcome", schema: mutationResultSchema },
   }),
-  validate("query", z.object({ userId: z.string().uuid().optional() })),
+  validate("query", z.object({ userId: z.uuid().optional() })),
   async (c) => {
     const tournamentId = c.req.param("id")!;
     const teamId = c.req.param("teamId")!;

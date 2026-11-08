@@ -454,7 +454,7 @@ export const createRuleSchema = z.object({
   triggerEvent: z.enum(TRIGGER_EVENTS),
   type: z.enum(["message", "badge"]),
   scope: z.enum(["global", "discipline"]),
-  disciplineId: z.string().uuid().nullable().optional(),
+  disciplineId: z.uuid().nullable().optional(),
   priority: z.number().int().default(0),
   name: z.string().min(2, vmsg("validation.nameRequired")).max(120),
   description: z.string().max(500).nullable().optional(),

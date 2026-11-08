@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { vmsg } from "./validation-messages";
+import { translateValidation, vmsg } from "./validation-messages";
 import { validationModeSchema } from "./enums";
 
 // ============================================
@@ -16,9 +16,14 @@ export const baseSeasonFormSchema = z.object({
     .min(3, vmsg("validation.nameMin3"))
     .max(100, vmsg("validation.nameMax100")),
   description: z.string().optional(),
-  disciplineId: z
-    .string(vmsg("validation.disciplineRequired"))
-    .uuid(vmsg("validation.invalidDisciplineId")),
+  disciplineId: z.uuid({
+      error: (issue) =>
+        translateValidation(
+          issue.input === undefined
+            ? "validation.disciplineRequired"
+            : "validation.invalidDisciplineId",
+        ),
+    }),
   startDate: z.date(vmsg("validation.startDateRequired")),
   endDate: z.date(vmsg("validation.endDateRequired")),
   minTeamSize: z
@@ -29,8 +34,8 @@ export const baseSeasonFormSchema = z.object({
     .number(vmsg("validation.maxTeamSizeRequired"))
     .int()
     .min(1, vmsg("validation.teamSizeMin1")),
-  rulesId: z.string().uuid().nullable().optional(),
-  organizationId: z.string().uuid().nullable().optional(),
+  rulesId: z.uuid().nullable().optional(),
+  organizationId: z.uuid().nullable().optional(),
   scoreEnabled: z.boolean().optional(),
   minScore: z.number().int().min(0).nullable().optional(),
   maxScore: z.number().int().min(0).nullable().optional(),

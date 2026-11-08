@@ -628,7 +628,7 @@ ranked.post(
   validate(
     "json",
     z.object({
-      ids: z.array(z.string().uuid()),
+      ids: z.array(z.uuid()),
       // Which screen consumed them. Optional: an older client sends none, and the
       // rules-engine stats then record the firing as delivered but of unknown fate
       // rather than assuming it was read.
@@ -671,7 +671,7 @@ ranked.post(
     auth: true,
     success: { description: "How many badges were marked", schema: markViewedResultSchema },
   }),
-  validate("json", z.object({ ids: z.array(z.string().uuid()) })),
+  validate("json", z.object({ ids: z.array(z.uuid()) })),
   async (c) => {
     const { ids } = c.req.valid("json");
     const playerId = c.get("appUserId");

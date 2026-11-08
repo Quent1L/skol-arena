@@ -104,7 +104,7 @@ export const generateBracketSchema = z
   .object({
     bracketType: bracketTypeSchema,
     seedingType: seedingTypeSchema,
-    sourceTournamentId: z.string().uuid().optional(),
+    sourceTournamentId: z.uuid().optional(),
     hasBronzeMatch: z.boolean().optional().default(false),
   })
   .refine(
@@ -123,11 +123,11 @@ export const generateBracketSchema = z
 export const bracketConfigSchema = z.object({
   // Field list mirrors BracketConfig above; kept as a plain object because it is
   // also used to validate stored bracket payloads.
-  id: z.string().uuid(),
-  tournamentId: z.string().uuid(),
+  id: z.uuid(),
+  tournamentId: z.uuid(),
   bracketType: bracketTypeSchema,
   seedingType: seedingTypeSchema,
-  sourceTournamentId: z.string().uuid().optional(),
+  sourceTournamentId: z.uuid().optional(),
   totalParticipants: z.number().int().positive(),
   roundsCount: z.number().int().positive(),
   hasBronzeMatch: z.boolean(),
@@ -136,8 +136,8 @@ export const bracketConfigSchema = z.object({
 });
 
 export const bracketRoundSchema = z.object({
-  id: z.string().uuid(),
-  bracketConfigId: z.string().uuid(),
+  id: z.uuid(),
+  bracketConfigId: z.uuid(),
   roundNumber: z.number().int().min(0),
   roundName: z.string().min(1),
   roundNameKey: z.string().nullish(),
@@ -148,21 +148,21 @@ export const bracketRoundSchema = z.object({
 });
 
 export const bracketSeedSchema = z.object({
-  id: z.string().uuid(),
-  bracketConfigId: z.string().uuid(),
-  entryId: z.string().uuid(),
+  id: z.uuid(),
+  bracketConfigId: z.uuid(),
+  entryId: z.uuid(),
   seedNumber: z.number().int().positive(),
   seedingScore: z.number().int().optional(),
   createdAt: z.string().datetime(),
 });
 
 export const bracketMatchMetadataSchema = z.object({
-  id: z.string().uuid(),
-  matchId: z.string().uuid(),
-  bracketRoundId: z.string().uuid(),
+  id: z.uuid(),
+  matchId: z.uuid(),
+  bracketRoundId: z.uuid(),
   matchNumber: z.number().int().min(0),
-  winnerToMatchId: z.string().uuid().optional(),
-  loserToMatchId: z.string().uuid().optional(),
+  winnerToMatchId: z.uuid().optional(),
+  loserToMatchId: z.uuid().optional(),
   isByeMatch: z.boolean(),
   createdAt: z.string().datetime(),
 });

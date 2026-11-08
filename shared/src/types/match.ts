@@ -207,8 +207,8 @@ export interface FinalizeMatchInput {
 
 export const matchSideInputSchema = z.object({
   position: z.number().int().min(1).max(2),
-  playerIds: z.array(z.string().uuid()).optional(),
-  teamId: z.string().uuid().optional(),
+  playerIds: z.array(z.uuid()).optional(),
+  teamId: z.uuid().optional(),
 });
 
 /**
@@ -233,18 +233,15 @@ export type WritableMatchStatus = z.infer<typeof writableMatchStatusSchema>;
 const winnerPositionSchema = z.number().int().min(1).max(2).nullable().optional();
 
 export const createMatchSchema = z.object({
-  tournamentId: z.string().uuid(vmsg("validation.invalidTournamentId")),
+  tournamentId: z.uuid(vmsg("validation.invalidTournamentId")),
   round: z.number().int().min(1).optional(),
   sides: matchSidesSchema.optional(),
   status: writableMatchStatusSchema.optional(),
   scoreA: z.number().int().min(0).nullable().optional(),
   scoreB: z.number().int().min(0).nullable().optional(),
   reportProof: z.string().optional(),
-  outcomeTypeId: z.string().uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
-  outcomeReasonId: z
-    .string()
-    .uuid(vmsg("validation.invalidOutcomeReasonId"))
-    .optional(),
+  outcomeTypeId: z.uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
+  outcomeReasonId: z.uuid(vmsg("validation.invalidOutcomeReasonId")).optional(),
   winnerPosition: winnerPositionSchema,
   playedAt: z.string().datetime().optional(),
 });
@@ -256,11 +253,8 @@ export const updateMatchSchema = z.object({
   status: writableMatchStatusSchema.optional(),
   reportProof: z.string().optional(),
   playedAt: z.string().datetime(),
-  outcomeTypeId: z.string().uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
-  outcomeReasonId: z
-    .string()
-    .uuid(vmsg("validation.invalidOutcomeReasonId"))
-    .optional(),
+  outcomeTypeId: z.uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
+  outcomeReasonId: z.uuid(vmsg("validation.invalidOutcomeReasonId")).optional(),
   winnerPosition: winnerPositionSchema,
 });
 
@@ -269,11 +263,8 @@ export const reportMatchResultSchema = z.object({
   scoreB: z.number().int().min(0, vmsg("validation.scoreNonNegative")),
   reportProof: z.string().optional(),
   winnerPosition: winnerPositionSchema,
-  outcomeTypeId: z.string().uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
-  outcomeReasonId: z
-    .string()
-    .uuid(vmsg("validation.invalidOutcomeReasonId"))
-    .optional(),
+  outcomeTypeId: z.uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
+  outcomeReasonId: z.uuid(vmsg("validation.invalidOutcomeReasonId")).optional(),
 });
 
 export const confirmMatchSchema = z.object({
@@ -296,10 +287,10 @@ export const finalizeMatchSchema = z.object({
 });
 
 export const listMatchesQuerySchema = z.object({
-  tournamentId: z.string().uuid().optional(),
+  tournamentId: z.uuid().optional(),
   status: matchStatusSchema.optional(),
   round: z.number().int().min(1).optional(),
-  playerId: z.string().uuid().optional(),
+  playerId: z.uuid().optional(),
 });
 
 /**
@@ -439,11 +430,11 @@ export type ClientMatchMessage = z.infer<typeof clientMatchMessageSchema>;
 export const clientMatchMessageListSchema = z.array(clientMatchMessageSchema);
 
 export const validateMatchSchema = z.object({
-  tournamentId: z.string().uuid(vmsg("validation.invalidTournamentId")),
+  tournamentId: z.uuid(vmsg("validation.invalidTournamentId")),
   round: z.number().int().min(1).optional(),
   sides: z.array(matchSideInputSchema).min(1).optional(),
-  allPlayerIds: z.array(z.string().uuid()).optional(),
-  matchId: z.string().uuid(vmsg("validation.invalidMatchId")).optional(),
+  allPlayerIds: z.array(z.uuid()).optional(),
+  matchId: z.uuid(vmsg("validation.invalidMatchId")).optional(),
   playedAt: z.string().datetime().optional(),
 });
 
@@ -501,7 +492,7 @@ export type ListMatchesQuery = z.infer<typeof listMatchesQuerySchema>;
 export const playerMatchHistoryQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).optional(),
   offset: z.coerce.number().int().min(0).optional(),
-  tournamentId: z.string().uuid().optional(),
+  tournamentId: z.uuid().optional(),
 });
 
 export type PlayerMatchHistoryQuery = z.infer<typeof playerMatchHistoryQuerySchema>;
@@ -762,7 +753,7 @@ export interface ClientMatchDetail {
 }
 
 export const listMatchCardsQuerySchema = z.object({
-  tournamentId: z.string().uuid().optional(),
+  tournamentId: z.uuid().optional(),
   playerIds: z.string().optional(),
   status: matchStatusSchema.optional(),
   bracketMode: z

@@ -20,7 +20,7 @@ const createOrganizationSchema = z.object({
   name: z.string().min(1, "Le nom est requis").max(100),
 });
 
-const addMemberSchema = z.object({ userId: z.string().uuid() });
+const addMemberSchema = z.object({ userId: z.uuid() });
 const renameOrganizationSchema = z.object({ name: z.string().min(1).max(100) });
 
 adminOrganizations.get(

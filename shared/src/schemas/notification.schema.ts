@@ -17,14 +17,14 @@ export const NotificationTypeEnum = z.enum([
 export const DeviceTypeEnum = z.enum(["WEB", "ANDROID", "IOS"]);
 
 export const CreateNotificationSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.uuid(),
   type: NotificationTypeEnum,
   titleKey: z.string(),
   messageKey: z.string(),
   translationParams: z.record(z.string(), z.any()).optional(),
   actionUrl: z.string().optional(),
   requiresAction: z.boolean().default(false),
-  matchId: z.string().uuid().optional(),
+  matchId: z.uuid().optional(),
 });
 
 export const RegisterDeviceSchema = z.object({
@@ -37,7 +37,7 @@ export const RegisterDeviceSchema = z.object({
 
 export const NotificationResponseSchema = z
   .object({
-    id: z.string().uuid(),
+    id: z.uuid(),
     // Drives the icon and accent the client renders the card with
     type: NotificationTypeEnum,
     // Pre-rendered server-side, kept as a fallback when the client does not know the key

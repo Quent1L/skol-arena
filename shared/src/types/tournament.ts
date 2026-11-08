@@ -220,10 +220,10 @@ const baseTournamentDataSchema = z.object({
     .string()
     .datetime()
     .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
-  disciplineId: z.string().uuid(vmsg("validation.invalidDisciplineId")).optional(),
+  disciplineId: z.uuid(vmsg("validation.invalidDisciplineId")).optional(),
   minScore: z.number().int().min(0).nullable().optional(),
   maxScore: z.number().int().min(0).nullable().optional(),
-  organizationId: z.string().uuid().optional().nullable(),
+  organizationId: z.uuid().optional().nullable(),
   validationMode: validationModeSchema.default("strict").optional(),
   validationTimerHours: z.number().int().min(1).max(168).nullable().optional(),
 });
@@ -236,7 +236,7 @@ export const createTournamentRequestSchema = baseTournamentDataSchema
 // Schema for the full API (WITH createdBy - types only)
 export const createTournamentSchema = baseTournamentDataSchema
   .extend({
-    createdBy: z.string().uuid(),
+    createdBy: z.uuid(),
   })
   .refine(dateRangePredicate, dateRangeError)
   .refine(teamSizePredicate, teamSizeError);
@@ -275,10 +275,10 @@ export const updateTournamentSchema = z
       .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
       .optional(),
     status: tournamentStatusSchema.optional(),
-    rulesId: z.string().uuid().nullable().optional(),
+    rulesId: z.uuid().nullable().optional(),
     minScore: z.number().int().min(0).nullable().optional(),
     maxScore: z.number().int().min(0).nullable().optional(),
-    organizationId: z.string().uuid().optional().nullable(),
+    organizationId: z.uuid().optional().nullable(),
     validationMode: validationModeSchema.optional(),
     validationTimerHours: z.number().int().min(1).max(168).nullable().optional(),
   })
@@ -293,7 +293,7 @@ export const changeTournamentStatusSchema = z.object({
 export const listTournamentsQuerySchema = z.object({
   status: tournamentStatusSchema.optional(),
   mode: tournamentModeSchema.optional(),
-  createdBy: z.string().uuid().optional(),
+  createdBy: z.uuid().optional(),
 });
 
 // ============================================

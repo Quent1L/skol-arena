@@ -151,10 +151,10 @@ export interface ClientMatchResultModel extends Omit<MatchResultModel, 'reported
 // ============================================
 
 export const createTournamentEntrySchema = z.object({
-  tournamentId: z.string().uuid(vmsg("validation.invalidTournamentId")),
+  tournamentId: z.uuid(vmsg("validation.invalidTournamentId")),
   entryType: entryTypeSchema,
-  teamId: z.string().uuid(vmsg("validation.invalidTeamId")).optional(),
-  playerIds: z.array(z.string().uuid(vmsg("validation.invalidPlayerId"))).min(1),
+  teamId: z.uuid(vmsg("validation.invalidTeamId")).optional(),
+  playerIds: z.array(z.uuid(vmsg("validation.invalidPlayerId"))).min(1),
 });
 
 export type CreateTournamentEntryData = z.infer<typeof createTournamentEntrySchema>;

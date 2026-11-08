@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from "hono";
+import { routePath } from "hono/route";
 import { isRateLimitEnabled } from "../config/rate-limit";
 import { rateLimitRepository } from "../repository/rate-limit.repository";
 import { ErrorCode, TooManyRequestsError } from "../types/errors";
@@ -38,7 +39,7 @@ export function rateLimit(options: {
     // error log all name the same caller — see TRUSTED_PROXY_HOPS. Callers that
     // cannot be placed collapse onto one shared window, which fails closed.
     const address = clientIpFor(c) ?? UNKNOWN_CLIENT_IP;
-    const key = `route:${c.req.method}:${c.req.routePath}:${address}`;
+    const key = `route:${c.req.method}:${routePath(c)}:${address}`;
 
     let verdict: { allowed: boolean; retryAfter: number };
     try {

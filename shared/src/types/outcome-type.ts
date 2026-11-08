@@ -60,7 +60,7 @@ export interface UpdateOutcomeTypeInput {
 // ============================================
 
 export const createOutcomeTypeSchema = z.object({
-  disciplineId: z.string().uuid(vmsg("validation.invalidDisciplineId")),
+  disciplineId: z.uuid(vmsg("validation.invalidDisciplineId")),
   name: z
     .string(vmsg("validation.nameRequired"))
     .min(1, vmsg("validation.nameNotEmpty"))
@@ -72,7 +72,7 @@ export const createOutcomeTypeSchema = z.object({
 });
 
 export const updateOutcomeTypeSchema = z.object({
-  disciplineId: z.string().uuid(vmsg("validation.invalidDisciplineId")).optional(),
+  disciplineId: z.uuid(vmsg("validation.invalidDisciplineId")).optional(),
   name: z
     .string()
     .min(1, vmsg("validation.nameNotEmpty"))

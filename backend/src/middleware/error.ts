@@ -2,7 +2,6 @@ import { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { AppError } from "../types/errors";
 import { ZodError } from "zod";
-import type { ZodIssue } from "zod";
 import { t } from "../utils/i18n-context";
 import { clientIpFor, UNKNOWN_CLIENT_IP } from "../utils/client-ip";
 import { logger } from "../utils/logger";
@@ -63,7 +62,7 @@ export async function errorHandler(err: Error, c: Context) {
   // raises a BadRequestError instead — see api/validator.ts.
   if (err instanceof ZodError) {
     const message = t("errors.VALIDATION_ERROR");
-    const validationIssues = err.issues.map((e: ZodIssue) => ({
+    const validationIssues = err.issues.map((e: ZodError["issues"][number]) => ({
       path: e.path.join("."),
       message: e.message,
     }));

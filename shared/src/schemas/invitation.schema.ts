@@ -5,7 +5,7 @@ export const generateInvitationCodeSchema = z.object({
   maxUses: z.number().int().min(1).optional().default(1),
   expiresInDays: z.number().int().min(1).optional(),
   notes: z.string().max(500).optional(),
-  organizationId: z.string().uuid().optional(),
+  organizationId: z.uuid().optional(),
 });
 
 export const validateInvitationCodeSchema = z.object({
