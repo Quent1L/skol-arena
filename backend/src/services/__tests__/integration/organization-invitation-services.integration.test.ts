@@ -202,7 +202,7 @@ describe("invitationService (integration)", () => {
     expect(created.displayName).not.toContain("<");
     expect(await organizationRepository.isMember(org.id, created.id)).toBe(true);
     expect(await invitationRepository.getRedeemedOrganizationId(auth!.id)).toBe(org.id);
-    expect((await testDb.select().from(appUsers).where(eq(appUsers.id, created.id))).length).toBe(1);
+    expect(await testDb.select().from(appUsers).where(eq(appUsers.id, created.id))).toHaveLength(1);
   });
 
   it("refuses to deactivate an unknown code", async () => {
