@@ -29,7 +29,7 @@ describe('MatchFormSkeleton', () => {
     // 3 dots, so 2 connecting rules between them.
     for (const variant of ['mobile', 'desktop'] as const) {
       const wrapper = mountSkeleton(variant)
-      expect(wrapper.findAll('.flex-none\\!').length).toBe(3)
+      expect(wrapper.findAll('.flex-none\\!')).toHaveLength(3)
     }
   })
 

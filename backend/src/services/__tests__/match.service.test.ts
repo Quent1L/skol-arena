@@ -1523,8 +1523,8 @@ describe("MatchService - Auto-Finalization", () => {
 
     const result = await matchService.autoFinalizeExpiredMatches();
 
-    expect(result.finalized.length).toBe(2);
-    expect(result.disputed.length).toBe(0);
+    expect(result.finalized).toHaveLength(2);
+    expect(result.disputed).toHaveLength(0);
     expect(result.total).toBe(2);
   });
 
@@ -1563,8 +1563,8 @@ describe("MatchService - Auto-Finalization", () => {
 
     const result = await matchService.autoFinalizeExpiredMatches();
 
-    expect(result.finalized.length).toBe(0);
-    expect(result.disputed.length).toBe(1);
+    expect(result.finalized).toHaveLength(0);
+    expect(result.disputed).toHaveLength(1);
     expect(result.total).toBe(1);
   });
 
@@ -1582,8 +1582,8 @@ describe("MatchService - Auto-Finalization", () => {
 
     const result = await matchService.autoFinalizeExpiredMatches();
 
-    expect(result.finalized.length).toBe(0);
-    expect(result.disputed.length).toBe(0);
+    expect(result.finalized).toHaveLength(0);
+    expect(result.disputed).toHaveLength(0);
     expect(result.total).toBe(0);
   });
 });

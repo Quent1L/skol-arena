@@ -81,8 +81,8 @@ describe('MmrRecapCard', () => {
       ev({ reason: 'match_cancelled', displayDelta: -12 }),
       ev({ reason: 'cascade', displayDelta: -3 }),
     ])
-    expect(document.body.querySelectorAll('.fa-rotate').length).toBe(1)
-    expect(document.body.querySelectorAll('.fa-ban').length).toBe(2) // match_cancelled + cascade
+    expect(document.body.querySelectorAll('.fa-rotate')).toHaveLength(1)
+    expect(document.body.querySelectorAll('.fa-ban')).toHaveLength(2) // match_cancelled + cascade
   })
 
   it('summary: one fragment per non-empty category, badge and summary agree', () => {

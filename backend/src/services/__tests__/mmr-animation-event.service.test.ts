@@ -130,13 +130,13 @@ describe("persistRecalcEvents", () => {
     const affected = await mmrAnimationEventService.persistRecalcEvents("season-1", ["p1"]);
 
     const rows = bulkRows();
-    expect(rows.length).toBe(1);
+    expect(rows).toHaveLength(1);
     expect(rows[0].matchId).toBe("m1");
     expect(rows[0].reason).toBe("recalculated");
     expect(rows[0].mmrDelta).toBe(18); // full delta kept for sync
     expect(rows[0].displayDelta).toBe(3); // differential 18 - seen 15
     expect(affected).toEqual(["p1"]);
-    expect(mockWs.send.mock.calls.length).toBe(0); // persist-only
+    expect(mockWs.send.mock.calls).toHaveLength(0); // persist-only
   });
 
   it("stacked recalcs before viewing: displayDelta relative to the SEEN delta, not the last stored one", async () => {
@@ -153,7 +153,7 @@ describe("persistRecalcEvents", () => {
     await mmrAnimationEventService.persistRecalcEvents("season-1", ["p1"]);
 
     const rows = bulkRows();
-    expect(rows.length).toBe(1);
+    expect(rows).toHaveLength(1);
     expect(rows[0].mmrDelta).toBe(20); // sync key = new full
     expect(rows[0].displayDelta).toBe(5); // 20 - seen 15, correct accumulation
   });
@@ -168,9 +168,9 @@ describe("persistRecalcEvents", () => {
 
     const affected = await mmrAnimationEventService.persistRecalcEvents("season-1", ["p1"]);
 
-    expect(bulkRows().length).toBe(0);
+    expect(bulkRows()).toHaveLength(0);
     expect(affected).toEqual([]);
-    expect(mockWs.send.mock.calls.length).toBe(0);
+    expect(mockWs.send.mock.calls).toHaveLength(0);
   });
 
   it("nothing for a match with no pre-existing animation event", async () => {
@@ -183,7 +183,7 @@ describe("persistRecalcEvents", () => {
 
     const affected = await mmrAnimationEventService.persistRecalcEvents("season-1", ["p1"]);
 
-    expect(bulkRows().length).toBe(0);
+    expect(bulkRows()).toHaveLength(0);
     expect(affected).toEqual([]);
   });
 
@@ -206,17 +206,17 @@ describe("persistRecalcEvents", () => {
 
     const affected = await mmrAnimationEventService.persistRecalcEvents("season-1", ["p1", "p2"]);
 
-    expect(mockAnimRepo.bulkUpsert.mock.calls.length).toBe(1); // single batch
+    expect(mockAnimRepo.bulkUpsert.mock.calls).toHaveLength(1); // single batch
     const rows = bulkRows();
-    expect(rows.length).toBe(2); // p1/m1 + p2/m2
+    expect(rows).toHaveLength(2); // p1/m1 + p2/m2
     expect(affected.sort()).toEqual(["p1", "p2"]);
-    expect(mockWs.send.mock.calls.length).toBe(0);
+    expect(mockWs.send.mock.calls).toHaveLength(0);
   });
 
   it("does nothing when the player list is empty", async () => {
     const affected = await mmrAnimationEventService.persistRecalcEvents("season-1", []);
     expect(affected).toEqual([]);
-    expect(mockRankedRepo.getConfigByTournamentId.mock.calls.length).toBe(0);
+    expect(mockRankedRepo.getConfigByTournamentId.mock.calls).toHaveLength(0);
   });
 });
 
@@ -236,14 +236,14 @@ describe("persistCancellationEvents", () => {
     const affected = await mmrAnimationEventService.persistCancellationEvents("m-cancelled", "season-1", changes);
 
     const rows = bulkRows();
-    expect(rows.length).toBe(1);
+    expect(rows).toHaveLength(1);
     expect(rows[0].playerId).toBe("p1");
     expect(rows[0].reason).toBe("match_cancelled");
     expect(rows[0].displayDelta).toBe(-12); // loss of SEEN points from the cancelled match
     expect(rows[0].rankChanged).toBe(false); // no misleading rank badge
     expect(rows[0].tierAfterName).toBeNull();
     expect(affected).toEqual(["p1"]);
-    expect(mockWs.send.mock.calls.length).toBe(0); // persist-only
+    expect(mockWs.send.mock.calls).toHaveLength(0); // persist-only
     expect(mockAnimRepo.retireUnseenForMatch.mock.calls).toEqual([["season-1", "m-cancelled", []]]);
   });
 
@@ -255,7 +255,7 @@ describe("persistCancellationEvents", () => {
 
     const affected = await mmrAnimationEventService.persistCancellationEvents("m-cancelled", "season-1", changes);
 
-    expect(bulkRows().length).toBe(0);
+    expect(bulkRows()).toHaveLength(0);
     expect(affected).toEqual([]);
     expect(mockAnimRepo.retireUnseenForMatch.mock.calls).toEqual([["season-1", "m-cancelled", ["p1"]]]);
   });
@@ -308,7 +308,7 @@ describe("theory: flood on the next match when events are stale", () => {
     expect(ev).toContainEqual({ matchId: "m2", reason: "recalculated" });
     expect(ev).toContainEqual({ matchId: "m3", reason: "recalculated" });
     expect(ev).toContainEqual({ matchId: "m4", reason: "match_finalized" });
-    expect(ev.length).toBe(4);
+    expect(ev).toHaveLength(4);
   });
 
   it("FIX: synchronized events → finalizing m4 only emits m4", async () => {
@@ -323,7 +323,7 @@ describe("theory: flood on the next match when events are stale", () => {
     await mmrAnimationEventService.createOfficialEventsAndBroadcast("m4", "season-1");
 
     expect(emitted()).toEqual([{ matchId: "m4", reason: "match_finalized" }]);
-    expect(mockWs.send.mock.calls.length).toBe(1);
+    expect(mockWs.send.mock.calls).toHaveLength(1);
   });
 
   it("the live payload carries the match's players, like the pending fetch", async () => {
@@ -369,7 +369,7 @@ describe("theory: flood on the next match when events are stale", () => {
     const ev = emitted();
     expect(ev).toContainEqual({ matchId: "m2", reason: "recalculated" });
     expect(ev).toContainEqual({ matchId: "m4", reason: "match_finalized" });
-    expect(ev.length).toBe(2);
+    expect(ev).toHaveLength(2);
   });
 });
 
@@ -424,7 +424,7 @@ describe("createOfficialEventsAndBroadcast: rules-engine message", () => {
 
     await mmrAnimationEventService.createOfficialEventsAndBroadcast("m4", "season-1", outputs() as never);
 
-    expect(emitted().length).toBe(2);
+    expect(emitted()).toHaveLength(2);
     expect(upsertedMessage("m4")).toBe("Blue team wins!");
     expect(broadcastMessage("m4")).toBe("Blue team wins!");
     // The replayed match carries no message, so its stored one is left alone.
@@ -532,13 +532,13 @@ describe("persistCorrectionEvents", () => {
     const affected = await mmrAnimationEventService.persistCorrectionEvents("m1", "season-1", ["p1"]);
 
     const rows = bulkRows();
-    expect(rows.length).toBe(1);
+    expect(rows).toHaveLength(1);
     expect(rows[0].matchId).toBe("m1");
     expect(rows[0].reason).toBe("match_corrected");
     expect(rows[0].mmrDelta).toBe(-12);
     expect(rows[0].displayDelta).toBe(-27);
     expect(affected).toEqual(["p1"]);
-    expect(mockWs.send.mock.calls.length).toBe(0);
+    expect(mockWs.send.mock.calls).toHaveLength(0);
   });
 
   it("rewrites a never-seen reveal as a plain finalization with the corrected delta", async () => {
@@ -566,7 +566,7 @@ describe("persistCorrectionEvents", () => {
 
     const affected = await mmrAnimationEventService.persistCorrectionEvents("m1", "season-1", ["p1"]);
 
-    expect(bulkRows().length).toBe(0);
+    expect(bulkRows()).toHaveLength(0);
     expect(affected).toEqual([]);
   });
 
@@ -593,7 +593,7 @@ describe("persistCorrectionEvents", () => {
 
     const affected = await mmrAnimationEventService.persistCorrectionEvents("m1", "season-1", ["p1"]);
 
-    expect(bulkRows().length).toBe(0);
+    expect(bulkRows()).toHaveLength(0);
     expect(affected).toEqual([]);
   });
 });

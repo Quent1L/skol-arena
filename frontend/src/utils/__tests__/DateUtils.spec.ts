@@ -57,8 +57,8 @@ describe('useDateUtils', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const convertedData: any = convertStringDatesToJS(dataTest)
 
-      expect(convertedData.date instanceof Date).toBe(true)
-      expect(convertedData.nestedObject.nestedObjectDate instanceof Date).toBe(true)
+      expect(convertedData.date).toBeInstanceOf(Date)
+      expect(convertedData.nestedObject.nestedObjectDate).toBeInstanceOf(Date)
     })
 
     test('should convert string dates to javascript dates in an array', () => {
@@ -73,8 +73,8 @@ describe('useDateUtils', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const convertedData: any = convertStringDatesToJS(dataTest)
 
-      expect(convertedData[0].date instanceof Date).toBe(true)
-      expect(convertedData[0].nestedObject.nestedObjectDate instanceof Date).toBe(true)
+      expect(convertedData[0].date).toBeInstanceOf(Date)
+      expect(convertedData[0].nestedObject.nestedObjectDate).toBeInstanceOf(Date)
     })
 
     test('should not convert non-date strings to javascript dates', () => {
@@ -89,8 +89,8 @@ describe('useDateUtils', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const convertedData: any = convertStringDatesToJS(dataTest)
 
-      expect(convertedData.date instanceof Date).toBe(true)
-      expect(convertedData.nestedObject.nestedObjectDate instanceof Date).toBe(true)
+      expect(convertedData.date).toBeInstanceOf(Date)
+      expect(convertedData.nestedObject.nestedObjectDate).toBeInstanceOf(Date)
       expect(convertedData.nonDateString).toBe('not a date')
     })
   })

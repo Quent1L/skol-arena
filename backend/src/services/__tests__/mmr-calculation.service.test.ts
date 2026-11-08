@@ -231,8 +231,8 @@ describe("MmrCalculationService", () => {
       setupMatches([], {});
       await service.recalculatePlayerMmr(SEASON, PLAYER);
 
-      expect(mockPlayerMmrRepo.deleteBySeasonAndPlayer.mock.calls.length).toBe(1);
-      expect(mockPlayerMmrRepo.upsert.mock.calls.length).toBe(0);
+      expect(mockPlayerMmrRepo.deleteBySeasonAndPlayer.mock.calls).toHaveLength(1);
+      expect(mockPlayerMmrRepo.upsert.mock.calls).toHaveLength(0);
     });
 
     it("1 victoire → wins=1, losses=0, MMR > baseMmr", async () => {

@@ -730,7 +730,7 @@ describe("BracketService", () => {
       const service = bracketService as any;
       const seeds = service.generateRandomSeeding(entries);
 
-      expect(seeds.length).toBe(4);
+      expect(seeds).toHaveLength(4);
       const seedNumbers = seeds.map((s: any) => s.seedNumber);
       expect(new Set(seedNumbers).size).toBe(4);
       expect(Math.min(...seedNumbers)).toBe(1);
@@ -760,7 +760,7 @@ describe("BracketService", () => {
         "source-tournament",
       );
 
-      expect(seeds.length).toBe(4);
+      expect(seeds).toHaveLength(4);
       // entry-4 should be seed 1 (highest points)
       const seed1 = seeds.find((s: any) => s.seedNumber === 1);
       expect(seed1?.entryId).toBe("entry-4");
@@ -793,14 +793,14 @@ describe("BracketService", () => {
         "source-tournament",
       );
 
-      expect(seeds.length).toBe(4);
+      expect(seeds).toHaveLength(4);
       // First two should have seeding scores
       const seededEntries = seeds.filter((s: any) => s.seedingScore);
-      expect(seededEntries.length).toBe(2);
+      expect(seededEntries).toHaveLength(2);
 
       // Last two should not have seeding scores
       const unseededEntries = seeds.filter((s: any) => !s.seedingScore);
-      expect(unseededEntries.length).toBe(2);
+      expect(unseededEntries).toHaveLength(2);
     });
   });
 
@@ -817,7 +817,7 @@ describe("BracketService", () => {
         false,
       );
 
-      expect(rounds.length).toBe(2); // Semifinals + Final
+      expect(rounds).toHaveLength(2); // Semifinals + Final
       expect(rounds[0].label).toEqual({ key: "SEMI_FINALS" });
       expect(rounds[1].label).toEqual({ key: "FINAL" });
     });
@@ -830,7 +830,7 @@ describe("BracketService", () => {
       }));
       const rounds = service.generateSingleEliminationBracket(seeds, false);
 
-      expect(rounds.length).toBe(3); // Quarterfinals + Semifinals + Final
+      expect(rounds).toHaveLength(3); // Quarterfinals + Semifinals + Final
       expect(rounds[0].label).toEqual({ key: "QUARTER_FINALS" });
       expect(rounds[1].label).toEqual({ key: "SEMI_FINALS" });
       expect(rounds[2].label).toEqual({ key: "FINAL" });
@@ -995,7 +995,7 @@ describe("BracketService", () => {
         await arrangeDuel();
 
         const roundsCall = mockBracketRepository.createRounds.mock.calls[0][0];
-        expect(roundsCall.length).toBe(1); // Only final
+        expect(roundsCall).toHaveLength(1); // Only final
         // The key travels with the row; the rendered name is only its fallback.
         expect(roundsCall[0].roundNameKey).toBe("FINAL");
         expect(roundsCall[0].roundName).toBe("Finale");
@@ -1020,7 +1020,7 @@ describe("BracketService", () => {
 
         const firstRound = rounds[0];
         const byeMatches = firstRound.matches.filter((m: any) => m.isByeMatch);
-        expect(byeMatches.length).toBe(1); // One bye for 3 participants
+        expect(byeMatches).toHaveLength(1); // One bye for 3 participants
       });
     });
 
@@ -1033,7 +1033,7 @@ describe("BracketService", () => {
         }));
         const rounds = service.generateSingleEliminationBracket(seeds, false);
 
-        expect(rounds.length).toBe(4); // R16 + QF + SF + F
+        expect(rounds).toHaveLength(4); // R16 + QF + SF + F
         expect(rounds[0].label).toEqual({ key: "ROUND_OF_16" });
         expect(rounds[0].matchesCount).toBe(8);
         expect(rounds[1].label).toEqual({ key: "QUARTER_FINALS" });
@@ -1052,7 +1052,7 @@ describe("BracketService", () => {
         }));
         const rounds = service.generateSingleEliminationBracket(seeds, false);
 
-        expect(rounds.length).toBe(5); // R32 + R16 + QF + SF + F
+        expect(rounds).toHaveLength(5); // R32 + R16 + QF + SF + F
         expect(rounds[0].label).toEqual({ key: "ROUND_OF_32" });
         expect(rounds[0].matchesCount).toBe(16);
       });
@@ -1068,7 +1068,7 @@ describe("BracketService", () => {
         const firstRound = rounds[0];
         const byeMatches = firstRound.matches.filter((m: any) => m.isByeMatch);
         // 13 participants need 16 slots (next power of 2), so 3 byes
-        expect(byeMatches.length).toBe(3);
+        expect(byeMatches).toHaveLength(3);
       });
     });
 
@@ -1091,10 +1091,10 @@ describe("BracketService", () => {
           "source-tournament",
         );
 
-        expect(seeds.length).toBe(4);
+        expect(seeds).toHaveLength(4);
         // All should be unseeded (no seeding scores)
         const unseededEntries = seeds.filter((s: any) => !s.seedingScore);
-        expect(unseededEntries.length).toBe(4);
+        expect(unseededEntries).toHaveLength(4);
       });
 
       it("should handle all entries seeded", async () => {
@@ -1116,10 +1116,10 @@ describe("BracketService", () => {
           "source-tournament",
         );
 
-        expect(seeds.length).toBe(2);
+        expect(seeds).toHaveLength(2);
         // All should be seeded
         const seededEntries = seeds.filter((s: any) => s.seedingScore);
-        expect(seededEntries.length).toBe(2);
+        expect(seededEntries).toHaveLength(2);
       });
 
       it("should handle entries with identical points in championship seeding", async () => {
@@ -1144,10 +1144,10 @@ describe("BracketService", () => {
           "source-tournament",
         );
 
-        expect(seeds.length).toBe(3);
+        expect(seeds).toHaveLength(3);
         // Both entry-1 and entry-2 should have seedingScore of 100
         const topSeeds = seeds.filter((s: any) => s.seedingScore === 100);
-        expect(topSeeds.length).toBe(2);
+        expect(topSeeds).toHaveLength(2);
         // entry-1 should be seed 1, entry-2 seed 2 (standings rank preserved)
         expect(seeds.find((s: any) => s.seedNumber === 1)?.entryId).toBe("entry-1");
         expect(seeds.find((s: any) => s.seedNumber === 2)?.entryId).toBe("entry-2");
@@ -1239,7 +1239,7 @@ describe("BracketService", () => {
 
         // Balanced draw order: (1,16),(8,9),(4,13),(5,12),(2,15),(7,10),(3,14),(6,11)
         // Ensures: #1 meets #8 in QF, #4 in SF, #2 only in final
-        expect(pairings.length).toBe(8);
+        expect(pairings).toHaveLength(8);
         expect(pairings[0]).toEqual([1, 16]);
         expect(pairings[1]).toEqual([8, 9]);
         expect(pairings[2]).toEqual([4, 13]);
@@ -1254,7 +1254,7 @@ describe("BracketService", () => {
         const service = bracketService as any;
         const pairings = service.generateStandardBracketPairings(5, 8);
 
-        expect(pairings.length).toBe(4);
+        expect(pairings).toHaveLength(4);
         // Seeds 6, 7, 8 don't exist, so they act as byes
         expect(pairings).toContainEqual([1, 8]);
         expect(pairings).toContainEqual([4, 5]);
@@ -1290,7 +1290,7 @@ describe("BracketService", () => {
         const service = bracketService as any;
         for (const size of [2, 4, 8, 16, 32]) {
           const positions = service.getBalancedSeedPositions(size);
-          expect(positions.length).toBe(size);
+          expect(positions).toHaveLength(size);
           expect(new Set(positions).size).toBe(size);
           expect(Math.min(...positions)).toBe(1);
           expect(Math.max(...positions)).toBe(size);
@@ -1361,8 +1361,8 @@ describe("BracketService", () => {
         );
 
         // For 4 participants: 2 winners rounds, (2-1)*2 = 2 losers rounds, 1 grand final
-        expect(winnersRounds.length).toBe(3); // Including grand final
-        expect(losersRounds.length).toBe(2);
+        expect(winnersRounds).toHaveLength(3); // Including grand final
+        expect(losersRounds).toHaveLength(2);
       });
 
       it("should end with grand final in double elimination", () => {

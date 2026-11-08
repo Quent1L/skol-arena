@@ -57,7 +57,7 @@ describe('MatchSidePanel player line', () => {
     const wrapper = mountPanel({ isFinalized: true, mode: 'championship' })
 
     const pills = wrapper.findAll('.tabular-nums')
-    expect(pills.length).toBe(2)
+    expect(pills).toHaveLength(2)
     for (const pill of pills) {
       expect(pill.classes()).toContain('shrink-0')
     }

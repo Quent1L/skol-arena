@@ -68,9 +68,9 @@ describe("initializeAdminIfNeeded", () => {
     expect(secondHash).not.toBe(firstHash);
 
     // No duplicate rows created by the rotation
-    expect((await testDb.select().from(appUsers)).length).toBe(1);
-    expect((await testDb.select().from(user)).length).toBe(1);
-    expect((await testDb.select().from(account)).length).toBe(1);
+    expect((await testDb.select().from(appUsers))).toHaveLength(1);
+    expect((await testDb.select().from(user))).toHaveLength(1);
+    expect((await testDb.select().from(account))).toHaveLength(1);
   });
 
   it("stops rotating once the flag is cleared", async () => {
@@ -103,7 +103,7 @@ describe("initializeAdminIfNeeded", () => {
 
     await initializeAdminIfNeeded();
 
-    expect((await testDb.select().from(appUsers)).length).toBe(1);
+    expect((await testDb.select().from(appUsers))).toHaveLength(1);
     expect(await getAdmin()).toBeUndefined();
   });
 
@@ -120,7 +120,7 @@ describe("initializeAdminIfNeeded", () => {
 
     const admin = await getAdmin();
     expect(admin.externalId).toBe("orphan-admin-id");
-    expect((await testDb.select().from(user)).length).toBe(1);
+    expect((await testDb.select().from(user))).toHaveLength(1);
     expect(await getPasswordHash("orphan-admin-id")).toBeTruthy();
   });
 });

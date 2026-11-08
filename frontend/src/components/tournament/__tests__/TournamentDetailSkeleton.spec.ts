@@ -53,13 +53,13 @@ describe('TournamentTabSkeleton', () => {
   it('gives each tab its own shape', () => {
     // Match cards, not list rows: the two do not stack the same way.
     expect(mountTab('matches').find('.bg-slate-800').exists()).toBe(true)
-    expect(mountTab('participants').findAll('.rounded-xl').length).toBe(6)
-    expect(mountTab('standings').findAll('.rounded-2xl').length).toBe(2)
-    expect(mountTab('bracket').findAll('.min-w-32').length).toBe(3)
+    expect(mountTab('participants').findAll('.rounded-xl')).toHaveLength(6)
+    expect(mountTab('standings').findAll('.rounded-2xl')).toHaveLength(2)
+    expect(mountTab('bracket').findAll('.min-w-32')).toHaveLength(3)
   })
 
   it('falls back to standings while the view resolves its default tab', () => {
-    expect(mountTab(undefined).findAll('.rounded-2xl').length).toBe(2)
+    expect(mountTab(undefined).findAll('.rounded-2xl')).toHaveLength(2)
   })
 
   it('widens the grid on desktop', () => {

@@ -54,7 +54,7 @@ describe('MatchList — background refresh', () => {
     // The reader's place is kept: the range already on screen is refetched from the
     // top, never reset to a first page of `pageSize`.
     expect(list.mock.calls[1][0]).toMatchObject({ offset: 0, limit: 2 })
-    expect(wrapper.findAllComponents({ name: 'MatchCard' }).length).toBe(3)
+    expect(wrapper.findAllComponents({ name: 'MatchCard' })).toHaveLength(3)
   })
 
   it('does nothing when the list is still empty', async () => {
