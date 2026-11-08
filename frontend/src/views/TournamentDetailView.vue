@@ -277,8 +277,10 @@ const visibleTabs = computed(() => {
   if (mode === 'championship') tabs.push({ value: 'standings', label: t('tournamentDetailView.tabs.standings') })
   if (mode === 'bracket') tabs.push({ value: 'bracket', label: t('tournamentDetailView.tabs.bracket') })
   if (mode === 'ranked') tabs.push({ value: 'standings', label: t('tournamentDetailView.tabs.standings') })
-  tabs.push({ value: 'matches', label: t('tournamentDetailView.tabs.matches') })
-  tabs.push({ value: 'stats', label: t('tournamentDetailView.tabs.stats') })
+  tabs.push(
+    { value: 'matches', label: t('tournamentDetailView.tabs.matches') },
+    { value: 'stats', label: t('tournamentDetailView.tabs.stats') },
+  )
   return tabs
 })
 

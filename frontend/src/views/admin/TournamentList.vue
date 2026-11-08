@@ -104,6 +104,7 @@ import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/a
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useTournamentService } from '@/composables/tournament/tournament.service'
 import type { TournamentResponse } from '@/composables/tournament/tournament.api'
+import type { TournamentStatus } from '@skol-arena/shared'
 
 const { t } = useI18n()
 const confirm = useConfirmDialog()
@@ -118,8 +119,8 @@ const {
   deleteTournament,
 } = useTournamentService()
 
-const selectedStatus = ref()
-const selectedMode = ref()
+const selectedStatus = ref<TournamentStatus | undefined>()
+const selectedMode = ref<'championship' | 'bracket' | undefined>()
 
 const columns: TableColumn<TournamentResponse>[] = [
   { accessorKey: 'name', header: sortableHeader(t('common.name')) },

@@ -117,6 +117,7 @@ function enterDelay(index: number): string {
     margin 0.28s ease-in;
   overflow: hidden;
   max-height: 12rem;
+  position: relative;
 }
 
 .notif-leave-to {
@@ -125,10 +126,6 @@ function enterDelay(index: number): string {
   max-height: 0;
   margin-top: 0 !important;
   margin-bottom: 0 !important;
-}
-
-.notif-leave-active {
-  position: relative;
 }
 
 .notif-move {

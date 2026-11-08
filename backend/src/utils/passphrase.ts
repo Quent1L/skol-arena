@@ -1,4 +1,4 @@
-import { randomInt } from "crypto";
+import { randomInt } from "node:crypto";
 
 const WORDS = [
   "ace", "air", "arc", "arm", "art", "ash", "axe", "bay", "bed", "bow",

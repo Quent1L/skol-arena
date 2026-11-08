@@ -24,7 +24,7 @@ class TeamService {
    */
   private async getTeamInTournament(teamId: string, tournamentId: string) {
     const team = await teamRepository.getById(teamId);
-    if (!team || team.tournamentId !== tournamentId) {
+    if (team?.tournamentId !== tournamentId) {
       throw new NotFoundError(ErrorCode.TEAM_NOT_FOUND);
     }
     return team;

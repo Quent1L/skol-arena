@@ -7,8 +7,8 @@ import { unaccent } from "@electric-sql/pglite/contrib/unaccent";
 import { drizzle } from "drizzle-orm/pglite";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../db/schema";
-import { readdirSync, readFileSync } from "fs";
-import { join } from "path";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { setTestDatabase, resetDatabase } from "./database";
 
 let testDbInstance: PgliteDatabase<typeof schema> | null = null;

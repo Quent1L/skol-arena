@@ -306,8 +306,8 @@ async function getSpec(version: ApiVersion): Promise<unknown> {
 export function mountApiDocs(app: AppHonoOptional): void {
   if (!docsEnabled()) return;
 
-  app.get(`${PUBLIC_PREFIX}/openapi/:version{.+\\.json}`, async (c) => {
-    const version = normalizeVersion(c.req.param("version").replace(/\.json$/, ""));
+  app.get(PUBLIC_PREFIX + String.raw`/openapi/:version{.+\.json}`, async (c) => {
+    const version = normalizeVersion((c.req.param("version") ?? "").replace(/\.json$/, ""));
     if (!version) return c.json({ error: { code: "NOT_FOUND", message: "Unknown API version" } }, 404);
     return c.json(await getSpec(version));
   });

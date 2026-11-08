@@ -293,8 +293,7 @@ function onOperatorChange(operator: string) {
   if (isListOperator.value !== wasList) node.value.value = isListOperator.value ? [] : ''
 }
 
-function onTextValue(val: string | undefined) {
-  const value = val ?? ''
+function onTextValue(value = '') {
   node.value.value = isListOperator.value
     ? value
         .split(',')

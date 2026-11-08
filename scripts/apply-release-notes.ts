@@ -53,7 +53,7 @@ const HTML_IMG_TARGET = /<img\b[^>]*?\bsrc=["']([^"']+)["']/g
 function readFrontmatter(raw: string): Record<string, string> {
   const fields: Record<string, string> = {}
   for (const line of raw.split(/\r?\n/)) {
-    const match = /^([A-Za-z]+):\s*(.*)$/.exec(line)
+    const match = /^([A-Za-z]+):[ \t]*(.*)$/.exec(line)
     if (match) fields[match[1]] = match[2].trim().replace(/^(["'])(.*)\1$/, '$2')
   }
   return fields
@@ -88,7 +88,7 @@ function isRelative(target: string): boolean {
 
 function rebase(target: string, fromDir: string, toDir: string): string {
   if (!isRelative(target)) return target
-  return relative(toDir, resolve(fromDir, target)).split('\\').join('/')
+  return relative(toDir, resolve(fromDir, target)).replaceAll('\\', '/')
 }
 
 /**
@@ -147,7 +147,7 @@ function listFragments(dir: string): string[] {
   if (!existsSync(dir)) return []
   return readdirSync(dir)
     .filter((name) => name.endsWith('.md') && name !== 'README.md' && !name.startsWith('_'))
-    .sort()
+    .sort((a, b) => a.localeCompare(b, 'en'))
 }
 
 /**

@@ -14,7 +14,7 @@ export function isDateString(str: string) {
  * @returns converted data
  */
 function parseDateString(value: string): Date {
-  const localMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  const localMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
   if (localMatch) {
     return new Date(+localMatch[1], +localMatch[2] - 1, +localMatch[3])
   }

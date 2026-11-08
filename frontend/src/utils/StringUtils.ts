@@ -29,7 +29,7 @@ const AVATAR_COLORS = [
 ]
 
 export function getAvatarBg(name: string): string {
-  const idx = name.charCodeAt(0) % AVATAR_COLORS.length
+  const idx = (name.codePointAt(0) ?? 0) % AVATAR_COLORS.length
   return AVATAR_COLORS[idx]
 }
 

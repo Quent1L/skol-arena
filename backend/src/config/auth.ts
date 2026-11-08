@@ -151,10 +151,10 @@ plugins.push({
       },
     ],
   },
-});
+},
 
 // Plugin to consume invitation codes during sign-up
-plugins.push({
+{
   id: "invitation-code-consumer",
   hooks: {
     after: [

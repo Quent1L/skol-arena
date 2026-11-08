@@ -210,7 +210,8 @@ function canonical(value: unknown): string {
     .filter(([, v]) => v !== undefined)
     .sort(([l], [r]) => compareKeys(l, r));
 
-  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;
+  const members = entries.map(([k, v]) => JSON.stringify(k) + ":" + canonical(v));
+  return `{${members.join(",")}}`;
 }
 
 function compareKeys(l: string, r: string): number {

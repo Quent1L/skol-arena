@@ -266,7 +266,7 @@ onMounted(async () => {
 
   offCreated.value = onWsEvent('team_created', (data) => {
     const team = data as ClientTeam
-    if (!teams.value.find((t) => t.id === team.id)) {
+    if (!teams.value.some((t) => t.id === team.id)) {
       teams.value.push(team)
     }
   })

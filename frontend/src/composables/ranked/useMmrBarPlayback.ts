@@ -112,21 +112,25 @@ export function useMmrBarPlayback(
   }
 
   function buildSteps(): SequenceStep[] {
-    const steps: SequenceStep[] = [{ delay: timing.entry, run: () => startSegment(0) }]
-    getSegments().forEach((segment, index) => {
-      if (segment.isFinal) return
-      steps.push({
-        delay: timing.segment,
-        run: () => {
-          completed.value = true
+    const crossings = getSegments().flatMap((segment, index): SequenceStep[] => {
+      if (segment.isFinal) return []
+      return [
+        {
+          delay: timing.segment,
+          run: () => {
+            completed.value = true
+          },
         },
-      })
-      steps.push({ delay: timing.flash, run: () => hooks.onTierCleared?.(index + 1) })
-      steps.push({ delay: timing.swap, run: () => startSegment(index + 1) })
+        { delay: timing.flash, run: () => hooks.onTierCleared?.(index + 1) },
+        { delay: timing.swap, run: () => startSegment(index + 1) },
+      ]
     })
-    steps.push({ delay: timing.segment, run: () => hooks.onSettled?.() })
-    steps.push({ delay: timing.settle, run: () => hooks.onDone?.() })
-    return steps
+    return [
+      { delay: timing.entry, run: () => startSegment(0) },
+      ...crossings,
+      { delay: timing.segment, run: () => hooks.onSettled?.() },
+      { delay: timing.settle, run: () => hooks.onDone?.() },
+    ]
   }
 
   function play(): void {

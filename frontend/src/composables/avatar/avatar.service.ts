@@ -64,21 +64,21 @@ function avatarSrcset(userId: string, version: string): string {
   return AVATAR_SIZES.map((s) => `${avatarUrl(userId, version, s)} ${s}w`).join(', ')
 }
 
+/** The current version of a player's avatar, null when they have none or it is not known yet. */
+function versionFor(id: string): string | null {
+  request(id)
+  return known.get(id) ?? null
+}
+
+/** Records a version learnt elsewhere (own profile, after an upload or a removal). */
+function remember(id: string, version: string | null): void {
+  known.set(id, version)
+}
+
 /**
  * Avatar state shared across the app.
  */
 export function useAvatarService() {
-  /** The current version of a player's avatar, null when they have none or it is not known yet. */
-  function versionFor(id: string): string | null {
-    request(id)
-    return known.get(id) ?? null
-  }
-
-  /** Records a version learnt elsewhere (own profile, after an upload or a removal). */
-  function remember(id: string, version: string | null): void {
-    known.set(id, version)
-  }
-
   async function upload(userId: string, image: Blob): Promise<string> {
     const { avatarVersion } = await (await api()).upload(image)
     remember(userId, avatarVersion)

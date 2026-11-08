@@ -50,7 +50,7 @@ export function careerPeak(
       return season.peakMmr > current.peakMmr ? season : current
     }
     return endedAt(season) < endedAt(current) ? season : current
-  })
+  }, scoped[0])
 
   return {
     mmr: best.peakMmr,

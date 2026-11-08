@@ -20,7 +20,8 @@ export async function errorHandler(err: Error, c: Context) {
       // has to name the same caller the rate limiter counted. See TRUSTED_PROXY_HOPS.
       ip: clientIpFor(c) ?? UNKNOWN_CLIENT_IP,
     };
-  } catch (_e) {
+  } catch (requestInfoError) {
+    logger.warn({ err: requestInfoError }, "[ErrorHandler] could not read the request for logging");
     requestInfo = {
       method: "UNKNOWN",
       url: "UNKNOWN",

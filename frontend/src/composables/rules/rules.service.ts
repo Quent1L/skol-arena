@@ -18,6 +18,14 @@ function withStoredDates(rule: ClientRule): ClientRule {
   return { ...rule, conditions: restoreDateValues(rule.conditions) }
 }
 
+async function getBadgeCount(id: string): Promise<number> {
+  try {
+    return await rulesApi.getBadgeCount(id)
+  } catch {
+    return 0
+  }
+}
+
 export function useRulesService() {
   const { t } = useI18n()
   const rules = ref<ClientRule[]>([])
@@ -118,14 +126,6 @@ export function useRulesService() {
       return false
     } finally {
       loading.value = false
-    }
-  }
-
-  async function getBadgeCount(id: string): Promise<number> {
-    try {
-      return await rulesApi.getBadgeCount(id)
-    } catch {
-      return 0
     }
   }
 

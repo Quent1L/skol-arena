@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ site }) => {
   const posts = await getPosts()
 
   const line = (title: string, href: string, note?: string) =>
-    `- [${title}](${href})${note ? `: ${note}` : ''}`
+    `- [${title}](${href})` + (note ? `: ${note}` : '')
 
   const body = `# ${SITE.name}
 

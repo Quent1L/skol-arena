@@ -13,7 +13,8 @@ import type {
 
 /** `%term%` with the LIKE wildcards escaped, so a typed `_` or `%` matches literally. */
 function containsPattern(term: string): string {
-  return `%${term.replace(/[\\%_]/g, String.raw`\$&`)}%`;
+  const escaped = term.replace(/[\\%_]/g, String.raw`\$&`);
+  return `%${escaped}%`;
 }
 
 export class UserRepository {

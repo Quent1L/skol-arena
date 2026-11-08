@@ -275,7 +275,7 @@ export class PlayerStatsService {
 
     const scope = visibleOrganizationIds === null
       ? "all"
-      : Bun.hash([...visibleOrganizationIds].sort().join(",")).toString(36);
+      : Bun.hash([...visibleOrganizationIds].sort(compareCodeUnits).join(",")).toString(36);
     return `stats:global:${scope}`;
   }
 

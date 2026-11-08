@@ -100,7 +100,7 @@ export class WebSocketService {
       logger.debug(`[WS] Message sent successfully to user ${userId}`);
       return;
     }
-    if (typeof ws.readyState === "undefined") {
+    if (ws.readyState === undefined) {
       try {
         ws.send(message);
         logger.debug(`[WS] Message sent successfully to user ${userId} (no readyState)`);

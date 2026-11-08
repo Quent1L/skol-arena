@@ -305,7 +305,8 @@ export class RulesEvaluationService {
       );
       firings.push({ ...draft(badgeRule), result: awarded ? "awarded" : "already_held" });
       if (!awarded) continue;
-      (output.badges ??= []).push({
+      output.badges ??= [];
+      output.badges.push({
         badgeId: awarded.id,
         ruleId: badgeRule.id,
         icon: badge.icon,

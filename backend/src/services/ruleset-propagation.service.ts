@@ -73,7 +73,7 @@ export class RulesetPropagationService {
       // Re-checked server-side: the dialog the ids came from may have been open
       // while the competition finished or changed discipline.
       const context = await tournamentRulesetRepository.getSnapshotContext(tournamentId);
-      if (!context || context.disciplineId !== disciplineId) {
+      if (context?.disciplineId !== disciplineId) {
         throw new BadRequestError(ErrorCode.DISCIPLINE_MISMATCH);
       }
       if (context.status === "finished") {

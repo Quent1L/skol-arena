@@ -66,7 +66,7 @@ type PlayerCareerMmrStatsRawRow = {
   matches_played: number;
 };
 
-function legacyOutcome(delta: number): 'win' | 'loss' | 'draw' {
+function legacyOutcome(delta: number): MmrHistoryOutcome {
   if (delta > 0) return 'win';
   return delta < 0 ? 'loss' : 'draw';
 }

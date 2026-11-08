@@ -138,7 +138,8 @@ function tierPath(
   const between = [...allTiers]
     .sort((a, b) => a.level - b.level)
     .filter((tier) => tier.level > lo && tier.level < hi)
-  const ordered = after.level > before.level ? between : between.reverse()
+  if (after.level <= before.level) between.reverse()
+  const ordered = between
   return [before, ...ordered.slice(0, maxIntermediate), after]
 }
 

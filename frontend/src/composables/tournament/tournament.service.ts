@@ -40,6 +40,17 @@ function getAvailableStatusTransitions(currentStatus: TournamentStatus): Tournam
 /**
  * Tournament service - Business logic and state management
  */
+/**
+ * What may still be edited, straight from the backend.
+ *
+ * Deliberately not derived locally: the list used to be duplicated here and in
+ * the form, both disagreed with what the API accepted, and fields were shown
+ * disabled that the server would happily have taken.
+ */
+async function getEditability(id: string): Promise<TournamentEditability> {
+  return await tournamentApi.getEditability(id)
+}
+
 export function useTournamentService() {
   const { currentUser, isSuperAdmin } = useAuth()
   const { t } = useI18n()
@@ -66,7 +77,7 @@ export function useTournamentService() {
 
     if (isSuperAdmin.value) return true
 
-    // TODO: Implement when tournament admins are available in BaseTournament
+    // Tournament admins are not exposed on BaseTournament yet, so only super admins pass.
     // Check if user is in the tournament admins
     // return tournament.admins?.some((admin) => admin.user.id === currentUser.value?.id) ?? false
 
@@ -82,7 +93,7 @@ export function useTournamentService() {
 
     if (isSuperAdmin.value) return true
 
-    // TODO: allow tournament owner to delete drafts once tournament admins exist.
+    // Tournament owners cannot delete drafts until tournament admins are exposed.
     // For now, only super admin can delete drafts.
     return tournament.status === 'draft'
   }
@@ -95,17 +106,6 @@ export function useTournamentService() {
 
     // After draft, only certain fields can be edited
     return true // Service handles the restriction
-  }
-
-  /**
-   * What may still be edited, straight from the backend.
-   *
-   * Deliberately not derived locally: the list used to be duplicated here and in
-   * the form, both disagreed with what the API accepted, and fields were shown
-   * disabled that the server would happily have taken.
-   */
-  async function getEditability(id: string): Promise<TournamentEditability> {
-    return await tournamentApi.getEditability(id)
   }
 
   /**

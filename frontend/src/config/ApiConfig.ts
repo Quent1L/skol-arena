@@ -53,9 +53,10 @@ http.interceptors.response.use(
     const message = rateLimited
       ? rateLimitMessage(retryAfterFrom({ details: apiError?.details }, error.response?.headers))
       : (apiError?.message ?? error.message)
-    const err = new Error(message, { cause })
-    if (apiError?.details) (err as Error & { details: unknown }).details = apiError.details
-    ;(err as Error & { status?: number }).status = status
+    const err = Object.assign(new Error(message, { cause }), {
+      status,
+      ...(apiError?.details ? { details: apiError.details } : {}),
+    })
     throw err
   },
 )

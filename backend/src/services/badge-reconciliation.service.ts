@@ -250,7 +250,7 @@ export class BadgeReconciliationService {
   /** Reconcile a single badge rule across all ranked seasons (create/update/reactivate). */
   async reconcileRule(ruleId: string, silent = false): Promise<void> {
     const rule = await rulesRepository.getById(ruleId);
-    if (!rule || rule.type !== "badge" || !rule.isActive) return;
+    if (rule?.type !== "badge" || !rule.isActive) return;
 
     const badgeRule = toBadgeRule(rule);
     const engine = this.buildEngine([badgeRule]);
@@ -358,7 +358,7 @@ export class BadgeReconciliationService {
   /** Notify holders then let the FK cascade remove the badges (hard delete of a rule). */
   async notifyHoldersBeforeDelete(ruleId: string): Promise<void> {
     const rule = await rulesRepository.getById(ruleId);
-    if (!rule || rule.type !== "badge") return;
+    if (rule?.type !== "badge") return;
     const label = (rule.action as BadgeAction).label;
     const holders = await rulesRepository.listBadgeHolderPlayerIds(ruleId);
     for (const playerId of holders) {

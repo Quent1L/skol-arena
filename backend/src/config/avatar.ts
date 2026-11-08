@@ -34,8 +34,7 @@ export function avatarStorageDriver(): BlobStorageDriver {
 }
 
 export function avatarStorageDir(): string {
-  const raw = process.env.AVATAR_STORAGE_DIR?.trim();
-  return raw ? raw : DEFAULT_STORAGE_DIR;
+  return process.env.AVATAR_STORAGE_DIR?.trim() || DEFAULT_STORAGE_DIR;
 }
 
 /** Largest upload accepted, in bytes, before any decoding happens. */

@@ -11,7 +11,9 @@ import { translateAuthError } from '@/utils/AuthErrors'
 import { i18n } from '@/i18n'
 import { useAvatarService } from '@/composables/avatar/avatar.service'
 
-const sessionData = ref()
+type SessionResult = Awaited<ReturnType<typeof authClient.getSession>>
+type SessionState = { data: NonNullable<SessionResult['data']> | { user: null; session: null } | null }
+const sessionData = ref<SessionState>()
 const appUserData = ref<UserResponse | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)

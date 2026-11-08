@@ -281,7 +281,7 @@ app.all(`${PUBLIC_PREFIX}/*`, apiNotFound);
 const frontendBuildPath = process.env.FRONTEND_BUILD_PATH;
 let _indexHtmlCache: string | null = null;
 /** Everything vite emits under /assets/ carries a content hash, so it can never go stale. */
-const HASHED_ASSET_PATH = /^\/assets\//;
+const isHashedAssetPath = (path: string): boolean => path.startsWith("/assets/");
 
 if (frontendBuildPath) {
   app.use("/*", spaSecurityHeaders);
@@ -296,7 +296,7 @@ if (frontendBuildPath) {
         // load, otherwise a client can stay pinned to a deployment it has already replaced.
         c.header(
           "Cache-Control",
-          HASHED_ASSET_PATH.test(c.req.path)
+          isHashedAssetPath(c.req.path)
             ? "public, max-age=31536000, immutable"
             : "no-cache"
         );
@@ -309,7 +309,7 @@ if (frontendBuildPath) {
   // where it expects a font or a script: fonts then fail to decode and render as tofu, and
   // scripts surface as "Unexpected token '<'". Fail honestly instead.
   app.use("/*", async (c, next) => {
-    if (HASHED_ASSET_PATH.test(c.req.path)) return c.text("Not found", 404);
+    if (isHashedAssetPath(c.req.path)) return c.text("Not found", 404);
     return next();
   });
 

@@ -297,7 +297,7 @@ function readSourceBox(): Box {
   const host = document.querySelector('[data-brand-logo]')
   const logo = host?.querySelector('svg')
   if (host && logo) {
-    sourceVariant.value = (host.getAttribute('data-brand-variant') as LogoVariant) ?? 'full'
+    sourceVariant.value = ((host as HTMLElement).dataset.brandVariant as LogoVariant | undefined) ?? 'full'
     const rect = logo.getBoundingClientRect()
     return { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
   }
@@ -370,7 +370,7 @@ watch(
     window.addEventListener('keydown', onKeydown)
     // The countdown starts with the animation, not with the trigger: waiting on
     // the font must not eat into the time the thing is on screen.
-    void measure().then(() => {
+    measure().then(() => {
       const duration = isBoth.value ? AUTO_DISMISS_BOTH_MS : AUTO_DISMISS_MS
       dismissTimer = setTimeout(() => emit('close'), duration)
     })
