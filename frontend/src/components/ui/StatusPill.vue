@@ -1,8 +1,8 @@
 <template>
   <Transition name="pill-fade">
-    <div v-if="visible" class="status-pill" role="status" aria-live="polite">
+    <output v-if="visible" class="status-pill" aria-live="polite">
       <slot />
-    </div>
+    </output>
   </Transition>
 </template>
 

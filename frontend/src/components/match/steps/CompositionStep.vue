@@ -32,24 +32,18 @@
         />
       </div>
 
-      <p
-        v-if="armedKind"
-        class="flex items-center gap-2 text-sm text-primary"
-        role="status"
-        data-testid="compose-duel-hint"
-      >
+      <output v-if="armedKind" class="flex items-center gap-2 text-sm text-primary" data-testid="compose-duel-hint">
         <i class="fa fa-wand-magic-sparkles" />
         {{ t('compositionStep.duelHint') }}
-      </p>
-      <p
+      </output>
+      <output
         v-else-if="balanceSettled"
         class="flex items-center gap-2 text-sm text-slate-500"
-        role="status"
         data-testid="compose-balance-settled"
       >
         <i class="fa fa-circle-check text-green-600" />
         {{ t('compositionStep.balancedOnly') }}
-      </p>
+      </output>
       <p v-else class="text-sm text-slate-500">{{ t('compositionStep.instruction') }}</p>
     </div>
 

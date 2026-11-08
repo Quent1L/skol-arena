@@ -150,6 +150,7 @@
       <input
         v-model="linkUrl"
         type="url"
+        :aria-label="t('richTextEditor.link.placeholder')"
         :placeholder="t('richTextEditor.link.placeholder')"
         class="image-url-input"
         @keydown.enter.prevent="insertLink"
@@ -169,6 +170,7 @@
       <input
         v-model="imageUrl"
         type="url"
+        :aria-label="t('richTextEditor.image.placeholder')"
         :placeholder="t('richTextEditor.image.placeholder')"
         class="image-url-input"
         @keydown.enter.prevent="insertImage"

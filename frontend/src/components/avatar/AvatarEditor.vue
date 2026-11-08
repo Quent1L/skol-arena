@@ -33,6 +33,7 @@
     <input
       ref="fileInput"
       type="file"
+      :aria-label="t('avatarEditor.hint', { max: maxLabel })"
       class="hidden"
       :accept="AVATAR_ACCEPTED_MIME.join(',')"
       data-testid="avatar-file-input"

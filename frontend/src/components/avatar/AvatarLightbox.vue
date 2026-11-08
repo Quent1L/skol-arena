@@ -43,15 +43,14 @@
           <template v-else>
             <!-- Held back a moment: a cached or fast image should just appear, without a
                  spinner flashing in front of it. -->
-            <div
+            <output
               v-if="spinnerVisible"
               class="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl bg-slate-800 text-white"
-              role="status"
               data-testid="avatar-lightbox-loading"
             >
               <i class="fa fa-spinner fa-spin text-3xl" />
               <span class="text-sm text-slate-300">{{ t('avatarLightbox.loading') }}</span>
-            </div>
+            </output>
             <img
               :key="attempt"
               :src="photo.src"
