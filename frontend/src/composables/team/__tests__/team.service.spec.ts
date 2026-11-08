@@ -1,4 +1,4 @@
-import { describe, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { describeServiceContract } from '@/test-support/service-contract'
 
 vi.mock('vue-i18n', async () => (await import('@/test-support/mock-modules')).i18nEchoMock())
@@ -57,4 +57,8 @@ describe('useTeamService', () => {
     ],
     toastAdd,
   )
+
+  it('starts idle, with no request in flight', () => {
+    expect(useTeamService().loading?.value ?? false).toBe(false)
+  })
 })
