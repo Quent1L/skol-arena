@@ -2,7 +2,7 @@
 #
 #   docker compose -f docker-compose.demo.yml up
 #
-# Then sign in at http://localhost:3000/login?native=true — the credentials are in
+# Then sign in at http://localhost:3000/login — the credentials are in
 # the logs (grep "DEMO CREDENTIALS"). Start over with `down -v`.
 #
 # For trying the product only: every demo account shares a published password.
@@ -23,7 +23,7 @@ services:
       retries: 10
 
   app:
-    image: quent1l/skol-arena:latest
+    image: skill-arena:beta-20
     depends_on:
       db:
         condition: service_healthy

@@ -7,6 +7,21 @@ description: Run Skol Arena on your own infrastructure with Docker.
 Skol Arena ships as a single Docker image containing the API, the built frontend,
 and automatic database migrations. All you need is a PostgreSQL database.
 
+## Just want to try it?
+
+Two commands, no configuration. This starts the app and a Postgres database already
+filled with players, disciplines, competitions and matches:
+
+```bash
+curl -O https://raw.githubusercontent.com/Quent1L/skol-arena/main/docker-compose.demo.yml
+docker compose -f docker-compose.demo.yml up
+```
+
+Open `http://localhost:3000/login`. The super admin is `alex@skol.demo`;
+the password is printed in the logs (`docker compose -f docker-compose.demo.yml logs app | grep "DEMO CREDENTIALS"`).
+Wipe everything with `down -v`. This is for testing only — see
+[Demo data](/docs/deployment#demo-data) for what is loaded and how it works.
+
 ## Quick start
 
 ```bash
@@ -31,6 +46,8 @@ and migrations, so a single container serves both the API and the web app.
 
 ## Where to go next
 
+- **[Demo data](/docs/deployment#demo-data)** — try the app in two minutes with a
+  pre-filled instance (`INIT_DEMO_DATA`).
 - **[Environment Variables](/docs/environment-variables)** — every variable the app
   reads, what it configures, and whether it's required.
 - **[Deployment](/docs/deployment)** — the full Docker Compose setup (app +

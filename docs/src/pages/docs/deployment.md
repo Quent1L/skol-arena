@@ -177,7 +177,7 @@ The repository ships a ready-made Compose file for it:
 docker compose -f docker-compose.demo.yml up
 ```
 
-Then open `http://localhost:3000/login?native=true` and sign in with the credentials
+Then open `http://localhost:3000/login` and sign in with the credentials
 printed in the logs:
 
 ```bash
