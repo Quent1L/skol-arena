@@ -380,6 +380,10 @@ async function createRankedSeason(ctx: DemoContext, pool: SeededDiscipline): Pro
     mode: "ranked",
     // No confirmation step: a ranked result counts the moment it is reported.
     validationMode: "none",
+    // Ladder games are won or lost, nobody counts racks: the winner is all that is entered.
+    scoreEnabled: false,
+    minScore: null,
+    maxScore: null,
     startDate: dateStr(daysAgo(ctx, 60)),
     endDate: dateStr(daysAgo(ctx, -30)),
     createdAt: daysAgo(ctx, 63),
@@ -433,7 +437,11 @@ async function seedRankedSeason(ctx: DemoContext, pool: SeededDiscipline): Promi
     matchIds.push(
       await insertMatch({
         tournamentId: seasonId,
-        sides: oneVsOne(playerA, playerB, result),
+        sides: [
+          { playerIds: [playerA], score: null },
+          { playerIds: [playerB], score: null },
+        ],
+        winnerSide: result.scoreA > result.scoreB ? "A" : "B",
         outcomeTypeId: result.outcomeTypeId,
         outcomeReasonId: result.outcomeReasonId,
         playedAt,
