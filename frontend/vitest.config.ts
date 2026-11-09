@@ -21,7 +21,7 @@ export default mergeConfig(
           '**/*.spec.ts',
           '**/*.d.ts',
           '**/types/**',
-          '**/config/**',
+          'src/config/**',
           'src/test-support/**',
           'src/views/**',
           'src/App.vue',
