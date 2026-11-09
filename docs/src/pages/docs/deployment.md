@@ -169,7 +169,7 @@ that has been playing for a few months:
   season with its ladder and tiers, a cup bracket waiting for its final, a table
   football league played by fixed teams of two, and a darts open still taking
   registrations;
-- **close to 300 matches**, a few of them waiting for your confirmation and one disputed.
+- **close to 400 matches**, a few of them waiting for your confirmation and one disputed.
 
 The repository ships a ready-made Compose file for it:
 
