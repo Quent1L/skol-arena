@@ -397,7 +397,7 @@ async function createRankedSeason(ctx: DemoContext, pool: SeededDiscipline): Pro
 /** Ranked pairings, oldest first, then a few for the admin inside the last days. */
 function rankedSchedule(ctx: DemoContext): { playerA: string; playerB: string; playedAt: Date }[] {
   const ids = DEMO_PEOPLE.map((p) => idOf(ctx, p.key));
-  const pairs = buildPairings(ctx.random, ids, 2).slice(0, 110);
+  const pairs = buildPairings(ctx.random, ids, 2).slice(0, 196);
   const schedule = pairs.map(([playerA, playerB], i) => ({
     playerA,
     playerB,
