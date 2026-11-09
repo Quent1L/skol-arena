@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, mock } from "bun:test";
 import type { Pool } from "pg";
 
