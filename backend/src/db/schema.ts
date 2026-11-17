@@ -1389,6 +1389,8 @@ export const announcements = pgTable(
     }),
     inFeed: boolean("in_feed").notNull().default(true),
     asPopup: boolean("as_popup").notNull().default(false),
+    // Past this instant the pop-up stops showing; the feed copies stay as history.
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
     createdBy: uuid("created_by").references(() => appUsers.id, {
       onDelete: "set null",
     }),

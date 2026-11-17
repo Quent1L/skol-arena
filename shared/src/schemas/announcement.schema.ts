@@ -25,8 +25,17 @@ export const createAnnouncementSchema = z
     inFeed: z.boolean(),
     /** Shown once as a pop-up: on opening the tournament, or the app for `all`. */
     asPopup: z.boolean(),
+    /** Past it, the pop-up stops showing. Null: no end. */
+    expiresAt: z.coerce.date().nullable().optional(),
   })
   .superRefine((value, ctx) => {
+    if (value.expiresAt && value.expiresAt.getTime() <= Date.now()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["expiresAt"],
+        message: translateValidation("validation.announcementExpiryPast"),
+      });
+    }
     if (value.audience === "tournament" && !value.tournamentId) {
       ctx.addIssue({
         code: "custom",
@@ -62,6 +71,7 @@ export const announcementSchema = z
     tournamentName: z.string().nullable(),
     inFeed: z.boolean(),
     asPopup: z.boolean(),
+    expiresAt: z.iso.datetime().nullable(),
     createdBy: z.string().nullable(),
     authorName: z.string().nullable(),
     /** How many players received it in their feed. */

@@ -46,8 +46,8 @@ async function createTournament(createdBy: string) {
       teamMode: "flex",
       minTeamSize: 1,
       maxTeamSize: 2,
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 7 * 86_400_000),
+      startDate: new Date().toISOString().slice(0, 10),
+      endDate: new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10),
       status: "ongoing",
       createdBy,
     })
@@ -166,6 +166,27 @@ describe("Announcements (integration)", () => {
       expect((await announcementService.getPendingPopups(alice)).map((a) => a.title)).toEqual(["Global"]);
       expect((await announcementService.getPendingPopups(alice, tournamentId)).map((a) => a.title)).toEqual(["Local"]);
       expect(await announcementService.getPendingPopups(outsider, tournamentId)).toEqual([]);
+    });
+
+    it("stops showing a pop-up past its end date, but leaves it in the feed", async () => {
+      const tomorrow = new Date(Date.now() + 86_400_000);
+      await announcementService.create(superAdmin, input({ title: "Running", expiresAt: tomorrow }));
+      const { id } = await announcementService.create(superAdmin, input({ title: "Ending", expiresAt: tomorrow }));
+      await testDb
+        .update(announcements)
+        .set({ expiresAt: new Date(Date.now() - 1000) })
+        .where(eq(announcements.id, id));
+
+      expect((await announcementService.getPendingPopups(alice)).map((a) => a.title)).toEqual(["Running"]);
+      expect(await feedOf(alice)).toHaveLength(2);
+      const listed = await announcementService.list(superAdmin);
+      expect(listed.find((a) => a.id === id)?.expiresAt).not.toBeNull();
+    });
+
+    it("refuses an end date already past", async () => {
+      const { createAnnouncementSchema } = await import("@skol-arena/shared");
+      const parsed = createAnnouncementSchema.safeParse(input({ expiresAt: new Date(Date.now() - 1000) }));
+      expect(parsed.success).toBe(false);
     });
 
     it("dismissing a pop-up hides it and marks its feed copy read", async () => {

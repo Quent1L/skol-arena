@@ -2773,7 +2773,8 @@
     "variantRequired": "Au moins une variante est requise",
     "announcementBodyMax": "Le message ne peut pas dépasser 2000 caractères",
     "announcementTournamentRequired": "Choisis le tournoi concerné",
-    "announcementChannelRequired": "Choisis au moins un mode de diffusion"
+    "announcementChannelRequired": "Choisis au moins un mode de diffusion",
+    "announcementExpiryPast": "La date de fin doit être dans le futur"
   },
   "rulesFacts": {
     "playerId": "Joueur concerné",
@@ -2860,7 +2861,10 @@
     "asPopupDescriptionApp": "Affichée une fois, à la prochaine ouverture de l'appli par chaque joueur",
     "asPopupDescriptionTournament": "Affichée une fois, à la prochaine ouverture du tournoi par chaque joueur",
     "submit": "Envoyer",
-    "published": "Annonce envoyée"
+    "published": "Annonce envoyée",
+    "expiresAtLabel": "Date de fin (facultatif)",
+    "expiresAtHelp": "Après ce jour, la pop-up ne s'affiche plus",
+    "expiresAtClear": "Retirer la date de fin"
   },
   "announcementList": {
     "empty": "Aucune annonce pour le moment",
@@ -2869,7 +2873,9 @@
     "inFeed": "Notifiés : {count}",
     "asPopup": "Pop-up vue : {count}",
     "deleteTitle": "Supprimer l'annonce",
-    "deleteMessage": "Supprimer « {title} » ? Sa pop-up ne s'affichera plus et elle disparaîtra des notifications de tous les joueurs."
+    "deleteMessage": "Supprimer « {title} » ? Sa pop-up ne s'affichera plus et elle disparaîtra des notifications de tous les joueurs.",
+    "until": "Jusqu'au {date}",
+    "expired": "Terminée"
   },
   "announcementPopup": {
     "kicker": "Annonce",

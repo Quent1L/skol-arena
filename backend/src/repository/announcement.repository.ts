@@ -19,6 +19,7 @@ export interface NewAnnouncement {
   tournamentId: string | null;
   inFeed: boolean;
   asPopup: boolean;
+  expiresAt: Date | null;
   createdBy: string;
 }
 
@@ -115,6 +116,7 @@ export const announcementRepository = {
         and(
           eq(announcements.asPopup, true),
           isNull(announcementViews.userId),
+          or(isNull(announcements.expiresAt), sql`${announcements.expiresAt} > now()`),
           or(isNull(announcements.createdBy), sql`${announcements.createdBy} <> ${userId}`),
           scope,
         ),

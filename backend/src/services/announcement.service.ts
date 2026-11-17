@@ -71,6 +71,7 @@ function toResponse(row: AnnouncementListRow): Announcement {
     tournamentName: row.tournamentName,
     inFeed: row.inFeed,
     asPopup: row.asPopup,
+    expiresAt: row.expiresAt?.toISOString() ?? null,
     createdBy: row.createdBy,
     authorName: row.authorName,
     recipientCount: row.recipientCount,
@@ -106,6 +107,7 @@ export const announcementService = {
       tournamentId,
       inFeed: input.inFeed,
       asPopup: input.asPopup,
+      expiresAt: input.expiresAt ?? null,
       createdBy: userId,
     });
     if (row.inFeed) {

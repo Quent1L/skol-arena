@@ -54,3 +54,10 @@ export function fromCalendarDateTime(value: DateValue | null | undefined): Date 
     getLocalTimeZone(),
   )
 }
+
+/** The last millisecond of a local calendar day: "until that date" includes the whole day. */
+export function endOfLocalDay(value: DateValue | null | undefined): Date | undefined {
+  if (!value) return undefined
+  const next = new CalendarDate(value.year, value.month, value.day).add({ days: 1 })
+  return new Date(next.toDate(getLocalTimeZone()).getTime() - 1)
+}

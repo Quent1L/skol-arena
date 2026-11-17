@@ -39,6 +39,14 @@
           />
           <UBadge v-if="a.inFeed" :label="t('announcementList.inFeed', { count: a.recipientCount })" icon="i-fa7-solid:bell" color="neutral" variant="subtle" size="sm" />
           <UBadge v-if="a.asPopup" :label="t('announcementList.asPopup', { count: a.seenCount })" icon="i-fa7-solid:window-maximize" color="neutral" variant="subtle" size="sm" />
+          <UBadge
+            v-if="a.expiresAt"
+            :label="isExpired(a.expiresAt) ? t('announcementList.expired') : t('announcementList.until', { date: formatDate(a.expiresAt) })"
+            icon="i-fa7-solid:hourglass-end"
+            :color="isExpired(a.expiresAt) ? 'neutral' : 'primary'"
+            variant="subtle"
+            size="sm"
+          />
           <span class="ms-auto">
             {{ formatDate(a.createdAt) }}<template v-if="a.authorName"> · {{ a.authorName }}</template>
           </span>
@@ -56,6 +64,10 @@ defineProps<{ announcements: ClientAnnouncement[]; loading?: boolean }>()
 const emit = defineEmits<{ delete: [announcement: ClientAnnouncement] }>()
 
 const { t, locale } = useI18n()
+
+function isExpired(date: Date) {
+  return new Date(date).getTime() <= Date.now()
+}
 
 function formatDate(date: Date) {
   return new Date(date).toLocaleDateString(locale.value, { day: 'numeric', month: 'short', year: 'numeric' })

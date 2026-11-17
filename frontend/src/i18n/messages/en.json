@@ -2773,7 +2773,8 @@
     "variantRequired": "At least one variant is required",
     "announcementBodyMax": "The message cannot exceed 2000 characters",
     "announcementTournamentRequired": "Choose the tournament to address",
-    "announcementChannelRequired": "Choose at least one way to deliver it"
+    "announcementChannelRequired": "Choose at least one way to deliver it",
+    "announcementExpiryPast": "The end date must be in the future"
   },
   "rulesFacts": {
     "playerId": "Player concerned",
@@ -2860,7 +2861,10 @@
     "asPopupDescriptionApp": "Shown once, the next time each player opens the app",
     "asPopupDescriptionTournament": "Shown once, the next time each player opens the tournament",
     "submit": "Send",
-    "published": "Announcement sent"
+    "published": "Announcement sent",
+    "expiresAtLabel": "End date (optional)",
+    "expiresAtHelp": "After this day, the pop-up no longer shows",
+    "expiresAtClear": "Remove the end date"
   },
   "announcementList": {
     "empty": "No announcement yet",
@@ -2869,7 +2873,9 @@
     "inFeed": "Notified: {count}",
     "asPopup": "Pop-up seen: {count}",
     "deleteTitle": "Delete the announcement",
-    "deleteMessage": "Delete \"{title}\"? Its pop-up will stop showing and it will leave every player's notifications."
+    "deleteMessage": "Delete \"{title}\"? Its pop-up will stop showing and it will leave every player's notifications.",
+    "until": "Until {date}",
+    "expired": "Ended"
   },
   "announcementPopup": {
     "kicker": "Announcement",

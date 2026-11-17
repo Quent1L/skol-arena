@@ -9,4 +9,5 @@ can also address every player of the app from the administration.
 
 Choose how it reaches them: in their notifications, as a pop-up shown once the next time they
 open the tournament (or the app, for an announcement to everyone), or both. Once a player
-closes the pop-up, the notification is marked as read too.
+closes the pop-up, the notification is marked as read too. You can also set an end date:
+after that day, the pop-up no longer shows.

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { CalendarDate } from '@internationalized/date'
 import {
+  endOfLocalDay,
   fromCalendarDate,
   fromCalendarDateTime,
   toCalendarDate,
@@ -43,5 +44,12 @@ describe('calendar-date', () => {
   it('reads a date-only value as local midnight', () => {
     expect(fromCalendarDateTime(new CalendarDate(2026, 10, 8))).toEqual(new Date(2026, 9, 8))
     expect(toCalendarDateTime(null)).toBeUndefined()
+  })
+
+  it('ends a day at its last local millisecond', () => {
+    const end = endOfLocalDay(new CalendarDate(2026, 11, 30))!
+    expect([end.getFullYear(), end.getMonth(), end.getDate()]).toEqual([2026, 10, 30])
+    expect([end.getHours(), end.getMinutes(), end.getSeconds(), end.getMilliseconds()]).toEqual([23, 59, 59, 999])
+    expect(endOfLocalDay(undefined)).toBeUndefined()
   })
 })

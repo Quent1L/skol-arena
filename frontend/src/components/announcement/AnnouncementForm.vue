@@ -53,6 +53,24 @@
       />
     </UFormField>
 
+    <UFormField
+      name="expiresAt"
+      :label="t('announcementForm.expiresAtLabel')"
+      :help="t('announcementForm.expiresAtHelp')"
+    >
+      <div class="flex items-center gap-2">
+        <UInputDate v-model="expiresOn" :min-value="tomorrow" class="w-full" data-testid="announcement-expires" />
+        <UButton
+          v-if="expiresOn"
+          icon="i-fa7-solid:xmark"
+          color="neutral"
+          variant="ghost"
+          :aria-label="t('announcementForm.expiresAtClear')"
+          @click="expiresOn = undefined"
+        />
+      </div>
+    </UFormField>
+
     <UFormField name="asPopup" :label="t('announcementForm.channelsLabel')">
       <div class="space-y-2">
         <UCheckbox
@@ -89,7 +107,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
+import { getLocalTimeZone, today, type CalendarDate } from '@internationalized/date'
+import { endOfLocalDay } from '@/utils/calendar-date'
 import { useI18n } from 'vue-i18n'
 import {
   ANNOUNCEMENT_BODY_MAX,
@@ -131,6 +151,10 @@ const state = reactive<{
   asPopup: true,
 })
 
+/** The last day the pop-up shows, included. Unset: it never expires. */
+const expiresOn = ref<CalendarDate | undefined>()
+const tomorrow = today(getLocalTimeZone()).add({ days: 1 })
+
 const audienceItems = computed(() => [
   { label: t('announcementForm.audienceAll'), value: 'all' },
   { label: t('announcementForm.audienceTournament'), value: 'tournament' },
@@ -150,6 +174,7 @@ function onSubmit() {
     tournamentId: state.audience === 'tournament' ? state.tournamentId : null,
     inFeed: state.inFeed,
     asPopup: state.asPopup,
+    expiresAt: endOfLocalDay(expiresOn.value) ?? null,
   })
 }
 </script>
