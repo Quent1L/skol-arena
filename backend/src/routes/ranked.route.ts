@@ -637,7 +637,7 @@ ranked.post(
   ),
   async (c) => {
     const { ids, surface } = c.req.valid("json");
-    await mmrAnimationEventService.markViewed(ids, surface);
+    await mmrAnimationEventService.markViewed(ids, c.get("appUserId"), surface);
     return c.json({ success: true, markedCount: ids.length });
   },
 );

@@ -23,7 +23,9 @@
     "MATCH_MESSAGE_TITLE": "{{authorName}} wrote on a match",
     "MATCH_MESSAGE_MESSAGE": "💬 New message in the match discussion.",
     "MATCH_RESULT_CORRECTED_TITLE": "{{authorName}} corrected a match result",
-    "MATCH_RESULT_CORRECTED_MESSAGE": "✏️ {{tournamentName}}\n📅 {{matchDate}}\nThe result of this match changed: see the match thread for details."
+    "MATCH_RESULT_CORRECTED_MESSAGE": "✏️ {{tournamentName}}\n📅 {{matchDate}}\nThe result of this match changed: see the match thread for details.",
+    "ANNOUNCEMENT_TITLE": "📢 {{title}}",
+    "ANNOUNCEMENT_MESSAGE": "{{body}}"
   },
   "emails": {
     "password_reset_subject": "Password Reset",

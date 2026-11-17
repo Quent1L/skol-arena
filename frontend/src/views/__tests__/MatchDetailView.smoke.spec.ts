@@ -53,6 +53,11 @@ vi.mock('@/composables/notification/notification.socket', () => ({
   onWsEvent: () => () => undefined,
 }))
 
+const markMatchRead = vi.fn(() => Promise.resolve())
+vi.mock('@/composables/notification/notification.service', () => ({
+  useNotificationService: () => ({ markMatchRead }),
+}))
+
 function makeMatch(status: MatchStatus, over: Partial<ClientMatchDetail> = {}): ClientMatchDetail {
   const side = (position: number, playerId: string, displayName: string) => ({
     position,
@@ -111,6 +116,8 @@ describe('MatchDetailView (render smoke)', () => {
     )
 
     const text = wrapper.text()
+    // Opening the match settles its "added to a match" notification.
+    expect(markMatchRead).toHaveBeenCalledWith('m-1')
     expect(text).toContain('Coupe du Vendredi')
     expect(text).toContain('Toto')
     expect(text).toContain('Titi')

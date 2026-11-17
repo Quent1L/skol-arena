@@ -199,7 +199,9 @@
     "usersTitle": "Users",
     "maintenanceTitle": "Technical maintenance",
     "maintenanceDescription": "Versions, database, avatar storage and environment variables",
-    "maintenanceAvatarWarning": "Some avatars are stored outside the configured storage: a migration is available."
+    "maintenanceAvatarWarning": "Some avatars are stored outside the configured storage: a migration is available.",
+    "announcementsTitle": "Announcements",
+    "announcementsDescription": "Send a message to every player of a tournament or of the app"
   },
   "app": {
     "errorSummary": "Error",
@@ -1040,7 +1042,9 @@
     "MATCH_VALIDATION_TITLE": "{reporterName} reported the match result ({matchFormat})",
     "NO_TEAMMATES": "None",
     "SOME_PLAYER": "A player",
-    "UNKNOWN_PLAYER": "Unknown player"
+    "UNKNOWN_PLAYER": "Unknown player",
+    "ANNOUNCEMENT_TITLE": "📢 {title}",
+    "ANNOUNCEMENT_MESSAGE": "{body}"
   },
   "notificationsView": {
     "deleteAll": "Delete all",
@@ -1635,7 +1639,9 @@
     "signup": "Sign up",
     "tournamentDetail": "Tournament details",
     "tournaments": "Competitive events",
-    "rewinds": "My Rewinds"
+    "rewinds": "My Rewinds",
+    "adminAnnouncements": "Announcements",
+    "adminAnnouncementsBreadcrumb": "Announcements"
   },
   "rulesContent": {
     "noRules": "No rules available."
@@ -2726,7 +2732,8 @@
     "users": "Users",
     "organizations": "Organizations",
     "invitations": "Invitations",
-    "maintenance": "Maintenance"
+    "maintenance": "Maintenance",
+    "announcements": "Announcements"
   },
   "validation": {
     "atLeastOneField": "At least one field must be provided",
@@ -2763,7 +2770,10 @@
     "titleMin2": "Title must be at least 2 characters",
     "titleRequired": "Title is required",
     "variantNotEmpty": "Variant cannot be empty",
-    "variantRequired": "At least one variant is required"
+    "variantRequired": "At least one variant is required",
+    "announcementBodyMax": "The message cannot exceed 2000 characters",
+    "announcementTournamentRequired": "Choose the tournament to address",
+    "announcementChannelRequired": "Choose at least one way to deliver it"
   },
   "rulesFacts": {
     "playerId": "Player concerned",
@@ -2824,12 +2834,56 @@
   "tournamentDetailMenu": {
     "recalculatePoints": "Recalculate points",
     "clearCache": "Clear cache",
-    "leave": "Leave"
+    "leave": "Leave",
+    "announcements": "Announcements"
   },
   "loadErrors": {
     "profile": "Error loading the profile",
     "stats": "Error loading statistics",
     "comparison": "Error loading the comparison",
     "users": "Error loading users"
+  },
+  "announcementForm": {
+    "audienceLabel": "Recipients",
+    "audienceAll": "Every player of the app",
+    "audienceTournament": "The players of a tournament",
+    "tournamentLabel": "Tournament",
+    "tournamentPlaceholder": "Choose a tournament",
+    "titleLabel": "Title",
+    "titlePlaceholder": "e.g. Three new badges to earn!",
+    "bodyLabel": "Message",
+    "bodyPlaceholder": "What do the players need to know?",
+    "channelsLabel": "How to deliver it",
+    "inFeedLabel": "In the notifications",
+    "inFeedDescription": "Added to the bell, and sent to phones with notifications on",
+    "asPopupLabel": "As a pop-up",
+    "asPopupDescriptionApp": "Shown once, the next time each player opens the app",
+    "asPopupDescriptionTournament": "Shown once, the next time each player opens the tournament",
+    "submit": "Send",
+    "published": "Announcement sent"
+  },
+  "announcementList": {
+    "empty": "No announcement yet",
+    "audienceAll": "Whole app",
+    "audienceTournament": "Tournament",
+    "inFeed": "Notified: {count}",
+    "asPopup": "Pop-up seen: {count}",
+    "deleteTitle": "Delete the announcement",
+    "deleteMessage": "Delete \"{title}\"? Its pop-up will stop showing and it will leave every player's notifications."
+  },
+  "announcementPopup": {
+    "kicker": "Announcement",
+    "gotIt": "Got it",
+    "next": "Next ({count} more)"
+  },
+  "tournamentAnnouncementsModal": {
+    "title": "Announcements",
+    "description": "Send a message to every player of this tournament",
+    "new": "New announcement"
+  },
+  "announcementsView": {
+    "title": "Announcements",
+    "subtitle": "Messages sent to every player of a tournament or of the app",
+    "new": "New announcement"
   }
 }

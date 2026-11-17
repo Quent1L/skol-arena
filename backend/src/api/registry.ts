@@ -8,6 +8,7 @@ import disciplines from "../routes/disciplines.route";
 import outcomeTypes from "../routes/outcome-types.route";
 import outcomeReasons from "../routes/outcome-reasons.route";
 import notifications from "../routes/notification.route";
+import announcements from "../routes/announcement.route";
 import config from "../routes/config.route";
 import invitations from "../routes/invitations.route";
 import gameRules from "../routes/game-rules.route";
@@ -47,6 +48,8 @@ const BASE_MOUNTS: RouteMount[] = [
   { path: "/outcome-reasons", router: outcomeReasons },
   // Mounted at the version root: its paths are /me/notifications, /me/pushDevices…
   { path: "/", router: notifications },
+  // Also at the root: /announcements for organizers, /me/announcements for players.
+  { path: "/", router: announcements },
   { path: "/config", router: config },
   { path: "/invitations", router: invitations },
   { path: "/game-rules", router: gameRules },

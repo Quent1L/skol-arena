@@ -248,6 +248,12 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "BADGE_AWARDED",
   "BADGE_REVOKED",
   "MATCH_RESULT_CORRECTED",
+  "ANNOUNCEMENT",
+]);
+
+export const announcementAudienceEnum = pgEnum("announcement_audience", [
+  "all",
+  "tournament",
 ]);
 
 export const matchMessageKindEnum = pgEnum("match_message_kind", [
@@ -1339,6 +1345,11 @@ export const notifications = pgTable(
     matchId: uuid("match_id").references(() => matches.id, {
       onDelete: "set null",
     }),
+    // Set on the feed copy of an announcement: deleting the announcement removes it,
+    // and dismissing the announcement's pop-up marks it read.
+    announcementId: uuid("announcement_id").references(() => announcements.id, {
+      onDelete: "cascade",
+    }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
@@ -1358,6 +1369,48 @@ export const notifications = pgTable(
       t.id.desc(),
     ),
   ],
+);
+
+/**
+ * A message an organizer sends to every player of a tournament, or a super admin to
+ * every player of the app. `inFeed` fans it out as ANNOUNCEMENT notifications at
+ * creation; `asPopup` shows it once, on opening the tournament (or the app for an
+ * `all` audience), until the player dismisses it.
+ */
+export const announcements = pgTable(
+  "announcements",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    audience: announcementAudienceEnum("audience").notNull(),
+    tournamentId: uuid("tournament_id").references(() => tournaments.id, {
+      onDelete: "cascade",
+    }),
+    inFeed: boolean("in_feed").notNull().default(true),
+    asPopup: boolean("as_popup").notNull().default(false),
+    createdBy: uuid("created_by").references(() => appUsers.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("announcements_tournament_created_idx").on(t.tournamentId, t.createdAt.desc()),
+  ],
+);
+
+export const announcementViews = pgTable(
+  "announcement_views",
+  {
+    announcementId: uuid("announcement_id")
+      .notNull()
+      .references(() => announcements.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "cascade" }),
+    seenAt: timestamp("seen_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.announcementId, t.userId] })],
 );
 
 export const notificationStatus = pgTable(
@@ -1947,6 +2000,10 @@ export const notificationsRelations = relations(
     match: one(matches, {
       fields: [notifications.matchId],
       references: [matches.id],
+    }),
+    announcement: one(announcements, {
+      fields: [notifications.announcementId],
+      references: [announcements.id],
     }),
     statuses: many(notificationStatus),
   }),

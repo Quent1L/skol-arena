@@ -141,45 +141,88 @@ function decodeCursor(raw: string): FeedCursor {
   return { createdAt: parsed, id };
 }
 
+type StoredNotification = Awaited<ReturnType<typeof notificationRepository.create>>;
+
+/** The live channels of a stored notification: the open sockets, then every push device. */
+async function deliver(notification: StoredNotification, data: CreateNotification) {
+  const { title, message } = buildNotificationContent(data);
+
+  // titleKey/messageKey/translationParams travel along: a connected client
+  // re-renders them with its own locale and timezone, title/message are the fallback.
+  webSocketService.send(data.userId, {
+    // A notification that has just been raised still asks for what it was raised for.
+    event: "new_notification",
+    data: { ...notification, title, message, actionResolved: false },
+  });
+
+  const devices = await pushDeviceRepository.getActiveForUser(data.userId);
+  logger.debug(`[Push] Found ${devices.length} push device(s) for user ${data.userId}`);
+
+  // The device is offline, so this is the one channel the server must render itself:
+  // use the locale and timezone captured when that device registered.
+  for (const device of devices) {
+    const rendered = buildNotificationContent(
+      data,
+      device.locale ?? "fr",
+      device.timezone ?? undefined,
+    );
+    await sendPushToDevice(device, { ...notification, ...rendered });
+  }
+}
+
 export const notificationService = {
   async send(data: CreateNotification) {
     logger.debug(
       `[Notification] Creating notification for user ${data.userId}, type: ${data.type}`,
     );
     const notification = await notificationRepository.create(data);
-
-    const { title, message } = buildNotificationContent(data);
-
-    logger.debug(
-      `[Notification] Sending WebSocket notification to user ${data.userId}`,
-    );
-    // titleKey/messageKey/translationParams travel along: a connected client
-    // re-renders them with its own locale and timezone, title/message are the fallback.
-    const sent = webSocketService.send(data.userId, {
-      // A notification that has just been raised still asks for what it was raised for.
-      event: "new_notification",
-      data: { ...notification, title, message, actionResolved: false },
-    });
-    logger.debug(`[Notification] WebSocket send result: ${sent}`);
-
-    logger.debug(`[Push] Fetching push devices for user ${data.userId}`);
-    const devices = await pushDeviceRepository.getActiveForUser(data.userId);
-    logger.debug(
-      `[Push] Found ${devices.length} push device(s) for user ${data.userId}`,
-    );
-
-    // The device is offline, so this is the one channel the server must render itself:
-    // use the locale and timezone captured when that device registered.
-    for (const device of devices) {
-      const rendered = buildNotificationContent(
-        data,
-        device.locale ?? "fr",
-        device.timezone ?? undefined,
-      );
-      await sendPushToDevice(device, { ...notification, ...rendered });
-    }
-
+    await deliver(notification, data);
     return notification;
+  },
+
+  /**
+   * Fans one message out to many users: one bulk insert, then the live channels. The
+   * pushes run in the background — an audience of the whole app must not hold the
+   * request that published it.
+   */
+  async sendMany(rows: CreateNotification[]) {
+    if (rows.length === 0) return [];
+    const created = await notificationRepository.createMany(rows);
+    const byUser = new Map(rows.map((row) => [row.userId, row]));
+    void (async () => {
+      for (const notification of created) {
+        const data = byUser.get(notification.userId);
+        if (data) await deliver(notification, data);
+      }
+    })().catch((err) => logger.error({ err }, "[Notification] Fan-out delivery failed"));
+    return created;
+  },
+
+  /** Tells the user's open clients these notifications are now read. */
+  emitRead(userId: string, ids: string[]) {
+    if (ids.length === 0) return;
+    webSocketService.send(userId, { event: "notifications_read", data: { ids } });
+  },
+
+  /**
+   * The player has seen the match by another way — its MMR reveal or recap, or its page.
+   * The "you were added to a match" notification has nothing left to tell.
+   */
+  async markMatchCreatedRead(userId: string, matchIds: string[]) {
+    const ids = await notificationRepository.markReadByMatches(
+      userId,
+      [...new Set(matchIds)],
+      ["MATCH_CREATED"],
+    );
+    notificationService.emitRead(userId, ids);
+    return ids;
+  },
+
+  /** The announcement's pop-up was dismissed: its copy in the feed is read too. */
+  async markAnnouncementRead(userId: string, announcementId: string) {
+    const ids = await notificationRepository.markReadByAnnouncement(announcementId, userId);
+    notificationService.emitRead(userId, ids);
+    return ids;
   },
 
   /**

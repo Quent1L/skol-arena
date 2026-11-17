@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lt, or, ilike, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lt, ne, or, ilike, sql } from "drizzle-orm";
 import { db } from "../config/database";
 import { foldedILike } from "../utils/accent-folding";
 import { appUsers, organizationMembers, organizations, session, user } from "../db/schema";
@@ -144,6 +144,24 @@ export class UserRepository {
       orderBy: (users, { asc }) => [asc(users.displayName)],
       limit,
     });
+  }
+
+  /**
+   * Ids of every account that can still sign in and play — the audience of an app-wide
+   * announcement. Deactivated, archived and kiosk accounts are left out.
+   */
+  async getActiveUserIds(): Promise<string[]> {
+    const rows = await db
+      .select({ id: appUsers.id })
+      .from(appUsers)
+      .where(
+        and(
+          isNull(appUsers.deactivatedAt),
+          isNull(appUsers.archivedAt),
+          ne(appUsers.role, "kiosk"),
+        ),
+      );
+    return rows.map((row) => row.id);
   }
 
   /**

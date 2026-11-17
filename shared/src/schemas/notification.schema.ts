@@ -12,6 +12,7 @@ export const NotificationTypeEnum = z.enum([
   "BADGE_AWARDED",
   "BADGE_REVOKED",
   "MATCH_RESULT_CORRECTED",
+  "ANNOUNCEMENT",
 ]);
 
 export const DeviceTypeEnum = z.enum(["WEB", "ANDROID", "IOS"]);
@@ -25,6 +26,7 @@ export const CreateNotificationSchema = z.object({
   actionUrl: z.string().optional(),
   requiresAction: z.boolean().default(false),
   matchId: z.uuid().optional(),
+  announcementId: z.uuid().optional(),
 });
 
 export const RegisterDeviceSchema = z.object({

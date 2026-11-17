@@ -185,6 +185,12 @@
 
     <RewindLauncher v-model:open="showRewind" :season-id="tournamentId" />
 
+    <TournamentAnnouncementsModal
+      v-if="store.canManageTournament"
+      v-model:open="store.announcementsOpen"
+      :tournament-id="tournamentId"
+    />
+
     <!-- Mounted outside the mobile/desktop split: a background refresh is the same
          event on both, and the reader keeps the data they already had. -->
     <BackgroundRefreshIndicator :active="store.isRefreshing" :done="store.justRefreshed" />
@@ -198,6 +204,8 @@ import { useI18n } from 'vue-i18n'
 import { useAppToast } from '@/composables/useAppToast'
 import { useWindowScroll } from '@vueuse/core'
 import { useTournamentDetailStore } from '@/stores/tournamentDetail.store'
+import { useAnnouncementPopups } from '@/composables/announcement/announcement.service'
+import TournamentAnnouncementsModal from '@/components/announcement/TournamentAnnouncementsModal.vue'
 import { useViewport } from '@/composables/useViewport'
 // Loaded on demand: the mobile shell is dead weight on desktop, the reveal
 // animations only exist for ranked seasons, and the rewind opens on a click.
@@ -243,6 +251,8 @@ const tournamentId = computed(() => route.params.id as string)
  * exactly once: quitting halfway leaves the deck reachable from the banner and
  * the stats tab, but never ambushes the player again.
  */
+const announcementPopups = useAnnouncementPopups()
+
 async function maybeAutoOpenRewind() {
   if (store.tournament?.mode !== 'ranked' || store.tournament.status !== 'finished') return
   if (!store.isAuthenticated) return
@@ -353,6 +363,8 @@ onMounted(async () => {
 
   await updateIndicator()
   await maybeAutoOpenRewind()
+  // Announcements for this tournament's players, shown by the app-wide pop-up host.
+  if (store.isAuthenticated) void announcementPopups.loadPending(tournamentId.value)
 
   offWsHandlers.push(
     onWsOpen(() => sendWsMessage({ event: 'subscribe_tournament', tournamentId: tournamentId.value })),

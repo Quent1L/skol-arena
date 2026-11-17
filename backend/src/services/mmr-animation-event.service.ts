@@ -8,6 +8,7 @@ import { playerMmrRepository } from "../repository/player-mmr.repository";
 import { mmrSeedRepository } from "../repository/mmr-seed.repository";
 import { rankedSeasonRepository } from "../repository/ranked-season.repository";
 import { ruleFiringRepository } from "../repository/rule-firing.repository";
+import { notificationService } from "./notification.service";
 import {
   calculateMatchMmr,
   toEnginePlayers,
@@ -574,11 +575,16 @@ export class MmrAnimationEventService {
    * that predates it keeps working — the firing is then left with no surface,
    * counted as delivered but of unknown fate rather than wrongly counted as read.
    */
-  async markViewed(ids: string[], surface?: RuleFiringSurface) {
-    await mmrAnimationEventRepository.markViewed(ids);
-    if (!surface) return;
+  async markViewed(ids: string[], playerId: string, surface?: RuleFiringSurface) {
+    const viewed = await mmrAnimationEventRepository.markViewed(ids, playerId);
+    // Seeing the match's MMR outcome means the player knows they played it: the
+    // "added to a match" notification has nothing left to say.
+    await notificationService
+      .markMatchCreatedRead(playerId, viewed.map((e) => e.matchId))
+      .catch((err) => logger.error({ err }, "[Notification] auto-read after MMR reveal failed"));
+    if (!surface || viewed.length === 0) return;
     await ruleFiringRepository
-      .markSeen(ids, surface)
+      .markSeen(viewed.map((e) => e.id), surface)
       .catch((err) => logger.error({ err, surface }, "[Rules] marking firings seen failed"));
   }
 

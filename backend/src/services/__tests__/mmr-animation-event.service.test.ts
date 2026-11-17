@@ -45,7 +45,9 @@ const mockAnimRepo = {
       playedAt: undefined,
     })),
   ),
-  markViewed: mock(() => Promise.resolve()),
+  markViewed: mock((_ids: string[], _playerId: string) =>
+    Promise.resolve([] as Array<{ id: string; matchId: string }>),
+  ),
   retireUnseenForMatch: mock((_seasonId: string, _matchId: string, _playerIds: string[]) => Promise.resolve()),
   clearMessageForMatch: mock((_seasonId: string, _matchId: string, _playerIds: string[]) => Promise.resolve()),
 };
@@ -76,6 +78,18 @@ mock.module("../mmr-calculation.service", () => ({
 
 const mockWs = { send: mock((_id: string, _msg: any) => undefined) };
 mock.module("../websocket.service", () => ({ webSocketService: mockWs }));
+
+const mockNotificationService = {
+  markMatchCreatedRead: mock((_userId: string, _matchIds: string[]) => Promise.resolve([] as string[])),
+};
+mock.module("../notification.service", () => ({ notificationService: mockNotificationService }));
+
+const mockRuleFiringRepo = {
+  markSeen: mock((_ids: string[], _surface: string) => Promise.resolve()),
+};
+mock.module("../../repository/rule-firing.repository", () => ({
+  ruleFiringRepository: mockRuleFiringRepo,
+}));
 
 // Imported AFTER mocks so the singleton picks them up.
 const { mmrAnimationEventService } = await import("../mmr-animation-event.service");
@@ -595,5 +609,42 @@ describe("persistCorrectionEvents", () => {
 
     expect(bulkRows()).toHaveLength(0);
     expect(affected).toEqual([]);
+  });
+});
+
+describe("markViewed", () => {
+  beforeEach(() => {
+    clearMock(mockNotificationService.markMatchCreatedRead as any);
+    clearMock(mockRuleFiringRepo.markSeen as any);
+  });
+
+  it("marks the viewed matches' MATCH_CREATED notifications read for the viewer", async () => {
+    mockAnimRepo.markViewed.mockImplementation(() =>
+      Promise.resolve([
+        { id: "evt-1", matchId: "match-1" },
+        { id: "evt-2", matchId: "match-2" },
+      ]),
+    );
+
+    await mmrAnimationEventService.markViewed(["evt-1", "evt-2", "evt-foreign"], "player-1", "recap");
+
+    expect(mockAnimRepo.markViewed.mock.calls[0]).toEqual([["evt-1", "evt-2", "evt-foreign"], "player-1"]);
+    expect(mockNotificationService.markMatchCreatedRead.mock.calls[0]).toEqual([
+      "player-1",
+      ["match-1", "match-2"],
+    ]);
+    // Only the events the viewer owns reach the rules-engine stats.
+    expect(mockRuleFiringRepo.markSeen.mock.calls[0]).toEqual([["evt-1", "evt-2"], "recap"]);
+  });
+
+  it("still marks notifications read when the client sends no surface", async () => {
+    mockAnimRepo.markViewed.mockImplementation(() =>
+      Promise.resolve([{ id: "evt-1", matchId: "match-1" }]),
+    );
+
+    await mmrAnimationEventService.markViewed(["evt-1"], "player-1");
+
+    expect(mockNotificationService.markMatchCreatedRead.mock.calls[0]).toEqual(["player-1", ["match-1"]]);
+    expect(mockRuleFiringRepo.markSeen.mock.calls.length).toBe(0);
   });
 });

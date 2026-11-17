@@ -141,6 +141,16 @@ const children: RouteRecordRaw[] = [
     },
   },
   {
+    path: 'announcements',
+    name: 'admin-announcements',
+    component: () => import('@/views/admin/AnnouncementsView.vue'),
+    meta: {
+      breadcrumb: t('routes.adminAnnouncementsBreadcrumb'),
+      title: t('routes.adminAnnouncements'),
+      parent: 'admin',
+    },
+  },
+  {
     path: 'maintenance',
     name: 'admin-maintenance',
     component: () => import('@/views/admin/MaintenanceView.vue'),

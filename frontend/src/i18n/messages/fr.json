@@ -199,7 +199,9 @@
     "usersTitle": "Utilisateurs",
     "maintenanceTitle": "Maintenance technique",
     "maintenanceDescription": "Versions, base de données, stockage des avatars et variables d'environnement",
-    "maintenanceAvatarWarning": "Des avatars sont stockés ailleurs que dans le stockage configuré : une migration est proposée."
+    "maintenanceAvatarWarning": "Des avatars sont stockés ailleurs que dans le stockage configuré : une migration est proposée.",
+    "announcementsTitle": "Annonces",
+    "announcementsDescription": "Envoyer un message à tous les joueurs d'un tournoi ou de l'appli"
   },
   "app": {
     "errorSummary": "Erreur",
@@ -1040,7 +1042,9 @@
     "MATCH_VALIDATION_TITLE": "{reporterName} a saisi le résultat ({matchFormat})",
     "NO_TEAMMATES": "Aucun",
     "SOME_PLAYER": "Un joueur",
-    "UNKNOWN_PLAYER": "Joueur inconnu"
+    "UNKNOWN_PLAYER": "Joueur inconnu",
+    "ANNOUNCEMENT_TITLE": "📢 {title}",
+    "ANNOUNCEMENT_MESSAGE": "{body}"
   },
   "notificationsView": {
     "deleteAll": "Tout supprimer",
@@ -1635,7 +1639,9 @@
     "signup": "Inscription",
     "tournamentDetail": "Détails du tournoi",
     "tournaments": "Évènements compétitifs",
-    "rewinds": "Mes Rewinds"
+    "rewinds": "Mes Rewinds",
+    "adminAnnouncements": "Annonces",
+    "adminAnnouncementsBreadcrumb": "Annonces"
   },
   "rulesContent": {
     "noRules": "Aucun règlement disponible."
@@ -2726,7 +2732,8 @@
     "users": "Utilisateurs",
     "organizations": "Organisations",
     "invitations": "Invitations",
-    "maintenance": "Maintenance"
+    "maintenance": "Maintenance",
+    "announcements": "Annonces"
   },
   "validation": {
     "atLeastOneField": "Au moins un champ doit être renseigné",
@@ -2763,7 +2770,10 @@
     "titleMin2": "Le titre doit contenir au moins 2 caractères",
     "titleRequired": "Le titre est requis",
     "variantNotEmpty": "La variante ne peut pas être vide",
-    "variantRequired": "Au moins une variante est requise"
+    "variantRequired": "Au moins une variante est requise",
+    "announcementBodyMax": "Le message ne peut pas dépasser 2000 caractères",
+    "announcementTournamentRequired": "Choisis le tournoi concerné",
+    "announcementChannelRequired": "Choisis au moins un mode de diffusion"
   },
   "rulesFacts": {
     "playerId": "Joueur concerné",
@@ -2824,12 +2834,56 @@
   "tournamentDetailMenu": {
     "recalculatePoints": "Recalculer les points",
     "clearCache": "Vider le cache",
-    "leave": "Quitter"
+    "leave": "Quitter",
+    "announcements": "Annonces"
   },
   "loadErrors": {
     "profile": "Erreur lors du chargement du profil",
     "stats": "Erreur lors du chargement des statistiques",
     "comparison": "Erreur lors du chargement de la comparaison",
     "users": "Erreur lors du chargement des utilisateurs"
+  },
+  "announcementForm": {
+    "audienceLabel": "Destinataires",
+    "audienceAll": "Tous les joueurs de l'appli",
+    "audienceTournament": "Les joueurs d'un tournoi",
+    "tournamentLabel": "Tournoi",
+    "tournamentPlaceholder": "Choisis un tournoi",
+    "titleLabel": "Titre",
+    "titlePlaceholder": "Ex. : 3 nouveaux badges à débloquer !",
+    "bodyLabel": "Message",
+    "bodyPlaceholder": "Que doivent savoir les joueurs ?",
+    "channelsLabel": "Mode de diffusion",
+    "inFeedLabel": "Dans les notifications",
+    "inFeedDescription": "Ajoutée à la cloche, et envoyée sur les téléphones qui ont activé les notifications",
+    "asPopupLabel": "En pop-up",
+    "asPopupDescriptionApp": "Affichée une fois, à la prochaine ouverture de l'appli par chaque joueur",
+    "asPopupDescriptionTournament": "Affichée une fois, à la prochaine ouverture du tournoi par chaque joueur",
+    "submit": "Envoyer",
+    "published": "Annonce envoyée"
+  },
+  "announcementList": {
+    "empty": "Aucune annonce pour le moment",
+    "audienceAll": "Toute l'appli",
+    "audienceTournament": "Tournoi",
+    "inFeed": "Notifiés : {count}",
+    "asPopup": "Pop-up vue : {count}",
+    "deleteTitle": "Supprimer l'annonce",
+    "deleteMessage": "Supprimer « {title} » ? Sa pop-up ne s'affichera plus et elle disparaîtra des notifications de tous les joueurs."
+  },
+  "announcementPopup": {
+    "kicker": "Annonce",
+    "gotIt": "Compris",
+    "next": "Suivante ({count} de plus)"
+  },
+  "tournamentAnnouncementsModal": {
+    "title": "Annonces",
+    "description": "Envoyer un message à tous les joueurs de ce tournoi",
+    "new": "Nouvelle annonce"
+  },
+  "announcementsView": {
+    "title": "Annonces",
+    "subtitle": "Messages envoyés à tous les joueurs d'un tournoi ou de l'appli",
+    "new": "Nouvelle annonce"
   }
 }

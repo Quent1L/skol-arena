@@ -95,6 +95,10 @@ const SERVICE_ENFORCED = new Map<string, string>([
   ["PATCH /game-rules/:id", "gameRulesService.updateGameRule"],
   ["DELETE /game-rules/:id", "gameRulesService.deleteGameRule"],
 
+  // announcementService.assertCanPublish — super_admin for `all`, canManageTournament otherwise
+  ["POST /announcements", "announcementService.create"],
+  ["GET /announcements", "announcementService.list"],
+  ["DELETE /announcements/:id", "announcementService.delete"],
   // Checked inline in the handler against the caller's role
   ["GET /users", "inline super_admin / tournament_admin check"],
   // self, super_admin, or owner of an organization the target belongs to

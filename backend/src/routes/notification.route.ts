@@ -81,6 +81,28 @@ app.delete(
 );
 
 app.post(
+  '/me/notifications/matches/:matchId/read',
+  requireAuth,
+  describe({
+    tags: TAGS,
+    summary: "Mark a match's informational notifications as read",
+    description:
+      'Called when the player opens the match: the "added to a match" notification has ' +
+      'nothing left to tell. Notifications that ask for an action are left untouched.',
+    auth: true,
+    success: { description: 'The ids marked read', schema: z.object({ ids: z.array(z.string()) }) },
+  }),
+  validate('param', z.object({ matchId: z.uuid() })),
+  async (c) => {
+    const appUserId = c.get('appUserId');
+    const { matchId } = c.req.valid('param');
+
+    const ids = await notificationService.markMatchCreatedRead(appUserId, [matchId]);
+    return c.json({ ids });
+  }
+);
+
+app.post(
   '/me/notifications/:id/read',
   requireAuth,
   describe({

@@ -1,4 +1,4 @@
-import { eq, and, or, lt, desc, inArray, notInArray, sql } from "drizzle-orm";
+import { eq, and, or, lt, desc, inArray, notInArray, sql, type SQLWrapper } from "drizzle-orm";
 import { db } from "../config/database";
 import { notifications, notificationStatus } from "../db/schema";
 import { CreateNotification } from "@skol-arena/shared";
@@ -16,6 +16,54 @@ async function deleteNotificationRows<T extends { id: string }>(rows: T[]): Prom
   return rows;
 }
 
+const CREATE_MANY_CHUNK = 500;
+
+async function insertChunk(chunk: CreateNotification[]) {
+  return await db.transaction(async (tx) => {
+    const created = await tx
+      .insert(notifications)
+      .values(
+        chunk.map((data) => ({
+          userId: data.userId,
+          type: data.type,
+          titleKey: data.titleKey,
+          messageKey: data.messageKey,
+          translationParams: data.translationParams,
+          actionUrl: data.actionUrl,
+          requiresAction: data.requiresAction,
+          matchId: data.matchId,
+          announcementId: data.announcementId,
+        })),
+      )
+      .returning();
+    if (created.length > 0) {
+      await tx.insert(notificationStatus).values(
+        created.map((n) => ({ notificationId: n.id, userId: n.userId })),
+      );
+    }
+    return created;
+  });
+}
+
+/** Flips to read the user's unread rows among the notifications `source` selects. */
+async function markUnreadAmong(
+  userId: string,
+  source: SQLWrapper,
+): Promise<string[]> {
+  const updated = await db
+    .update(notificationStatus)
+    .set({ read: true, readAt: new Date() })
+    .where(
+      and(
+        eq(notificationStatus.userId, userId),
+        eq(notificationStatus.read, false),
+        inArray(notificationStatus.notificationId, source),
+      ),
+    )
+    .returning({ id: notificationStatus.notificationId });
+  return updated.map((r) => r.id);
+}
+
 export const notificationRepository = {
   async create(data: CreateNotification) {
     return await db.transaction(async (tx) => {
@@ -30,6 +78,7 @@ export const notificationRepository = {
           actionUrl: data.actionUrl,
           requiresAction: data.requiresAction,
           matchId: data.matchId,
+          announcementId: data.announcementId,
         })
         .returning();
 
@@ -42,6 +91,20 @@ export const notificationRepository = {
 
       return notification;
     });
+  },
+
+  /**
+   * Many notifications at once — an announcement fans out to every player of a
+   * tournament or of the app. Chunked so a large audience never builds a statement
+   * past the driver's parameter limit.
+   */
+  async createMany(rows: CreateNotification[]) {
+    const created: (typeof notifications.$inferSelect)[] = [];
+    for (let i = 0; i < rows.length; i += CREATE_MANY_CHUNK) {
+      const chunk = rows.slice(i, i + CREATE_MANY_CHUNK);
+      created.push(...(await insertChunk(chunk)));
+    }
+    return created;
   },
 
   /**
@@ -308,6 +371,38 @@ export const notificationRepository = {
         .delete(notifications)
         .where(eq(notifications.id, notificationId));
     }
+  },
+
+  /** Marks read the user's unread feed copy of an announcement; returns the ids changed. */
+  async markReadByAnnouncement(announcementId: string, userId: string): Promise<string[]> {
+    const source = db
+      .select({ id: notifications.id })
+      .from(notifications)
+      .where(eq(notifications.announcementId, announcementId));
+    return markUnreadAmong(userId, source);
+  },
+
+  /**
+   * Marks read the user's unread notifications of the given types for these matches —
+   * informational ones only: an actionable notification must stay until acted upon.
+   */
+  async markReadByMatches(
+    userId: string,
+    matchIds: string[],
+    types: CreateNotification["type"][],
+  ): Promise<string[]> {
+    if (matchIds.length === 0 || types.length === 0) return [];
+    const source = db
+      .select({ id: notifications.id })
+      .from(notifications)
+      .where(
+        and(
+          inArray(notifications.matchId, matchIds),
+          inArray(notifications.type, types),
+          eq(notifications.requiresAction, false),
+        ),
+      );
+    return markUnreadAmong(userId, source);
   },
 
   /** Recipients who still hold an unread notification of this type for the match. */

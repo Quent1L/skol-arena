@@ -87,6 +87,30 @@ export function useNotificationService() {
     await notificationApi.markRead(id)
   }
 
+  /**
+   * The server marked these read on its own — a match seen through its MMR reveal or its
+   * page, an announcement pop-up dismissed. Every id it sends flipped from unread, so one
+   * that is not loaded still counts; one already read here was counted down already.
+   */
+  function markReadLocally(ids: string[]) {
+    for (const id of ids) {
+      const notif = notifications.value.find((n) => n.id === id)
+      if (notif?.isRead) continue
+      if (notif) notif.isRead = true
+      unreadCount.value = Math.max(0, unreadCount.value - 1)
+    }
+  }
+
+  /** Opening a match settles its "added to a match" notification. Never blocks the page. */
+  async function markMatchRead(matchId: string) {
+    try {
+      const { ids } = await notificationApi.markMatchRead(matchId)
+      markReadLocally(ids)
+    } catch {
+      // Best effort: the notification simply stays unread.
+    }
+  }
+
   async function markActionCompleted(id: string) {
     const notif = notifications.value.find((n) => n.id === id)
     if (!notif || notif.actionCompleted) return
@@ -203,6 +227,8 @@ export function useNotificationService() {
     add,
     remove,
     markRead,
+    markReadLocally,
+    markMatchRead,
     markActionCompleted,
     open,
     deleteNotification,

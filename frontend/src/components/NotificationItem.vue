@@ -121,6 +121,7 @@ const TYPE_STYLES: Record<string, { icon: string; accent: string }> = {
   MATCH_RESULT_CORRECTED: { icon: 'fa-pen-to-square', accent: 'var(--color-sky-400)' },
   BADGE_AWARDED: { icon: 'fa-medal', accent: 'var(--color-yellow-400)' },
   BADGE_REVOKED: { icon: 'fa-medal', accent: 'var(--ui-color-neutral-400)' },
+  ANNOUNCEMENT: { icon: 'fa-bullhorn', accent: 'var(--color-fuchsia-400)' },
 }
 const FALLBACK_STYLE = { icon: 'fa-bell', accent: 'var(--ui-color-primary-400)' }
 

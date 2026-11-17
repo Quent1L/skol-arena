@@ -66,6 +66,20 @@ export class ParticipantRepository {
     return new Set(rows.map((row) => row.userId));
   }
 
+  /** Ids of the players currently registered — the audience of a tournament announcement. */
+  async getActiveParticipantIds(tournamentId: string): Promise<string[]> {
+    const rows = await db
+      .select({ userId: tournamentParticipants.userId })
+      .from(tournamentParticipants)
+      .where(
+        and(
+          eq(tournamentParticipants.tournamentId, tournamentId),
+          eq(tournamentParticipants.status, "active")
+        )
+      );
+    return rows.map((row) => row.userId);
+  }
+
   /**
    * Registration status of each listed player who has one. A player missing from the map
    * never registered.

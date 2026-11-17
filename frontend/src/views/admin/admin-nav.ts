@@ -36,6 +36,7 @@ export const ADMIN_SECTION_GROUPS: AdminSectionGroup[] = [
   {
     key: 'system',
     sections: [
+      { to: '/admin/announcements', navKey: 'announcements', icon: 'i-fa7-solid:bullhorn' },
       { to: '/admin/maintenance', navKey: 'maintenance', icon: 'i-fa7-solid:screwdriver-wrench' },
     ],
   },

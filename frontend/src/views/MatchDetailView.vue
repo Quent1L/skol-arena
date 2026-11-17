@@ -317,6 +317,7 @@ import { rankedApi } from '@/composables/ranked/ranked.api'
 import { useCountUp } from '@/composables/ui/useCountUp'
 import { useMMrAnimationQueue } from '@/composables/ranked/useMMrAnimationQueue'
 import { onWsEvent } from '@/composables/notification/notification.socket'
+import { useNotificationService } from '@/composables/notification/notification.service'
 
 const { t, locale } = useI18n()
 const { isMobile } = useViewport()
@@ -755,12 +756,17 @@ const metaItems = computed<{ icon: string; label: string; value: string }[]>(() 
   return items
 })
 
+const { markMatchRead } = useNotificationService()
+
 async function loadMatch() {
   try {
     loading.value = true
     error.value = null
     const matchId = route.params.id as string
     match.value = await getMatch(matchId)
+    // Having the match in front of them is what the "added to a match" notification
+    // was for: it reads as read from here on.
+    void markMatchRead(matchId)
     initAnimationIfRanked()
     syncMatchSubscription()
     void loadBalance()

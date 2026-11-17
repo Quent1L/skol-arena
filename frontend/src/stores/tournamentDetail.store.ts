@@ -128,6 +128,9 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
     return mine?.rank
   })
 
+  /** The organizer's announcements dialog, opened from the overflow menu. */
+  const announcementsOpen = ref(false)
+
   const menuItems = computed(() => {
     const items: { label: string; icon: string; command: () => void }[] = []
     if (canManageTournament.value) {
@@ -142,6 +145,13 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
         label: i18n.global.t('common.edit'),
         icon: 'i-fa7-solid:pencil',
         command: () => router.push(editPath),
+      })
+      items.push({
+        label: i18n.global.t('tournamentDetailMenu.announcements'),
+        icon: 'i-fa7-solid:bullhorn',
+        command: () => {
+          announcementsOpen.value = true
+        },
       })
       if (tournament.value?.mode) {
         items.push({
@@ -488,6 +498,7 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
     canManageTournament,
     canCreateMatch,
     menuItems,
+    announcementsOpen,
     // Auth pass-through
     isAuthenticated,
     appUser,

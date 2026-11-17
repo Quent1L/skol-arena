@@ -277,12 +277,17 @@ export class MmrAnimationEventRepository {
 
   // Mark events viewed and advance their seenDelta baseline to the current full
   // delta — so a later recalc of the same match shows only the change since now.
-  async markViewed(ids: string[]) {
-    if (ids.length === 0) return;
-    await db
+  // Scoped to the player's own events: an id belonging to someone else is ignored.
+  async markViewed(
+    ids: string[],
+    playerId: string,
+  ): Promise<Array<{ id: string; matchId: string }>> {
+    if (ids.length === 0) return [];
+    return await db
       .update(mmrAnimationEvents)
       .set({ viewedAt: new Date(), seenDelta: sql`${mmrAnimationEvents.mmrDelta}` })
-      .where(inArray(mmrAnimationEvents.id, ids));
+      .where(and(inArray(mmrAnimationEvents.id, ids), eq(mmrAnimationEvents.playerId, playerId)))
+      .returning({ id: mmrAnimationEvents.id, matchId: mmrAnimationEvents.matchId });
   }
 }
 

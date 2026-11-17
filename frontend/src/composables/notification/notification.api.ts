@@ -54,6 +54,11 @@ export const notificationApi = {
   async markRead(id: string): Promise<void> {
     await http.post(`${BASE_URL}/me/notifications/${id}/read`)
   },
+  /** The match was seen: its informational notifications are read. Returns their ids. */
+  async markMatchRead(matchId: string): Promise<{ ids: string[] }> {
+    const res = await http.post<{ ids: string[] }>(`${BASE_URL}/me/notifications/matches/${matchId}/read`)
+    return res.data
+  },
   async markActionCompleted(id: string): Promise<void> {
     await http.post(`${BASE_URL}/me/notifications/${id}/action-completed`)
   },

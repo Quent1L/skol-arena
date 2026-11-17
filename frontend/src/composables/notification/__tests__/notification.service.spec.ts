@@ -190,3 +190,48 @@ describe('notification service socket updates', () => {
     expect(service.unreadCount.value).toBe(1)
   })
 })
+
+describe('notification service server-side reads', () => {
+  it('marks loaded notifications read and counts down unloaded ones too', async () => {
+    vi.spyOn(notificationApi, 'list').mockResolvedValue(
+      page([makeNotif('n-1'), makeNotif('n-2')], { unreadCount: 5, total: 5 }),
+    )
+    await service.load()
+
+    service.markReadLocally(['n-1', 'n-unloaded'])
+
+    expect(service.notifications.value.find((n) => n.id === 'n-1')?.isRead).toBe(true)
+    expect(service.notifications.value.find((n) => n.id === 'n-2')?.isRead).toBe(false)
+    expect(service.unreadCount.value).toBe(3)
+  })
+
+  it('does not count twice a notification already read here', async () => {
+    vi.spyOn(notificationApi, 'list').mockResolvedValue(
+      page([makeNotif('n-1', { isRead: true }), makeNotif('n-2')], { unreadCount: 1, total: 2 }),
+    )
+    await service.load()
+
+    service.markReadLocally(['n-1'])
+
+    expect(service.unreadCount.value).toBe(1)
+  })
+
+  it('applies what the server marked read when a match is opened', async () => {
+    vi.spyOn(notificationApi, 'list').mockResolvedValue(
+      page([makeNotif('n-1', { type: 'MATCH_CREATED' })], { unreadCount: 1, total: 1 }),
+    )
+    await service.load()
+    const markMatchRead = vi.spyOn(notificationApi, 'markMatchRead').mockResolvedValue({ ids: ['n-1'] })
+
+    await service.markMatchRead('match-1')
+
+    expect(markMatchRead).toHaveBeenCalledWith('match-1')
+    expect(service.notifications.value[0].isRead).toBe(true)
+    expect(service.unreadCount.value).toBe(0)
+  })
+
+  it('never throws when the match read fails', async () => {
+    vi.spyOn(notificationApi, 'markMatchRead').mockRejectedValue(new Error('offline'))
+    await expect(service.markMatchRead('match-1')).resolves.toBeUndefined()
+  })
+})

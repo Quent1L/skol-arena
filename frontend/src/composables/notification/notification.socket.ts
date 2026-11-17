@@ -46,7 +46,7 @@ const WS_BASE = import.meta.env.MODE === 'dev'
   : window.location.origin.replace('http', 'ws')
 
 export function useNotificationSocket() {
-  const { add, remove } = useNotificationService()
+  const { add, remove, markReadLocally } = useNotificationService()
   const { isAuthenticated } = useAuth()
 
   function connect() {
@@ -92,6 +92,9 @@ export function useNotificationSocket() {
           const notificationWithDates = convertStringDatesToJS(payload.data)
           console.log('[WS] New notification (parsed):', notificationWithDates)
           add(notificationWithDates)
+        }
+        if (payload.event === 'notifications_read') {
+          markReadLocally(payload.data.ids ?? [])
         }
         if (payload.event === 'notification_deleted') {
           console.log('[WS] Notification deleted:', payload.data.id)

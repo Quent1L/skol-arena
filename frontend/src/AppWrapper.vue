@@ -10,6 +10,7 @@
       </RouterView>
       <PwaInstallBanner />
       <UpdateNotice />
+      <AnnouncementPopup v-if="isAuthenticated" />
     </NotificationsInit>
   </div>
 </template>
@@ -42,11 +43,14 @@ const routeKey = computed(() => {
 import AppHeader from '@/components/AppHeader.vue'
 import BreadcrumbMenu from '@/components/BreadcrumbMenu.vue'
 import NotificationsInit from '@/components/NotificationsInit.vue'
+import AnnouncementPopup from '@/components/announcement/AnnouncementPopup.vue'
+import { useAuth } from '@/composables/useAuth'
 import PwaInstallBanner from '@/components/PwaInstallBanner.vue'
 import { usePageTransitions } from '@/utils/transitions'
 import { useViewport } from '@/composables/useViewport'
 
 const { isMobile } = useViewport()
+const { isAuthenticated } = useAuth()
 usePageTransitions()
 </script>
 
