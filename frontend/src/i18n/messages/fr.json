@@ -2603,6 +2603,32 @@
         "duoDetail": "{wins} victoires en {matches} matchs",
         "bestPartner": "Coéquipier le plus apprécié",
         "bestPartnerDetail": "coéquipiers gagnants"
+      },
+      "votes": {
+        "title": "🤝 Fair-play & MVP",
+        "subtitle": "Ce que les joueurs ont voté",
+        "fairPlayPrize": "Prix du fair-play",
+        "fairPlayPrizeDetail": "{count} votes reçus",
+        "teamCarrier": "Porteur d'équipe",
+        "teamCarrierDetail": "titres de MVP",
+        "topSupporter": "Supporter le plus assidu",
+        "topSupporterDetail": "matchs suivis",
+        "mostInvolved": "Le plus investi",
+        "mostInvolvedDetail": "votes émis",
+        "kindest": "Le Bisounours",
+        "kindestDetail": "de 👍 sur {count} votes émis",
+        "strictestJudge": "Le juge le plus sévère",
+        "strictestJudgeDetail": "de 👎 sur {count} votes émis",
+        "fairPlayWorst": "Fair-play à travailler",
+        "fairPlayWorstDetail": "{count} votes reçus",
+        "podium": "Aussi sur le podium fair-play : {names}",
+        "totals": "{count} votes",
+        "positive": "{rate} % positifs",
+        "topTag": "tag le plus utilisé : {tag}",
+        "you": "Toi",
+        "mineRate": "{rate} % de fair-play (#{rank})",
+        "mineMvp": "{count} titre de MVP | {count} titres de MVP",
+        "mineDown": "{count} 👎"
       }
     },
     "conclusion": {

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { mmrChartPointSchema } from "./ranked";
 import { clientPlayerBadgeSchema } from "./rules-engine";
 import { playerRelationStatSchema } from "./player";
+import { fairPlayTagSchema, tagCountSchema } from "./votes";
 
 // ============================================
 // Season Rewind — end-of-season recap
@@ -117,6 +118,13 @@ export const rewindAwardKeySchema = z.enum([
   "longestStreak",
   "duo",
   "bestPartner",
+  "fairPlayPrize",
+  "teamCarrier",
+  "mostInvolved",
+  "kindest",
+  "strictestJudge",
+  "topSupporter",
+  "fairPlayWorst",
 ]);
 
 export type RewindAwardKey = z.infer<typeof rewindAwardKeySchema>;
@@ -236,6 +244,40 @@ export const rewindCooperationAwardsSchema = z
 
 export type RewindCooperationAwards = z.infer<typeof rewindCooperationAwardsSchema>;
 
+/**
+ * Fair-play / MVP awards, present only when the season ran votes. Optional rather
+ * than versioned: a payload generated before votes existed simply has none, and
+ * the deck skips the card.
+ */
+export const rewindVoteAwardsSchema = z
+  .object({
+    /** Best smoothed fair-play rate past the vote threshold. `value` = rate (0-100), `detail` = votes received. */
+    fairPlayPrize: rewindAwardSchema.nullable(),
+    /** The fair-play podium, prize winner included. */
+    fairPlayPodium: z.array(rewindAwardSchema),
+    /** Most MVP titles. `value` = titles. */
+    teamCarrier: rewindAwardSchema.nullable(),
+    /** Most votes cast, fair-play and MVP. Voter award. */
+    mostInvolved: rewindAwardSchema.nullable(),
+    /** Highest share of 👍 among the fair-play votes cast (0-100). Voter award. */
+    kindest: rewindAwardSchema.nullable(),
+    /** Highest share of 👎 among the fair-play votes cast (0-100) — never who they targeted. Voter award. */
+    strictestJudge: rewindAwardSchema.nullable(),
+    /** Most matches watched as a declared spectator. */
+    topSupporter: rewindAwardSchema.nullable(),
+    /** Lowest fair-play rate. Only when the season opted into a public negative award. */
+    fairPlayWorst: rewindAwardSchema.nullable(),
+    totals: z.object({
+      votes: z.number().int(),
+      /** Share of 👍 (0-100), null without any fair-play vote. */
+      positiveRate: z.number().nullable(),
+      topTag: fairPlayTagSchema.nullable(),
+    }),
+  })
+  .meta({ id: "RewindVoteAwards" });
+
+export type RewindVoteAwards = z.infer<typeof rewindVoteAwardsSchema>;
+
 export const rewindSeasonInfoSchema = z
   .object({
     seasonId: z.string(),
@@ -273,6 +315,7 @@ export const seasonRewindPayloadSchema = z
     combat: rewindCombatAwardsSchema,
     endurance: rewindEnduranceAwardsSchema,
     cooperation: rewindCooperationAwardsSchema,
+    votes: rewindVoteAwardsSchema.optional(),
   })
   .meta({ id: "SeasonRewindPayload" });
 
@@ -453,6 +496,17 @@ export const playerRewindPayloadSchema = z
     conclusion: rewindConclusionSchema,
     /** Season awards this player holds — drives the highlight on the award cards. */
     awardsWon: z.array(rewindAwardKeySchema),
+    /** The player's own fair-play / MVP figures, when the season ran votes. */
+    votes: z
+      .object({
+        fairPlayRate: z.number().nullable(),
+        fairPlayRank: z.number().int().nullable(),
+        up: z.number().int(),
+        down: z.number().int(),
+        tags: z.array(tagCountSchema),
+        mvpTitles: z.number().int(),
+      })
+      .optional(),
   })
   .meta({ id: "PlayerRewindPayload" });
 

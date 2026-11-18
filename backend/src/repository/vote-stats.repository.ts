@@ -122,6 +122,26 @@ export class VoteStatsRepository {
     return row?.n ?? 0;
   }
 
+  /** MVP votes cast per voter. */
+  async mvpVotesCastPerVoter(tournamentId: string) {
+    return await db
+      .select({ playerId: mvpVotes.voterId, n: sql<number>`count(*)::int` })
+      .from(mvpVotes)
+      .innerJoin(matches, eq(matches.id, mvpVotes.matchId))
+      .where(counted(tournamentId))
+      .groupBy(mvpVotes.voterId);
+  }
+
+  /** Matches watched per declared spectator. */
+  async spectatedPerUser(tournamentId: string) {
+    return await db
+      .select({ playerId: matchSpectators.userId, n: sql<number>`count(*)::int` })
+      .from(matchSpectators)
+      .innerJoin(matches, eq(matches.id, matchSpectators.matchId))
+      .where(counted(tournamentId))
+      .groupBy(matchSpectators.userId);
+  }
+
   async players(ids: string[]): Promise<Map<string, VoteStatPlayer>> {
     if (ids.length === 0) return new Map();
     const rows = await db

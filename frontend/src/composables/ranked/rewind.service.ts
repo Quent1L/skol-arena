@@ -24,6 +24,7 @@ export type RewindCardKey =
   | 'awardsCombat'
   | 'awardsEndurance'
   | 'awardsCooperation'
+  | 'awardsVotes'
   | 'conclusion'
 
 /**
@@ -55,6 +56,9 @@ const CARD_ORDER: RewindCardSpec[] = [
   { key: 'awardsCombat', since: 1 },
   { key: 'awardsEndurance', since: 1 },
   { key: 'awardsCooperation', since: 1 },
+  // No version gate: `votes` is optional, absent from every payload of a season
+  // without votes, older ones included.
+  { key: 'awardsVotes', since: 1 },
   { key: 'conclusion', since: 1 },
 ]
 
@@ -83,6 +87,13 @@ function groupOf(season: SeasonRewindPayload, key: RewindCardKey): Record<string
   return null
 }
 
+function hasVoteAwards(season: SeasonRewindPayload): boolean {
+  const votes = season.votes
+  if (!votes) return false
+  const { totals: _totals, fairPlayPodium: _podium, ...awards } = votes
+  return hasAward(awards) || votes.totals.votes > 0
+}
+
 /**
  * Decides which cards the deck actually shows. A season nobody could win an
  * award in, a player with no badges or no upset to brag about: those cards are
@@ -100,6 +111,7 @@ export function buildRewindCards(bundle: RewindBundle): RewindCardKey[] {
 
     const group = groupOf(season, key)
     if (group) return hasAward(group)
+    if (key === 'awardsVotes') return hasVoteAwards(season)
 
     if (!player) return true
     if (key === 'journey') return player.journey.points.length > 1

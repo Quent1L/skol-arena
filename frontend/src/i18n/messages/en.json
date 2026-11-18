@@ -2603,6 +2603,32 @@
         "duoDetail": "{wins} wins in {matches} matches",
         "bestPartner": "Most appreciated teammate",
         "bestPartnerDetail": "winning teammates"
+      },
+      "votes": {
+        "title": "🤝 Fair-play & MVP",
+        "subtitle": "What the players voted",
+        "fairPlayPrize": "Fair-play prize",
+        "fairPlayPrizeDetail": "{count} votes received",
+        "teamCarrier": "Team carrier",
+        "teamCarrierDetail": "MVP titles",
+        "topSupporter": "Most loyal supporter",
+        "topSupporterDetail": "matches watched",
+        "mostInvolved": "Most involved",
+        "mostInvolvedDetail": "votes cast",
+        "kindest": "The kindest",
+        "kindestDetail": "👍 among {count} votes cast",
+        "strictestJudge": "The strictest judge",
+        "strictestJudgeDetail": "👎 among {count} votes cast",
+        "fairPlayWorst": "Fair-play to work on",
+        "fairPlayWorstDetail": "{count} votes received",
+        "podium": "On the fair-play podium too: {names}",
+        "totals": "{count} votes",
+        "positive": "{rate} % positive",
+        "topTag": "most used tag: {tag}",
+        "you": "You",
+        "mineRate": "{rate} % fair-play (#{rank})",
+        "mineMvp": "{count} MVP title | {count} MVP titles",
+        "mineDown": "{count} 👎"
       }
     },
     "conclusion": {

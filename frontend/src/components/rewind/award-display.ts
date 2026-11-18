@@ -21,4 +21,11 @@ export const AWARD_STYLE: Record<RewindAwardKey, { icon: string; accent: string 
   longestStreak: { icon: 'fa fa-fire', accent: '#fb7185' },
   duo: { icon: 'fa fa-people-group', accent: '#4ade80' },
   bestPartner: { icon: 'fa fa-handshake', accent: '#2dd4bf' },
+  fairPlayPrize: { icon: 'fa fa-trophy', accent: '#a78bfa' },
+  teamCarrier: { icon: 'fa fa-mask', accent: '#fbbf24' },
+  mostInvolved: { icon: 'fa fa-check-to-slot', accent: '#38bdf8' },
+  kindest: { icon: 'fa fa-heart', accent: '#f472b6' },
+  strictestJudge: { icon: 'fa fa-scale-balanced', accent: '#f59e0b' },
+  topSupporter: { icon: 'fa fa-eye', accent: '#4ade80' },
+  fairPlayWorst: { icon: 'fa fa-thumbs-down', accent: '#a3a3a3' },
 }

@@ -135,6 +135,23 @@ describe('buildRewindCards', () => {
     expect(buildRewindCards(bundleOf({ season }))).toContain('awardsEndurance')
   })
 
+  it('shows the votes card only for a season that ran votes', () => {
+    expect(buildRewindCards(bundleOf())).not.toContain('awardsVotes')
+
+    const votes = {
+      fairPlayPrize: { player, value: 92, detail: 12 },
+      fairPlayPodium: [{ player, value: 92, detail: 12 }],
+      teamCarrier: null,
+      mostInvolved: null,
+      kindest: null,
+      strictestJudge: null,
+      topSupporter: null,
+      fairPlayWorst: null,
+      totals: { votes: 12, positiveRate: 92, topTag: null },
+    }
+    expect(buildRewindCards(bundleOf({ season: seasonPayload({ votes }) }))).toContain('awardsVotes')
+  })
+
   it('hides the badges card when the player earned none', () => {
     expect(buildRewindCards(bundleOf())).not.toContain('badges')
 

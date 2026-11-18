@@ -28,6 +28,7 @@ declare module 'vue' {
     AwardsCooperationCard: typeof import('./src/components/rewind/cards/AwardsCooperationCard.vue')['default']
     AwardsEnduranceCard: typeof import('./src/components/rewind/cards/AwardsEnduranceCard.vue')['default']
     AwardsPerformanceCard: typeof import('./src/components/rewind/cards/AwardsPerformanceCard.vue')['default']
+    AwardsVotesCard: typeof import('./src/components/rewind/cards/AwardsVotesCard.vue')['default']
     BackgroundRefreshIndicator: typeof import('./src/components/ui/BackgroundRefreshIndicator.vue')['default']
     BadgeDetailModal: typeof import('./src/components/rules/BadgeDetailModal.vue')['default']
     BadgeProgressBars: typeof import('./src/components/rules/BadgeProgressBars.vue')['default']

@@ -133,6 +133,7 @@ import AwardsPerformanceCard from './cards/AwardsPerformanceCard.vue'
 import AwardsCombatCard from './cards/AwardsCombatCard.vue'
 import AwardsEnduranceCard from './cards/AwardsEnduranceCard.vue'
 import AwardsCooperationCard from './cards/AwardsCooperationCard.vue'
+import AwardsVotesCard from './cards/AwardsVotesCard.vue'
 import ConclusionCard from './cards/ConclusionCard.vue'
 
 const props = defineProps<{ bundle: RewindBundle | null; loading?: boolean }>()
@@ -167,6 +168,7 @@ const CARD_COMPONENTS: Record<RewindCardKey, Component> = {
   awardsCombat: AwardsCombatCard,
   awardsEndurance: AwardsEnduranceCard,
   awardsCooperation: AwardsCooperationCard,
+  awardsVotes: AwardsVotesCard,
   conclusion: ConclusionCard,
 }
 
@@ -176,6 +178,7 @@ const SEASON_CARDS = new Set<RewindCardKey>([
   'awardsCombat',
   'awardsEndurance',
   'awardsCooperation',
+  'awardsVotes',
 ])
 
 const cardComponent = computed(() =>
@@ -188,6 +191,7 @@ const cardProps = computed(() => {
 
   const { season, player } = props.bundle
   if (key === 'conclusion') return { player }
+  if (key === 'awardsVotes') return { season, awardsWon: player?.awardsWon ?? [], mine: player?.votes ?? null }
   if (SEASON_CARDS.has(key)) return { season, awardsWon: player?.awardsWon ?? [] }
   // Whether the season ever produced a draw decides which figures a card shows,
   // so it travels with every player card rather than with the season ones.

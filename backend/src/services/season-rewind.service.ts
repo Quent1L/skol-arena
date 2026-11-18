@@ -31,6 +31,7 @@ import {
 import { NotFoundError, BadRequestError, ErrorCode } from "../types/errors";
 import { logger } from "../utils/logger";
 import { rankRelationsByWeightedRate } from "./player-stats.service";
+import { computeVoteRewind } from "./season-rewind.votes";
 import {
   awardsWonBy,
   computeCombatAwards,
@@ -153,6 +154,8 @@ export class SeasonRewindService {
     );
 
     const seasonPayload = this.buildSeasonPayload(context, aggregates, replay);
+    const votes = await computeVoteRewind(seasonId, context.directory);
+    if (votes) seasonPayload.votes = votes.awards;
     const nextSeason = await this.findNextSeason(context.disciplineId, seasonId);
     const promotedUntil = new Date(Date.now() + REWIND_PROMO_DAYS * 24 * 60 * 60 * 1000);
 
@@ -177,7 +180,7 @@ export class SeasonRewindService {
           relations,
           context,
           seasonPayload,
-          { badges: badgesByPlayer.get(playerId) ?? [], nextSeason },
+          { badges: badgesByPlayer.get(playerId) ?? [], nextSeason, votes: votes?.forPlayer(playerId) },
         ),
       }),
     );
@@ -323,7 +326,11 @@ export class SeasonRewindService {
     index: RelationIndex,
     context: SeasonContext,
     seasonPayload: SeasonRewindPayload,
-    extras: { badges: BadgeRow[]; nextSeason: RewindConclusion["nextSeason"] },
+    extras: {
+      badges: BadgeRow[];
+      nextSeason: RewindConclusion["nextSeason"];
+      votes?: PlayerRewindPayload["votes"];
+    },
   ): PlayerRewindPayload {
     const rank = context.rankByPlayer.get(agg.playerId) ?? 0;
     const tier = context.tierByPlayer.get(agg.playerId) ?? null;
@@ -381,6 +388,7 @@ export class SeasonRewindService {
       percentiles: computePercentiles(aggregates, agg),
       conclusion: { nextSeason: extras.nextSeason },
       awardsWon: awardsWonBy(agg.playerId, seasonPayload),
+      ...(extras.votes && { votes: extras.votes }),
     };
   }
 

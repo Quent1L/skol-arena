@@ -8,6 +8,7 @@ import {
   type RewindAwardKey,
   type RewindCombatAwards,
   type RewindCooperationAwards,
+  type RewindVoteAwards,
   type RewindDatedAward,
   type RewindDuoAward,
   type RewindEnduranceAwards,
@@ -416,6 +417,7 @@ type AwardGroups = {
   combat: RewindCombatAwards;
   endurance: RewindEnduranceAwards;
   cooperation: RewindCooperationAwards;
+  votes?: RewindVoteAwards;
 };
 
 /** Which awards a given player holds — drives the highlight on the award cards. */
@@ -435,6 +437,13 @@ export function awardsWonBy(playerId: string, groups: AwardGroups): RewindAwardK
     ["topFiveKing", groups.endurance.topFiveKing],
     ["longestStreak", groups.endurance.longestStreak],
     ["bestPartner", groups.cooperation.bestPartner],
+    ["fairPlayPrize", groups.votes?.fairPlayPrize ?? null],
+    ["teamCarrier", groups.votes?.teamCarrier ?? null],
+    ["mostInvolved", groups.votes?.mostInvolved ?? null],
+    ["kindest", groups.votes?.kindest ?? null],
+    ["strictestJudge", groups.votes?.strictestJudge ?? null],
+    ["topSupporter", groups.votes?.topSupporter ?? null],
+    ["fairPlayWorst", groups.votes?.fairPlayWorst ?? null],
   ];
 
   const won = single
