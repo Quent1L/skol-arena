@@ -2949,5 +2949,18 @@
     "promptMaxMatchAge": "Vote prompt for matches played within (minutes)",
     "promptMaxMatchAgeHelp": "Past this, voting stays possible from the match page.",
     "rewindVoterAwards": "Voter awards in the season recap"
+  },
+  "votePrompt": {
+    "label": "Vote on your last match",
+    "newMatch": "New match recorded",
+    "you": "You",
+    "versus": "vs",
+    "win": "Win",
+    "loss": "Loss",
+    "mvpQuestion": "Your MVP?",
+    "skip": "Skip →",
+    "fairPlayQuestion": "A word on {name}'s fair-play?",
+    "fairPlayTeamQuestion": "A word on the other team's fair-play?",
+    "thanks": "Thanks ✓"
   }
 }

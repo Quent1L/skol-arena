@@ -155,6 +155,7 @@ export const votePromptSchema = z
   .object({
     matchId: z.string(),
     tournamentId: z.string(),
+    meId: z.string(),
     myPosition: z.number().int(),
     winnerPosition: z.number().int().nullable(),
     sides: z.array(
@@ -212,3 +213,82 @@ export function designateMvp(
 export function smoothedFairPlayRate(up: number, down: number, m: number, p: number): number {
   return (up + m * p) / (up + down + m);
 }
+
+// ============================================
+// Stats
+// ============================================
+
+export const voteStatPlayerSchema = z.object({
+  id: z.string(),
+  displayName: z.string(),
+  shortName: z.string(),
+});
+export type VoteStatPlayer = z.infer<typeof voteStatPlayerSchema>;
+
+export const tagCountSchema = z.object({ tag: fairPlayTagSchema, count: z.number().int() });
+
+/** Public vote stats of a tournament: positive data only, never a name next to a 👎. */
+export const tournamentVoteStatsSchema = z
+  .object({
+    fairPlayOfTheWeek: z.object({ player: voteStatPlayerSchema, ups: z.number().int() }).nullable(),
+    fairPlayRanking: z.array(
+      z.object({ player: voteStatPlayerSchema, rate: z.number(), votes: z.number().int(), rank: z.number().int() }),
+    ),
+    mvpRanking: z.array(
+      z.object({ player: voteStatPlayerSchema, titles: z.number().int(), rank: z.number().int() }),
+    ),
+    totals: z.object({ votes: z.number().int(), positiveRate: z.number().nullable() }),
+  })
+  .meta({ id: "TournamentVoteStats" });
+export type TournamentVoteStats = z.infer<typeof tournamentVoteStatsSchema>;
+
+/** A player's own vote stats, shown to them alone. */
+export const myVoteStatsSchema = z
+  .object({
+    fairPlay: z.object({
+      /** Smoothed rate, null below the vote threshold. */
+      rate: z.number().nullable(),
+      rank: z.number().int().nullable(),
+      up: z.number().int(),
+      down: z.number().int(),
+      tags: z.array(tagCountSchema),
+    }),
+    cast: z.object({ count: z.number().int(), upRate: z.number().nullable() }),
+    mvp: z.object({ titles: z.number().int(), teamMatches: z.number().int() }),
+    spectated: z.number().int(),
+  })
+  .meta({ id: "MyVoteStats" });
+export type MyVoteStats = z.infer<typeof myVoteStatsSchema>;
+
+/** The organizers' view: 👎 per player with tags, voters hidden until revealed. */
+export const adminVoteStatsSchema = z
+  .object({
+    received: z.array(
+      z.object({
+        player: voteStatPlayerSchema,
+        down: z.number().int(),
+        downLast30Days: z.number().int(),
+        tags: z.array(tagCountSchema),
+      }),
+    ),
+    voters: z.array(
+      z.object({ player: voteStatPlayerSchema, cast: z.number().int(), downRate: z.number() }),
+    ),
+    revealLog: z.array(
+      z.object({ admin: voteStatPlayerSchema.nullable(), target: voteStatPlayerSchema, createdAt: z.date() }),
+    ),
+  })
+  .meta({ id: "AdminVoteStats" });
+export type AdminVoteStats = z.infer<typeof adminVoteStatsSchema>;
+
+export const revealedVotersSchema = z
+  .array(
+    z.object({
+      voter: voteStatPlayerSchema,
+      matchId: z.string(),
+      tags: z.array(fairPlayTagSchema),
+      createdAt: z.date(),
+    }),
+  )
+  .meta({ id: "RevealedVoters" });
+export type RevealedVoters = z.infer<typeof revealedVotersSchema>;

@@ -5,6 +5,7 @@ import { useAppToast } from '@/composables/useAppToast'
 import { onWsEvent } from '@/composables/notification/notification.socket'
 import { matchApi } from './match.api'
 import { useParticipantService } from '../participant.service'
+import { useVotePrompt } from '../votes/useVotePrompt'
 import type {
   ClientMatchModel,
   ClientMatchDetail,
@@ -190,6 +191,8 @@ export function useMatchService() {
         name: 'tournament-tab',
         params: { id: tournamentId, tab: tabAfterMatchSave(tournamentMode) },
       })
+      // Waits for the free screen on its own: a ranked MMR reveal plays first.
+      void useVotePrompt().offerForMatch(match.id)
       return match
     } catch (err) {
       const message = err instanceof Error ? err.message : t('matchService.errors.createFailed')

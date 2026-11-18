@@ -11,6 +11,7 @@
       <PwaInstallBanner />
       <UpdateNotice />
       <AnnouncementPopup v-if="isAuthenticated" />
+      <VotePrompt v-if="isAuthenticated" />
     </NotificationsInit>
   </div>
 </template>
@@ -44,6 +45,7 @@ import AppHeader from '@/components/AppHeader.vue'
 import BreadcrumbMenu from '@/components/BreadcrumbMenu.vue'
 import NotificationsInit from '@/components/NotificationsInit.vue'
 import AnnouncementPopup from '@/components/announcement/AnnouncementPopup.vue'
+import VotePrompt from '@/components/votes/VotePrompt.vue'
 import { useAuth } from '@/composables/useAuth'
 import PwaInstallBanner from '@/components/PwaInstallBanner.vue'
 import { usePageTransitions } from '@/utils/transitions'

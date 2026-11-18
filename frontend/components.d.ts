@@ -201,6 +201,7 @@ declare module 'vue' {
     UTooltip: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Tooltip.vue')['default']
     ValidationModeSection: typeof import('./src/components/forms/sections/ValidationModeSection.vue')['default']
     VoteConfigSection: typeof import('./src/components/forms/sections/VoteConfigSection.vue')['default']
+    VotePrompt: typeof import('./src/components/votes/VotePrompt.vue')['default']
     WeeklyMmrLeaders: typeof import('./src/components/ranked/WeeklyMmrLeaders.vue')['default']
     WhenStep: typeof import('./src/components/match/steps/WhenStep.vue')['default']
   }

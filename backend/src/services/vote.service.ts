@@ -310,6 +310,7 @@ export class VoteService {
     return {
       matchId: ctx.match.id,
       tournamentId: ctx.match.tournamentId,
+      meId: userId,
       myPosition: ctx.me?.position ?? 0,
       winnerPosition: winner,
       sides: [1, 2].map((position) => ({
