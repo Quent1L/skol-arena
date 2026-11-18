@@ -6,9 +6,12 @@ import ConfirmModal, { type ConfirmModalProps } from '@/components/ui/ConfirmMod
  * false when they cancel or dismiss it. Must be called during setup.
  */
 export function useConfirmDialog() {
-  const modal = useOverlay().create(ConfirmModal, { destroyOnClose: true })
+  const overlay = useOverlay()
 
   return async (options: ConfirmModalProps): Promise<boolean> => {
+    // One overlay per call: `destroyOnClose` drops it from the overlay list once closed,
+    // so an instance created once at setup would throw "Overlay not found" the second time.
+    const modal = overlay.create(ConfirmModal, { destroyOnClose: true })
     const confirmed = await modal.open(options).result
     return confirmed === true
   }

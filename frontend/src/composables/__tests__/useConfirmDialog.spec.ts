@@ -47,4 +47,22 @@ describe('useConfirmDialog', () => {
     expect(await answer).toBe(false)
     wrapper.unmount()
   })
+
+  it('opens again after a first confirmation was closed', async () => {
+    const { wrapper, ask } = setup()
+    const first = ask()
+    await flushPromises()
+    button('common.confirm').click()
+    expect(await first).toBe(true)
+    // the closed modal unmounts once its leave transition ends
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    await flushPromises()
+
+    const second = ask()
+    await flushPromises()
+    button('common.confirm').click()
+
+    expect(await second).toBe(true)
+    wrapper.unmount()
+  })
 })
