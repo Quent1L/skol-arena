@@ -10,6 +10,7 @@ const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 import { voteService } from "../../vote.service";
 import { voteStatsService } from "../../vote-stats.service";
 import { notificationService } from "../../notification.service";
+import { webSocketService } from "../../websocket.service";
 import {
   appUsers,
   fairPlayVotes,
@@ -168,13 +169,26 @@ describe("Fair-play & MVP votes (integration)", () => {
   });
 
   describe("MVP", () => {
-    it("designates a provisional MVP from player votes", async () => {
+    it("designates the MVP from player votes", async () => {
       const id = await match2v2();
       await voteService.castMvp(id, alice, bob);
       const votes = await voteService.castMvp(id, carol, bob);
       expect(votes.mvp?.mvpPlayerIds).toEqual([bob]);
-      expect(votes.mvp?.isFinal).toBe(false);
       expect(votes.mvp?.myVote).toBe(bob);
+    });
+
+    it("sends the members the new MVP, never the votes behind it", async () => {
+      const send = spyOn(webSocketService, "send").mockReturnValue(true);
+      const id = await match2v2();
+      await voteService.castMvp(id, alice, bob);
+      await voteService.castMvp(id, carol, bob);
+      await Bun.sleep(20);
+      const calls = send.mock.calls.filter(([, msg]) => (msg as { event: string }).event === "match_votes_updated");
+      expect(calls.map(([userId]) => userId)).toContain(member);
+      // First vote: below the threshold, no MVP yet. Second: Bob. No voter ever listed.
+      expect(calls[0]?.[1]).toEqual({ event: "match_votes_updated", data: { matchId: id, mvpPlayerIds: [] } });
+      expect(calls.at(-1)?.[1]).toEqual({ event: "match_votes_updated", data: { matchId: id, mvpPlayerIds: [bob] } });
+      send.mockRestore();
     });
 
     it("refuses a vote for yourself and in a 1v1", async () => {
@@ -211,14 +225,12 @@ describe("Fair-play & MVP votes (integration)", () => {
       await expect(voteService.castMvp(id, alice, bob)).rejects.toThrow("MVP_SAME_TARGET_LIMIT");
     });
 
-    it("freezes the MVP once the window closed", async () => {
-      const id = await match2v2(1);
+    it("flags the MVP on list views straight from the votes", async () => {
+      const id = await match2v2();
+      expect((await voteService.mvpOfMatches([{ id, tournamentId }])).has(id)).toBe(false);
       await voteService.castMvp(id, alice, bob);
       await voteService.castMvp(id, dave, bob);
-      await voteService.freezeClosedMatches(new Date(Date.now() + 48 * HOUR));
-      const [row] = await testDb.select({ mvp: matches.mvpPlayerIds }).from(matches).where(eq(matches.id, id));
-      expect(row?.mvp).toEqual([bob]);
-      expect((await voteService.getMatchVotes(id, alice)).mvp?.isFinal).toBe(true);
+      expect((await voteService.mvpOfMatches([{ id, tournamentId }])).get(id)).toEqual([bob]);
     });
 
     it("drops every vote of a cancelled match", async () => {
@@ -255,12 +267,18 @@ describe("Fair-play & MVP votes (integration)", () => {
       expect(mine.fairPlay).toMatchObject({ up: 1, down: 1, tags: [{ tag: "bad_faith", count: 1 }] });
     });
 
-    it("counts frozen MVP titles and team matches", async () => {
+    it("counts MVP titles once the vote is closed, and team matches", async () => {
       const id = await match2v2();
       await voteService.castMvp(id, alice, bob);
       await voteService.castMvp(id, carol, bob);
       await finalize(id);
-      await voteService.freezeClosedMatches(new Date(Date.now() + 49 * HOUR));
+      expect(await voteStatsService.mvpTitles(tournamentId)).toEqual([]);
+      expect(await voteStatsService.mvpTitles(tournamentId, false)).toEqual([{ playerId: bob, titles: 1 }]);
+      // Window over: the ballots can no longer move, the title counts.
+      await testDb
+        .update(matches)
+        .set({ createdAt: new Date(Date.now() - 49 * HOUR) })
+        .where(eq(matches.id, id));
       const mine = await voteStatsService.getMyStats(tournamentId, bob);
       expect(mine.mvp.titles).toBeGreaterThanOrEqual(1);
       expect(mine.mvp.teamMatches).toBeGreaterThanOrEqual(1);

@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, ne, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt, ne, sql, type SQL } from "drizzle-orm";
 import { db } from "../config/database";
 import {
   appUsers,
@@ -77,14 +77,13 @@ export class VoteStatsRepository {
       .groupBy(fairPlayVotes.targetId);
   }
 
-  /** Frozen MVP titles per player. */
-  async mvpTitles(tournamentId: string) {
-    const playerId = sql<string>`unnest(${matches.mvpPlayerIds})`;
+  /** MVP ballots of the counted matches, optionally only those entered before a date. */
+  async mvpBallots(tournamentId: string, enteredBefore?: Date) {
     return await db
-      .select({ playerId, titles: sql<number>`count(*)::int` })
-      .from(matches)
-      .where(counted(tournamentId))
-      .groupBy(playerId);
+      .select({ matchId: mvpVotes.matchId, targetId: mvpVotes.targetId, voterRole: mvpVotes.voterRole })
+      .from(mvpVotes)
+      .innerJoin(matches, eq(matches.id, mvpVotes.matchId))
+      .where(and(counted(tournamentId), enteredBefore ? lt(matches.createdAt, enteredBefore) : undefined));
   }
 
   async mvpVotesCast(tournamentId: string, voterId: string): Promise<number> {

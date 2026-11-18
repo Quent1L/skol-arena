@@ -133,8 +133,8 @@ export const matchVotesSchema = z
         spectatorsEnabled: z.boolean(),
         candidateIds: z.array(z.string()),
         myVote: z.string().nullable(),
+        /** Most voted player(s) right now; final once the window closes, as votes freeze. */
         mvpPlayerIds: z.array(z.string()),
-        isFinal: z.boolean(),
         spectatorCount: z.number().int(),
         /** Targets the same-target limit blocks for this voter right now. */
         blockedTargetIds: z.array(z.string()),
@@ -155,9 +155,6 @@ export const votePromptSchema = z
   .object({
     matchId: z.string(),
     tournamentId: z.string(),
-    meId: z.string(),
-    myPosition: z.number().int(),
-    winnerPosition: z.number().int().nullable(),
     sides: z.array(
       z.object({ position: z.number().int(), players: z.array(votePromptPlayerSchema) }),
     ),
@@ -168,6 +165,12 @@ export const votePromptSchema = z
   })
   .meta({ id: "VotePrompt" });
 export type VotePrompt = z.infer<typeof votePromptSchema>;
+
+/** WebSocket `match_votes_updated`: the match's MVP now. Public — never the votes. */
+export interface MatchVotesUpdatedPayload {
+  matchId: string;
+  mvpPlayerIds: string[];
+}
 
 // ============================================
 // Rules

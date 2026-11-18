@@ -54,9 +54,10 @@
             <span
               v-for="player in (leftSide?.players ?? []).slice(0, 2)"
               :key="player.id"
-              class="font-label font-semibold tracking-tight truncate  text-center text-highlighted"
+              class="flex max-w-full items-center justify-center gap-1"
             >
-              {{ player.displayName }}
+              <span class="font-label font-semibold tracking-tight truncate  text-center text-highlighted min-w-0">{{ player.displayName }}</span>
+              <MvpBadge v-if="player.isMvp" />
             </span>
           </div>
         </div>
@@ -91,9 +92,10 @@
             <span
               v-for="player in (rightSide?.players ?? []).slice(0, 2)"
               :key="player.id"
-              class="font-label font-semibold  tracking-tight truncate  text-center text-highlighted"
+              class="flex max-w-full items-center justify-center gap-1"
             >
-              {{ player.displayName }}
+              <span class="font-label font-semibold  tracking-tight truncate  text-center text-highlighted min-w-0">{{ player.displayName }}</span>
+              <MvpBadge v-if="player.isMvp" />
             </span>
           </div>
         </div>
@@ -137,6 +139,7 @@
 </template>
 
 <script setup lang="ts">
+import MvpBadge from '@/components/votes/MvpBadge.vue'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'

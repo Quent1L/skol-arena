@@ -1,5 +1,5 @@
 -- Fair-play and MVP votes: optional per tournament (tournament_vote_configs), open for
--- 48h after a match is entered (created_at), MVP frozen into matches.mvp_player_ids at the close.
+-- 48h after a match is entered (created_at). The MVP is derived from mvp_votes on read.
 ALTER TYPE "public"."notification_type" ADD VALUE IF NOT EXISTS 'FAIR_PLAY_ALERT';
 --> statement-breakpoint
 DO $$ BEGIN
@@ -31,8 +31,6 @@ DO $$ BEGIN
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
---> statement-breakpoint
-ALTER TABLE "matches" ADD COLUMN IF NOT EXISTS "mvp_player_ids" uuid[];
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "tournament_vote_configs" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,

@@ -643,7 +643,13 @@ export const matchCardSideSchema = z
     score: z.number().nullable(),
     isWinner: z.boolean(),
     players: z.array(
-      z.object({ id: z.string(), displayName: z.string(), shortName: z.string() })
+      z.object({
+        id: z.string(),
+        displayName: z.string(),
+        shortName: z.string(),
+        /** MVP of the match, from the votes cast so far. */
+        isMvp: z.boolean().optional(),
+      })
     ),
   })
   .meta({ id: "MatchCardSide" });

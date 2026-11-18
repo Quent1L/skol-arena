@@ -10,6 +10,7 @@ import {
   type VoteConfig,
 } from "@skol-arena/shared/types/index";
 import { voteStatsRepository } from "../repository/vote-stats.repository";
+import { voteStatsService } from "./vote-stats.service";
 import { tournamentRepository } from "../repository/tournament.repository";
 
 type Directory = Map<string, RewindPlayerRef>;
@@ -136,7 +137,8 @@ export async function computeVoteRewind(seasonId: string, directory: Directory) 
     voteStatsRepository.fairPlayReceived(seasonId),
     voteStatsRepository.fairPlayCast(seasonId),
     voteStatsRepository.mvpVotesCastPerVoter(seasonId),
-    voteStatsRepository.mvpTitles(seasonId),
+    // The season is over: every match counts, even one entered in its last 48 hours.
+    voteStatsService.mvpTitles(seasonId, false),
     voteStatsRepository.spectatedPerUser(seasonId),
     voteStatsRepository.downTagsReceived(seasonId),
   ]);

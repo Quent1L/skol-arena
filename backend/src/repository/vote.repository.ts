@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, isNull, lt, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, ne, sql } from "drizzle-orm";
 import { db } from "../config/database";
 import {
   appUsers,
@@ -33,7 +33,6 @@ export interface VoteMatch {
   createdAt: Date;
   playedAt: Date;
   winnerSide: string | null;
-  mvpPlayerIds: string[] | null;
   players: VoteMatchPlayer[];
 }
 
@@ -48,7 +47,6 @@ export class VoteRepository {
         createdAt: matches.createdAt,
         playedAt: matches.playedAt,
         winnerSide: matches.winnerSide,
-        mvpPlayerIds: matches.mvpPlayerIds,
       })
       .from(matches)
       .where(eq(matches.id, matchId));
@@ -217,27 +215,13 @@ export class VoteRepository {
     return rows.map((r) => r.targetId);
   }
 
-  async setMvp(matchId: string, playerIds: string[]): Promise<void> {
-    await db.update(matches).set({ mvpPlayerIds: playerIds }).where(eq(matches.id, matchId));
-  }
-
-  /**
-   * Matches with MVP votes whose window closed (entered before `closedBefore`) and whose
-   * MVP is not frozen yet. A match nobody voted on has no MVP to freeze.
-   */
-  async listMatchesToFreeze(closedBefore: Date, limit = 500) {
+  /** MVP ballots of several matches at once, for list views. */
+  async listMvpBallotsFor(matchIds: string[]) {
+    if (matchIds.length === 0) return [];
     return await db
-      .select({ id: matches.id, tournamentId: matches.tournamentId })
-      .from(matches)
-      .where(
-        and(
-          lt(matches.createdAt, closedBefore),
-          isNull(matches.mvpPlayerIds),
-          inArray(matches.id, db.selectDistinct({ id: mvpVotes.matchId }).from(mvpVotes)),
-          ne(matches.status, "cancelled"),
-        ),
-      )
-      .limit(limit);
+      .select({ matchId: mvpVotes.matchId, targetId: mvpVotes.targetId, voterRole: mvpVotes.voterRole })
+      .from(mvpVotes)
+      .where(inArray(mvpVotes.matchId, matchIds));
   }
 
   /** A cancelled match takes every vote cast on it along. */
@@ -246,7 +230,6 @@ export class VoteRepository {
       await tx.delete(fairPlayVotes).where(eq(fairPlayVotes.matchId, matchId));
       await tx.delete(mvpVotes).where(eq(mvpVotes.matchId, matchId));
       await tx.delete(matchSpectators).where(eq(matchSpectators.matchId, matchId));
-      await tx.update(matches).set({ mvpPlayerIds: null }).where(eq(matches.id, matchId));
     });
   }
 

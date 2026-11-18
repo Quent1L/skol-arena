@@ -1,6 +1,5 @@
 import { computed, ref } from 'vue'
 import type { VotePrompt } from '@skol-arena/shared/types/index'
-import { screenTakenOver } from '@/composables/useScreenTakeover'
 import { votesApi } from './votes.api'
 
 export type VotePromptSource = 'entry' | 'open'
@@ -13,25 +12,33 @@ const current = ref<{ prompt: VotePrompt; source: VotePromptSource } | null>(nul
  * loaded is simply not shown, and nothing ever reminds the player about it.
  */
 export function useVotePrompt() {
-  /** After entering a match (§6.1): the server says whether a vote is worth asking. */
-  async function offerForMatch(matchId: string): Promise<void> {
+  /**
+   * After entering a match (§6.1): the server says whether a vote is worth asking.
+   * Resolves to whether the card will show — it then carries the "match saved" line.
+   */
+  async function offerForMatch(matchId: string): Promise<boolean> {
     try {
       const prompt = await votesApi.promptForMatch(matchId)
-      if (prompt && !current.value) current.value = { prompt, source: 'entry' }
+      if (!prompt || current.value) return false
+      current.value = { prompt, source: 'entry' }
+      return true
     } catch {
       // A nicety: the match page still offers the vote.
+      return false
     }
   }
 
   /**
-   * On opening the app (§6.2): the latest match someone else entered. Never competes
-   * with a full-screen moment — if one is playing, this opening gets no prompt.
+   * For the other players of a fresh match (§6.2): on opening the app, on coming back to
+   * it, and the moment a match notification lands while it is open. The server picks the
+   * match and decides whether to ask; the host waits for any full-screen moment (MMR
+   * reveal, recap…) to end rather than compete with it.
    */
   async function offerPending(): Promise<void> {
-    if (current.value || screenTakenOver.value) return
+    if (current.value) return
     try {
       const prompt = await votesApi.pendingPrompt()
-      if (prompt && !current.value && !screenTakenOver.value) current.value = { prompt, source: 'open' }
+      if (prompt && !current.value) current.value = { prompt, source: 'open' }
     } catch {
       // Not shown this time.
     }

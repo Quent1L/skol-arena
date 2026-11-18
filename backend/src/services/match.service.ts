@@ -309,6 +309,10 @@ export class MatchService {
       sidesByMatch.get(side.matchId)!.push(side)
     }
 
+    const mvpByMatch = await voteService.mvpOfMatches(
+      rows.map((r) => ({ id: r.matchId, tournamentId: r.tournamentId })),
+    )
+
     const data: ClientMatchCard[] = rows.map((row) => ({
       id: row.matchId,
       playedAt: row.playedAt ?? new Date(),
@@ -327,6 +331,7 @@ export class MatchService {
           id: p.player.id,
           displayName: p.player.displayName,
           shortName: p.player.shortName ?? p.player.displayName.slice(0, 8),
+          ...(mvpByMatch.get(row.matchId)?.includes(p.player.id) && { isMvp: true }),
         })),
       })),
       outcomeType: row.outcomeTypeId

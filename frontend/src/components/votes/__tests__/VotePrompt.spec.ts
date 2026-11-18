@@ -15,17 +15,24 @@ const api = vi.hoisted(() => ({
 }))
 vi.mock('@/composables/votes/votes.api', () => ({ votesApi: api }))
 
+const ws = vi.hoisted(() => ({ handlers: new Map<string, (data: unknown) => void>() }))
+vi.mock('@/composables/notification/notification.socket', () => ({
+  onWsEvent: (event: string, handler: (data: unknown) => void) => {
+    ws.handlers.set(event, handler)
+    return () => ws.handlers.delete(event)
+  },
+}))
+
 import ui from '@nuxt/ui/vue-plugin'
+import { createMemoryHistory, createRouter } from 'vue-router'
 import VotePrompt from '../VotePrompt.vue'
 import { useVotePrompt } from '@/composables/votes/useVotePrompt'
 import { holdScreenWhile } from '@/composables/useScreenTakeover'
+import { registerBottomNav } from '@/composables/ui/useBottomNav'
 
 const prompt = (over: Partial<VotePromptData> = {}): VotePromptData => ({
   matchId: 'm1',
   tournamentId: 't1',
-  meId: 'me',
-  myPosition: 1,
-  winnerPosition: 2,
   sides: [
     { position: 1, players: [{ id: 'me', displayName: 'Moi' }, { id: 'julie', displayName: 'Julie' }] },
     { position: 2, players: [{ id: 'paul', displayName: 'Paul' }, { id: 'marc', displayName: 'Marc' }] },
@@ -37,13 +44,23 @@ const prompt = (over: Partial<VotePromptData> = {}): VotePromptData => ({
 
 const i18n = createI18n({ legacy: false, locale: 'fr', fallbackLocale: 'fr', messages: { fr } })
 
-async function mountPrompt(data: VotePromptData | null) {
+const mounted: { unmount(): void }[] = []
+
+async function mountPrompt(data: VotePromptData | null, props: Record<string, unknown> = { idleMs: 7000 }) {
   api.pendingPrompt.mockResolvedValue(data)
   const wrapper = mount(VotePrompt, {
-    props: { settleMs: 0, thanksMs: 10 },
+    props: { settleMs: 0, thanksMs: 10, ...props },
     attachTo: document.body,
-    global: { plugins: [i18n, ui] },
+    global: {
+      plugins: [
+        i18n,
+        ui,
+        // The "More options" link is a ULink, which needs a real router.
+        createRouter({ history: createMemoryHistory(), routes: [{ path: '/:p(.*)*', component: { render: () => null } }] }),
+      ],
+    },
   })
+  mounted.push(wrapper)
   await flushPromises()
   await vi.advanceTimersByTimeAsync(1)
   await flushPromises()
@@ -57,16 +74,18 @@ describe('VotePrompt', () => {
   })
 
   afterEach(() => {
+    // One host only, as in the app: a leftover instance would close the next prompt.
+    mounted.splice(0).forEach((w) => w.unmount())
     useVotePrompt().close()
     vi.useRealTimers()
     document.body.innerHTML = ''
   })
 
-  it('shows the match line, records the prompt as shown, and asks MVP first', async () => {
+  it('asks for the MVP of the last match first, and records the prompt as shown', async () => {
     const wrapper = await mountPrompt(prompt())
-    expect(wrapper.get('[data-testid="vote-prompt-info"]').text()).toContain('Toi & Julie vs Paul & Marc · Défaite')
+    expect(wrapper.text()).toContain('Désigne le MVP de ton dernier match')
+    expect(wrapper.text()).not.toMatch(/Victoire|Défaite/)
     expect(api.recordPrompt).toHaveBeenCalledWith('m1', 'expired')
-    expect(wrapper.text()).toContain('Ton MVP ?')
     expect(wrapper.html()).not.toContain('thumbs-down')
   })
 
@@ -94,6 +113,77 @@ describe('VotePrompt', () => {
     expect(api.castFairPlay).toHaveBeenCalledWith('m1', 'paul', { value: 'up' })
   })
 
+  it('links to the match page for 👎 and tags, and closes', async () => {
+    const wrapper = await mountPrompt(prompt({ mvpCandidateIds: [] }))
+    const more = wrapper.get('[data-testid="vote-prompt-more"]')
+    expect(more.attributes('href')).toBe('/matches/m1')
+    await more.trigger('click')
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
+  })
+
+  it('drains its progress bar as the countdown runs', async () => {
+    const wrapper = await mountPrompt(prompt())
+    const value = () => Number(wrapper.get('[data-testid="vote-prompt-progress"] [role="progressbar"]').attributes('aria-valuenow'))
+    const start = value()
+    await vi.advanceTimersByTimeAsync(3500)
+    expect(value()).toBeLessThan(start)
+  })
+
+  it('gives phones 12 s instead of 7', async () => {
+    // jsdom reports a 0-wide screen: useViewport reads it as a phone.
+    const wrapper = await mountPrompt(prompt(), {})
+    await vi.advanceTimersByTimeAsync(7000)
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(true)
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
+  })
+
+  it('drops the countdown once past the MVP step', async () => {
+    const wrapper = await mountPrompt(prompt())
+    await wrapper.get('[data-testid="vote-prompt-skip"]').trigger('click')
+    expect(wrapper.find('[data-testid="vote-prompt-progress"]').exists()).toBe(false)
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(wrapper.find('[data-testid="vote-prompt-thumbs-up"]').exists()).toBe(true)
+  })
+
+  it('keeps the countdown when fair-play is the only step', async () => {
+    const wrapper = await mountPrompt(prompt({ mvpCandidateIds: [] }))
+    expect(wrapper.find('[data-testid="vote-prompt-progress"]').exists()).toBe(true)
+    await vi.advanceTimersByTimeAsync(7000)
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
+  })
+
+  it('freezes for good at the first touch', async () => {
+    const wrapper = await mountPrompt(prompt())
+    await wrapper.get('[data-testid="vote-prompt"]').trigger('pointerdown')
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(true)
+  })
+
+  it('stops counting while the app is in the background', async () => {
+    const wrapper = await mountPrompt(prompt())
+    const state = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(true)
+    state.mockReturnValue('visible')
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.advanceTimersByTimeAsync(7000)
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
+    state.mockRestore()
+  })
+
+  it('carries the "match saved" line right after entering the match', async () => {
+    api.pendingPrompt.mockResolvedValue(null)
+    api.promptForMatch.mockResolvedValue(prompt())
+    const wrapper = await mountPrompt(null)
+    expect(await useVotePrompt().offerForMatch('m1')).toBe(true)
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(1)
+    await flushPromises()
+    expect(wrapper.get('[data-testid="vote-prompt-saved"]').text()).toContain('Match enregistré')
+  })
+
   it('"Passer" moves on to fair-play without voting MVP', async () => {
     const wrapper = await mountPrompt(prompt())
     await wrapper.get('[data-testid="vote-prompt-skip"]').trigger('click')
@@ -107,11 +197,44 @@ describe('VotePrompt', () => {
     expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
   })
 
-  it('is not offered while a full-screen moment plays', async () => {
+  it('pauses the 7 s countdown while hovered', async () => {
+    const wrapper = await mountPrompt(prompt())
+    await wrapper.get('[data-testid="vote-prompt"]').trigger('mouseenter')
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(true)
+    await wrapper.get('[data-testid="vote-prompt"]').trigger('mouseleave')
+    await vi.advanceTimersByTimeAsync(7000)
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
+  })
+
+  it('sits above a mobile bottom nav so the player can keep navigating', async () => {
+    const nav = mount(defineComponent({ setup: () => (registerBottomNav(), () => null) }))
+    const wrapper = await mountPrompt(prompt())
+    expect(wrapper.get('[data-testid="vote-prompt"]').classes()).toContain('above-nav')
+    nav.unmount()
+    await flushPromises()
+    expect(wrapper.get('[data-testid="vote-prompt"]').classes()).not.toContain('above-nav')
+  })
+
+  it('waits for a full-screen moment to end instead of dropping the prompt', async () => {
     const open = ref(true)
     mount(defineComponent({ setup: () => (holdScreenWhile(() => open.value), () => null) }))
-    await mountPrompt(prompt())
-    expect(api.pendingPrompt).not.toHaveBeenCalled()
+    const wrapper = await mountPrompt(prompt())
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
     open.value = false
+    await vi.advanceTimersByTimeAsync(1)
+    await flushPromises()
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(true)
+  })
+
+  it('asks as soon as a match notification lands while the app is open', async () => {
+    await mountPrompt(null)
+    api.pendingPrompt.mockClear()
+    ws.handlers.get('new_notification')?.({ type: 'MATCH_MESSAGE' })
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(api.pendingPrompt).not.toHaveBeenCalled()
+    ws.handlers.get('new_notification')?.({ type: 'MATCH_CREATED' })
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(api.pendingPrompt).toHaveBeenCalledTimes(1)
   })
 })

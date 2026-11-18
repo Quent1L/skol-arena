@@ -180,19 +180,20 @@ export function useMatchService() {
     try {
       const match = await matchApi.create(data)
 
-      toast.add({
-        severity: 'success',
-        summary: t('common.success'),
-        detail: t('matchService.toast.createSuccessDetail'),
-        life: 3000,
-      })
-
       await router.replace({
         name: 'tournament-tab',
         params: { id: tournamentId, tab: tabAfterMatchSave(tournamentMode) },
       })
-      // Waits for the free screen on its own: a ranked MMR reveal plays first.
-      void useVotePrompt().offerForMatch(match.id)
+      // One element on screen, not two: a vote card carries the "match saved" line
+      // itself (and waits for a ranked MMR reveal to end); otherwise the usual toast.
+      if (!(await useVotePrompt().offerForMatch(match.id))) {
+        toast.add({
+          severity: 'success',
+          summary: t('common.success'),
+          detail: t('matchService.toast.createSuccessDetail'),
+          life: 3000,
+        })
+      }
       return match
     } catch (err) {
       const message = err instanceof Error ? err.message : t('matchService.errors.createFailed')

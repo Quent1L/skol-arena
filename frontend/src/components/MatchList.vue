@@ -141,12 +141,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent, watch } from 'vue'
+import { ref, computed, defineAsyncComponent, onUnmounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useInfiniteScroll } from '@vueuse/core'
 import { matchApi } from '@/composables/match/match.api'
-import type { ClientMatchCard, MatchCardSide } from '@skol-arena/shared/types/index'
+import { onWsEvent } from '@/composables/notification/notification.socket'
+import type { ClientMatchCard, MatchCardSide, MatchVotesUpdatedPayload } from '@skol-arena/shared/types/index'
 import { useViewport } from '@/composables/useViewport'
 import { useMatchListFiltersStore } from '@/stores/matchListFilters.store'
 import MatchCard from './match/MatchCard.vue'
@@ -392,4 +393,21 @@ watch(
   () => props.refreshKey,
   () => refreshMatches(),
 )
+
+// A vote moved the MVP of a match on screen: the event carries the new MVP, so only that
+// card's badge changes — no refetch, the pages the reader scrolled through stay as they are.
+const offVotesWs = onWsEvent('match_votes_updated', (payload) => {
+  const { matchId, mvpPlayerIds } = payload as MatchVotesUpdatedPayload
+  const index = matches.value.findIndex((m) => m.id === matchId)
+  if (index === -1) return
+  const match = matches.value[index]!
+  matches.value[index] = {
+    ...match,
+    sides: match.sides.map((side) => ({
+      ...side,
+      players: side.players.map((p) => ({ ...p, isMvp: mvpPlayerIds.includes(p.id) })),
+    })),
+  }
+})
+onUnmounted(offVotesWs)
 </script>

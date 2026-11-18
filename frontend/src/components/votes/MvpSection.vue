@@ -11,13 +11,9 @@
 
     <div class="space-y-3">
       <p class="text-sm text-white/90" data-testid="mvp-result">
-        <template v-if="mvp.mvpPlayerIds.length > 0">
-          🏅 {{ mvpNames }}
-          <span class="text-muted">
-            ({{ mvp.isFinal ? t('matchVotes.mvp.final') : t('matchVotes.mvp.provisional') }})
-          </span>
-        </template>
+        <template v-if="mvp.mvpPlayerIds.length > 0">🏅 {{ mvpNames }}</template>
         <span v-else class="text-muted">{{ t('matchVotes.mvp.none') }}</span>
+        <span v-if="timeLeft" class="text-muted" data-testid="mvp-time-left"> · {{ timeLeft }}</span>
       </p>
 
       <UButton
@@ -71,6 +67,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useNow } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import type { MatchVotes } from '@skol-arena/shared/types/index'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
@@ -92,8 +89,22 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+// Ticks every minute so the time left stays true on a page left open.
+const now = useNow({ interval: 60_000 })
 
 const mvp = computed(() => props.votes.mvp)
+
+/** Time left to vote, rounded down; nothing once the vote is closed. */
+const timeLeft = computed(() => {
+  const closesAt = props.votes.closesAt
+  if (!props.votes.isOpen || !closesAt) return null
+  const minutes = Math.max(0, Math.floor((closesAt.getTime() - now.value) / 60_000))
+  const [d, h, m] = [Math.floor(minutes / 1440), Math.floor((minutes % 1440) / 60), minutes % 60]
+  let time = t('matchVotes.mvp.minutes', { m })
+  if (d > 0) time = t('matchVotes.mvp.days', { d, h })
+  else if (h > 0) time = t('matchVotes.mvp.hours', { h, m })
+  return t('matchVotes.mvp.openFor', { time })
+})
 const mvpNames = computed(() =>
   mvp.value.mvpPlayerIds.map((id) => props.players.get(id)?.displayName ?? '?').join(', '),
 )

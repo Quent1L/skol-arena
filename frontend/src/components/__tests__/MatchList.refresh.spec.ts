@@ -12,6 +12,14 @@ vi.mock('@vueuse/core', async (importOriginal) => ({
   useInfiniteScroll: vi.fn(),
 }))
 
+const ws = vi.hoisted(() => ({ handlers: new Map<string, (data: unknown) => void>() }))
+vi.mock('@/composables/notification/notification.socket', () => ({
+  onWsEvent: (event: string, handler: (data: unknown) => void) => {
+    ws.handlers.set(event, handler)
+    return () => ws.handlers.delete(event)
+  },
+}))
+
 import MatchList from '../MatchList.vue'
 
 const i18n = createI18n({ legacy: false, locale: 'fr', missingWarn: false, fallbackWarn: false, messages: { fr: {} } })
@@ -67,5 +75,34 @@ describe('MatchList — background refresh', () => {
     await flushPromises()
 
     expect(list).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('MatchList — live MVP', () => {
+  it('swaps the MVP badge of a listed match without refetching', async () => {
+    list.mockResolvedValue({
+      data: [
+        {
+          id: 'm1',
+          playedAt: new Date(),
+          sides: [
+            { position: 1, players: [{ id: 'p1', displayName: 'Paul', shortName: 'PA' }] },
+            { position: 2, players: [{ id: 'p2', displayName: 'Marc', shortName: 'MA', isMvp: true }] },
+          ],
+        },
+      ],
+      total: 1,
+      hasMore: false,
+    })
+    const wrapper = mountList()
+    await flushPromises()
+
+    ws.handlers.get('match_votes_updated')?.({ matchId: 'elsewhere', mvpPlayerIds: ['x'] })
+    ws.handlers.get('match_votes_updated')?.({ matchId: 'm1', mvpPlayerIds: ['p1'] })
+    await flushPromises()
+
+    expect(list).toHaveBeenCalledTimes(1)
+    const entry = wrapper.findComponent({ name: 'MatchCard' }).props('entry') as ClientMatchCard
+    expect(entry.sides.flatMap((s) => s.players).filter((p) => p.isMvp).map((p) => p.id)).toEqual(['p1'])
   })
 })

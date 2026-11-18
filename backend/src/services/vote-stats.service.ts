@@ -1,6 +1,8 @@
 import {
+  designateMvp,
   resolveVoteConfig,
   smoothedFairPlayRate,
+  VOTE_WINDOW_HOURS,
   type AdminVoteStats,
   type FairPlayTag,
   type MyVoteStats,
@@ -58,12 +60,31 @@ export class VoteStatsService {
     return resolveVoteConfig(await tournamentRepository.getVoteConfig(tournamentId));
   }
 
+  /**
+   * MVP titles per player, derived from the ballots of validated matches. By default
+   * only matches whose vote window closed count, so a ranking never moves with votes
+   * still being cast; `closedOnly: false` takes them all (a finished season).
+   */
+  async mvpTitles(tournamentId: string, closedOnly = true): Promise<{ playerId: string; titles: number }[]> {
+    const config = await this.config(tournamentId);
+    if (!config.mvpEnabled) return [];
+    const enteredBefore = closedOnly ? new Date(Date.now() - VOTE_WINDOW_HOURS * 60 * 60 * 1000) : undefined;
+    const ballots = await voteStatsRepository.mvpBallots(tournamentId, enteredBefore);
+    const byMatch = new Map<string, typeof ballots>();
+    for (const b of ballots) byMatch.set(b.matchId, [...(byMatch.get(b.matchId) ?? []), b]);
+    const titles = new Map<string, number>();
+    for (const matchBallots of byMatch.values()) {
+      for (const id of designateMvp(matchBallots, config)) titles.set(id, (titles.get(id) ?? 0) + 1);
+    }
+    return [...titles].map(([playerId, n]) => ({ playerId, titles: n }));
+  }
+
   async getPublicStats(tournamentId: string): Promise<TournamentVoteStats> {
     const config = await this.config(tournamentId);
     const [received, weekly, titles] = await Promise.all([
       voteStatsRepository.fairPlayReceived(tournamentId),
       voteStatsRepository.fairPlayReceived(tournamentId, new Date(Date.now() - 7 * DAY_MS)),
-      voteStatsRepository.mvpTitles(tournamentId),
+      this.mvpTitles(tournamentId),
     ]);
     const fairPlay = rankFairPlay(received, config.fairPlayMinVotes).slice(0, RANKING_LIMIT);
     const mvp = assignCompetitionRanks(
@@ -92,7 +113,7 @@ export class VoteStatsService {
       voteStatsRepository.fairPlayReceived(tournamentId),
       voteStatsRepository.downTagsReceived(tournamentId, userId),
       voteStatsRepository.fairPlayCast(tournamentId),
-      voteStatsRepository.mvpTitles(tournamentId),
+      this.mvpTitles(tournamentId),
       voteStatsRepository.mvpVotesCast(tournamentId, userId),
       voteStatsRepository.teamMatchesPlayed(tournamentId, userId),
       voteStatsRepository.spectatedCount(tournamentId, userId),

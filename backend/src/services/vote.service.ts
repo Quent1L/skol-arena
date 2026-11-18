@@ -3,7 +3,6 @@ import {
   isMvpEligible,
   resolveVoteConfig,
   voteWindowCloseAt,
-  VOTE_WINDOW_HOURS,
   type CastFairPlayVoteInput,
   type MatchVotes,
   type VoteConfig,
@@ -15,6 +14,8 @@ import { voteRepository, type VoteMatch, type VoteMatchPlayer } from "../reposit
 import { tournamentRepository } from "../repository/tournament.repository";
 import { matchPermissionValidator } from "./validators/match-permission.validator";
 import { notificationService } from "./notification.service";
+import { webSocketService } from "./websocket.service";
+import { participantRepository } from "../repository/participant.repository";
 import { ConflictError, ErrorCode, ForbiddenError, NotFoundError } from "../types/errors";
 import { logger } from "../utils/logger";
 
@@ -101,14 +102,12 @@ export class VoteService {
 
   private async mvpView(ctx: VoteContext, userId: string): Promise<MatchVotes["mvp"]> {
     if (!ctx.mvpEligible || ctx.match.status === "cancelled") return null;
-    const frozen = ctx.match.mvpPlayerIds;
     const canVote = ctx.role === "player" || ctx.role === "spectator";
     return {
       spectatorsEnabled: ctx.config.mvpSpectatorsEnabled,
       candidateIds: ctx.match.players.filter((p) => p.id !== userId).map((p) => p.id),
       myVote: canVote ? await voteRepository.getMvpVoteBy(ctx.match.id, userId) : null,
-      mvpPlayerIds: frozen ?? designateMvp(await voteRepository.listMvpBallots(ctx.match.id), ctx.config),
-      isFinal: frozen !== null,
+      mvpPlayerIds: designateMvp(await voteRepository.listMvpBallots(ctx.match.id), ctx.config),
       spectatorCount: await voteRepository.countSpectators(ctx.match.id),
       blockedTargetIds: canVote ? await this.blockedMvpTargets(ctx, userId) : [],
     };
@@ -202,6 +201,7 @@ export class VoteService {
     if (ctx.role !== "member" && ctx.role !== "spectator") throw new ForbiddenError(ErrorCode.VOTE_NOT_ALLOWED);
     if (!ctx.isOpen) throw new ConflictError(ErrorCode.VOTING_CLOSED);
     await voteRepository.addSpectator(matchId, userId);
+    void this.broadcastMvpChange(ctx);
     return await this.getMatchVotes(matchId, userId);
   }
 
@@ -209,6 +209,7 @@ export class VoteService {
     const ctx = await this.loadContext(matchId, userId);
     if (!ctx.isOpen) throw new ConflictError(ErrorCode.VOTING_CLOSED);
     await voteRepository.removeSpectator(matchId, userId);
+    void this.broadcastMvpChange(ctx);
     return await this.getMatchVotes(matchId, userId);
   }
 
@@ -234,13 +235,41 @@ export class VoteService {
     const role = ctx.role === "player" ? "player" : "spectator";
     await voteRepository.upsertMvpVote(matchId, userId, targetId, role);
     await this.afterVote(matchId, userId);
+    void this.broadcastMvpChange(ctx);
     return await this.getMatchVotes(matchId, userId);
   }
 
   async removeMvp(matchId: string, userId: string) {
-    await this.mvpContext(matchId, userId);
+    const ctx = await this.mvpContext(matchId, userId);
     await voteRepository.deleteMvpVote(matchId, userId);
+    void this.broadcastMvpChange(ctx);
     return await this.getMatchVotes(matchId, userId);
+  }
+
+  // ── Realtime ──────────────────────────────────────────────────────────
+
+  /**
+   * Tells everyone who may see the MVP — tournament members, players and organizers —
+   * who it is now. The MVP is public; the votes behind it never travel: a match page
+   * refetches its own view (my vote, spectators), a list just swaps the badge.
+   * Never throws.
+   */
+  private async broadcastMvpChange(ctx: VoteContext): Promise<void> {
+    const { match } = ctx;
+    try {
+      const [members, admins, ballots] = await Promise.all([
+        participantRepository.getActiveParticipantIds(match.tournamentId),
+        tournamentRepository.getAdminUserIds(match.tournamentId),
+        voteRepository.listMvpBallots(match.id),
+      ]);
+      const data = { matchId: match.id, mvpPlayerIds: designateMvp(ballots, ctx.config) };
+      const audience = new Set([...members, ...admins, ...match.players.map((p) => p.id)]);
+      for (const userId of audience) {
+        webSocketService.send(userId, { event: "match_votes_updated", data });
+      }
+    } catch (err) {
+      logger.error({ err, matchId: match.id }, "Failed to broadcast vote update");
+    }
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────
@@ -249,19 +278,28 @@ export class VoteService {
     await voteRepository.deleteAllForMatch(matchId);
   }
 
-  /** Freezes the MVP of every match whose window closed. Run by the hourly job. */
-  async freezeClosedMatches(now = new Date()): Promise<number> {
-    const closedBefore = new Date(now.getTime() - VOTE_WINDOW_HOURS * 60 * 60 * 1000);
-    const due = await voteRepository.listMatchesToFreeze(closedBefore);
+  /**
+   * MVP(s) of several matches, for list views. Derived from the ballots on every read:
+   * once the window closes no vote can change any more, so the result is final without
+   * being stored. Matches without an MVP are left out of the map.
+   */
+  async mvpOfMatches(list: { id: string; tournamentId: string }[]): Promise<Map<string, string[]>> {
+    const ballots = await voteRepository.listMvpBallotsFor(list.map((m) => m.id));
+    const byMatch = new Map<string, typeof ballots>();
+    for (const b of ballots) byMatch.set(b.matchId, [...(byMatch.get(b.matchId) ?? []), b]);
     const configs = new Map<string, VoteConfig>();
-    for (const { id, tournamentId } of due) {
+    const result = new Map<string, string[]>();
+    for (const { id, tournamentId } of list) {
+      const matchBallots = byMatch.get(id);
+      if (!matchBallots) continue;
       if (!configs.has(tournamentId)) {
         configs.set(tournamentId, resolveVoteConfig(await tournamentRepository.getVoteConfig(tournamentId)));
       }
-      const ballots = await voteRepository.listMvpBallots(id);
-      await voteRepository.setMvp(id, designateMvp(ballots, configs.get(tournamentId) as VoteConfig));
+      const config = configs.get(tournamentId)!;
+      const mvp = config.mvpEnabled ? designateMvp(matchBallots, config) : [];
+      if (mvp.length > 0) result.set(id, mvp);
     }
-    return due.length;
+    return result;
   }
 
   // ── Vote prompts (toasts) ─────────────────────────────────────────────
@@ -306,13 +344,9 @@ export class VoteService {
       : [];
     const fairPlayTargetIds = ctx.config.fairPlayEnabled ? this.opponentsOf(ctx).map((p) => p.id) : [];
     if (mvpCandidateIds.length === 0 && fairPlayTargetIds.length === 0) return null;
-    const winner = ctx.match.winnerSide === "A" ? 1 : ctx.match.winnerSide === "B" ? 2 : null;
     return {
       matchId: ctx.match.id,
       tournamentId: ctx.match.tournamentId,
-      meId: userId,
-      myPosition: ctx.me?.position ?? 0,
-      winnerPosition: winner,
       sides: [1, 2].map((position) => ({
         position,
         players: ctx.match.players.filter((p) => p.position === position).map(({ position: _, ...p }) => p),

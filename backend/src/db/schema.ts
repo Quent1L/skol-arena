@@ -623,9 +623,6 @@ export const matches = pgTable(
       onDelete: "set null",
     }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    // MVP frozen once the vote window (created_at + VOTE_WINDOW_HOURS) closes; null
-    // until then, empty when nobody qualified.
-    mvpPlayerIds: uuid("mvp_player_ids").array(),
   },
   (table) => [
     index("idx_matches_tournament_status_played_at").on(table.tournamentId, table.status, table.playedAt),

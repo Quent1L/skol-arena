@@ -59,6 +59,8 @@
           {{ player.displayName }}
         </span>
 
+        <MvpBadge v-if="mvpIds?.includes(player.id)" />
+
         <template v-if="isFinalized && mode === 'championship' && player.effectivePointsAwarded !== undefined">
           <span
             v-if="player.exceededMatchLimit"
@@ -101,6 +103,7 @@
 </template>
 
 <script setup lang="ts">
+import MvpBadge from '@/components/votes/MvpBadge.vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
@@ -122,6 +125,8 @@ const props = defineProps<{
   confirmationStatuses?: Map<string, ConfirmationStatus>
   tournamentId?: string
   dimmed?: boolean
+  /** Current MVP(s) of the match, from the votes cast so far. */
+  mvpIds?: string[]
 }>()
 
 const { t } = useI18n()

@@ -62,4 +62,24 @@ describe('MatchSidePanel player line', () => {
       expect(pill.classes()).toContain('shrink-0')
     }
   })
+
+  it('flags the MVP next to their name', () => {
+    const wrapper = mountPanel({
+      mvpIds: ['p1'],
+      side: {
+        position: 1,
+        score: 3,
+        pointsAwarded: 0,
+        isWinner: true,
+        entryId: 'e-1',
+        entryName: null,
+        teamId: null,
+        players: [
+          { id: 'p1', displayName: 'Alexandre', shortName: 'AL' },
+          { id: 'p2', displayName: 'Bob', shortName: 'BO' },
+        ],
+      },
+    })
+    expect(wrapper.findAll('[data-testid="mvp-badge"]')).toHaveLength(1)
+  })
 })

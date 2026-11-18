@@ -89,6 +89,7 @@
           >
             <MatchSidePanel
               :side="sideA"
+              :mvp-ids="mvpIds"
               :fallback-name="t('matchDetailView.teamA')"
               :mode="match.tournament?.mode"
               :is-finalized="isFinalized"
@@ -120,6 +121,7 @@
 
             <MatchSidePanel
               :side="sideB"
+              :mvp-ids="mvpIds"
               :fallback-name="t('matchDetailView.teamB')"
               :mode="match.tournament?.mode"
               :is-finalized="isFinalized"
@@ -177,6 +179,7 @@
         :style="revealDelay(4)"
         :match-id="match.id"
         :sides="match.sides"
+        @mvp="mvpIds = $event"
       />
 
       <MatchMessageThread
@@ -356,6 +359,7 @@ const { appUser } = useAuth()
 const { tiers: rankedTiers, loadTiers } = useRankedService()
 
 const match = ref<ClientMatchDetail | null>(null)
+const mvpIds = ref<string[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const responding = ref(false)

@@ -80,9 +80,9 @@ mock.module("../mmr-job-queue.service", () => ({
   },
 }));
 
-// Cancelling a match drops its votes; that path has its own integration test.
+// Votes have their own integration test: cancelling drops them, cards flag the MVP.
 mock.module("../vote.service", () => ({
-  voteService: { onMatchCancelled: async () => {} },
+  voteService: { onMatchCancelled: async () => {}, mvpOfMatches: async () => new Map() },
 }));
 
 beforeEach(() => {
