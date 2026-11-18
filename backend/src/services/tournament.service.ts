@@ -242,6 +242,7 @@ export class TournamentService {
       ...(input.mode === "championship" && {
         championshipConfig: resolveChampionshipConfig(input.championshipConfig),
       }),
+      voteConfig: input.voteConfig,
       allowDraw: input.allowDraw ?? true,
       scoreEnabled: input.scoreEnabled ?? true,
       startDate: input.startDate,

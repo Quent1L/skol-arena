@@ -13,6 +13,7 @@ export const NotificationTypeEnum = z.enum([
   "BADGE_REVOKED",
   "MATCH_RESULT_CORRECTED",
   "ANNOUNCEMENT",
+  "FAIR_PLAY_ALERT",
 ]);
 
 export const DeviceTypeEnum = z.enum(["WEB", "ANDROID", "IOS"]);

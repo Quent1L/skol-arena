@@ -10,6 +10,8 @@ const pruneNotificationsJob = mock(async () => ({ deleted: 0 }));
 mock.module("../prune-notifications.job", () => ({ pruneNotificationsJob }));
 const rolloverRankedSeasonsJob = mock(async () => ({}));
 mock.module("../rollover-ranked-seasons.job", () => ({ rolloverRankedSeasonsJob }));
+const freezeMvpJob = mock(async () => ({ frozen: 0 }));
+mock.module("../freeze-mvp.job", () => ({ freezeMvpJob }));
 
 const pool = { name: "pool" };
 mock.module("../../config/database", () => ({ getPool: () => pool }));
@@ -42,11 +44,12 @@ beforeEach(() => {
 });
 
 describe("startJobScheduler", () => {
-  it("registers the four schedules", () => {
+  it("registers the five schedules", () => {
     startJobScheduler();
     expect(registered.map((j) => j.pattern)).toEqual([
       "0 * * * *",
       "30 * * * *",
+      "15 * * * *",
       "0 3 * * *",
       "30 3 * * *",
     ]);
@@ -61,6 +64,7 @@ describe("startJobScheduler", () => {
     ["0 * * * *", 1, autoFinalizeMatchesJob],
     ["30 * * * *", 3, rolloverRankedSeasonsJob],
     ["30 3 * * *", 2, pruneNotificationsJob],
+    ["15 * * * *", 4, freezeMvpJob],
   ])("runs %s under advisory lock %i", async (pattern, lockKey, task) => {
     startJobScheduler();
 
@@ -73,7 +77,7 @@ describe("startJobScheduler", () => {
     expect(task).toHaveBeenCalled();
   });
 
-  it.each(["0 * * * *", "30 * * * *", "30 3 * * *"])(
+  it.each(["0 * * * *", "30 * * * *", "15 * * * *", "30 3 * * *"])(
     "survives a skipped or failing run of %s",
     async (pattern) => {
       startJobScheduler();

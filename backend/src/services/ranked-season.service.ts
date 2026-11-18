@@ -491,6 +491,9 @@ export class RankedSeasonService {
     );
 
     await tournamentRulesetService.seed(result.tournament.id, input.disciplineId);
+    if (input.voteConfig) {
+      await tournamentRepository.update(result.tournament.id, { voteConfig: input.voteConfig });
+    }
 
     if (input.usePreviousMmr) {
       await this.syncMmrSeeds(result.tournament.id);
@@ -704,6 +707,7 @@ export class RankedSeasonService {
     this.assertSeasonFieldsEditable(season, enteredMatchCount, input);
 
     await this.applyTournamentUpdate(id, input);
+    if (input.voteConfig) await tournamentRepository.update(id, { voteConfig: input.voteConfig });
     if (input.endDate) await this.rescheduleCloseIfNeeded(id);
     const affectsMmr = await this.applyConfigUpdate(id, input);
 

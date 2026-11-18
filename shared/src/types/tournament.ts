@@ -29,6 +29,7 @@ import {
   type ChampionshipConfigInput,
   type TournamentScoringConfigInput,
 } from "./tournament-config";
+import { voteConfigInputSchema, voteConfigSchema, type VoteConfigInput } from "./votes";
 
 // ============================================
 // Types and interfaces for tournaments
@@ -47,6 +48,8 @@ export const baseTournamentSchema = z
     scoringConfig: tournamentScoringConfigSchema.nullish(),
     /** Championship-only pairing caps, null on every other mode. */
     championshipConfig: championshipConfigSchema.nullish(),
+    /** Fair-play / MVP vote settings, defaults resolved — every mode. */
+    voteConfig: voteConfigSchema.nullish(),
     allowDraw: z.boolean(),
     scoreEnabled: z.boolean(),
     startDate: z.iso.datetime(),
@@ -78,6 +81,7 @@ export interface CreateTournamentInput {
   maxTeamSize: number;
   scoringConfig?: TournamentScoringConfigInput;
   championshipConfig?: ChampionshipConfigInput;
+  voteConfig?: VoteConfigInput;
   allowDraw?: boolean;
   scoreEnabled?: boolean;
   startDate: string; // ISO date string
@@ -99,6 +103,7 @@ export interface UpdateTournamentInput {
   maxTeamSize?: number;
   scoringConfig?: TournamentScoringConfigInput;
   championshipConfig?: ChampionshipConfigInput;
+  voteConfig?: VoteConfigInput;
   allowDraw?: boolean;
   scoreEnabled?: boolean;
   startDate?: string;
@@ -210,6 +215,7 @@ const baseTournamentDataSchema = z.object({
     .min(1, vmsg("validation.teamSizeMin1")),
   scoringConfig: tournamentScoringConfigInputSchema.optional(),
   championshipConfig: championshipConfigInputSchema.optional(),
+  voteConfig: voteConfigInputSchema.optional(),
   allowDraw: z.boolean().default(true).optional(),
   scoreEnabled: z.boolean().default(true).optional(),
   startDate: z.iso.datetime()
@@ -258,6 +264,7 @@ export const updateTournamentSchema = z
     maxTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
     scoringConfig: tournamentScoringConfigInputSchema.optional(),
     championshipConfig: championshipConfigInputSchema.optional(),
+    voteConfig: voteConfigInputSchema.optional(),
     allowDraw: z.boolean().optional(),
     scoreEnabled: z.boolean().optional(),
     startDate: z.iso.datetime()

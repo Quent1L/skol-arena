@@ -10,6 +10,7 @@ export * from "./enums";
 // Business types
 export * from "./season-form";
 export * from "./tournament-config";
+export * from "./votes";
 export * from "./tournament-ruleset";
 export * from "./tournament-editability";
 export * from "./tournament";

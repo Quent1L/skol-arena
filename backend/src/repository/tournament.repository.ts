@@ -7,6 +7,7 @@ import {
   tournamentParticipants,
   tournamentScoringConfigs,
   championshipConfigs,
+  tournamentVoteConfigs,
 } from "../db/schema";
 import {
   type TournamentMode,
@@ -15,12 +16,15 @@ import {
   type ValidationMode,
   type TournamentScoringConfig,
   type ChampionshipConfig,
+  type VoteConfig,
+  resolveVoteConfig,
 } from "@skol-arena/shared/types/index";
 import { handleDatabaseError } from "../utils/db-errors";
 import {
   SCORING_CONFIG_COLUMNS,
   CHAMPIONSHIP_CONFIG_COLUMNS,
   TOURNAMENT_CONFIGS_WITH,
+  VOTE_CONFIG_COLUMNS,
 } from "./tournament-config.columns";
 
 export interface CreateTournamentData {
@@ -34,6 +38,7 @@ export interface CreateTournamentData {
   scoringConfig?: TournamentScoringConfig;
   /** Fully resolved by the service; omitted outside championship mode. */
   championshipConfig?: ChampionshipConfig;
+  voteConfig?: Partial<VoteConfig>;
   allowDraw: boolean | null;
   scoreEnabled?: boolean;
   startDate: string;
@@ -55,6 +60,7 @@ export interface UpdateTournamentData {
   teamSize?: number;
   scoringConfig?: Partial<TournamentScoringConfig>;
   championshipConfig?: Partial<ChampionshipConfig>;
+  voteConfig?: Partial<VoteConfig>;
   allowDraw?: boolean;
   startDate?: string;
   endDate?: string;
@@ -129,11 +135,18 @@ export class TournamentRepository {
             .values({ tournamentId: tournament.id, ...data.championshipConfig });
         }
 
+        if (data.voteConfig && Object.keys(data.voteConfig).length > 0) {
+          await tx
+            .insert(tournamentVoteConfigs)
+            .values({ tournamentId: tournament.id, ...data.voteConfig });
+        }
+
         // Return the configs alongside the row: the create response carries them.
         return {
           ...tournament,
           scoringConfig: data.scoringConfig ?? null,
           championshipConfig: data.championshipConfig ?? null,
+          voteConfig: data.voteConfig ? resolveVoteConfig(data.voteConfig) : null,
         };
       });
     } catch (error) {
@@ -165,6 +178,7 @@ export class TournamentRepository {
         },
         scoringConfig: { columns: SCORING_CONFIG_COLUMNS },
         championshipConfig: { columns: CHAMPIONSHIP_CONFIG_COLUMNS },
+        voteConfig: { columns: VOTE_CONFIG_COLUMNS },
       },
     });
 
@@ -283,7 +297,7 @@ export class TournamentRepository {
    * Update tournament
    */
   async update(id: string, data: UpdateTournamentData) {
-    const { scoringConfig, championshipConfig, ...columns } = data;
+    const { scoringConfig, championshipConfig, voteConfig, ...columns } = data;
 
     try {
       return await db.transaction(async (tx) => {
@@ -305,6 +319,13 @@ export class TournamentRepository {
               target: championshipConfigs.tournamentId,
               set: championshipConfig,
             });
+        }
+
+        if (voteConfig && Object.keys(voteConfig).length > 0) {
+          await tx
+            .insert(tournamentVoteConfigs)
+            .values({ tournamentId: id, ...voteConfig })
+            .onConflictDoUpdate({ target: tournamentVoteConfigs.tournamentId, set: voteConfig });
         }
 
         // Skipped when the payload only touched the configs: an UPDATE with no
@@ -369,6 +390,31 @@ export class TournamentRepository {
   /**
    * List the users who administrate a tournament (owner and co-admins).
    */
+  /** The raw vote settings row of a tournament, or null when it never set any. */
+  async getVoteConfig(tournamentId: string): Promise<VoteConfig | null> {
+    const row = await db.query.tournamentVoteConfigs.findFirst({
+      where: eq(tournamentVoteConfigs.tournamentId, tournamentId),
+      columns: VOTE_CONFIG_COLUMNS,
+    });
+    return row ?? null;
+  }
+
+  /** Whether the user is an active participant (member) of the tournament. */
+  async isActiveParticipant(tournamentId: string, userId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ id: tournamentParticipants.id })
+      .from(tournamentParticipants)
+      .where(
+        and(
+          eq(tournamentParticipants.tournamentId, tournamentId),
+          eq(tournamentParticipants.userId, userId),
+          eq(tournamentParticipants.status, "active"),
+        ),
+      )
+      .limit(1);
+    return !!row;
+  }
+
   async getAdminUserIds(tournamentId: string): Promise<string[]> {
     const records = await db.query.tournamentAdmins.findMany({
       where: eq(tournamentAdmins.tournamentId, tournamentId),

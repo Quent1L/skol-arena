@@ -25,7 +25,9 @@
     "MATCH_RESULT_CORRECTED_TITLE": "{{authorName}} corrected a match result",
     "MATCH_RESULT_CORRECTED_MESSAGE": "✏️ {{tournamentName}}\n📅 {{matchDate}}\nThe result of this match changed: see the match thread for details.",
     "ANNOUNCEMENT_TITLE": "📢 {{title}}",
-    "ANNOUNCEMENT_MESSAGE": "{{body}}"
+    "ANNOUNCEMENT_MESSAGE": "{{body}}",
+    "FAIR_PLAY_ALERT_TITLE": "Fair-play alert: {{playerName}}",
+    "FAIR_PLAY_ALERT_MESSAGE": "⚖️ {{tournamentName}}\n{{playerName}} received {{count}} 👎 fair-play votes over the last 30 days."
   },
   "emails": {
     "password_reset_subject": "Password Reset",
@@ -164,7 +166,11 @@
     "ORGANIZATION_NOT_FOUND": "Organization not found",
     "ORGANIZATION_ACCESS_DENIED": "You do not have access to this organization",
     "ORGANIZATION_ALREADY_MEMBER": "This user is already a member of this organization",
-    "ORGANIZATION_MEMBER_NOT_FOUND": "This user is not a member of this organization"
+    "ORGANIZATION_MEMBER_NOT_FOUND": "This user is not a member of this organization",
+    "VOTING_CLOSED": "Voting on this match is closed",
+    "VOTING_DISABLED": "This vote is not enabled for this tournament",
+    "VOTE_NOT_ALLOWED": "You cannot cast this vote",
+    "MVP_SAME_TARGET_LIMIT": "You already voted for this player recently"
   },
   "ranked": {
     "PROVISIONAL": "Match recorded!",

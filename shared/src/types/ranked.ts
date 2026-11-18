@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { translateValidation, vmsg } from "./validation-messages";
 import { validationModeSchema } from "./enums";
+import { voteConfigInputSchema } from "./votes";
 import {
   baseSeasonFormSchema,
   baseSeasonUpdateFormSchema,
@@ -568,6 +569,7 @@ export const createRankedSeasonSchema = z
     ...rankedSeasonExtraFields,
     validationMode: validationModeSchema.default("strict").optional(),
     validationTimerHours: z.number().int().min(1).max(168).nullable().optional(),
+    voteConfig: voteConfigInputSchema.optional(),
   })
   .refine(dateRangePredicate, dateRangeError)
   .refine(teamSizePredicate, teamSizeError)
@@ -606,6 +608,7 @@ export const updateRankedSeasonSchema = z.object({
   sourceMmrSeasonId: z.uuid().nullable().optional(),
   validationMode: validationModeSchema.optional(),
   validationTimerHours: z.number().int().min(1).max(168).nullable().optional(),
+  voteConfig: voteConfigInputSchema.optional(),
 });
 
 // ============================================

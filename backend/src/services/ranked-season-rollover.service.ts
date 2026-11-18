@@ -8,6 +8,7 @@ import {
   type RankedSeasonAutomationRow,
 } from "../repository/ranked-season-automation.repository";
 import { rankedSeasonRepository } from "../repository/ranked-season.repository";
+import { tournamentRepository } from "../repository/tournament.repository";
 import { participantRepository } from "../repository/participant.repository";
 import { playerMmrRepository } from "../repository/player-mmr.repository";
 import { rankedSeasonService, seasonTerm } from "./ranked-season.service";
@@ -175,6 +176,7 @@ export class RankedSeasonRolloverService {
     automation: RankedSeasonAutomationRow,
   ): Promise<CreateRankedSeasonInput> {
     const config = await rankedSeasonRepository.getConfigByTournamentId(season.id);
+    const voteConfig = await tournamentRepository.getVoteConfig(season.id);
     const startDate = new Date().toISOString().slice(0, 10);
     const { endDate } = seasonTerm(startDate, automation.durationDays);
 
@@ -208,6 +210,7 @@ export class RankedSeasonRolloverService {
       sourceMmrSeasonId: automation.carryMmr ? season.id : null,
       sourceTierSeasonId: automation.carryTiers ? season.id : null,
       tierScalingMode: automation.tierScalingMode,
+      ...(voteConfig && { voteConfig }),
     };
   }
 

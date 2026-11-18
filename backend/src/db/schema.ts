@@ -249,6 +249,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "BADGE_REVOKED",
   "MATCH_RESULT_CORRECTED",
   "ANNOUNCEMENT",
+  "FAIR_PLAY_ALERT",
 ]);
 
 export const announcementAudienceEnum = pgEnum("announcement_audience", [
@@ -622,6 +623,9 @@ export const matches = pgTable(
       onDelete: "set null",
     }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    // MVP frozen once the vote window (created_at + VOTE_WINDOW_HOURS) closes; null
+    // until then, empty when nobody qualified.
+    mvpPlayerIds: uuid("mvp_player_ids").array(),
   },
   (table) => [
     index("idx_matches_tournament_status_played_at").on(table.tournamentId, table.status, table.playedAt),
@@ -1565,6 +1569,10 @@ export const tournamentsRelations = relations(tournaments, ({ one, many }) => ({
     fields: [tournaments.id],
     references: [championshipConfigs.tournamentId],
   }),
+  voteConfig: one(tournamentVoteConfigs, {
+    fields: [tournaments.id],
+    references: [tournamentVoteConfigs.tournamentId],
+  }),
   ruleset: one(tournamentRulesets, {
     fields: [tournaments.id],
     references: [tournamentRulesets.tournamentId],
@@ -2226,3 +2234,154 @@ export const playerSeasonRewindsRelations = relations(playerSeasonRewinds, ({ on
 // ***************************************************************
 // [End] Season rewind tables
 // ***************************************************************
+
+// ********************************************************************
+// [Start] Fair-play & MVP votes
+// ***************************************************************
+
+export const fairPlayVoteValueEnum = pgEnum("fair_play_vote_value", ["up", "down"]);
+export const mvpVoterRoleEnum = pgEnum("mvp_voter_role", ["player", "spectator"]);
+export const mvpTieRuleEnum = pgEnum("mvp_tie_rule", ["co_mvp", "none"]);
+export const mvpSameTargetLimitEnum = pgEnum("mvp_same_target_limit", ["none", "daily", "weekly"]);
+export const votePromptOutcomeEnum = pgEnum("vote_prompt_outcome", [
+  "voted",
+  "skipped",
+  "dismissed",
+  "expired",
+]);
+
+/** Fair-play / MVP vote settings of a tournament. No row means every default. */
+export const tournamentVoteConfigs = pgTable("tournament_vote_configs", {
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+  tournamentId: uuid("tournament_id")
+    .notNull()
+    .unique()
+    .references(() => tournaments.id, { onDelete: "cascade" }),
+  fairPlayEnabled: boolean("fair_play_enabled").notNull().default(false),
+  fairPlayMinVotes: integer("fair_play_min_votes").notNull().default(5),
+  fairPlayAlertThreshold: integer("fair_play_alert_threshold").notNull().default(3),
+  fairPlayPublicNegativeAward: boolean("fair_play_public_negative_award").notNull().default(false),
+  mvpEnabled: boolean("mvp_enabled").notNull().default(false),
+  mvpSpectatorsEnabled: boolean("mvp_spectators_enabled").notNull().default(true),
+  mvpMinVotes: integer("mvp_min_votes").notNull().default(2),
+  mvpTieRule: mvpTieRuleEnum("mvp_tie_rule").notNull().default("co_mvp"),
+  mvpSameTargetLimit: mvpSameTargetLimitEnum("mvp_same_target_limit").notNull().default("none"),
+  rewindVoterAwards: boolean("rewind_voter_awards").notNull().default(true),
+  promptMaxMatchAgeMinutes: integer("prompt_max_match_age_minutes").notNull().default(60),
+});
+
+export const fairPlayVotes = pgTable(
+  "fair_play_votes",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    voterId: uuid("voter_id")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "cascade" }),
+    targetId: uuid("target_id")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "cascade" }),
+    value: fairPlayVoteValueEnum("value").notNull(),
+    tags: text("tags").array(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    unique("fair_play_votes_match_voter_target_uq").on(t.matchId, t.voterId, t.targetId),
+    index("fair_play_votes_target_idx").on(t.targetId, t.createdAt),
+  ],
+);
+
+export const matchSpectators = pgTable(
+  "match_spectators",
+  {
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.matchId, t.userId] })],
+);
+
+export const mvpVotes = pgTable(
+  "mvp_votes",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    voterId: uuid("voter_id")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "cascade" }),
+    targetId: uuid("target_id")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "cascade" }),
+    voterRole: mvpVoterRoleEnum("voter_role").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    unique("mvp_votes_match_voter_uq").on(t.matchId, t.voterId),
+    index("mvp_votes_voter_target_idx").on(t.voterId, t.targetId, t.updatedAt),
+  ],
+);
+
+/** One row per (match, user) once a vote prompt was shown: it never shows twice. */
+export const votePrompts = pgTable(
+  "vote_prompts",
+  {
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "cascade" }),
+    shownAt: timestamp("shown_at", { withTimezone: true }).defaultNow().notNull(),
+    outcome: votePromptOutcomeEnum("outcome").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.matchId, t.userId] })],
+);
+
+/** Back-off of the app-open vote prompt: 3 ignored in a row snooze it for 7 days. */
+export const playerVotePromptStates = pgTable("player_vote_prompt_states", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => appUsers.id, { onDelete: "cascade" }),
+  consecutiveIgnored: integer("consecutive_ignored").notNull().default(0),
+  snoozedUntil: timestamp("snoozed_until", { withTimezone: true }),
+});
+
+/** Every time an admin revealed who voted 👎 on a player: visible to the other admins. */
+export const fairPlayRevealLogs = pgTable(
+  "fair_play_reveal_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    tournamentId: uuid("tournament_id")
+      .notNull()
+      .references(() => tournaments.id, { onDelete: "cascade" }),
+    adminId: uuid("admin_id").references(() => appUsers.id, { onDelete: "set null" }),
+    targetId: uuid("target_id")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("fair_play_reveal_logs_tournament_idx").on(t.tournamentId, t.createdAt.desc())],
+);
+
+export const tournamentVoteConfigsRelations = relations(tournamentVoteConfigs, ({ one }) => ({
+  tournament: one(tournaments, {
+    fields: [tournamentVoteConfigs.tournamentId],
+    references: [tournaments.id],
+  }),
+}));

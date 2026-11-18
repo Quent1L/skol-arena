@@ -20,6 +20,7 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import type * as schema from "../db/schema";
 import { organizationVisibilityCondition } from "./organization-visibility";
+import { VOTE_CONFIG_COLUMNS } from "./tournament-config.columns";
 
 type DbTransaction = NodePgDatabase<typeof schema> | typeof db;
 
@@ -549,6 +550,7 @@ export class RankedSeasonRepository {
         automation: true,
         rankTiers: true,
         discipline: true,
+        voteConfig: { columns: VOTE_CONFIG_COLUMNS },
         rules: {
           columns: {
             id: true,

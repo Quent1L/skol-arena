@@ -80,6 +80,11 @@ mock.module("../mmr-job-queue.service", () => ({
   },
 }));
 
+// Cancelling a match drops its votes; that path has its own integration test.
+mock.module("../vote.service", () => ({
+  voteService: { onMatchCancelled: async () => {} },
+}));
+
 beforeEach(() => {
   mmrQueueCalls.finalization = 0;
   mmrQueueCalls.cascade = 0;

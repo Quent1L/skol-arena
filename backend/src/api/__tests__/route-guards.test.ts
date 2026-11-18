@@ -76,6 +76,16 @@ const SERVICE_ENFORCED = new Map<string, string>([
   ["GET /matches/:id/messages", "matchMessageService.assertCanRead"],
   ["POST /matches/:id/messages", "matchMessageService.assertCanRead"],
 
+  // voteService — match player, declared spectator or tournament member
+  ["PUT /matches/:id/fair-play", "voteService.fairPlayContext"],
+  ["PUT /matches/:id/fair-play/:targetId", "voteService.fairPlayContext"],
+  ["DELETE /matches/:id/fair-play/:targetId", "voteService.fairPlayContext"],
+  ["PUT /matches/:id/spectators/me", "voteService.declareSpectator"],
+  ["DELETE /matches/:id/spectators/me", "voteService.withdrawSpectator"],
+  ["PUT /matches/:id/mvp", "voteService.mvpContext"],
+  ["DELETE /matches/:id/mvp", "voteService.mvpContext"],
+  ["POST /matches/:id/vote-prompt", "voteService.recordPrompt"],
+
   // rankedSeasonService.assertCanManage — super_admin only
   ["POST /ranked/seasons", "rankedSeasonService.createSeason"],
   ["PATCH /ranked/seasons/:id", "rankedSeasonService.updateSeason"],

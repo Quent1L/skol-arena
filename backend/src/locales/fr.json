@@ -25,7 +25,9 @@
     "MATCH_RESULT_CORRECTED_TITLE": "{{authorName}} a corrigé le résultat d'un match",
     "MATCH_RESULT_CORRECTED_MESSAGE": "✏️ {{tournamentName}}\n📅 {{matchDate}}\nLe résultat de ce match a changé : consultez la discussion du match pour le détail.",
     "ANNOUNCEMENT_TITLE": "📢 {{title}}",
-    "ANNOUNCEMENT_MESSAGE": "{{body}}"
+    "ANNOUNCEMENT_MESSAGE": "{{body}}",
+    "FAIR_PLAY_ALERT_TITLE": "Alerte fair-play : {{playerName}}",
+    "FAIR_PLAY_ALERT_MESSAGE": "⚖️ {{tournamentName}}\n{{playerName}} a reçu {{count}} votes fair-play 👎 sur les 30 derniers jours."
   },
   "emails": {
     "password_reset_subject": "Réinitialisation de votre mot de passe",
@@ -164,7 +166,11 @@
     "ORGANIZATION_NOT_FOUND": "Organisation non trouvée",
     "ORGANIZATION_ACCESS_DENIED": "Vous n'avez pas accès à cette organisation",
     "ORGANIZATION_ALREADY_MEMBER": "Cet utilisateur est déjà membre de cette organisation",
-    "ORGANIZATION_MEMBER_NOT_FOUND": "Cet utilisateur n'est pas membre de cette organisation"
+    "ORGANIZATION_MEMBER_NOT_FOUND": "Cet utilisateur n'est pas membre de cette organisation",
+    "VOTING_CLOSED": "Le vote est clos pour ce match",
+    "VOTING_DISABLED": "Ce vote n'est pas activé pour ce tournoi",
+    "VOTE_NOT_ALLOWED": "Vous ne pouvez pas émettre ce vote",
+    "MVP_SAME_TARGET_LIMIT": "Vous avez déjà voté pour ce joueur récemment"
   },
   "ranked": {
     "PROVISIONAL": "Partie comptabilisée !",

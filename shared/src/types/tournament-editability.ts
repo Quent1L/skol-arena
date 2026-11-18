@@ -66,6 +66,8 @@ export const TOURNAMENT_FIELD_POLICY: Record<string, FieldPolicy> = {
   rulesId: { tier: "always" },
   validationMode: { tier: "always" },
   validationTimerHours: { tier: "always" },
+  // Fair-play / MVP votes never weigh on a result or on the MMR.
+  voteConfig: { tier: "always" },
 
   // ── Scoring semantics: changing them invalidates entered scores ───────
   scoreEnabled: { tier: "untilMatches" },

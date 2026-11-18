@@ -52,6 +52,7 @@ import { matchNotificationBuilder } from './match-notification.builder'
 import { matchFinalizationOrchestrator } from './match-finalization.orchestrator'
 import { matchMessageService } from './match-message.service'
 import { matchRealtimeService } from './match-realtime.service'
+import { voteService } from './vote.service'
 
 type TournamentFromRepository = Awaited<ReturnType<typeof matchRepository.getTournament>>
 type MatchDetail = NonNullable<Awaited<ReturnType<typeof matchRepository.getById>>>
@@ -1179,6 +1180,7 @@ export class MatchService {
 
     if (match.status === 'finalized') {
       await this.cancelFinalizedMatch(id, match, cancelledBy)
+      await voteService.onMatchCancelled(id)
       return await matchRepository.getById(id)
     }
 
@@ -1186,6 +1188,7 @@ export class MatchService {
 
     const wasUnfinalized = ['reported', 'disputed'].includes(match.status)
     await matchRepository.update(id, { status: 'cancelled' })
+    await voteService.onMatchCancelled(id)
     await notificationService.deleteActionsByMatchId(id)
     if (wasUnfinalized) {
       this.scheduleProvisionalRecompute(match.tournamentId)

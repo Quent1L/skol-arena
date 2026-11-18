@@ -19,8 +19,23 @@ export const CHAMPIONSHIP_CONFIG_COLUMNS = {
   maxTimesWithSameOpponent: true,
 } as const;
 
-/** `with` clause loading both configs on a tournament relational query. */
+export const VOTE_CONFIG_COLUMNS = {
+  fairPlayEnabled: true,
+  fairPlayMinVotes: true,
+  fairPlayAlertThreshold: true,
+  fairPlayPublicNegativeAward: true,
+  mvpEnabled: true,
+  mvpSpectatorsEnabled: true,
+  mvpMinVotes: true,
+  mvpTieRule: true,
+  mvpSameTargetLimit: true,
+  rewindVoterAwards: true,
+  promptMaxMatchAgeMinutes: true,
+} as const;
+
+/** `with` clause loading every config on a tournament relational query. */
 export const TOURNAMENT_CONFIGS_WITH = {
   scoringConfig: { columns: SCORING_CONFIG_COLUMNS },
   championshipConfig: { columns: CHAMPIONSHIP_CONFIG_COLUMNS },
+  voteConfig: { columns: VOTE_CONFIG_COLUMNS },
 } as const;
