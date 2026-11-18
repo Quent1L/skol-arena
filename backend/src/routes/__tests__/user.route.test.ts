@@ -131,7 +131,7 @@ describe("PATCH /users/me", () => {
 describe("GET /users", () => {
   it("shows a super admin the contact details", async () => {
     const res = await app.request("/users", { headers: authed });
-    const [user]: any[] = await res.json();
+    const [user] = (await res.json()) as any[];
 
     expect(res.status).toBe(200);
     expect(user.betterAuth.email).toBe("bob@x.io");
@@ -142,7 +142,7 @@ describe("GET /users", () => {
     userRepository.getById.mockImplementation(async () => ({ id: "u1", role: "tournament_admin" }));
 
     const res = await app.request("/users", { headers: authed });
-    const [user]: any[] = await res.json();
+    const [user] = (await res.json()) as any[];
 
     expect(res.status).toBe(200);
     expect(user.betterAuth.email).toBeUndefined();

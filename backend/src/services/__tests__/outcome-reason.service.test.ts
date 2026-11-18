@@ -28,7 +28,7 @@ describe("createOutcomeReason", () => {
   it("creates the reason under an existing outcome type", async () => {
     const created = await outcomeReasonService.createOutcomeReason({ outcomeTypeId: "t1", name: "Forfeit" } as any);
 
-    expect(created).toEqual({ id: "r1" });
+    expect<unknown>(created).toEqual({ id: "r1" });
     expect(reasonRepo.create).toHaveBeenCalledWith({ outcomeTypeId: "t1", name: "Forfeit" });
   });
 
@@ -44,7 +44,7 @@ describe("createOutcomeReason", () => {
 
 describe("getOutcomeReasonById", () => {
   it("returns the reason", async () => {
-    expect(await outcomeReasonService.getOutcomeReasonById("r1")).toEqual({ id: "r1" });
+    expect<unknown>(await outcomeReasonService.getOutcomeReasonById("r1")).toEqual({ id: "r1" });
   });
 
   it("throws NotFoundError for an unknown reason", async () => {

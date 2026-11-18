@@ -39,7 +39,7 @@ describe("autoFinalizeMatchesJob", () => {
 describe("rolloverRankedSeasonsJob", () => {
   it("returns the rollover result", async () => {
     const result = await rolloverRankedSeasonsJob();
-    expect(result.rolledOver).toEqual(["s1"]);
+    expect<unknown>(result.rolledOver).toEqual(["s1"]);
     expect(rolloverDue).toHaveBeenCalledTimes(1);
   });
 

@@ -86,13 +86,13 @@ describe("assertCanManage", () => {
 
 describe("tier administration", () => {
   it("creates, updates and deletes a tier for a manager", async () => {
-    expect(await service.createTier("s1", { level: 1 } as any, "u1")).toEqual({ level: 1 });
+    expect<unknown>(await service.createTier("s1", { level: 1 } as any, "u1")).toEqual({ level: 1 });
     expect(seasonRepo.insertTier).toHaveBeenCalledWith("s1", { level: 1 });
 
-    expect(await service.updateTier("s1", 1, { name: "x" } as any, "u1")).toEqual({ level: 1 });
+    expect<unknown>(await service.updateTier("s1", 1, { name: "x" } as any, "u1")).toEqual({ level: 1 });
     expect(seasonRepo.updateTier).toHaveBeenCalledWith("s1", 1, { name: "x" });
 
-    expect(await service.deleteTier("s1", 1, "u1")).toEqual({ deleted: true });
+    expect<unknown>(await service.deleteTier("s1", 1, "u1")).toEqual({ deleted: true });
     expect(seasonRepo.deleteTier).toHaveBeenCalledWith("s1", 1);
   });
 
@@ -205,7 +205,7 @@ describe("automation", () => {
 
     const out = await service.setAutomation("s1", { enabled: false } as any, "u1");
 
-    expect(out).toEqual({ enabled: false, stored: true });
+    expect<unknown>(out).toEqual({ enabled: false, stored: true });
   });
 
   it("deletes an existing automation and refuses to delete a missing one", async () => {
@@ -221,6 +221,6 @@ describe("automation", () => {
 
   it("reads the automation of a season", async () => {
     automationRepo.getByTournamentId.mockImplementation(async () => ({ enabled: true }));
-    expect(await service.getAutomation("s1")).toEqual({ enabled: true });
+    expect<unknown>(await service.getAutomation("s1")).toEqual({ enabled: true });
   });
 });
