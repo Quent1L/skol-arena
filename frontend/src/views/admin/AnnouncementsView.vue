@@ -45,6 +45,7 @@ import AnnouncementList from '@/components/announcement/AnnouncementList.vue'
 import { useAnnouncementAdmin } from '@/composables/announcement/announcement.service'
 import type { ClientAnnouncement } from '@/composables/announcement/announcement.api'
 import { useTournamentService } from '@/composables/tournament/tournament.service'
+import { useRankedService } from '@/composables/ranked/ranked.service'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useAppToast } from '@/composables/useAppToast'
 import { useErrorService } from '@/composables/useErrorService'
@@ -55,18 +56,27 @@ const toast = useAppToast()
 const { showError } = useErrorService()
 const { announcements, loading, saving, load, publish, remove } = useAnnouncementAdmin()
 const { tournaments, listTournaments } = useTournamentService()
+const { seasons, loadSeasons } = useRankedService()
 const composing = ref(false)
 
-const tournamentOptions = computed(() =>
-  tournaments.value
+// The tournament list leaves ranked seasons out, yet a season is a tournament row too:
+// its players are reached the same way, so offer both, seasons flagged by their icon.
+const toOptions = (list: typeof tournaments.value, icon?: string) =>
+  list
     .filter((tournament) => tournament.status !== 'finished')
-    .map((tournament) => ({ label: tournament.name, value: tournament.id })),
-)
+    .map((tournament) => ({ label: tournament.name, value: tournament.id, icon }))
+
+const tournamentOptions = computed(() => [
+  ...toOptions(tournaments.value),
+  ...toOptions(seasons.value, 'i-fa7-solid:ranking-star'),
+])
 
 watch(composing, (isOpen) => {
   if (isOpen && tournaments.value.length === 0) {
     void listTournaments().catch((err: Error) => showError(err))
   }
+  // loadSeasons keeps its own error state instead of throwing
+  if (isOpen && seasons.value.length === 0) void loadSeasons()
 })
 
 onMounted(() => {

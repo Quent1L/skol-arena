@@ -2847,9 +2847,9 @@
   "announcementForm": {
     "audienceLabel": "Recipients",
     "audienceAll": "Every player of the app",
-    "audienceTournament": "The players of a tournament",
-    "tournamentLabel": "Tournament",
-    "tournamentPlaceholder": "Choose a tournament",
+    "audienceTournament": "The players of a tournament or ranked season",
+    "tournamentLabel": "Tournament or ranked season",
+    "tournamentPlaceholder": "Choose a tournament or season",
     "titleLabel": "Title",
     "titlePlaceholder": "e.g. Three new badges to earn!",
     "bodyLabel": "Message",

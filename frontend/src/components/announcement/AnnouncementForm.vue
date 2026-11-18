@@ -129,7 +129,7 @@ const props = withDefaults(
     tournamentId?: string | null
     /** Super admins only: lets the author pick the whole app or any tournament. */
     allowGlobal?: boolean
-    tournamentOptions?: Array<{ label: string; value: string }>
+    tournamentOptions?: Array<{ label: string; value: string; icon?: string }>
     saving?: boolean
   }>(),
   { tournamentId: null, allowGlobal: false, tournamentOptions: () => [], saving: false },

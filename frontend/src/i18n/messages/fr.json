@@ -2847,9 +2847,9 @@
   "announcementForm": {
     "audienceLabel": "Destinataires",
     "audienceAll": "Tous les joueurs de l'appli",
-    "audienceTournament": "Les joueurs d'un tournoi",
-    "tournamentLabel": "Tournoi",
-    "tournamentPlaceholder": "Choisis un tournoi",
+    "audienceTournament": "Les joueurs d'un tournoi ou d'une saison ranked",
+    "tournamentLabel": "Tournoi ou saison ranked",
+    "tournamentPlaceholder": "Choisis un tournoi ou une saison",
     "titleLabel": "Titre",
     "titlePlaceholder": "Ex. : 3 nouveaux badges à débloquer !",
     "bodyLabel": "Message",
