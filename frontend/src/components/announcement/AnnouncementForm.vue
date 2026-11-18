@@ -72,13 +72,17 @@
     </UFormField>
 
     <UFormField name="asPopup" :label="t('announcementForm.channelsLabel')">
+      <!-- Explicit ids: the field hands its single id to every input inside it, so both
+           labels would otherwise point at the first checkbox. -->
       <div class="space-y-2">
         <UCheckbox
+          id="announcement-in-feed"
           v-model="state.inFeed"
           :label="t('announcementForm.inFeedLabel')"
           :description="t('announcementForm.inFeedDescription')"
         />
         <UCheckbox
+          id="announcement-as-popup"
           v-model="state.asPopup"
           :label="t('announcementForm.asPopupLabel')"
           :description="popupDescription"
