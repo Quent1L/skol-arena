@@ -1044,7 +1044,9 @@
     "SOME_PLAYER": "Un joueur",
     "UNKNOWN_PLAYER": "Joueur inconnu",
     "ANNOUNCEMENT_TITLE": "📢 {title}",
-    "ANNOUNCEMENT_MESSAGE": "{body}"
+    "ANNOUNCEMENT_MESSAGE": "{body}",
+    "FAIR_PLAY_ALERT_TITLE": "Alerte fair-play : {playerName}",
+    "FAIR_PLAY_ALERT_MESSAGE": "⚖️ {tournamentName}\n{playerName} a reçu {count} votes fair-play 👎 sur les 30 derniers jours."
   },
   "notificationsView": {
     "deleteAll": "Tout supprimer",
@@ -1641,7 +1643,8 @@
     "tournaments": "Évènements compétitifs",
     "rewinds": "Mes Rewinds",
     "adminAnnouncements": "Annonces",
-    "adminAnnouncementsBreadcrumb": "Annonces"
+    "adminAnnouncementsBreadcrumb": "Annonces",
+    "fairPlayAdmin": "Fair-play"
   },
   "rulesContent": {
     "noRules": "Aucun règlement disponible."
@@ -2836,7 +2839,8 @@
     "recalculatePoints": "Recalculer les points",
     "clearCache": "Vider le cache",
     "leave": "Quitter",
-    "announcements": "Annonces"
+    "announcements": "Annonces",
+    "fairPlay": "Fair-play"
   },
   "loadErrors": {
     "profile": "Erreur lors du chargement du profil",
@@ -2962,5 +2966,38 @@
     "fairPlayQuestion": "Un mot sur le fair-play de {name} ?",
     "fairPlayTeamQuestion": "Un mot sur le fair-play de l'équipe adverse ?",
     "thanks": "Merci ✓"
+  },
+  "voteStats": {
+    "mine": {
+      "title": "Mes votes (visible par toi seul)",
+      "fairPlayRate": "Taux fair-play",
+      "votesCast": "Votes émis",
+      "mvpTitles": "Titres MVP / matchs en équipe",
+      "spectated": "Matchs assistés",
+      "downs": "{count} 👎 reçus"
+    },
+    "fairPlay": {
+      "title": "Classement fair-play",
+      "ofTheWeek": "Fair-play de la semaine : {name} ({count} 👍)"
+    },
+    "mvp": {
+      "title": "Classement MVP",
+      "titles": "{count} titre | {count} titres"
+    },
+    "totals": "{count} votes · {rate} positifs"
+  },
+  "fairPlayAdmin": {
+    "title": "Fair-play",
+    "description": "👎 reçus par chaque joueur. Les votants restent masqués : les révéler est journalisé et visible des autres organisateurs.",
+    "received": "👎 reçus",
+    "noneReceived": "Aucun 👎 pour l'instant.",
+    "downs": "{count} 👎 · {recent} sur 30 jours",
+    "reveal": "Voir les votants",
+    "voters": "Profils votants",
+    "votersHelp": "Part de 👎 parmi les votes fair-play émis par chaque joueur.",
+    "cast": "{count} votes",
+    "log": "Journal des consultations",
+    "noLog": "Personne n'a encore consulté de votant.",
+    "logEntry": "{admin} a consulté les votants de {target}"
   }
 }

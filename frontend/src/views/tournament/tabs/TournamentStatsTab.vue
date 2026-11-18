@@ -176,6 +176,8 @@
         </div>
 
         <!-- Empty state -->
+        <VoteStatsCards v-if="votesEnabled" :tournament-id="store.tournament!.id" />
+
         <div
           v-if="!store.tournamentStats.totalFinalized"
           class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center"
@@ -194,6 +196,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, ref, nextTick } from 'vue'
 import AppChart from '@/components/charts/AppChart.vue'
+import VoteStatsCards from '@/components/votes/VoteStatsCards.vue'
 import { useI18n } from 'vue-i18n'
 import { useTournamentDetailStore } from '@/stores/tournamentDetail.store'
 import { formatDate } from 'date-fns'
@@ -205,6 +208,9 @@ import StreakLeadersCard from '@/components/stats/StreakLeadersCard.vue'
 import WeeklyMmrLeaders from '@/components/ranked/WeeklyMmrLeaders.vue'
 
 const store = useTournamentDetailStore()
+const votesEnabled = computed(
+  () => !!store.tournament?.voteConfig?.fairPlayEnabled || !!store.tournament?.voteConfig?.mvpEnabled,
+)
 const { t } = useI18n()
 
 const isMounted = ref(false)

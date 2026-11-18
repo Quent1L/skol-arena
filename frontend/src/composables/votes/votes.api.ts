@@ -1,5 +1,9 @@
 import http from '@/config/ApiConfig'
 import type {
+  AdminVoteStats,
+  MyVoteStats,
+  RevealedVoters,
+  TournamentVoteStats,
   CastFairPlayVoteInput,
   MatchVotes,
   VotePrompt,
@@ -42,5 +46,18 @@ export const votesApi = {
   },
   async recordPrompt(matchId: string, outcome: VotePromptOutcome): Promise<void> {
     await http.post(`${BASE_URL}/matches/${matchId}/vote-prompt`, { outcome })
+  },
+  async publicStats(tournamentId: string): Promise<TournamentVoteStats> {
+    return (await http.get<TournamentVoteStats>(`${BASE_URL}/tournaments/${tournamentId}/votes/stats`)).data
+  },
+  async myStats(tournamentId: string): Promise<MyVoteStats> {
+    return (await http.get<MyVoteStats>(`${BASE_URL}/tournaments/${tournamentId}/votes/stats/me`)).data
+  },
+  async adminStats(tournamentId: string): Promise<AdminVoteStats> {
+    return (await http.get<AdminVoteStats>(`${BASE_URL}/tournaments/${tournamentId}/votes/admin`)).data
+  },
+  async reveal(tournamentId: string, playerId: string): Promise<RevealedVoters> {
+    const url = `${BASE_URL}/tournaments/${tournamentId}/votes/admin/reveal/${playerId}`
+    return (await http.post<RevealedVoters>(url)).data
   },
 }

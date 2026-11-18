@@ -153,6 +153,13 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
           announcementsOpen.value = true
         },
       })
+      if (tournament.value?.voteConfig?.fairPlayEnabled) {
+        items.push({
+          label: i18n.global.t('tournamentDetailMenu.fairPlay'),
+          icon: 'i-fa7-solid:handshake',
+          command: () => router.push(`/tournaments/${tournamentId.value}/fair-play`),
+        })
+      }
       if (tournament.value?.mode) {
         items.push({
           label: i18n.global.t('tournamentDetailMenu.recalculatePoints'),

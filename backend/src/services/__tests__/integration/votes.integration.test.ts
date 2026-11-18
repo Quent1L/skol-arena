@@ -8,6 +8,7 @@ import * as schema from "../../../db/schema";
 const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
 import { voteService } from "../../vote.service";
+import { voteStatsService } from "../../vote-stats.service";
 import { notificationService } from "../../notification.service";
 import {
   appUsers,
@@ -227,6 +228,57 @@ describe("Fair-play & MVP votes (integration)", () => {
       await voteService.onMatchCancelled(id);
       expect(await testDb.select().from(mvpVotes).where(eq(mvpVotes.matchId, id))).toEqual([]);
       expect(await testDb.select().from(fairPlayVotes).where(eq(fairPlayVotes.matchId, id))).toEqual([]);
+    });
+  });
+
+  describe("stats", () => {
+    async function finalize(id: string) {
+      await testDb.update(matches).set({ status: "finalized" }).where(eq(matches.id, id));
+    }
+
+    it("counts finalized matches only and keeps 👎 out of the public figures", async () => {
+      await setConfig({ fairPlayMinVotes: 1 });
+      const pending = await match2v2();
+      await voteService.castFairPlay(pending, alice, carol, { value: "down" });
+      const done = await match2v2();
+      await voteService.castFairPlay(done, alice, carol, { value: "up" });
+      await voteService.castFairPlay(done, bob, carol, { value: "down", tags: ["bad_faith"] });
+      await voteService.castFairPlay(done, alice, dave, { value: "up" });
+      await finalize(done);
+
+      const pub = await voteStatsService.getPublicStats(tournamentId);
+      expect(pub.totals.votes).toBe(3);
+      expect(pub.fairPlayRanking[0]?.player.id).toBe(dave);
+      expect(JSON.stringify(pub)).not.toContain("bad_faith");
+
+      const mine = await voteStatsService.getMyStats(tournamentId, carol);
+      expect(mine.fairPlay).toMatchObject({ up: 1, down: 1, tags: [{ tag: "bad_faith", count: 1 }] });
+    });
+
+    it("counts frozen MVP titles and team matches", async () => {
+      const id = await match2v2();
+      await voteService.castMvp(id, alice, bob);
+      await voteService.castMvp(id, carol, bob);
+      await finalize(id);
+      await voteService.freezeClosedMatches(new Date(Date.now() + 49 * HOUR));
+      const mine = await voteStatsService.getMyStats(tournamentId, bob);
+      expect(mine.mvp.titles).toBeGreaterThanOrEqual(1);
+      expect(mine.mvp.teamMatches).toBeGreaterThanOrEqual(1);
+      const pub = await voteStatsService.getPublicStats(tournamentId);
+      expect(pub.mvpRanking[0]?.player.id).toBe(bob);
+    });
+
+    it("lets only organizers reveal 👎 voters, and logs every reveal", async () => {
+      const id = await match2v2();
+      await voteService.castFairPlay(id, bob, carol, { value: "down" });
+      await expect(voteStatsService.revealVoters(tournamentId, alice, carol)).rejects.toThrow(
+        "INSUFFICIENT_PERMISSIONS",
+      );
+      const voters = await voteStatsService.revealVoters(tournamentId, admin, carol);
+      expect(voters.map((v) => v.voter.id)).toContain(bob);
+      const view = await voteStatsService.getAdminStats(tournamentId, admin);
+      expect(view.revealLog[0]).toMatchObject({ admin: { id: admin }, target: { id: carol } });
+      expect(view.received.find((r) => r.player.id === carol)?.down).toBeGreaterThan(0);
     });
   });
 

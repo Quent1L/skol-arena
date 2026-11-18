@@ -202,6 +202,7 @@ declare module 'vue' {
     ValidationModeSection: typeof import('./src/components/forms/sections/ValidationModeSection.vue')['default']
     VoteConfigSection: typeof import('./src/components/forms/sections/VoteConfigSection.vue')['default']
     VotePrompt: typeof import('./src/components/votes/VotePrompt.vue')['default']
+    VoteStatsCards: typeof import('./src/components/votes/VoteStatsCards.vue')['default']
     WeeklyMmrLeaders: typeof import('./src/components/ranked/WeeklyMmrLeaders.vue')['default']
     WhenStep: typeof import('./src/components/match/steps/WhenStep.vue')['default']
   }

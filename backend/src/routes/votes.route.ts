@@ -1,7 +1,13 @@
 import { validate } from "../api/validator";
 import { describe } from "../api/describe";
 import { voteService } from "../services/vote.service";
+import { voteStatsService } from "../services/vote-stats.service";
+import { tournamentService } from "../services/tournament.service";
 import {
+  adminVoteStatsSchema,
+  myVoteStatsSchema,
+  revealedVotersSchema,
+  tournamentVoteStatsSchema,
   castFairPlayVoteSchema,
   castMvpVoteSchema,
   matchVotesSchema,
@@ -130,6 +136,49 @@ votes.get(
   requireAuth,
   describe({ tags: TAGS, summary: "Vote prompt to show on opening the app", auth: true, success: PROMPT_RESPONSE }),
   async (c) => c.json(await voteService.getPendingPrompt(c.get("appUserId"))),
+);
+
+// ── Stats ───────────────────────────────────────────────────────────────
+
+const STATS = { tags: TAGS, auth: true, role: true, notFound: true };
+
+votes.get(
+  "/tournaments/:id/votes/stats",
+  requireAuth,
+  describe({ ...STATS, summary: "Public fair-play and MVP stats of a tournament", success: { description: "Positive figures only", schema: tournamentVoteStatsSchema } }),
+  async (c) => {
+    const id = c.req.param("id")!;
+    await tournamentService.assertCanAccess(id, c.get("appUserId"));
+    return c.json(await voteStatsService.getPublicStats(id));
+  },
+);
+
+votes.get(
+  "/tournaments/:id/votes/stats/me",
+  requireAuth,
+  describe({ ...STATS, summary: "My fair-play and MVP stats in a tournament", success: { description: "Visible to the player alone", schema: myVoteStatsSchema } }),
+  async (c) => {
+    const id = c.req.param("id")!;
+    await tournamentService.assertCanAccess(id, c.get("appUserId"));
+    return c.json(await voteStatsService.getMyStats(id, c.get("appUserId")));
+  },
+);
+
+votes.get(
+  "/tournaments/:id/votes/admin",
+  requireAuth,
+  describe({ ...STATS, summary: "Fair-play moderation view (organizers)", success: { description: "👎 per player, voters hidden", schema: adminVoteStatsSchema } }),
+  async (c) => c.json(await voteStatsService.getAdminStats(c.req.param("id")!, c.get("appUserId"))),
+);
+
+votes.post(
+  "/tournaments/:id/votes/admin/reveal/:playerId",
+  requireAuth,
+  describe({ ...STATS, summary: "Reveal who voted 👎 on a player (logged)", success: { description: "The voters", schema: revealedVotersSchema } }),
+  async (c) => {
+    const { id, playerId } = c.req.param();
+    return c.json(await voteStatsService.revealVoters(id, c.get("appUserId"), playerId));
+  },
 );
 
 export default votes;

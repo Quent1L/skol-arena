@@ -158,6 +158,17 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/tournaments/:id/fair-play',
+    name: 'tournament-fair-play',
+    component: () => import('@/views/tournament/TournamentFairPlayAdminView.vue'),
+    beforeEnter: requireAuth,
+    meta: {
+      title: t('routes.fairPlayAdmin'),
+      hideBreadcrumb: true,
+      requiresAuth: true,
+    },
+  },
+  {
     path: '/tournaments/:tournamentId/create-match',
     name: 'create-match',
     component: () => import('@/views/CreateMatchView.vue'),

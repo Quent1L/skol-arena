@@ -1044,7 +1044,9 @@
     "SOME_PLAYER": "A player",
     "UNKNOWN_PLAYER": "Unknown player",
     "ANNOUNCEMENT_TITLE": "📢 {title}",
-    "ANNOUNCEMENT_MESSAGE": "{body}"
+    "ANNOUNCEMENT_MESSAGE": "{body}",
+    "FAIR_PLAY_ALERT_TITLE": "Fair-play alert: {playerName}",
+    "FAIR_PLAY_ALERT_MESSAGE": "⚖️ {tournamentName}\n{playerName} received {count} 👎 fair-play votes over the last 30 days."
   },
   "notificationsView": {
     "deleteAll": "Delete all",
@@ -1641,7 +1643,8 @@
     "tournaments": "Competitive events",
     "rewinds": "My Rewinds",
     "adminAnnouncements": "Announcements",
-    "adminAnnouncementsBreadcrumb": "Announcements"
+    "adminAnnouncementsBreadcrumb": "Announcements",
+    "fairPlayAdmin": "Fair-play"
   },
   "rulesContent": {
     "noRules": "No rules available."
@@ -2836,7 +2839,8 @@
     "recalculatePoints": "Recalculate points",
     "clearCache": "Clear cache",
     "leave": "Leave",
-    "announcements": "Announcements"
+    "announcements": "Announcements",
+    "fairPlay": "Fair-play"
   },
   "loadErrors": {
     "profile": "Error loading the profile",
@@ -2962,5 +2966,38 @@
     "fairPlayQuestion": "A word on {name}'s fair-play?",
     "fairPlayTeamQuestion": "A word on the other team's fair-play?",
     "thanks": "Thanks ✓"
+  },
+  "voteStats": {
+    "mine": {
+      "title": "My votes (only you see this)",
+      "fairPlayRate": "Fair-play rate",
+      "votesCast": "Votes cast",
+      "mvpTitles": "MVP titles / team matches",
+      "spectated": "Matches watched",
+      "downs": "{count} 👎 received"
+    },
+    "fairPlay": {
+      "title": "Fair-play ranking",
+      "ofTheWeek": "Fair-play of the week: {name} ({count} 👍)"
+    },
+    "mvp": {
+      "title": "MVP ranking",
+      "titles": "{count} title | {count} titles"
+    },
+    "totals": "{count} votes · {rate} positive"
+  },
+  "fairPlayAdmin": {
+    "title": "Fair-play",
+    "description": "👎 received by each player. Voters stay hidden: revealing them is logged and visible to the other organizers.",
+    "received": "👎 received",
+    "noneReceived": "No 👎 so far.",
+    "downs": "{count} 👎 · {recent} in 30 days",
+    "reveal": "Show voters",
+    "voters": "Voter profiles",
+    "votersHelp": "Share of 👎 among the fair-play votes each player cast.",
+    "cast": "{count} votes",
+    "log": "Reveal log",
+    "noLog": "Nobody revealed any voter yet.",
+    "logEntry": "{admin} revealed the voters of {target}"
   }
 }

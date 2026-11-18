@@ -85,6 +85,10 @@ const SERVICE_ENFORCED = new Map<string, string>([
   ["PUT /matches/:id/mvp", "voteService.mvpContext"],
   ["DELETE /matches/:id/mvp", "voteService.mvpContext"],
   ["POST /matches/:id/vote-prompt", "voteService.recordPrompt"],
+  ["GET /tournaments/:id/votes/stats", "tournamentService.assertCanAccess"],
+  ["GET /tournaments/:id/votes/stats/me", "tournamentService.assertCanAccess"],
+  ["GET /tournaments/:id/votes/admin", "voteStatsService.assertCanManage"],
+  ["POST /tournaments/:id/votes/admin/reveal/:playerId", "voteStatsService.assertCanManage"],
 
   // rankedSeasonService.assertCanManage — super_admin only
   ["POST /ranked/seasons", "rankedSeasonService.createSeason"],

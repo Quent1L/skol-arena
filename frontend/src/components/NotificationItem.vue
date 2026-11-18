@@ -122,6 +122,7 @@ const TYPE_STYLES: Record<string, { icon: string; accent: string }> = {
   BADGE_AWARDED: { icon: 'fa-medal', accent: 'var(--color-yellow-400)' },
   BADGE_REVOKED: { icon: 'fa-medal', accent: 'var(--ui-color-neutral-400)' },
   ANNOUNCEMENT: { icon: 'fa-bullhorn', accent: 'var(--color-fuchsia-400)' },
+  FAIR_PLAY_ALERT: { icon: 'fa-handshake-slash', accent: 'var(--color-amber-400)' },
 }
 const FALLBACK_STYLE = { icon: 'fa-bell', accent: 'var(--ui-color-primary-400)' }
 
