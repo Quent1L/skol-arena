@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, beforeEach, afterAll, spyOn } from "bun:test";
 import { eq } from "drizzle-orm";
 import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
@@ -9,6 +9,7 @@ const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
 import { announcementService } from "../../announcement.service";
 import { notificationService } from "../../notification.service";
+import { webSocketService } from "../../websocket.service";
 import {
   announcements,
   appUsers,
@@ -200,9 +201,19 @@ describe("Announcements (integration)", () => {
     });
   });
 
-  it("deleting an announcement removes its copies from every feed", async () => {
+  it("deleting an announcement removes its copies from every feed, open bells included", async () => {
     const { id } = await announcementService.create(superAdmin, input({}));
-    await announcementService.delete(superAdmin, id);
+    const [aliceCopy] = await feedOf(alice);
+    const send = spyOn(webSocketService, "send");
+    try {
+      await announcementService.delete(superAdmin, id);
+      expect(send).toHaveBeenCalledWith(alice, {
+        event: "notification_deleted",
+        data: { id: aliceCopy.id },
+      });
+    } finally {
+      send.mockRestore();
+    }
     expect(await feedOf(alice)).toHaveLength(0);
   });
 });

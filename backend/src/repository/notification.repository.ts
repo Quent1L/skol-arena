@@ -499,6 +499,15 @@ export const notificationRepository = {
     return deleteNotificationRows(toDelete);
   },
 
+  /** Every feed copy of an announcement, which is being deleted. */
+  async deleteByAnnouncement(announcementId: string) {
+    const toDelete = await db
+      .select({ id: notifications.id, userId: notifications.userId })
+      .from(notifications)
+      .where(eq(notifications.announcementId, announcementId));
+    return deleteNotificationRows(toDelete);
+  },
+
   async deleteActionsByMatchId(matchId: string) {
     // Find all requiresAction notifications for this match
     const toDelete = await db

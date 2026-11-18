@@ -406,6 +406,18 @@ export const notificationService = {
     return deleted;
   },
 
+  /** The announcement is withdrawn: its copies leave the feeds, open bells included. */
+  async deleteByAnnouncement(announcementId: string) {
+    const deleted = await notificationRepository.deleteByAnnouncement(announcementId);
+    for (const notif of deleted) {
+      webSocketService.send(notif.userId, {
+        event: "notification_deleted",
+        data: { id: notif.id },
+      });
+    }
+    return deleted;
+  },
+
   async deleteActionsByMatchId(matchId: string) {
     const deleted =
       await notificationRepository.deleteActionsByMatchId(matchId);

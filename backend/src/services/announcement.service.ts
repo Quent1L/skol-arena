@@ -137,6 +137,9 @@ export const announcementService = {
     const row = await announcementRepository.findById(id);
     if (!row) throw new NotFoundError(ErrorCode.NOT_FOUND);
     await assertCanPublish(userId, row);
+    // Deleted first and one by one, so the players' open bells hear of it; the cascade
+    // alone would remove the rows silently.
+    await notificationService.deleteByAnnouncement(id);
     await announcementRepository.delete(id);
   },
 
