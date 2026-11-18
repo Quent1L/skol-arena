@@ -58,7 +58,7 @@ describe("mmrAnimationEventRepository (integration)", () => {
   it("upserts an event and resets it when the same one is re-emitted", async () => {
     const first = await repo.upsert(event(ann, matchA, { message: "hello" }));
     expect(first?.viewedAt).toBeNull();
-    await repo.markViewed([first!.id]);
+    await repo.markViewed([first!.id], ann);
 
     const again = await repo.upsert(event(ann, matchA, { mmrDelta: 30, mmrAfter: 1030 }));
     expect(again?.id).toBe(first!.id);
@@ -102,9 +102,9 @@ describe("mmrAnimationEventRepository (integration)", () => {
   });
 
   it("marks events viewed, which records the delta the player has seen", async () => {
-    await repo.markViewed([]);
+    await repo.markViewed([], bob);
     const [pending] = await repo.getPendingForPlayer(bob, seasonId);
-    await repo.markViewed([pending!.id]);
+    await repo.markViewed([pending!.id], bob);
     expect(await repo.getPendingForPlayer(bob, seasonId)).toEqual([]);
     const seen = (await repo.getOfficialEventDeltasForPlayers(seasonId, [bob])).get(bob)?.get(matchA);
     expect(seen).toMatchObject({ seenDelta: 25, viewed: true });

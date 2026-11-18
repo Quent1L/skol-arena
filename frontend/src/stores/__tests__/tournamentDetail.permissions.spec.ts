@@ -180,15 +180,18 @@ describe('menu', () => {
     expect(store.menuItems).toEqual([])
   })
 
-  it('offers a manager the ranked edit form, recalculation and cache clearing', async () => {
+  it('offers a manager the ranked edit form, announcements, recalculation and cache clearing', async () => {
     h.flags.canManage = true
     const store = await ready()
 
-    const [edit, recalculate, clear] = store.menuItems
-    expect(store.menuItems).toHaveLength(3)
+    const [edit, announce, recalculate, clear] = store.menuItems
+    expect(store.menuItems).toHaveLength(4)
 
     edit.command()
     expect(h.push).toHaveBeenCalledWith('/admin/ranked/t1/edit')
+    expect(store.announcementsOpen).toBe(false)
+    announce.command()
+    expect(store.announcementsOpen).toBe(true)
     recalculate.command()
     expect(h.recalculatePoints).toHaveBeenCalledWith('t1')
     clear.command()
@@ -203,7 +206,7 @@ describe('menu', () => {
     expect(h.push).toHaveBeenCalledWith('/admin/tournaments/t1/edit')
 
     tournamentRef.value = { mode: undefined }
-    expect(store.menuItems).toHaveLength(2)
+    expect(store.menuItems).toHaveLength(3)
   })
 
   it('offers a participant who may leave the way out', async () => {
