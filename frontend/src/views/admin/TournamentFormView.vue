@@ -127,6 +127,8 @@
 
         <ValidationModeSection v-model:state="state" :editability="sectionEditability" />
 
+        <VoteConfigSection v-model:state="state" />
+
         <template #footer>
           <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <UButton
@@ -167,6 +169,7 @@ import {
   SCORING_DEFAULTS,
   resolveChampionshipConfig,
   resolveScoringConfig,
+  resolveVoteConfig,
 } from '@skol-arena/shared/types/index'
 import { useTournamentService } from '@/composables/tournament/tournament.service'
 import { useFormReferences } from '@/composables/useFormReferences'
@@ -176,6 +179,7 @@ import FieldEditabilityNote from '@/components/forms/FieldEditabilityNote.vue'
 import GeneralInfoSection from '@/components/forms/sections/GeneralInfoSection.vue'
 import ScoreConstraintsSection from '@/components/forms/sections/ScoreConstraintsSection.vue'
 import ValidationModeSection from '@/components/forms/sections/ValidationModeSection.vue'
+import VoteConfigSection from '@/components/forms/sections/VoteConfigSection.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -327,6 +331,7 @@ onMounted(async () => {
         organizationId: currentTournament.value.organizationId ?? null,
         validationMode: currentTournament.value.validationMode ?? 'strict',
         validationTimerHours: currentTournament.value.validationTimerHours ?? null,
+        voteConfig: resolveVoteConfig(currentTournament.value.voteConfig),
       })
     }
   } else {
@@ -342,6 +347,7 @@ onMounted(async () => {
       scoreEnabled: true,
       validationMode: 'strict',
       validationTimerHours: null,
+      voteConfig: resolveVoteConfig(null),
     })
   }
 })

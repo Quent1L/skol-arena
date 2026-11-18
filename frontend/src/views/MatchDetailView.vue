@@ -171,6 +171,14 @@
         @edit-result="completeMatch"
       />
 
+      <MatchVotes
+        v-if="match.status !== 'cancelled' && match.status !== 'scheduled'"
+        class="reveal"
+        :style="revealDelay(4)"
+        :match-id="match.id"
+        :sides="match.sides"
+      />
+
       <MatchMessageThread
         v-if="canSeeThread"
         class="reveal"
@@ -300,6 +308,7 @@ import {
 } from '@skol-arena/shared/types/index'
 import MatchConfirmation from '@/components/match/MatchConfirmation.vue'
 import MatchMessageThread from '@/components/match/MatchMessageThread.vue'
+import MatchVotes from '@/components/votes/MatchVotes.vue'
 import MatchSidePanel from '@/components/match/MatchSidePanel.vue'
 import MatchBalanceBar from '@/components/match/MatchBalanceBar.vue'
 import { useRankedService } from '@/composables/ranked/ranked.service'

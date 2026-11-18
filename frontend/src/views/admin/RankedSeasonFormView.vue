@@ -238,6 +238,8 @@
 
         <ValidationModeSection v-model:state="state" />
 
+        <VoteConfigSection v-model:state="state" />
+
         <template #footer>
           <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <UButton
@@ -277,6 +279,7 @@ import {
   rankedSeasonAutomationFormSchema,
   renderSeasonName,
   SEASON_NUMBER_PLACEHOLDER,
+  resolveVoteConfig,
 } from '@skol-arena/shared/types/index'
 import { useRankedService } from '@/composables/ranked/ranked.service'
 import { useFormReferences } from '@/composables/useFormReferences'
@@ -285,6 +288,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
 import GeneralInfoSection from '@/components/forms/sections/GeneralInfoSection.vue'
 import ScoreConstraintsSection from '@/components/forms/sections/ScoreConstraintsSection.vue'
 import ValidationModeSection from '@/components/forms/sections/ValidationModeSection.vue'
+import VoteConfigSection from '@/components/forms/sections/VoteConfigSection.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -426,6 +430,8 @@ function sameValue(a: unknown, b: unknown): boolean {
   }
   // The form normalises "no value" to null, the payload may carry undefined.
   if (a == null && b == null) return true
+  // Nested configs (voteConfig) are flat objects of primitives.
+  if (typeof a === 'object' && typeof b === 'object') return JSON.stringify(a) === JSON.stringify(b)
   return a === b
 }
 
@@ -536,9 +542,11 @@ onMounted(async () => {
         sourceMmrSeasonId: s.rankedConfig?.sourceMmrSeasonId ?? null,
         validationMode: (s.validationMode ?? 'strict') as 'none' | 'auto' | 'strict' | 'admin',
         validationTimerHours: s.validationTimerHours ?? null,
+        voteConfig: resolveVoteConfig(s.voteConfig),
       }
       Object.assign(state.value, loaded)
-      initialValues.value = { ...loaded }
+      // Its own copy: the section edits state.voteConfig in place.
+      initialValues.value = { ...loaded, voteConfig: { ...loaded.voteConfig } }
       if (s.automation) {
         automationEnabled.value = s.automation.enabled
         automation.value = {
@@ -571,6 +579,7 @@ onMounted(async () => {
       allowDraw: true,
       validationMode: 'strict',
       validationTimerHours: null,
+      voteConfig: resolveVoteConfig(null),
     })
   }
 })

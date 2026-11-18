@@ -1,4 +1,4 @@
-import type { ValidationMode } from '@skol-arena/shared/types/index'
+import type { ValidationMode, VoteConfig } from '@skol-arena/shared/types/index'
 
 /**
  * Slices of the season form state each shared section edits. The parent view owns
@@ -27,4 +27,8 @@ export interface ScoreConstraintsState {
 export interface ValidationModeState {
   validationMode?: ValidationMode
   validationTimerHours?: number | null
+}
+
+export interface VoteConfigState {
+  voteConfig?: VoteConfig
 }

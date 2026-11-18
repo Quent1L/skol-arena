@@ -17,6 +17,7 @@ import type {
   MmrSnapshotResponse,
   RankedSeasonAutomation,
   RankedSeasonAutomationInput,
+  VoteConfig,
 } from '@skol-arena/shared/types/index'
 
 const BASE_URL = '/api/ranked'
@@ -61,6 +62,7 @@ export type RankedSeason = {
   discipline?: { id: string; name: string } | null
   rules?: { id: string; title: string } | null
   automation?: RankedSeasonAutomation | null
+  voteConfig?: Partial<VoteConfig> | null
 }
 
 export type LeaderboardResponse = {

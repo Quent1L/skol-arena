@@ -2891,5 +2891,63 @@
     "title": "Announcements",
     "subtitle": "Messages sent to every player of a tournament or of the app",
     "new": "New announcement"
+  },
+  "matchVotes": {
+    "saved": "Saved ✓",
+    "saveFailed": "Your vote could not be saved",
+    "closed": "Voting closed",
+    "editableUntil": "editable until {date}",
+    "fairPlay": {
+      "title": "Fair-play",
+      "wholeTeam": "Whole team 👍",
+      "up": "Great fair-play",
+      "down": "Fair-play issue",
+      "tags": {
+        "abusive_dispute": "Abusive dispute",
+        "bad_faith": "Bad faith",
+        "attitude": "Attitude",
+        "lateness": "Late / no-show",
+        "other": "Other"
+      }
+    },
+    "mvp": {
+      "title": "Match MVP",
+      "provisional": "provisional",
+      "final": "final",
+      "none": "No MVP yet",
+      "yourVote": "Your vote:",
+      "iWatched": "I watched this match",
+      "withdrawSpectator": "I did not watch it after all",
+      "spectators": "{count} spectator | {count} spectators",
+      "alreadyVoted": "Already voted for {name} recently"
+    }
+  },
+  "voteConfigSection": {
+    "title": "Fair-play & MVP votes",
+    "description": "Optional votes after each match. They never affect the MMR or the standings.",
+    "fairPlayEnabled": "Fair-play votes",
+    "fairPlayMinVotes": "Votes needed to be ranked",
+    "fairPlayMinVotesHelp": "Below this, a player's fair-play rate is not shown.",
+    "fairPlayAlertThreshold": "Admin alert after",
+    "fairPlayAlertThresholdHelp": "Number of 👎 received over 30 days that notifies the organizers.",
+    "publicNegativeAward": "Public negative award in the season recap",
+    "transparency": "Organizers can see who cast a 👎 in case of a dispute; every look is logged. Mention it in your rules.",
+    "mvpEnabled": "MVP votes (team matches)",
+    "mvpSpectatorsEnabled": "Spectators may vote",
+    "mvpMinVotes": "Votes needed for an MVP",
+    "mvpTieRule": "On a tie",
+    "tieRule": {
+      "co_mvp": "Co-MVPs",
+      "none": "No MVP"
+    },
+    "mvpSameTargetLimit": "Votes for the same player",
+    "limit": {
+      "none": "No limit",
+      "daily": "Once a day",
+      "weekly": "Once a week"
+    },
+    "promptMaxMatchAge": "Vote prompt for matches played within (minutes)",
+    "promptMaxMatchAgeHelp": "Past this, voting stays possible from the match page.",
+    "rewindVoterAwards": "Voter awards in the season recap"
   }
 }

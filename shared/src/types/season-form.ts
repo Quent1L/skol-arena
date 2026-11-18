@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { translateValidation, vmsg } from "./validation-messages";
 import { validationModeSchema } from "./enums";
+import { voteConfigInputSchema } from "./votes";
 
 // ============================================
 // Base schema shared between tournaments and ranked seasons
@@ -42,6 +43,7 @@ export const baseSeasonFormSchema = z.object({
   allowDraw: z.boolean().optional(),
   validationMode: validationModeSchema.optional(),
   validationTimerHours: z.number().int().min(1).max(168).nullable().optional(),
+  voteConfig: voteConfigInputSchema.optional(),
 });
 
 export const baseSeasonUpdateFormSchema = baseSeasonFormSchema.partial();
