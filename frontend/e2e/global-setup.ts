@@ -6,12 +6,16 @@ import { execSync } from 'node:child_process'
  * are neither deletable nor cancellable via the API once finalized, and
  * trigger the "already a match at this date and time" check (same minute)
  * on subsequent runs.
+ *
+ * Also drops every announcement (their views and feed copies cascade): an app-wide
+ * pop-up left pending by a crashed run is a modal that would cover every other spec.
  */
 export default function globalSetup() {
   const sql = `
     DELETE FROM matches
     WHERE tournament_id = 'e2e00000-0000-4000-8000-00000000f001'
       AND id::text NOT LIKE 'e2e%';
+    DELETE FROM announcements;
   `
   try {
     execSync(

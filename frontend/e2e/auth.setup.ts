@@ -1,5 +1,5 @@
 import { test as setup, expect, request } from '@playwright/test'
-import { API_URL, USERS, ADMIN_STATE, PLAYER_STATE } from './fixtures'
+import { API_URL, USERS, ADMIN_STATE, PLAYER_STATE, PLAYER2_STATE } from './fixtures'
 
 /**
  * Logs in via the Better Auth API (faster and more robust than the UI)
@@ -18,6 +18,10 @@ async function saveState(email: string, password: string, path: string) {
 
 setup('authenticate player1', async () => {
   await saveState(USERS.player1.email, USERS.player1.password, PLAYER_STATE)
+})
+
+setup('authenticate player2', async () => {
+  await saveState(USERS.player2.email, USERS.player2.password, PLAYER2_STATE)
 })
 
 setup('authenticate admin', async () => {
