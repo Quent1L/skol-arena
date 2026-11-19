@@ -166,19 +166,19 @@
 
     <!-- MMR Animation System -->
     <MmrRecapCard
-      v-if="store.tournament?.mode === 'ranked' && animationQueue.showRecap.value"
+      v-if="isActive && store.tournament?.mode === 'ranked' && animationQueue.showRecap.value"
       :events="animationQueue.queue.value"
       :tiers="store.rankedTiers"
       @close="animationQueue.dismissAll()"
     />
     <MmrRevealAnimation
-      v-else-if="store.tournament?.mode === 'ranked' && animationQueue.currentEvent.value"
+      v-else-if="isActive && store.tournament?.mode === 'ranked' && animationQueue.currentEvent.value"
       :event="animationQueue.currentEvent.value"
       :tiers="store.rankedTiers"
       @close="animationQueue.acknowledgeCurrentEvent()"
     />
     <BadgeRevealAnimation
-      v-else-if="store.tournament?.mode === 'ranked' && animationQueue.currentBadge.value"
+      v-else-if="isActive && store.tournament?.mode === 'ranked' && animationQueue.currentBadge.value"
       :badge="animationQueue.currentBadge.value"
       @close="animationQueue.acknowledgeCurrentBadge()"
     />
@@ -198,8 +198,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import {
+  ref,
+  computed,
+  defineAsyncComponent,
+  onActivated,
+  onDeactivated,
+  onMounted,
+  onUnmounted,
+  watch,
+  nextTick,
+} from 'vue'
+import { useRouter } from 'vue-router'
+import { useActivationRefresh } from '@/composables/ui/useActivationRefresh'
+import { useFrozenRoute } from '@/composables/ui/useFrozenRoute'
 import { useI18n } from 'vue-i18n'
 import { useAppToast } from '@/composables/useAppToast'
 import { useWindowScroll } from '@vueuse/core'
@@ -226,8 +238,15 @@ const BadgeRevealAnimation = defineAsyncComponent(() => import('@/components/ran
 const RewindLauncher = defineAsyncComponent(() => import('@/components/rewind/RewindLauncher.vue'))
 import { useRewindService } from '@/composables/ranked/rewind.service'
 
-const route = useRoute()
+// Kept alive behind a match or a player page (AppWrapper's <KeepAlive>).
+const route = useFrozenRoute()
 const router = useRouter()
+
+// Overlays teleport to <body>: mounted while the view is hidden, they would cover the
+// match page. They wait for the return instead.
+const isActive = ref(true)
+onActivated(() => (isActive.value = true))
+onDeactivated(() => (isActive.value = false))
 const { t } = useI18n()
 const toast = useAppToast()
 const { isMobile } = useViewport()
@@ -313,6 +332,13 @@ watch(activeTabName, updateIndicator)
 watch(visibleTabs, updateIndicator)
 
 const offWsHandlers: (() => void)[] = []
+
+// Coming back from a match or a player page: the data stayed on screen, kept current by
+// the socket; refetched only when it may have moved without one.
+useActivationRefresh(() => {
+  store.refreshSilently()
+  if (store.tournament?.mode === 'ranked') animationQueue.loadPending(tournamentId.value)
+}, notificationSocket.hadUnexpectedDisconnect)
 
 function onVisibilityChange() {
   if (document.visibilityState === 'visible' && notificationSocket.hadUnexpectedDisconnect.value) {

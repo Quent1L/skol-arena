@@ -5,7 +5,11 @@
       <BreadcrumbMenu v-if="route.name !== 'offline' && !isMobile && !route.meta.hideBreadcrumb" />
       <RouterView v-slot="{ Component }">
         <Transition name="fade" mode="out-in" appear>
-          <component :is="Component" :key="routeKey" />
+          <!-- The tournament page survives a visit to a match or a player: coming back
+               from one costs no reload on a mobile connection. -->
+          <KeepAlive include="TournamentDetailView" :max="1">
+            <component :is="Component" :key="routeKey" />
+          </KeepAlive>
         </Transition>
       </RouterView>
       <PwaInstallBanner />

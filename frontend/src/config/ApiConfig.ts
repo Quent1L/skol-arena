@@ -17,12 +17,25 @@ export const API_VERSION_HEADER = 'accept-version'
 
 const baseURL = apiBaseURL
 
+let writeCount = 0
+/**
+ * How many requests that may change server data this client has sent. A screen kept
+ * alive behind another page compares it on return to know whether it went stale.
+ */
+export const writeSequence = (): number => writeCount
+// Non-GET requests that change nothing another screen shows: a read sent as POST (its
+// player list is too long for a query string) and the reader's own notification state.
+// Anything not listed counts: an unknown write refreshes rather than risk stale data.
+const NEUTRAL_WRITES = [/\/mmr-snapshot$/, /^\/api\/me\/notifications\//]
+
 const http = xior.create({
   baseURL,
   credentials: 'include',
 })
 
 http.interceptors.request.use((config) => {
+  const isWrite = config.method && config.method.toUpperCase() !== 'GET'
+  if (isWrite && !NEUTRAL_WRITES.some((re) => re.test(config.url ?? ''))) writeCount += 1
   // The server renders its messages in this language: the one picked in the app,
   // not the browser's own Accept-Language.
   config.headers = {

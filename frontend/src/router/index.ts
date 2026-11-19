@@ -270,6 +270,10 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+  // Back/forward lands where the reader left the page. The wait lets the out-in page
+  // transition (0.4s, AppWrapper.vue) take the old page off first.
+  scrollBehavior: (_to, _from, savedPosition) =>
+    savedPosition ? new Promise((resolve) => setTimeout(() => resolve(savedPosition), 400)) : false,
 })
 
 router.beforeEach((to) => {

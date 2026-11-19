@@ -226,12 +226,13 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
     isInitialLoading.value = true
     try {
       await tournamentSvc.loadTournamentWithErrorHandling(id)
+      // The mode decides what else to fetch; past that, nothing depends on anything.
       if (tournament.value) {
-        await participantSvc.getTournamentParticipants(id)
-        if (tournament.value.mode === 'ranked') {
-          await rankedSvc.loadLeaderboard(id)
-        }
-        if (isSameTournament) await revalidateWarmCaches()
+        await Promise.all([
+          participantSvc.getTournamentParticipants(id),
+          tournament.value.mode === 'ranked' ? rankedSvc.loadLeaderboard(id) : null,
+          isSameTournament ? revalidateWarmCaches() : null,
+        ])
       }
     } finally {
       isInitialLoading.value = false
