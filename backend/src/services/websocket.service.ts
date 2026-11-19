@@ -7,8 +7,9 @@ export class WebSocketService {
   private static instance: WebSocketService;
   // Map userId -> Set of WebSockets (to support multiple tabs/devices)
   private readonly connections: Map<string, Set<WS>> = new Map();
-  // Map tournamentId -> Set<userId>
-  private readonly tournamentSubscriptions: Map<string, Set<string>> = new Map();
+  // Map tournamentId -> Set of WebSockets. Per connection, not per user: a user's other
+  // tabs and devices keep their own subscriptions when one of them leaves or closes.
+  private readonly tournamentSubscriptions: Map<string, Set<WS>> = new Map();
 
   private constructor() {}
 
@@ -27,6 +28,7 @@ export class WebSocketService {
     logger.debug(`User ${userId} connected via WebSocket`);
   }
 
+  /** `ws` must be the same object passed to handleConnection. */
   public handleClose(ws: WS, userId: string) {
     const userConns = this.connections.get(userId);
     if (userConns) {
@@ -35,33 +37,31 @@ export class WebSocketService {
         this.connections.delete(userId);
       }
     }
+    for (const tournamentId of this.tournamentSubscriptions.keys()) {
+      this.unsubscribeFromTournament(tournamentId, ws);
+    }
     logger.debug(`User ${userId} disconnected`);
   }
 
-  public subscribeToTournament(tournamentId: string, userId: string): void {
+  public subscribeToTournament(tournamentId: string, ws: WS): void {
     if (!this.tournamentSubscriptions.has(tournamentId)) {
       this.tournamentSubscriptions.set(tournamentId, new Set());
     }
-    this.tournamentSubscriptions.get(tournamentId)!.add(userId);
+    this.tournamentSubscriptions.get(tournamentId)!.add(ws);
   }
 
+  /** Whether any of the user's connections follows the tournament. */
   public isSubscribedToTournament(tournamentId: string, userId: string): boolean {
-    return this.tournamentSubscriptions.get(tournamentId)?.has(userId) ?? false;
+    const subs = this.tournamentSubscriptions.get(tournamentId);
+    const userConns = this.connections.get(userId);
+    if (!subs || !userConns) return false;
+    return [...userConns].some((ws) => subs.has(ws));
   }
 
-  public unsubscribeFromTournament(tournamentId: string, userId: string): void {
+  public unsubscribeFromTournament(tournamentId: string, ws: WS): void {
     const subs = this.tournamentSubscriptions.get(tournamentId);
     if (subs) {
-      subs.delete(userId);
-      if (subs.size === 0) {
-        this.tournamentSubscriptions.delete(tournamentId);
-      }
-    }
-  }
-
-  public unsubscribeUserFromAll(userId: string): void {
-    for (const [tournamentId, subs] of this.tournamentSubscriptions) {
-      subs.delete(userId);
+      subs.delete(ws);
       if (subs.size === 0) {
         this.tournamentSubscriptions.delete(tournamentId);
       }
@@ -71,8 +71,9 @@ export class WebSocketService {
   public broadcastToTournament(tournamentId: string, data: unknown): void {
     const subs = this.tournamentSubscriptions.get(tournamentId);
     if (!subs) return;
-    for (const userId of subs) {
-      this.send(userId, data);
+    const message = JSON.stringify(data);
+    for (const ws of subs) {
+      ws.send(message);
     }
   }
 

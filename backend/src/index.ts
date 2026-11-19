@@ -2,6 +2,7 @@ import type { Context, Next } from "hono";
 import { z } from "zod";
 import { cors } from "hono/cors";
 import { serveStatic, upgradeWebSocket, websocket } from "hono/bun";
+import type { WSContext } from "hono/ws";
 import { HTTPException } from "hono/http-exception";
 import { auth } from "./config/auth";
 import { buildVersionApp } from "./api/build";
@@ -221,9 +222,13 @@ app.get(
     
     logger.debug(`[WS] BetterAuth user ${user.id} mapped to App user ${appUserId}`);
     
+    // hono/bun wraps the socket in a new WSContext on every event: the one from onOpen
+    // is kept so close and unsubscribe find the object the service registered.
+    let socket: WSContext;
     return {
       onOpen(_event, ws) {
         logger.debug(`[WS] App user ${appUserId} connected (BetterAuth: ${user.id})`);
+        socket = ws;
         webSocketService.handleConnection(ws, appUserId);
       },
       async onMessage(event, _ws) {
@@ -241,7 +246,7 @@ app.get(
         const msg = parsed.data;
 
         if (msg.event === "unsubscribe_tournament") {
-          webSocketService.unsubscribeFromTournament(msg.tournamentId, appUserId);
+          webSocketService.unsubscribeFromTournament(msg.tournamentId, socket);
           return;
         }
 
@@ -256,12 +261,11 @@ app.get(
           );
           return;
         }
-        webSocketService.subscribeToTournament(msg.tournamentId, appUserId);
+        webSocketService.subscribeToTournament(msg.tournamentId, socket);
       },
-      onClose(_event, ws) {
+      onClose(_event, _ws) {
         logger.debug(`[WS] App user ${appUserId} disconnected`);
-        webSocketService.handleClose(ws, appUserId);
-        webSocketService.unsubscribeUserFromAll(appUserId);
+        webSocketService.handleClose(socket, appUserId);
       },
       onError(event, _ws) {
         logger.error(`[WS] Error for app user ${appUserId}: %o`, event);
