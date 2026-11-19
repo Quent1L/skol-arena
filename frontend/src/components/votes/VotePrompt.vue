@@ -12,7 +12,7 @@
     <div
       v-if="visible && current"
       ref="cardRef"
-      class="vote-prompt fixed inset-x-4 z-50 flex gap-2.5 overflow-hidden rounded-lg bg-default p-4 shadow-lg ring ring-primary/50 sm:left-auto sm:right-4 sm:w-96"
+      class="vote-prompt fixed inset-x-4 touch-none z-50 flex gap-2.5 overflow-hidden rounded-lg bg-default p-4 shadow-lg ring ring-primary/50 sm:left-auto sm:right-4 sm:w-96"
       :class="{ 'above-nav': hasBottomNav }"
       :style="swipeStyle"
       role="dialog"
@@ -43,13 +43,13 @@
               :key="id"
               color="neutral"
               variant="outline"
-              size="xs"
+              size="md"
               :disabled="busy"
               :data-testid="`vote-prompt-mvp-${id}`"
               @click="pickMvp(id)"
             >
               <template #leading>
-                <PlayerAvatar :name="nameOf(id)" :player-id="id" size="xs" />
+                <PlayerAvatar :name="nameOf(id)" :player-id="id" size="sm" />
               </template>
               {{ nameOf(id) }}
             </UButton>
@@ -57,7 +57,7 @@
               :label="t('votePrompt.skip')"
               variant="link"
               color="neutral"
-              size="xs"
+              size="sm"
               data-testid="vote-prompt-skip"
               @click="skipMvp"
             />
@@ -70,7 +70,7 @@
             <UButton
               icon="i-fa7-solid:thumbs-up"
               :label="t('matchVotes.fairPlay.up')"
-              size="xs"
+              size="md"
               :disabled="busy"
               data-testid="vote-prompt-thumbs-up"
               @click="thumbsUp"
@@ -80,7 +80,7 @@
               trailing-icon="i-fa7-solid:arrow-right"
               variant="link"
               color="neutral"
-              size="xs"
+              size="sm"
               :to="`/matches/${prompt.matchId}`"
               data-testid="vote-prompt-more"
               @click="end"
@@ -95,7 +95,8 @@
         icon="i-fa7-solid:xmark"
         color="neutral"
         variant="link"
-        class="p-0"
+        size="md"
+        class="-mr-2 -mt-2 self-start"
         :aria-label="t('common.close')"
         data-testid="vote-prompt-close"
         @click="end"
@@ -220,6 +221,7 @@ watch(
 
 // ── Swipe to dismiss ───────────────────────────────────────────────────
 // The gauge is not the only way out: a sideways or downward swipe closes the card.
+// `touch-none` on the card keeps a swipe from also scrolling the page underneath.
 const SWIPE_DISMISS_PX = 80
 const cardRef = ref<HTMLElement | null>(null)
 const { isSwiping, lengthX } = useSwipe(cardRef, {
@@ -335,12 +337,13 @@ onUnmounted(() => {
 
 <style scoped>
 /* Clear of the home indicator; above a mobile bottom nav (same height contract as
-   MobileBottomNav) so the player can keep navigating without answering. */
+   MobileBottomNav) so the player can keep navigating without answering. The extra
+   1.75rem clears the "Create" button, which sticks out 14px above the nav. */
 .vote-prompt {
   bottom: calc(1rem + env(safe-area-inset-bottom));
 }
 
 .vote-prompt.above-nav {
-  bottom: calc(4rem + env(safe-area-inset-bottom) + 0.75rem);
+  bottom: calc(4rem + env(safe-area-inset-bottom) + 1.75rem);
 }
 </style>
