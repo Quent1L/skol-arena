@@ -3003,7 +3003,8 @@
     },
     "fairPlay": {
       "title": "Fair-play ranking (last 30 days)",
-      "ofTheWeek": "Fair-play of the week: {name} ({count} 👍)"
+      "ofTheWeek": "Fair-play of the week: {name} ({count} 👍)",
+      "weekTitle": "Fair-play of the week"
     },
     "mvp": {
       "title": "MVP ranking",

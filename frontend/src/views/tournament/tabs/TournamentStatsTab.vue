@@ -30,19 +30,40 @@
             :losers="store.weeklyMmrLeaders!.losers"
             :tournament-id="store.tournament?.id"
           />
-          <p
+          <div
             v-if="voteStats?.fairPlayOfTheWeek"
-            class="mt-4 text-sm text-gray-900 dark:text-white/90"
+            class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
             data-testid="weekly-fair-play"
           >
-            🏅
-            {{
-              t('voteStats.fairPlay.ofTheWeek', {
-                name: voteStats.fairPlayOfTheWeek.player.displayName,
-                count: voteStats.fairPlayOfTheWeek.ups,
-              })
-            }}
-          </p>
+            <div
+              class="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2"
+            >
+              <i class="fa fa-handshake text-primary" />
+              {{ t('voteStats.fairPlay.weekTitle') }}
+            </div>
+            <div class="flex justify-between items-center gap-2 py-1.5">
+              <RouterLink
+                :to="playerLink(voteStats.fairPlayOfTheWeek.player.id, store.tournament?.id)"
+                class="flex items-center gap-2 min-w-0 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
+              >
+                <PlayerAvatar
+                  :name="voteStats.fairPlayOfTheWeek.player.displayName"
+                  :color-key="voteStats.fairPlayOfTheWeek.player.shortName"
+                  :player-id="voteStats.fairPlayOfTheWeek.player.id"
+                  size="xs"
+                  shape="square"
+                  class="shrink-0"
+                />
+                <span class="truncate">{{ voteStats.fairPlayOfTheWeek.player.displayName }}</span>
+              </RouterLink>
+              <span
+                class="flex items-center gap-1 text-sm font-black tabular-nums shrink-0 text-gray-900 dark:text-white"
+              >
+                {{ voteStats.fairPlayOfTheWeek.ups }}
+                <UIcon name="i-fa7-solid:thumbs-up" class="size-3.5 text-primary" />
+              </span>
+            </div>
+          </div>
         </div>
 
         <!-- Fair-play / MVP rankings -->
@@ -210,7 +231,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, provide, ref, nextTick, watch } from 'vue'
-import { STAT_ROWS_ARE_PLAYERS } from '@/utils/player-link'
+import { STAT_ROWS_ARE_PLAYERS, playerLink } from '@/utils/player-link'
+import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import AppChart from '@/components/charts/AppChart.vue'
 import VoteStatsCards from '@/components/votes/VoteStatsCards.vue'
 import { useI18n } from 'vue-i18n'
