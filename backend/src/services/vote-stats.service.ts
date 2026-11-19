@@ -2,7 +2,6 @@ import {
   designateMvp,
   resolveVoteConfig,
   smoothedFairPlayRate,
-  VOTE_WINDOW_HOURS,
   type AdminVoteStats,
   type FairPlayTag,
   type MyVoteStats,
@@ -18,7 +17,7 @@ import { assignCompetitionRanks } from "./stats-ranking";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RANKING_LIMIT = 10;
-/** The public ranking is a rolling window: the whole season belongs to its rewind. */
+/** The public rankings are a rolling window: the whole season belongs to its rewind. */
 const RANKING_WINDOW_DAYS = 30;
 const rankingSince = () => new Date(Date.now() - RANKING_WINDOW_DAYS * DAY_MS);
 
@@ -64,15 +63,14 @@ export class VoteStatsService {
   }
 
   /**
-   * MVP titles per player, derived from the ballots of validated matches. By default
-   * only matches whose vote window closed count, so a ranking never moves with votes
-   * still being cast; `closedOnly: false` takes them all (a finished season).
+   * MVP titles per player, derived from the ballots of validated matches, optionally only
+   * those entered since a date. A match still open to votes counts already: its title
+   * may change hands until the window closes, like any live ranking.
    */
-  async mvpTitles(tournamentId: string, closedOnly = true): Promise<{ playerId: string; titles: number }[]> {
+  async mvpTitles(tournamentId: string, since?: Date): Promise<{ playerId: string; titles: number }[]> {
     const config = await this.config(tournamentId);
     if (!config.mvpEnabled) return [];
-    const enteredBefore = closedOnly ? new Date(Date.now() - VOTE_WINDOW_HOURS * 60 * 60 * 1000) : undefined;
-    const ballots = await voteStatsRepository.mvpBallots(tournamentId, enteredBefore);
+    const ballots = await voteStatsRepository.mvpBallots(tournamentId, since);
     const byMatch = new Map<string, typeof ballots>();
     for (const b of ballots) byMatch.set(b.matchId, [...(byMatch.get(b.matchId) ?? []), b]);
     const titles = new Map<string, number>();
@@ -84,10 +82,12 @@ export class VoteStatsService {
 
   async getPublicStats(tournamentId: string): Promise<TournamentVoteStats> {
     const config = await this.config(tournamentId);
-    const [received, weekly, titles] = await Promise.all([
+    const weekStart = new Date(Date.now() - 7 * DAY_MS);
+    const [received, weekly, titles, weeklyTitles] = await Promise.all([
       voteStatsRepository.fairPlayReceived(tournamentId, rankingSince()),
-      voteStatsRepository.fairPlayReceived(tournamentId, new Date(Date.now() - 7 * DAY_MS)),
-      this.mvpTitles(tournamentId),
+      voteStatsRepository.fairPlayReceived(tournamentId, weekStart),
+      this.mvpTitles(tournamentId, rankingSince()),
+      this.mvpTitles(tournamentId, weekStart),
     ]);
     const fairPlay = rankFairPlay(received, config.fairPlayMinVotes).slice(0, RANKING_LIMIT);
     const mvp = assignCompetitionRanks(
@@ -95,15 +95,18 @@ export class VoteStatsService {
       (a, b) => a.titles === b.titles,
     ).slice(0, RANKING_LIMIT);
     const best = [...weekly].filter((r) => r.up > 0).sort((a, b) => b.up - a.up)[0];
+    const bestMvp = [...weeklyTitles].sort((a, b) => b.titles - a.titles)[0];
     const players = await voteStatsRepository.players([
       ...fairPlay.map((e) => e.item.playerId),
       ...mvp.map((e) => e.item.playerId),
       ...(best ? [best.playerId] : []),
+      ...(bestMvp ? [bestMvp.playerId] : []),
     ]);
     const who = (id: string) => players.get(id) ?? unknownPlayer(id);
     const total = received.reduce((n, r) => n + r.up + r.down, 0);
     return {
       fairPlayOfTheWeek: best ? { player: who(best.playerId), ups: best.up } : null,
+      mvpOfTheWeek: bestMvp ? { player: who(bestMvp.playerId), titles: bestMvp.titles } : null,
       fairPlayRanking: fairPlay.map(({ item, rank }) => ({ player: who(item.playerId), rate: item.rate, votes: item.votes, rank })),
       mvpRanking: mvp.map(({ item, rank }) => ({ player: who(item.playerId), titles: item.titles, rank })),
       totals: { votes: total, positiveRate: total > 0 ? averageUpRate(received) : null },

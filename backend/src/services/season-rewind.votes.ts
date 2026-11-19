@@ -138,7 +138,7 @@ export async function computeVoteRewind(seasonId: string, directory: Directory) 
     voteStatsRepository.fairPlayCast(seasonId),
     voteStatsRepository.mvpVotesCastPerVoter(seasonId),
     // The season is over: every match counts, even one entered in its last 48 hours.
-    voteStatsService.mvpTitles(seasonId, false),
+    voteStatsService.mvpTitles(seasonId),
     voteStatsRepository.spectatedPerUser(seasonId),
     voteStatsRepository.downTagsReceived(seasonId),
   ]);

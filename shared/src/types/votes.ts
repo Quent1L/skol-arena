@@ -236,6 +236,7 @@ export const tagCountSchema = z.object({ tag: fairPlayTagSchema, count: z.number
 export const tournamentVoteStatsSchema = z
   .object({
     fairPlayOfTheWeek: z.object({ player: voteStatPlayerSchema, ups: z.number().int() }).nullable(),
+    mvpOfTheWeek: z.object({ player: voteStatPlayerSchema, titles: z.number().int() }).nullable(),
     fairPlayRanking: z.array(
       z.object({ player: voteStatPlayerSchema, rate: z.number(), votes: z.number().int(), rank: z.number().int() }),
     ),

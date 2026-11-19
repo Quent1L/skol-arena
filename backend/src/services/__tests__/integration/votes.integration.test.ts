@@ -282,23 +282,33 @@ describe("Fair-play & MVP votes (integration)", () => {
       expect(pub.fairPlayRanking.map((r) => r.player.id)).not.toContain(carol);
     });
 
-    it("counts MVP titles once the vote is closed, and team matches", async () => {
+    it("counts MVP titles as soon as the match is validated, and team matches", async () => {
       const id = await match2v2();
       await voteService.castMvp(id, alice, bob);
       await voteService.castMvp(id, carol, bob);
-      await finalize(id);
       expect(await voteStatsService.mvpTitles(tournamentId)).toEqual([]);
-      expect(await voteStatsService.mvpTitles(tournamentId, false)).toEqual([{ playerId: bob, titles: 1 }]);
-      // Window over: the ballots can no longer move, the title counts.
-      await testDb
-        .update(matches)
-        .set({ createdAt: new Date(Date.now() - 49 * HOUR) })
-        .where(eq(matches.id, id));
+      await finalize(id);
+      expect(await voteStatsService.mvpTitles(tournamentId)).toEqual([{ playerId: bob, titles: 1 }]);
       const mine = await voteStatsService.getMyStats(tournamentId, bob);
       expect(mine.mvp.titles).toBeGreaterThanOrEqual(1);
       expect(mine.mvp.teamMatches).toBeGreaterThanOrEqual(1);
       const pub = await voteStatsService.getPublicStats(tournamentId);
       expect(pub.mvpRanking[0]?.player.id).toBe(bob);
+      expect(pub.mvpOfTheWeek).toMatchObject({ player: { id: bob }, titles: 1 });
+    });
+
+    it("ranks MVP titles on the last 30 days only", async () => {
+      const id = await match2v2();
+      await voteService.castMvp(id, alice, dave);
+      await voteService.castMvp(id, carol, dave);
+      await finalize(id);
+      await testDb
+        .update(matches)
+        .set({ createdAt: new Date(Date.now() - 31 * 24 * HOUR) })
+        .where(eq(matches.id, id));
+      const pub = await voteStatsService.getPublicStats(tournamentId);
+      expect(pub.mvpRanking.map((r) => r.player.id)).not.toContain(dave);
+      expect(await voteStatsService.mvpTitles(tournamentId)).toContainEqual({ playerId: dave, titles: 1 });
     });
 
     it("lets only organizers reveal 👎 voters, and logs every reveal", async () => {

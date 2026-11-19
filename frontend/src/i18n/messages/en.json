@@ -3002,14 +3002,16 @@
       "downs": "{count} 👎 received"
     },
     "fairPlay": {
-      "title": "Fair-play ranking (last 30 days)",
-      "ofTheWeek": "Fair-play of the week: {name} ({count} 👍)",
-      "weekTitle": "Fair-play of the week"
+      "title": "Fair-play",
+      "weekTitle": "Fair-play of the week",
+      "votes": "{count} vote | {count} votes"
     },
     "mvp": {
-      "title": "MVP ranking",
-      "titles": "{count} title | {count} titles"
+      "title": "MVP",
+      "titles": "{count} title | {count} titles",
+      "weekTitle": "MVP of the week"
     },
+    "rankingTitle": "Ranking · last 30 days",
     "totals": "{count} votes · {rate} positive"
   },
   "fairPlayAdmin": {

@@ -31,43 +31,33 @@
             :tournament-id="store.tournament?.id"
           />
           <div
-            v-if="voteStats?.fairPlayOfTheWeek"
-            class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
-            data-testid="weekly-fair-play"
+            v-if="voteStats?.fairPlayOfTheWeek || voteStats?.mvpOfTheWeek"
+            class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
           >
-            <div
-              class="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2"
-            >
-              <i class="fa fa-handshake text-primary" />
-              {{ t('voteStats.fairPlay.weekTitle') }}
-            </div>
-            <div class="flex justify-between items-center gap-2 py-1.5">
-              <RouterLink
-                :to="playerLink(voteStats.fairPlayOfTheWeek.player.id, store.tournament?.id)"
-                class="flex items-center gap-2 min-w-0 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
-              >
-                <PlayerAvatar
-                  :name="voteStats.fairPlayOfTheWeek.player.displayName"
-                  :color-key="voteStats.fairPlayOfTheWeek.player.shortName"
-                  :player-id="voteStats.fairPlayOfTheWeek.player.id"
-                  size="xs"
-                  shape="square"
-                  class="shrink-0"
-                />
-                <span class="truncate">{{ voteStats.fairPlayOfTheWeek.player.displayName }}</span>
-              </RouterLink>
-              <span
-                class="flex items-center gap-1 text-sm font-black tabular-nums shrink-0 text-gray-900 dark:text-white"
-              >
-                {{ voteStats.fairPlayOfTheWeek.ups }}
-                <UIcon name="i-fa7-solid:thumbs-up" class="size-3.5 text-primary" />
-              </span>
-            </div>
+            <VoteOfTheWeek
+              v-if="voteStats?.fairPlayOfTheWeek"
+              kind="fairPlay"
+              :player="voteStats.fairPlayOfTheWeek.player"
+              :count="voteStats.fairPlayOfTheWeek.ups"
+              :tournament-id="store.tournament?.id"
+            />
+            <VoteOfTheWeek
+              v-if="voteStats?.mvpOfTheWeek"
+              kind="mvp"
+              :player="voteStats.mvpOfTheWeek.player"
+              :count="voteStats.mvpOfTheWeek.titles"
+              :tournament-id="store.tournament?.id"
+            />
           </div>
         </div>
 
         <!-- Fair-play / MVP rankings -->
-        <VoteStatsCards v-if="votesEnabled" :stats="voteStats" :hide-weekly="hasWeeklyMmr" />
+        <VoteStatsCards
+          v-if="votesEnabled"
+          :stats="voteStats"
+          :hide-weekly="hasWeeklyMmr"
+          :tournament-id="store.tournament?.id"
+        />
 
         <!-- Match outcome breakdown -->
         <div
@@ -231,8 +221,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, provide, ref, nextTick, watch } from 'vue'
-import { STAT_ROWS_ARE_PLAYERS, playerLink } from '@/utils/player-link'
-import PlayerAvatar from '@/components/PlayerAvatar.vue'
+import { STAT_ROWS_ARE_PLAYERS } from '@/utils/player-link'
+import VoteOfTheWeek from '@/components/votes/VoteOfTheWeek.vue'
 import AppChart from '@/components/charts/AppChart.vue'
 import VoteStatsCards from '@/components/votes/VoteStatsCards.vue'
 import { useI18n } from 'vue-i18n'
@@ -261,7 +251,7 @@ const votesEnabled = computed(
 )
 const { t } = useI18n()
 
-// Shared by the "This week" card (fair-play of the week) and the vote rankings.
+// Shared by the "This week" card (players of the week) and the vote rankings.
 const voteStats = ref<TournamentVoteStats | null>(null)
 watch(
   () => (votesEnabled.value ? store.tournament?.id : undefined),
