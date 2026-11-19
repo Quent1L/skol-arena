@@ -605,6 +605,11 @@ export class MatchRepository {
   async update(id: string, data: UpdateMatchData) {
     return await db.transaction(async (tx) => {
       const updated = await this.updateMatchRecord(tx, id, data);
+      // Two confirmations landing together both try to finalize: only the first may,
+      // or the trust score, the system message and the bracket move twice.
+      if (!updated && data.status === "finalized") {
+        throw new BadRequestError(ErrorCode.MATCH_ALREADY_FINALIZED);
+      }
       if (!updated) throw new Error(`Match ${id} not found`);
 
       // A winner-only result (score disabled) still has to settle the winner and points.
@@ -632,11 +637,11 @@ export class MatchRepository {
     const hasMatchFields = Object.values(matchFields).some((v) => v !== undefined);
 
     if (hasMatchFields) {
-      const [updated] = await tx
-        .update(matches)
-        .set(matchFields)
-        .where(eq(matches.id, id))
-        .returning();
+      const target =
+        data.status === "finalized"
+          ? and(eq(matches.id, id), ne(matches.status, "finalized"))
+          : eq(matches.id, id);
+      const [updated] = await tx.update(matches).set(matchFields).where(target).returning();
       return updated;
     }
 

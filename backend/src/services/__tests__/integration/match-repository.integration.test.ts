@@ -100,6 +100,35 @@ describe("matchRepository (integration)", () => {
     });
   });
 
+  describe("finalization", () => {
+    it("lets only the first of two concurrent finalizations through", async () => {
+      // Its own tournament, so the listing and counting fixtures stay untouched.
+      const ownTournamentId = await seed.createTournament(admin);
+      await insertTournamentConfigs(testDb, ownTournamentId);
+      const id = await matchRepository.create({
+        tournamentId: ownTournamentId,
+        sides: [
+          { position: 1, playerIds: [ann!] },
+          { position: 2, playerIds: [cat!] },
+        ],
+        scoreA: 1,
+        scoreB: 0,
+        status: "reported",
+        reportedBy: ann,
+        playedAt: earlier,
+        createdBy: admin,
+      });
+      const finalize = () => matchRepository.update(id, { status: "finalized", finalizedAt: new Date() });
+
+      const results = await Promise.allSettled([finalize(), finalize()]);
+
+      expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+      const [rejected] = results.filter((r) => r.status === "rejected");
+      expect((rejected as PromiseRejectedResult).reason).toBeInstanceOf(BadRequestError);
+      expect((rejected as PromiseRejectedResult).reason.code).toBe("MATCH_ALREADY_FINALIZED");
+    });
+  });
+
   describe("listing", () => {
     it("filters by tournament, status and player", async () => {
       expect(await matchRepository.list({ tournamentId })).toHaveLength(3);

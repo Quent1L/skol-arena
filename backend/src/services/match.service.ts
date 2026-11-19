@@ -1168,7 +1168,10 @@ export class MatchService {
       : confirmedSides.has('A') && confirmedSides.has('B')
 
     if (isAgreed) {
-      await this.finalizeMatch(matchId, { finalizationReason: 'consensus' })
+      // A simultaneous confirmation may have finalized it first: nothing left to do.
+      await this.finalizeMatch(matchId, { finalizationReason: 'consensus' }).catch((err) => {
+        if (!(err instanceof AppError && err.code === ErrorCode.MATCH_ALREADY_FINALIZED)) throw err
+      })
     }
   }
 
