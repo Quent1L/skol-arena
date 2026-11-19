@@ -22,8 +22,11 @@ export type PaletteItem = {
   paletteType: 'leaf' | 'group-all' | 'group-any' | 'count'
 }
 
-/** Option for player-reference facts (winnerId / loserId). */
-export interface PlayerOption {
+/**
+ * Option for player-reference facts (winnerId / loserId). A type alias, not an
+ * interface, so it fits the `Record<string, unknown>` items of a value select.
+ */
+export type PlayerOption = {
   id: string
   displayName: string
 }

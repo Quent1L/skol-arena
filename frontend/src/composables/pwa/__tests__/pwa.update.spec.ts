@@ -88,7 +88,9 @@ function finishInstall(
   stub: ReturnType<typeof stubServiceWorker>,
   worker: InstallingWorker,
 ): ReturnType<typeof vi.fn> {
-  const postMessage = vi.fn(() => stub.container.dispatchEvent(new Event('controllerchange')))
+  const postMessage = vi.fn(() => {
+    stub.container.dispatchEvent(new Event('controllerchange'))
+  })
   stub.registration.waiting = { postMessage }
   worker.transitionTo('installed')
   return postMessage

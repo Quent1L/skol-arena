@@ -19,14 +19,14 @@
   </nav>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="V extends string">
 import type { SubTabOption } from '@/composables/ui/useSubTabs'
 
 defineProps<{
-  options: readonly SubTabOption[]
-  modelValue: string
+  options: readonly SubTabOption<V>[]
+  modelValue: V
   label?: string
 }>()
 
-const emit = defineEmits<{ 'update:modelValue': [string] }>()
+const emit = defineEmits<{ 'update:modelValue': [V] }>()
 </script>

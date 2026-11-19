@@ -31,7 +31,7 @@
             class="hidden md:flex"
             @click="emit('create-match')"
           />
-          <OverflowMenuButton :items="items" />
+          <OverflowMenuButton :items="items ?? []" />
         </div>
       </div>
 

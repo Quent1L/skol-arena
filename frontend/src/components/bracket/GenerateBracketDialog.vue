@@ -145,7 +145,7 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { GenerateBracketInput } from '@skol-arena/shared/types/index'
 import { tournamentApi } from '@/composables/tournament/tournament.api'
-import type { TournamentResponse } from '@/composables/tournament/tournament.api'
+import type { TournamentListResponse } from '@/composables/tournament/tournament.api'
 
 interface Props {
   modelValue: boolean
@@ -173,7 +173,7 @@ const visible = computed({
 
 const loading = ref(false)
 const loadingTournaments = ref(false)
-const finishedTournaments = ref<TournamentResponse[]>([])
+const finishedTournaments = ref<TournamentListResponse[]>([])
 
 const formData = ref<GenerateBracketInput>({
   bracketType: 'single_elimination',

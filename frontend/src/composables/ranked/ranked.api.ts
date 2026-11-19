@@ -65,6 +65,11 @@ export type RankedSeason = {
   voteConfig?: Partial<VoteConfig> | null
 }
 
+/** A row of GET /seasons: the summary, plus the automation the admin list shows. */
+export type RankedSeasonListItem = ClientTournamentSummary & {
+  automation?: RankedSeasonAutomation | null
+}
+
 export type LeaderboardResponse = {
   players: ClientPlayerMmr[]
   /** Matches needed to be ranked; players below it are listed apart. */
@@ -97,12 +102,12 @@ export const rankedApi = {
     return response.data
   },
 
-  async listSeasons(filters?: { disciplineId?: string; status?: string }): Promise<ClientTournamentSummary[]> {
+  async listSeasons(filters?: { disciplineId?: string; status?: string }): Promise<RankedSeasonListItem[]> {
     const params = new URLSearchParams()
     if (filters?.disciplineId) params.set('disciplineId', filters.disciplineId)
     if (filters?.status) params.set('status', filters.status)
     const query = params.toString() ? `?${params.toString()}` : ''
-    const response = await http.get<ClientTournamentSummary[]>(`${BASE_URL}/seasons${query}`)
+    const response = await http.get<RankedSeasonListItem[]>(`${BASE_URL}/seasons${query}`)
     return response.data
   },
 

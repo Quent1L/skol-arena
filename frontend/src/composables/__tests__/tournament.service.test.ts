@@ -1,10 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ref } from 'vue'
 import { useTournamentService } from '../tournament/tournament.service'
-import { tournamentApi, type TournamentResponse } from '../tournament/tournament.api'
+import {
+  tournamentApi,
+  type TournamentListResponse,
+  type TournamentResponse,
+} from '../tournament/tournament.api'
 import { useAuth } from '../useAuth'
 import type {
-
   CreateTournamentFormData,
   UpdateTournamentFormData,
 } from '@skol-arena/shared/types/index'
@@ -25,7 +28,7 @@ vi.mock('../tournament/tournament.api')
 vi.mock('../useAuth')
 
 describe('useTournamentService', () => {
-  const mockCurrentUser = ref({ id: 'user-1', role: 'super_admin' })
+  const mockCurrentUser = ref<{ id: string; role: string } | null>({ id: 'user-1', role: 'super_admin' })
   const mockIsSuperAdmin = ref(true)
 
   beforeEach(() => {
@@ -207,8 +210,8 @@ describe('useTournamentService', () => {
 
   describe('listTournaments', () => {
     it('should load tournaments successfully', async () => {
-      const mockTournaments: TournamentResponse[] = [
-        { id: 't-1', name: 'Tournament 1' } as TournamentResponse,
+      const mockTournaments: TournamentListResponse[] = [
+        { id: 't-1', name: 'Tournament 1' } as TournamentListResponse,
       ]
 
       vi.mocked(tournamentApi.list).mockResolvedValue(mockTournaments)
@@ -297,7 +300,7 @@ describe('useTournamentService', () => {
         endDate: new Date('2024-01-02'),
       } as CreateTournamentFormData
 
-      tournaments.value = [{ id: 't-1' } as TournamentResponse]
+      tournaments.value = [{ id: 't-1' } as TournamentListResponse]
 
       const result = await createTournament(formData)
 
@@ -332,7 +335,7 @@ describe('useTournamentService', () => {
 
       const { updateTournament, tournaments, currentTournament, loading } = useTournamentService()
 
-      tournaments.value = [{ id: 't-1', name: 'Old Name' } as TournamentResponse]
+      tournaments.value = [{ id: 't-1', name: 'Old Name' } as TournamentListResponse]
       currentTournament.value = { id: 't-1', name: 'Old Name' } as TournamentResponse
 
       const formData: UpdateTournamentFormData = {
@@ -360,7 +363,7 @@ describe('useTournamentService', () => {
 
       const { changeTournamentStatus, tournaments, currentTournament } = useTournamentService()
 
-      tournaments.value = [{ id: 't-1', status: 'draft' } as TournamentResponse]
+      tournaments.value = [{ id: 't-1', status: 'draft' } as TournamentListResponse]
       currentTournament.value = { id: 't-1', status: 'draft' } as TournamentResponse
 
       const result = await changeTournamentStatus('t-1', 'open')
@@ -381,7 +384,7 @@ describe('useTournamentService', () => {
 
       const { deleteTournament, tournaments, currentTournament, loading } = useTournamentService()
 
-      tournaments.value = [{ id: 't-1' } as TournamentResponse, { id: 't-2' } as TournamentResponse]
+      tournaments.value = [{ id: 't-1' } as TournamentListResponse, { id: 't-2' } as TournamentListResponse]
       currentTournament.value = { id: 't-1' } as TournamentResponse
 
       const result = await deleteTournament('t-1')

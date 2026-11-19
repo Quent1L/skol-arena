@@ -51,7 +51,7 @@ function playerPayload(overrides: Partial<PlayerRewindPayload> = {}): PlayerRewi
       rank: 2,
       totalPlayers: 12,
       mmr: 1200,
-      tier: { name: 'Expert', level: 4, iconClass: null },
+      tier: { name: 'Expert', nameKey: null, level: 4, iconClass: null },
     },
     totals: { matchesPlayed: 40, wins: 25, losses: 14, draws: 1, winRate: 63 },
     journey: {
@@ -68,7 +68,7 @@ function playerPayload(overrides: Partial<PlayerRewindPayload> = {}): PlayerRewi
       mmr: 1250,
       matchId: 'm9',
       playedAt: new Date(),
-      tier: { name: 'Expert', level: 4, iconClass: null },
+      tier: { name: 'Expert', nameKey: null, level: 4, iconClass: null },
     },
     streaks: {
       bestWinStreak: 6,
@@ -166,6 +166,9 @@ describe('buildRewindCards', () => {
           description: '',
           awardedAt: new Date(),
           matchId: 'm1',
+          recurrence: 'per_season',
+          seasonId: null,
+          seasonName: null,
         },
       ],
     })

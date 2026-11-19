@@ -5,7 +5,7 @@ import { ADMIN_STATE, CHAMPIONSHIP_ID, SEASON_ID } from './fixtures'
 test.use({
   storageState: ADMIN_STATE,
   viewport: { width: 390, height: 844 },
-  screen: { width: 390, height: 844 },
+  contextOptions: { screen: { width: 390, height: 844 } },
   hasTouch: true,
 })
 

@@ -121,7 +121,7 @@
             >.
           </span>
           <USelectMenu
-            v-model="selectedUserId"
+            v-model.nullable="selectedUserId"
             :items="availableParticipants"
             value-key="value"
             :placeholder="t('teamManagementPanel.choosePlayerPlaceholder')"

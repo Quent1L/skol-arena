@@ -30,5 +30,5 @@ export interface ValidationModeState {
 }
 
 export interface VoteConfigState {
-  voteConfig?: VoteConfig
+  voteConfig?: Partial<VoteConfig>
 }

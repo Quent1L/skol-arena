@@ -98,7 +98,7 @@ const mvp = computed(() => props.votes.mvp)
 const timeLeft = computed(() => {
   const closesAt = props.votes.closesAt
   if (!props.votes.isOpen || !closesAt) return null
-  const minutes = Math.max(0, Math.floor((closesAt.getTime() - now.value) / 60_000))
+  const minutes = Math.max(0, Math.floor((closesAt.getTime() - now.value.getTime()) / 60_000))
   const [d, h, m] = [Math.floor(minutes / 1440), Math.floor((minutes % 1440) / 60), minutes % 60]
   let time = t('matchVotes.mvp.minutes', { m })
   if (d > 0) time = t('matchVotes.mvp.days', { d, h })

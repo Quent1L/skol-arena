@@ -135,7 +135,7 @@ describe('useParticipantService', () => {
           teamId: null,
           matchesPlayed: 0,
           joinedAt: new Date(),
-          user: { id: 'user-1', displayName: 'User 1' },
+          user: { id: 'user-1', displayName: 'User 1', role: 'player' },
         } as ParticipantListItem,
       ]
 

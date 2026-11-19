@@ -35,10 +35,12 @@ export default mergeConfig(
         // Ratchet floor, measured over the logic (composables, stores, utils, router)
         // and the components; route-level views are left to the e2e suite.
         // Raise these thresholds as new tests are added.
-        lines: 55,
-        functions: 46,
-        branches: 45,
-        statements: 55,
+        thresholds: {
+          lines: 55,
+          functions: 46,
+          branches: 45,
+          statements: 55,
+        },
       },
     },
   }),

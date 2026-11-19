@@ -20,7 +20,7 @@
       required
     >
       <USelectMenu
-        v-model="state.tournamentId"
+        v-model.nullable="state.tournamentId"
         :items="tournamentOptions"
         value-key="value"
         :placeholder="t('announcementForm.tournamentPlaceholder')"

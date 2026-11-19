@@ -132,12 +132,12 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(rulesApi.getCatalog).mockResolvedValue(revived({ facts: catalog }))
   vi.mocked(rulesApi.create).mockImplementation(
-    async (data) => revived({ ...wireRule(), ...data }) as ClientRule,
+    async (data) => revived({ ...wireRule(), ...data }) as unknown as ClientRule,
   )
   vi.mocked(rulesApi.update).mockImplementation(
-    async (_, data) => revived({ ...wireRule(), ...data }) as ClientRule,
+    async (_, data) => revived({ ...wireRule(), ...data }) as unknown as ClientRule,
   )
-  vi.mocked(rulesApi.test).mockResolvedValue({ matched: true, output: null })
+  vi.mocked(rulesApi.test).mockResolvedValue({ matched: true, output: undefined })
 })
 
 describe('RulesEngineFormView — editing an existing rule', () => {

@@ -446,6 +446,7 @@ export interface TournamentSummary {
   status: TournamentStatus;
   startDate: string;
   endDate: string;
+  disciplineId: string | null;
   discipline?: { id: string; name: string; icon?: string | null } | null;
   /** Active registrations for a tournament, ranked players for a season */
   participantCount: number;

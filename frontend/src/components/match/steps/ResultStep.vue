@@ -70,7 +70,7 @@
       }}</label>
       <USelectMenu
         id="result-outcome-type"
-        v-model="outcomeTypeIdModel"
+        v-model.nullable="outcomeTypeIdModel"
         :items="outcomeTypes"
         value-key="id"
         label-key="name"
@@ -108,7 +108,7 @@
       }}</label>
       <USelectMenu
         id="result-outcome-reason"
-        v-model="outcomeReasonIdModel"
+        v-model.nullable="outcomeReasonIdModel"
         :items="filteredOutcomeReasons"
         value-key="id"
         label-key="name"

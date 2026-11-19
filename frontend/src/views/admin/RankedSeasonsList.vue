@@ -75,7 +75,7 @@ import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useRankedService } from '@/composables/ranked/ranked.service'
 import { rewindApi } from '@/composables/ranked/rewind.api'
 import { useAppToast } from '@/composables/useAppToast'
-import type { RankedSeason } from '@/composables/ranked/ranked.api'
+import type { RankedSeasonListItem } from '@/composables/ranked/ranked.api'
 
 const { t } = useI18n()
 const confirm = useConfirmDialog()
@@ -85,7 +85,7 @@ const { seasons, loading, error, loadSeasons, startSeason, endSeason, rolloverNo
 
 const regeneratingId = ref<string | null>(null)
 
-function formatDate(date: string) {
+function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: '2-digit',
@@ -97,7 +97,7 @@ function formatDate(date: string) {
  * "Auto · 12/04/2026" while a term is scheduled, plain "Auto" on a draft that has none yet;
  * the "Clôture" variants for an automation that only ends the season.
  */
-function chainingLabel(season: RankedSeason) {
+function chainingLabel(season: RankedSeasonListItem) {
   const at = season.automation?.nextRolloverAt
   const prefix = season.automation?.mode === 'close' ? 'closing' : 'chaining'
   return at
@@ -129,7 +129,7 @@ function statusBadge(status: string) {
   return { label: statusLabel(status), color }
 }
 
-const columns: TableColumn<RankedSeason>[] = [
+const columns: TableColumn<RankedSeasonListItem>[] = [
   { accessorKey: 'name', header: sortableHeader(t('common.name')) },
   {
     id: 'discipline',
@@ -154,7 +154,7 @@ const columns: TableColumn<RankedSeason>[] = [
 
 // A running season is no longer frozen: its metadata is always editable and its MMR
 // settings replay the season when changed. Only a finished one is closed for good.
-function rowActions(season: RankedSeason): RowAction[] {
+function rowActions(season: RankedSeasonListItem): RowAction[] {
   const chains = season.automation?.enabled && season.automation.mode === 'chain'
   return [
     {
@@ -205,12 +205,12 @@ function rowActions(season: RankedSeason): RowAction[] {
   ]
 }
 
-async function handleStart(season: RankedSeason) {
+async function handleStart(season: RankedSeasonListItem) {
   await startSeason(season.id)
   await loadSeasons()
 }
 
-async function confirmEnd(season: RankedSeason) {
+async function confirmEnd(season: RankedSeasonListItem) {
   const confirmed = await confirm({
     title: t('rankedSeasonsList.endDialogHeader'),
     message: t('rankedSeasonsList.endDialogConfirm', { name: season.name }),
@@ -225,7 +225,7 @@ async function confirmEnd(season: RankedSeason) {
  * moved (an MMR recalculation, a cancelled match); players keep their promotion
  * window and their viewed state across a rebuild.
  */
-async function handleRegenerateRewind(season: RankedSeason) {
+async function handleRegenerateRewind(season: RankedSeasonListItem) {
   regeneratingId.value = season.id
   try {
     await rewindApi.regenerate(season.id)
@@ -250,7 +250,7 @@ async function handleRegenerateRewind(season: RankedSeason) {
   }
 }
 
-async function confirmRollover(season: RankedSeason) {
+async function confirmRollover(season: RankedSeasonListItem) {
   const confirmed = await confirm({
     title: t('rankedSeasonsList.rolloverDialogHeader'),
     message: `${t('rankedSeasonsList.rolloverDialogConfirm', { name: season.name })}\n\n${t('rankedSeasonsList.rolloverDialogDetail')}`,
@@ -260,7 +260,7 @@ async function confirmRollover(season: RankedSeason) {
   if (confirmed) await handleRollover(season)
 }
 
-async function handleRollover(season: RankedSeason) {
+async function handleRollover(season: RankedSeasonListItem) {
   const next = await rolloverNow(season.id)
   if (!next) {
     toast.add({

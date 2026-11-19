@@ -13,6 +13,7 @@ const ISO = '2026-06-01T15:00:00.000Z'
 function makeNotif(overrides: Partial<RawNotification> = {}): RawNotification {
   return {
     id: 'n-1',
+    type: 'MATCH_CREATED',
     title: 'server title',
     message: 'server message',
     titleKey: 'notifications.MATCH_CREATED_TITLE',

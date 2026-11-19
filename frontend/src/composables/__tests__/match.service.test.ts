@@ -5,11 +5,12 @@ import { useRouter } from 'vue-router'
 import { useAppToast } from '@/composables/useAppToast'
 import { useParticipantService } from '../participant.service'
 import type {
-  Match as MatchModel,
+  ClientMatchModel as MatchModel,
+  ClientMatchDetail,
   CreateMatchRequestData,
   UpdateMatchRequestData,
   ReportMatchResultRequestData,
-  ConfirmMatchResultRequestData,
+  ConfirmMatchRequestData,
   PaginatedMatchCards,
   ValidateMatchRequestData,
 } from '@skol-arena/shared/types/index'
@@ -69,8 +70,10 @@ describe('useMatchService', () => {
       const { createMatch } = useMatchService()
       const input: CreateMatchRequestData = {
         tournamentId: 'tournament-1',
-        playerIdsA: ['user-1'],
-        playerIdsB: ['user-2'],
+        sides: [
+          { position: 1, playerIds: ['user-1'] },
+          { position: 2, playerIds: ['user-2'] },
+        ],
       }
 
       const result = await createMatch(input)
@@ -82,10 +85,10 @@ describe('useMatchService', () => {
 
   describe('getMatch', () => {
     it('should call matchApi.getById with correct id', async () => {
-      const mockMatch: MatchModel = {
+      const mockMatch = {
         id: 'match-1',
         tournamentId: 'tournament-1',
-      } as MatchModel
+      } as ClientMatchDetail
 
       vi.mocked(matchApi.getById).mockResolvedValue(mockMatch)
 
@@ -189,7 +192,7 @@ describe('useMatchService', () => {
       vi.mocked(matchApi.confirmResult).mockResolvedValue(mockMatch)
 
       const { confirmMatchResult } = useMatchService()
-      const input: ConfirmMatchResultRequestData = { confirmed: true }
+      const input: ConfirmMatchRequestData = {}
       const result = await confirmMatchResult('match-1', input)
 
       expect(matchApi.confirmResult).toHaveBeenCalledWith('match-1', input)
@@ -288,8 +291,10 @@ describe('useMatchService', () => {
       const { validateMatch } = useMatchService()
       const input: ValidateMatchRequestData = {
         tournamentId: 'tournament-1',
-        playerIdsA: ['user-1'],
-        playerIdsB: ['user-2'],
+        sides: [
+          { position: 1, playerIds: ['user-1'] },
+          { position: 2, playerIds: ['user-2'] },
+        ],
       }
       const result = await validateMatch(input)
 

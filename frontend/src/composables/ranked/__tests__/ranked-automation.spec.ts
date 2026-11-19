@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { rankedApi } from '../ranked.api'
+import { rankedApi, type RankedSeason } from '../ranked.api'
 import { useRankedService } from '../ranked.service'
 
 vi.mock('../ranked.api', () => ({
@@ -36,7 +36,7 @@ beforeEach(() => {
 describe('setAutomation', () => {
   it('stores the automation on the season currently loaded', async () => {
     const service = useRankedService()
-    service.currentSeason.value = { id: 'season-1', name: 'Saison 1' } as never
+    service.currentSeason.value = { id: 'season-1', name: 'Saison 1' } as RankedSeason
     vi.mocked(rankedApi.setAutomation).mockResolvedValue(storedAutomation as never)
 
     expect(await service.setAutomation('season-1', input)).toBe(true)
@@ -46,7 +46,7 @@ describe('setAutomation', () => {
 
   it('leaves another season in state untouched', async () => {
     const service = useRankedService()
-    service.currentSeason.value = { id: 'other', name: 'Other' } as never
+    service.currentSeason.value = { id: 'other', name: 'Other' } as RankedSeason
     vi.mocked(rankedApi.setAutomation).mockResolvedValue(storedAutomation as never)
 
     await service.setAutomation('season-1', input)
@@ -80,7 +80,7 @@ describe('deleteAutomation', () => {
       id: 'season-1',
       name: 'Saison 1',
       automation: storedAutomation,
-    } as never
+    } as unknown as RankedSeason
     vi.mocked(rankedApi.deleteAutomation).mockResolvedValue(undefined)
 
     expect(await service.deleteAutomation('season-1')).toBe(true)

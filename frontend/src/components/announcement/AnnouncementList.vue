@@ -65,11 +65,11 @@ const emit = defineEmits<{ delete: [announcement: ClientAnnouncement] }>()
 
 const { t, locale } = useI18n()
 
-function isExpired(date: Date) {
+function isExpired(date: Date | string) {
   return new Date(date).getTime() <= Date.now()
 }
 
-function formatDate(date: Date) {
+function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString(locale.value, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 </script>

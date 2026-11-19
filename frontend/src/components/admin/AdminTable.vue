@@ -75,7 +75,7 @@
   </div>
 </template>
 
-<script setup lang="ts" generic="T">
+<script setup lang="ts" generic="Row extends TableData">
 import { computed, ref, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
@@ -84,7 +84,7 @@ import {
   type SortingOptions,
   type SortingState,
 } from '@tanstack/vue-table'
-import type { TableColumn } from '@nuxt/ui'
+import type { TableColumn, TableData, TableSlots } from '@nuxt/ui'
 import AdminTableCell from './AdminTableCell.vue'
 import {
   EXPAND_COLUMN_ID,
@@ -103,15 +103,15 @@ import {
  */
 const props = withDefaults(
   defineProps<{
-    data: T[]
-    columns: TableColumn<T>[]
+    data: Row[]
+    columns: TableColumn<Row>[]
     loading?: boolean
     empty?: string
     /** Rows per page; 0 disables pagination (the caller pages, or shows everything). */
     pageSize?: number
     initialSorting?: SortingState
     /** e.g. `{ manualSorting: true }` when the server sorts. */
-    sortingOptions?: Partial<SortingOptions<T>>
+    sortingOptions?: Partial<SortingOptions<Row>>
   }>(),
   {
     loading: false,
@@ -122,7 +122,9 @@ const props = withDefaults(
   },
 )
 
-const sorting = defineModel<SortingState>('sorting', { default: undefined })
+defineSlots<TableSlots<Row>>()
+
+const sorting = defineModel<SortingState>('sorting')
 if (sorting.value === undefined) sorting.value = props.initialSorting
 
 const { t } = useI18n()

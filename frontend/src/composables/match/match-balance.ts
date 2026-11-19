@@ -50,9 +50,9 @@ export function computeMatchBalance(
 
   // A player missing from the snapshot means the side cannot be averaged
   // honestly — better no bar than one built on a silent zero.
-  const standingsA = idsA.map((id) => standings[id])
-  const standingsB = idsB.map((id) => standings[id])
-  if ([...standingsA, ...standingsB].includes(undefined)) return null
+  if (![...idsA, ...idsB].every((id) => id in standings)) return null
+  const standingsA = idsA.map((id) => standings[id]!)
+  const standingsB = idsB.map((id) => standings[id]!)
 
   const avgA = averageMmr(standingsA.map((s) => s.mmr))
   const avgB = averageMmr(standingsB.map((s) => s.mmr))

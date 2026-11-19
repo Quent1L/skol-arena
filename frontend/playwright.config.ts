@@ -34,7 +34,8 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         // useViewport tests screen.width/height < 768: the default headless
         // screen (1280x720) would switch the app to the mobile variant
-        screen: { width: 1920, height: 1080 },
+        // `screen` is not a test option: only contextOptions reaches newContext.
+        contextOptions: { screen: { width: 1920, height: 1080 } },
         viewport: { width: 1280, height: 800 },
         storageState: 'e2e/.auth/player.json',
       },

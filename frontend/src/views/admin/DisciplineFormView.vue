@@ -155,6 +155,7 @@ import {
   createDisciplineSchema,
   updateDisciplineSchema,
   type CreateDisciplineRequestData,
+  type UpdateDisciplineRequestData,
   type OutcomeType,
   type ImpactedCompetition,
 } from '@skol-arena/shared/types/index'
@@ -381,7 +382,10 @@ async function confirmDeleteOutcomeReason(outcomeReason: OutcomeReason) {
   }
 }
 
-async function onSubmit({ data: values }: FormSubmitEvent<CreateDisciplineRequestData>) {
+// `schema` switches with the mode, so the event carries either output.
+async function onSubmit({
+  data: values,
+}: FormSubmitEvent<CreateDisciplineRequestData | UpdateDisciplineRequestData>) {
   try {
     if (isEditMode.value && route.params.id) {
       await updateDiscipline(route.params.id as string, values)
@@ -390,7 +394,7 @@ async function onSubmit({ data: values }: FormSubmitEvent<CreateDisciplineReques
       if (driftingCompetitionCount.value > 0) return
       router.push('/admin/disciplines')
     } else {
-      const created = await createDiscipline(values)
+      const created = await createDiscipline(values as CreateDisciplineRequestData)
       // A new discipline still needs its outcome types: open it rather than the list.
       // `replace`, so Back does not return to an empty creation form.
       router.replace(`/admin/disciplines/${created.id}`)

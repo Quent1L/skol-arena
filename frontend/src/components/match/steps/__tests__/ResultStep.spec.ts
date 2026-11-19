@@ -26,11 +26,21 @@ vi.mock('@/composables/discipline/discipline.api', () => ({
   disciplineApi: { getById: (...a: unknown[]) => disciplineGet(...a) },
 }))
 
-const normal = { id: 'ot-normal', name: 'Normal', isDefault: true, points: 3, mmrMultiplier: 1 }
+const normal = {
+  id: 'ot-normal',
+  disciplineId: 'd1',
+  name: 'Normal',
+  isDefault: true,
+  scoreCountsForMmr: true,
+  points: 3,
+  mmrMultiplier: 1,
+}
 const forfeit = {
   id: 'ot-forfeit',
+  disciplineId: 'd1',
   name: 'Forfeit',
   isDefault: false,
+  scoreCountsForMmr: false,
   points: 3,
   mmrMultiplier: 1.5,
 }

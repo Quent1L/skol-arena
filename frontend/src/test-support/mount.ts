@@ -49,7 +49,7 @@ export function mountWithUi<C extends Component>(
       () =>
         h(UApp, null, () => h(component, attrs, slots as Slots)),
   })
-  return mount(Host, {
+  const wrapper = mount(Host, {
     ...(rest as ComponentMountingOptions<typeof Host>),
     attachTo: document.body,
     global: {
@@ -61,6 +61,9 @@ export function mountWithUi<C extends Component>(
       },
     },
   })
+  // The host declares no props: type setProps with the mounted component's own.
+  return wrapper as Omit<typeof wrapper, 'setProps'> &
+    Pick<ReturnType<typeof mountWithPlugins<C>>, 'setProps'>
 }
 
 function testRouter() {

@@ -72,7 +72,7 @@
           </UFormField>
           <UFormField v-if="form.scope === 'discipline'" :label="t('common.discipline')" required>
             <USelectMenu
-              v-model="form.disciplineId"
+              v-model.nullable="form.disciplineId"
               :items="disciplineOptions"
               value-key="value"
               :placeholder="t('rulesEngineFormView.placeholderDiscipline')"
@@ -263,13 +263,15 @@
           <UFormField v-for="fact in catalog" :key="fact.key" :label="fact.label" size="sm">
             <USelectMenu
               v-if="simulatorSelect(fact)"
-              v-model="testContext[fact.key]"
+              :model-value="testContext[fact.key] as SimulatorValue"
               v-bind="simulatorSelect(fact)!"
+              @update:model-value="testContext[fact.key] = $event"
               class="w-full"
             />
             <UInputTime
               v-else-if="fact.ref === 'time'"
               :model-value="minutesToTime(testContext[fact.key])"
+              :range="false"
               :hour-cycle="24"
               class="w-full"
               @update:model-value="testContext[fact.key] = timeToMinutes($event)"
@@ -398,7 +400,7 @@ const { disciplineOptions, loadAll: loadReferences } = useFormReferences()
 function minutesToTime(min: unknown): Time | undefined {
   return typeof min === 'number' ? new Time(Math.floor(min / 60), min % 60) : undefined
 }
-function timeToMinutes(time: Time | null | undefined): number | '' {
+function timeToMinutes(time: Pick<Time, 'hour' | 'minute'> | null | undefined): number | '' {
   return time ? time.hour * 60 + time.minute : ''
 }
 function stringToDate(value: unknown): DateValue | undefined {
@@ -455,8 +457,20 @@ const booleanOptions = [
   { label: t('rulesEngineFormView.boolFalse'), value: false },
 ]
 
+/** What a simulator select holds; an alias because `|` in a template reads as a filter. */
+type SimulatorValue = string | string[] | undefined
+
+interface SimulatorSelect {
+  items: Record<string, unknown>[]
+  valueKey: string
+  labelKey?: string
+  multiple?: boolean
+  placeholder?: string
+  searchInput?: boolean
+}
+
 /** Simulator inputs that pick from a list; null for free-form facts. */
-function simulatorSelect(fact: CatalogFact) {
+function simulatorSelect(fact: CatalogFact): SimulatorSelect | null {
   const playerPlaceholder = t('rulesEngineFormView.placeholderPlayer')
   if (fact.ref === 'player') {
     const multiple = fact.type === 'stringList'

@@ -62,6 +62,7 @@ import {
   createGameRuleSchema,
   updateGameRuleSchema,
   type CreateGameRuleData,
+  type UpdateGameRuleData,
 } from '@skol-arena/shared/types/index'
 import { useGameRulesService } from '@/composables/game-rules/game-rules.service'
 import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
@@ -77,11 +78,12 @@ const schema = computed(() => (isEditMode.value ? updateGameRuleSchema : createG
 
 const state = reactive<CreateGameRuleData>({ title: '', content: '' })
 
-async function onSubmit({ data }: FormSubmitEvent<CreateGameRuleData>) {
+// `schema` switches with the mode, so the event carries either output.
+async function onSubmit({ data }: FormSubmitEvent<CreateGameRuleData | UpdateGameRuleData>) {
   const saved =
     isEditMode.value && route.params.id
       ? await updateRule(route.params.id as string, data)
-      : await createRule(data)
+      : await createRule(data as CreateGameRuleData)
   if (saved) router.push('/admin/rules')
 }
 

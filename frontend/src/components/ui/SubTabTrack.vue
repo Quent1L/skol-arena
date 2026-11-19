@@ -72,15 +72,15 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="V extends string">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useEventListener, useSwipe } from '@vueuse/core'
 import { subTabWindow, type SubTabOption } from '@/composables/ui/useSubTabs'
 
 const props = withDefaults(
   defineProps<{
-    options: readonly SubTabOption[]
-    modelValue: string
+    options: readonly SubTabOption<V>[]
+    modelValue: V
     label?: string
     /** Panes are dragged only while this is true (the track can sit under a hidden tab). */
     enabled?: boolean
@@ -98,8 +98,8 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  'update:modelValue': [string]
-  'visible-values': [string[]]
+  'update:modelValue': [V]
+  'visible-values': [V[]]
 }>()
 
 /** Must match the `.subtab-synced` transition duration. */
@@ -263,13 +263,13 @@ onBeforeUnmount(() => {
   if (collapseTimer) clearTimeout(collapseTimer)
 })
 
-function moveTo(value: string) {
+function moveTo(value: V) {
   expandAllPanes()
   current.value = value
   scheduleCollapse()
 }
 
-function select(value: string) {
+function select(value: V) {
   if (value === current.value) return
   moveTo(value)
   emit('update:modelValue', value)

@@ -20,6 +20,9 @@ export interface ServiceCase<S> {
   result?: unknown
 }
 
+/** An API object seen as a bag of async methods, so `vi.spyOn` can mock any of them. */
+export type AsyncApi = Record<string, (...args: unknown[]) => Promise<unknown>>
+
 interface ServiceShape {
   loading?: { value: boolean }
   error?: { value: unknown }
@@ -39,7 +42,7 @@ export function describeServiceContract<S extends ServiceShape>(
 
     describe.each(cases)('$name', ({ call, api, method, args, result }) => {
       it('reaches the API with the given arguments and clears loading', async () => {
-        const spy = vi.spyOn(api as never, method as never).mockResolvedValue((result ?? {}) as never)
+        const spy = vi.spyOn(api as AsyncApi, method).mockResolvedValue((result ?? {}) as never)
         const service = makeService()
 
         await call(service)
@@ -50,7 +53,7 @@ export function describeServiceContract<S extends ServiceShape>(
       })
 
       it('clears loading and surfaces an API failure', async () => {
-        vi.spyOn(api as never, method as never).mockRejectedValue(new Error('boom') as never)
+        vi.spyOn(api as AsyncApi, method).mockRejectedValue(new Error('boom') as never)
         const service = makeService()
         let thrown = false
 

@@ -226,8 +226,10 @@ SEO and GEO metadata is centralised, not spread across pages:
 - **When a feature or fix is done, before handing back**, run `bun run lint`,
   `bun run type-check` and `bun run test:unit` from the root. A commit passing the hook
   says nothing about the backend integration tests or the rest of the frontend suite
-- `frontend`'s `type-check` (`vue-tsc --noEmit` on a `"files": []` solution tsconfig)
-  checks nothing; `vue-tsc --build` reports ~400 pre-existing errors to fix first
+- `frontend`'s `type-check` is `vue-tsc --build`: `tsconfig.json` is a solution file
+  (`"files": []` + references), so `vue-tsc --noEmit` on it silently checks nothing.
+  `components.d.ts` (auto-imported components) must stay in the app/vitest `include`,
+  or every Nuxt UI component types as `any`
 
 ### API versioning (`backend/src/api/`)
 

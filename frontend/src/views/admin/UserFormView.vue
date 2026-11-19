@@ -146,7 +146,7 @@
 
         <div class="flex flex-col gap-3 sm:flex-row">
           <USelectMenu
-            v-model="organizationToAdd"
+            v-model.nullable="organizationToAdd"
             :items="availableOrganizations"
             value-key="id"
             label-key="name"

@@ -11,7 +11,7 @@
     >
       <USelectMenu
         v-model="node.fact"
-        :items="facts"
+        :items="factItems"
         value-key="key"
         label-key="label"
         :placeholder="t('conditionRow.placeholderVariable')"
@@ -119,6 +119,8 @@ function getOperatorLabel(op: string): string {
 }
 
 const selectedFact = computed(() => props.facts.find((f) => f.key === node.value.fact))
+// A fact's own `type` (string, number…) would be read as USelectMenu's item type.
+const factItems = computed(() => props.facts.map(({ key, label }) => ({ key, label })))
 
 const operatorOptions = computed(() =>
   (selectedFact.value?.operators ?? []).map((op) => ({ label: getOperatorLabel(op), value: op })),
@@ -187,7 +189,7 @@ const booleanOptions = computed(() => [
 ])
 
 interface ValueSelect {
-  items: object[]
+  items: Record<string, unknown>[]
   valueKey: string
   labelKey: string
   multiple: boolean
@@ -204,7 +206,7 @@ const valueSelect = computed<ValueSelect | null>(() => {
   if (!fact) return null
   const multiple = isListOperator.value
   const pick = (
-    items: object[],
+    items: Record<string, unknown>[],
     labelKey: string,
     valueKey: string,
     placeholders: [string, string],

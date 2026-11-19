@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { disciplineApi } from './discipline.api'
 import { outcomeTypeApi } from '../outcome-type.api'
-import { outcomeReasonApi, type OutcomeReasonResponse } from '../outcome-reason.api'
+import { outcomeReasonApi } from '../outcome-reason.api'
 import type {
   CreateDisciplineRequestData,
   UpdateDisciplineRequestData,
@@ -10,6 +10,7 @@ import type {
   UpdateOutcomeTypeRequestData,
   CreateOutcomeReasonRequestData,
   UpdateOutcomeReasonRequestData,
+  OutcomeReason,
   Discipline,
   OutcomeType,
 } from '@skol-arena/shared/types/index'
@@ -22,7 +23,7 @@ export function useDisciplineService() {
   const disciplines = ref<Discipline[]>([])
   const currentDiscipline = ref<Discipline | null>(null)
   const outcomeTypes = ref<OutcomeType[]>([])
-  const outcomeReasons = ref<OutcomeReasonResponse[]>([])
+  const outcomeReasons = ref<OutcomeReason[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
 

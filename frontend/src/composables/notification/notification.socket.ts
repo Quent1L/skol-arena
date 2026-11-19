@@ -17,10 +17,12 @@ export function onWsOpen(handler: () => void): () => void {
   return () => openHandlers.delete(handler)
 }
 
-export function onWsEvent(event: string, handler: WsEventHandler): () => void {
+/** `T` is the payload the server sends for `event`: it is trusted, not validated. */
+export function onWsEvent<T = unknown>(event: string, handler: (data: T) => void): () => void {
+  const stored = handler as WsEventHandler
   if (!eventRegistry.has(event)) eventRegistry.set(event, new Set())
-  eventRegistry.get(event)!.add(handler)
-  return () => eventRegistry.get(event)?.delete(handler)
+  eventRegistry.get(event)!.add(stored)
+  return () => eventRegistry.get(event)?.delete(stored)
 }
 
 export function sendWsMessage(data: unknown): void {

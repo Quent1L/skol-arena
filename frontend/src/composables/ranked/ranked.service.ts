@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { startOfWeek } from 'date-fns'
 import { i18n } from '@/i18n'
 import { rankedApi } from './ranked.api'
-import type { RankedSeason, FinishedSeasonSummary } from './ranked.api'
+import type { RankedSeason, RankedSeasonListItem, FinishedSeasonSummary } from './ranked.api'
 import type {
   CreateRankedSeasonInput,
   UpdateRankedSeasonInput,
@@ -14,7 +14,6 @@ import type {
   ClientSeasonMmrPlayer,
   ClientMmrHistoryEntry,
   ClientRankTier,
-  ClientTournamentSummary,
   OpponentQualityStats,
   MmrChartPoint,
   WeeklyMmrLeaders,
@@ -109,7 +108,7 @@ export function getMatchLabel(
 }
 
 export function useRankedService() {
-  const seasons = ref<ClientTournamentSummary[]>([])
+  const seasons = ref<RankedSeasonListItem[]>([])
   const currentSeason = ref<RankedSeason | null>(null)
   const leaderboard = ref<ClientPlayerMmr[]>([])
   const provisionalLeaderboard = ref<ClientPlayerMmr[]>([])
@@ -165,9 +164,7 @@ export function useRankedService() {
     error.value = null
     try {
       const payload = formDataToApiPayload(data) as unknown as CreateRankedSeasonInput
-      const season = await rankedApi.createSeason(payload)
-      seasons.value.unshift(season as RankedSeason)
-      return season as RankedSeason
+      return await rankedApi.createSeason(payload)
     } catch (err) {
       error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.createSeasonFailed')
       return null

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { nextTick } from 'vue'
+import { nextTick, type Component } from 'vue'
 import { mountWithUi } from '@/test-support/mount'
 import USelect from '@nuxt/ui/components/Select.vue'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
@@ -15,7 +15,7 @@ describe('LocaleSwitcher', () => {
     i18n.global.locale.value = 'fr'
     const wrapper = mountWithUi(LocaleSwitcher, { global: { plugins: [i18n] } })
 
-    wrapper.findComponent(USelect).vm.$emit('update:modelValue', 'en')
+    wrapper.findComponent(USelect as Component).vm.$emit('update:modelValue', 'en')
     await nextTick()
 
     expect(i18n.global.locale.value).toBe('en')

@@ -247,7 +247,7 @@ export function useTournamentService() {
       await tournamentApi.delete(id)
 
       // Remove from list
-      tournaments.value = tournaments.value.filter((t: TournamentResponse) => t.id !== id)
+      tournaments.value = tournaments.value.filter((t) => t.id !== id)
 
       // Clear current if it's the deleted one
       if (currentTournament.value?.id === id) {

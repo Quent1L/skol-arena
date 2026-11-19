@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import type { AsyncApi } from '@/test-support/service-contract'
 import { useMatchService } from '../match/match.service'
 import { matchApi } from '../match/match.api'
 import { useRouter } from 'vue-router'
@@ -217,13 +218,13 @@ describe.each([
   ],
 ] as const)('%s', (_name, apiMethod, run, severity) => {
   it('confirms with a toast', async () => {
-    vi.mocked(matchApi[apiMethod] as never).mockResolvedValue({ id: 'm1' } as never)
+    vi.mocked(matchApi[apiMethod] as AsyncApi[string]).mockResolvedValue({ id: 'm1' } as never)
     expect(await run(useMatchService())).toEqual({ id: 'm1' })
     expect(toasted(severity)).toBe(true)
   })
 
   it('reports the failure and rethrows it', async () => {
-    vi.mocked(matchApi[apiMethod] as never).mockRejectedValue(new Error('nope') as never)
+    vi.mocked(matchApi[apiMethod] as AsyncApi[string]).mockRejectedValue(new Error('nope') as never)
     await expect(run(useMatchService())).rejects.toThrow('nope')
     expect(toast.add).toHaveBeenCalledWith(
       expect.objectContaining({ severity: 'error', detail: 'nope' }),
@@ -231,7 +232,7 @@ describe.each([
   })
 
   it('falls back on a translated message for a non-Error failure', async () => {
-    vi.mocked(matchApi[apiMethod] as never).mockRejectedValue('weird' as never)
+    vi.mocked(matchApi[apiMethod] as AsyncApi[string]).mockRejectedValue('weird' as never)
     await expect(run(useMatchService())).rejects.toBe('weird')
     expect(toast.add).toHaveBeenCalledWith(
       expect.objectContaining({

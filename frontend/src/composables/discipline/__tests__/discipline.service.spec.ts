@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import type { AsyncApi } from '@/test-support/service-contract'
 import { useDisciplineService } from '../discipline.service'
 import { disciplineApi } from '../discipline.api'
 import { outcomeTypeApi } from '../../outcome-type.api'
@@ -41,7 +42,7 @@ describe('useDisciplineService', () => {
 
   describe.each(mutations)('$name', ({ call, api, method }) => {
     it('confirms with a success toast and clears the loading flag', async () => {
-      vi.spyOn(api as never, method as never).mockResolvedValue({ id: 'x' } as never)
+      vi.spyOn(api as AsyncApi, method).mockResolvedValue({ id: 'x' } as never)
       const service = useDisciplineService()
 
       await call(service)
@@ -52,7 +53,7 @@ describe('useDisciplineService', () => {
     })
 
     it('reports the failure, records it and rethrows', async () => {
-      vi.spyOn(api as never, method as never).mockRejectedValue(new Error('nope') as never)
+      vi.spyOn(api as AsyncApi, method).mockRejectedValue(new Error('nope') as never)
       const service = useDisciplineService()
 
       await expect(call(service)).rejects.toThrow('nope')

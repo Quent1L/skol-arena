@@ -66,7 +66,7 @@ const getPlayerCareer = vi.fn(async () => ({
              discipline: { id: 'disc-2', name: 'Echecs', icon: null } }),
   ],
 }))
-vi.mock('@/composables/ranked/ranked.api', () => ({ rankedApi: { getPlayerCareer: (...a: unknown[]) => getPlayerCareer(...a) } }))
+vi.mock('@/composables/ranked/ranked.api', () => ({ rankedApi: { getPlayerCareer: () => getPlayerCareer() } }))
 
 import { useTournamentDetailStore } from '../tournamentDetail.store'
 
