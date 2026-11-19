@@ -30,7 +30,24 @@
             :losers="store.weeklyMmrLeaders!.losers"
             :tournament-id="store.tournament?.id"
           />
+          <p
+            v-if="voteStats?.fairPlayOfTheWeek"
+            class="mt-4 text-sm text-gray-900 dark:text-white/90"
+            data-testid="weekly-fair-play"
+          >
+            🏅
+            {{
+              t('voteStats.fairPlay.ofTheWeek', {
+                name: voteStats.fairPlayOfTheWeek.player.displayName,
+                count: voteStats.fairPlayOfTheWeek.ups,
+              })
+            }}
+          </p>
         </div>
+
+        <!-- Fair-play / MVP rankings -->
+        <VoteStatsCards v-if="votesEnabled" :stats="voteStats" :hide-weekly="hasWeeklyMmr" />
+
         <!-- Match outcome breakdown -->
         <div
           v-if="hasOutcomeTypes"
@@ -176,8 +193,6 @@
         </div>
 
         <!-- Empty state -->
-        <VoteStatsCards v-if="votesEnabled" :tournament-id="store.tournament!.id" />
-
         <div
           v-if="!store.tournamentStats.totalFinalized"
           class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center"
@@ -194,14 +209,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, provide, ref, nextTick } from 'vue'
+import { computed, onMounted, onBeforeUnmount, provide, ref, nextTick, watch } from 'vue'
 import { STAT_ROWS_ARE_PLAYERS } from '@/utils/player-link'
 import AppChart from '@/components/charts/AppChart.vue'
 import VoteStatsCards from '@/components/votes/VoteStatsCards.vue'
 import { useI18n } from 'vue-i18n'
 import { useTournamentDetailStore } from '@/stores/tournamentDetail.store'
 import { formatDate } from 'date-fns'
-import { MIN_WEIGHTED_RATE_MATCHES, type BestDuoEntry } from '@skol-arena/shared/types/index'
+import {
+  MIN_WEIGHTED_RATE_MATCHES,
+  type BestDuoEntry,
+  type TournamentVoteStats,
+} from '@skol-arena/shared/types/index'
+import { votesApi } from '@/composables/votes/votes.api'
 import TopPlayersCard, { type TopPlayerItem } from '@/components/tournament/TopPlayersCard.vue'
 import MatchOutcomeDistribution from '@/components/stats/MatchOutcomeDistribution.vue'
 import OutcomeTypeFunStats from '@/components/stats/OutcomeTypeFunStats.vue'
@@ -218,6 +238,21 @@ const votesEnabled = computed(
   () => !!store.tournament?.voteConfig?.fairPlayEnabled || !!store.tournament?.voteConfig?.mvpEnabled,
 )
 const { t } = useI18n()
+
+// Shared by the "This week" card (fair-play of the week) and the vote rankings.
+const voteStats = ref<TournamentVoteStats | null>(null)
+watch(
+  () => (votesEnabled.value ? store.tournament?.id : undefined),
+  async (id) => {
+    try {
+      voteStats.value = id ? await votesApi.publicStats(id) : null
+    } catch {
+      // Optional cards: they drop out rather than take the tab down.
+      voteStats.value = null
+    }
+  },
+  { immediate: true },
+)
 
 const isMounted = ref(false)
 

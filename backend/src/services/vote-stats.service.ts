@@ -18,6 +18,9 @@ import { assignCompetitionRanks } from "./stats-ranking";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RANKING_LIMIT = 10;
+/** The public ranking is a rolling window: the whole season belongs to its rewind. */
+const RANKING_WINDOW_DAYS = 30;
+const rankingSince = () => new Date(Date.now() - RANKING_WINDOW_DAYS * DAY_MS);
 
 interface Tally {
   playerId: string;
@@ -82,7 +85,7 @@ export class VoteStatsService {
   async getPublicStats(tournamentId: string): Promise<TournamentVoteStats> {
     const config = await this.config(tournamentId);
     const [received, weekly, titles] = await Promise.all([
-      voteStatsRepository.fairPlayReceived(tournamentId),
+      voteStatsRepository.fairPlayReceived(tournamentId, rankingSince()),
       voteStatsRepository.fairPlayReceived(tournamentId, new Date(Date.now() - 7 * DAY_MS)),
       this.mvpTitles(tournamentId),
     ]);
@@ -109,8 +112,9 @@ export class VoteStatsService {
 
   async getMyStats(tournamentId: string, userId: string): Promise<MyVoteStats> {
     const config = await this.config(tournamentId);
-    const [received, tags, cast, titles, mvpCast, teamMatches, spectated] = await Promise.all([
+    const [received, recent, tags, cast, titles, mvpCast, teamMatches, spectated] = await Promise.all([
       voteStatsRepository.fairPlayReceived(tournamentId),
+      voteStatsRepository.fairPlayReceived(tournamentId, rankingSince()),
       voteStatsRepository.downTagsReceived(tournamentId, userId),
       voteStatsRepository.fairPlayCast(tournamentId),
       this.mvpTitles(tournamentId),
@@ -119,7 +123,8 @@ export class VoteStatsService {
       voteStatsRepository.spectatedCount(tournamentId, userId),
     ]);
     const mine = received.find((r) => r.playerId === userId) ?? { playerId: userId, up: 0, down: 0 };
-    const ranked = rankFairPlay(received, config.fairPlayMinVotes).find((e) => e.item.playerId === userId);
+    // Rate and rank mirror the public ranking's window; the 👍/👎 counts stay cumulative.
+    const ranked = rankFairPlay(recent, config.fairPlayMinVotes).find((e) => e.item.playerId === userId);
     const myCast = cast.find((r) => r.playerId === userId) ?? { up: 0, down: 0 };
     const fairPlayCast = myCast.up + myCast.down;
     return {

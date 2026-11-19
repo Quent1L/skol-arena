@@ -1,10 +1,10 @@
 <template>
   <template v-if="stats">
-    <div v-if="stats.fairPlayRanking.length || stats.fairPlayOfTheWeek" class="rounded-xl border border-gray-800 bg-gray-800 p-6" data-testid="fair-play-ranking">
+    <div v-if="stats.fairPlayRanking.length || showWeekly" class="rounded-xl border border-gray-800 bg-gray-800 p-6" data-testid="fair-play-ranking">
       <h2 class="mb-4 text-base font-semibold text-white">
         <i class="fa fa-handshake mr-2 text-primary" />{{ t('voteStats.fairPlay.title') }}
       </h2>
-      <p v-if="stats.fairPlayOfTheWeek" class="mb-3 text-sm text-white/90">
+      <p v-if="showWeekly && stats.fairPlayOfTheWeek" class="mb-3 text-sm text-white/90">
         🏅 {{ t('voteStats.fairPlay.ofTheWeek', { name: stats.fairPlayOfTheWeek.player.displayName, count: stats.fairPlayOfTheWeek.ups }) }}
       </p>
       <ol class="space-y-2">
@@ -37,33 +37,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TournamentVoteStats } from '@skol-arena/shared/types/index'
-import { votesApi } from '@/composables/votes/votes.api'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 
 /**
  * Fair-play / MVP rankings of the stats tab. Public figures are positive only; the
- * viewer's own figures live on their profile (MyVoteStatsCard).
+ * viewer's own figures live on their profile (MyVoteStatsCard). `hideWeekly` drops the
+ * fair-play of the week when the "This week" card already shows it.
  */
-const props = defineProps<{ tournamentId: string }>()
+const props = defineProps<{ stats: TournamentVoteStats | null; hideWeekly?: boolean }>()
 const { t } = useI18n()
 
-const stats = ref<TournamentVoteStats | null>(null)
-
-watch(
-  () => props.tournamentId,
-  async (id) => {
-    try {
-      stats.value = await votesApi.publicStats(id)
-    } catch {
-      // Optional cards: they drop out rather than take the tab down.
-      stats.value = null
-    }
-  },
-  { immediate: true },
-)
+const showWeekly = computed(() => !props.hideWeekly && !!props.stats?.fairPlayOfTheWeek)
 
 const percent = (rate: number | null) => (rate == null ? '—' : `${Math.round(rate * 100)} %`)
 </script>

@@ -3002,7 +3002,7 @@
       "downs": "{count} 👎 reçus"
     },
     "fairPlay": {
-      "title": "Classement fair-play",
+      "title": "Classement fair-play (30 jours)",
       "ofTheWeek": "Fair-play de la semaine : {name} ({count} 👍)"
     },
     "mvp": {

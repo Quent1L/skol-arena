@@ -267,6 +267,21 @@ describe("Fair-play & MVP votes (integration)", () => {
       expect(mine.fairPlay).toMatchObject({ up: 1, down: 1, tags: [{ tag: "bad_faith", count: 1 }] });
     });
 
+    it("ranks fair-play on the last 30 days only", async () => {
+      await setConfig({ fairPlayMinVotes: 1 });
+      const id = await match2v2();
+      await voteService.castFairPlay(id, alice, carol, { value: "up" });
+      await finalize(id);
+      const before = await voteStatsService.getPublicStats(tournamentId);
+      expect(before.fairPlayRanking.map((r) => r.player.id)).toContain(carol);
+      await testDb
+        .update(fairPlayVotes)
+        .set({ createdAt: new Date(Date.now() - 31 * 24 * HOUR) })
+        .where(eq(fairPlayVotes.matchId, id));
+      const pub = await voteStatsService.getPublicStats(tournamentId);
+      expect(pub.fairPlayRanking.map((r) => r.player.id)).not.toContain(carol);
+    });
+
     it("counts MVP titles once the vote is closed, and team matches", async () => {
       const id = await match2v2();
       await voteService.castMvp(id, alice, bob);
