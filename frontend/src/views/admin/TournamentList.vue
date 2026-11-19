@@ -65,7 +65,6 @@
             ? t('tournamentList.teamModeStatic')
             : t('tournamentList.teamModeFlex')
         }}
-        ({{ row.original.teamSize }}v{{ row.original.teamSize }})
       </template>
       <template #startDate-cell="{ row }">{{ formatDate(row.original.startDate) }}</template>
       <template #endDate-cell="{ row }">{{ formatDate(row.original.endDate) }}</template>
@@ -103,7 +102,7 @@ import RowActions, { type RowAction } from '@/components/ui/RowActions.vue'
 import { ACTIONS_COLUMN_META, hiddenBelow, sortableHeader } from '@/components/admin/table-columns'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useTournamentService } from '@/composables/tournament/tournament.service'
-import type { TournamentResponse } from '@/composables/tournament/tournament.api'
+import type { TournamentListResponse } from '@/composables/tournament/tournament.api'
 import type { TournamentStatus } from '@skol-arena/shared'
 
 const { t } = useI18n()
@@ -122,7 +121,7 @@ const {
 const selectedStatus = ref<TournamentStatus | undefined>()
 const selectedMode = ref<'championship' | 'bracket' | undefined>()
 
-const columns: TableColumn<TournamentResponse>[] = [
+const columns: TableColumn<TournamentListResponse>[] = [
   { accessorKey: 'name', header: sortableHeader(t('common.name')) },
   {
     accessorKey: 'mode',
@@ -196,7 +195,7 @@ function modeBadge(mode: string) {
     : { label: t('tournamentList.modeBracket'), color: 'warning' as const }
 }
 
-function rowActions(tournament: TournamentResponse): RowAction[] {
+function rowActions(tournament: TournamentListResponse): RowAction[] {
   return [
     {
       label: t('common.edit'),
@@ -221,7 +220,7 @@ function applyFilters() {
   })
 }
 
-async function confirmDelete(tournament: TournamentResponse) {
+async function confirmDelete(tournament: TournamentListResponse) {
   const confirmed = await confirm({
     title: t('tournamentList.deleteDialogTitle', { name: tournament.name }),
     message: t('tournamentList.deleteConfirm'),
