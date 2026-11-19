@@ -965,8 +965,7 @@
     "info": "Info",
     "matches": "Matchs",
     "standings": "Classement",
-    "stats": "Stats",
-    "teams": "Équipes"
+    "stats": "Stats"
   },
   "notFoundView": {
     "administration": "Administration",
@@ -2162,8 +2161,7 @@
       "infos": "Infos",
       "matches": "Matchs",
       "standings": "Classement",
-      "stats": "Stats",
-      "teams": "Équipes"
+      "stats": "Stats"
     }
   },
   "tournamentFormView": {

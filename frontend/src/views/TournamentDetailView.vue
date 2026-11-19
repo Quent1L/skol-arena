@@ -280,11 +280,9 @@ const isMobileSubTab = computed(() => MOBILE_SUB_TABS.has(activeTabName.value ??
 
 const visibleTabs = computed(() => {
   const mode = store.tournament?.mode
-  const teamMode = store.tournament?.teamMode
   const tabs: { value: string; label: string; badge?: number }[] = [
     { value: 'infos', label: t('tournamentDetailView.tabs.infos') },
   ]
-  if (teamMode === 'static') tabs.push({ value: 'teams', label: t('tournamentDetailView.tabs.teams') })
   if (mode === 'championship') tabs.push({ value: 'standings', label: t('tournamentDetailView.tabs.standings') })
   if (mode === 'bracket') tabs.push({ value: 'bracket', label: t('tournamentDetailView.tabs.bracket') })
   if (mode === 'ranked') tabs.push({ value: 'standings', label: t('tournamentDetailView.tabs.standings') })

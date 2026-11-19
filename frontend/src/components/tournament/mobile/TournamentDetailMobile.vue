@@ -78,7 +78,6 @@
           :tournament-id="store.tournamentId"
           :allow-draw="store.tournament!.allowDraw"
           :score-enabled="store.tournament!.scoreEnabled ?? true"
-          :team-mode="store.tournament!.teamMode"
           :show-provisional-toggle="store.tournament!.validationMode !== 'none'"
           :tournament-config="toStandingsConfig(store.tournament!)"
           :current-user-id="store.appUser?.id"

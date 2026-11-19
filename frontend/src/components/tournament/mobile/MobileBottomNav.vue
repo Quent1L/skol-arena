@@ -106,7 +106,6 @@ interface NavTab {
 const props = defineProps<{
   activeTab: string
   tournamentMode: string
-  teamMode: string
   isAuthenticated: boolean
   canCreateMatch?: boolean
 }>()
@@ -132,9 +131,6 @@ const tabs = computed<NavTab[]>(() => {
       { id: 'bracket', label: t('mobileBottomNav.bracket'), icon: 'fas fa-sitemap' },
       { id: 'matches', label: t('mobileBottomNav.matches'), icon: 'fas fa-gamepad' },
       { id: 'stats', label: t('mobileBottomNav.stats'), icon: 'fas fa-chart-pie' },
-      ...(props.teamMode === 'static'
-        ? [{ id: 'teams', label: t('mobileBottomNav.teams'), icon: 'fas fa-users' }]
-        : []),
     ]
   }
 
@@ -143,9 +139,6 @@ const tabs = computed<NavTab[]>(() => {
     { id: 'standings', label: t('mobileBottomNav.standings'), icon: 'fas fa-trophy' },
     { id: 'matches', label: t('mobileBottomNav.matches'), icon: 'fas fa-gamepad' },
     { id: 'stats', label: t('mobileBottomNav.stats'), icon: 'fas fa-chart-pie' },
-    ...(props.teamMode === 'static'
-      ? [{ id: 'teams', label: t('mobileBottomNav.teams'), icon: 'fas fa-users' }]
-      : []),
   ]
 })
 
