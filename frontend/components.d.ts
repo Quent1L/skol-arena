@@ -49,7 +49,6 @@ declare module 'vue' {
     ConditionRow: typeof import('./src/components/rules/ConditionRow.vue')['default']
     ConfirmModal: typeof import('./src/components/ui/ConfirmModal.vue')['default']
     EmptyState: typeof import('./src/components/ui/EmptyState.vue')['default']
-    FairPlayOfTheWeek: typeof import('./src/components/votes/FairPlayOfTheWeek.vue')['default']
     FairPlaySection: typeof import('./src/components/votes/FairPlaySection.vue')['default']
     FeatsCard: typeof import('./src/components/rewind/cards/FeatsCard.vue')['default']
     FieldEditabilityNote: typeof import('./src/components/forms/FieldEditabilityNote.vue')['default']
