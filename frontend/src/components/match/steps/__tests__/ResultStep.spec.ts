@@ -247,11 +247,38 @@ describe('ResultStep — presentation helpers', () => {
     expect(vm.sidePlayers({ position: 3 })).toEqual([])
   })
 
+  it('shows the name and members of a static team', () => {
+    const member = (userId: string, displayName: string) => ({ userId, user: { displayName } })
+    const { wrapper } = mountStep({
+      sides: [
+        { position: 1, teamId: 'tA' },
+        { position: 2, teamId: 'tB' },
+      ],
+      teams: [
+        { id: 'tA', name: 'Golden Goals', members: [member('a', 'Ava'), member('d', 'Dan')] },
+        { id: 'tB', name: 'Rod Squad', members: [member('g', 'Grace')] },
+      ],
+    })
+    const text = wrapper.text()
+    for (const name of ['Golden Goals', 'Rod Squad', 'Ava', 'Dan', 'Grace']) expect(text).toContain(name)
+    expect(text).not.toContain('resultStep.team')
+  })
+
   it('derives the balance bar from the standings, flat without any', () => {
     expect(mountStep().vm.sidePercents).toEqual({ a: 0, b: 0 })
     const { vm } = mountStep({
       standings: { a: { mmr: 1200 }, b: { mmr: 1000 }, c: { mmr: 1000 } },
     })
     expect(vm.sidePercents.a + vm.sidePercents.b).toBeGreaterThanOrEqual(0)
+  })
+})
+
+describe('ResultStep — score input', () => {
+  it('selects the current score on focus so typing replaces it', async () => {
+    const { wrapper } = mountStep({ scoreEnabled: true, maxScore: 10 })
+    const input = wrapper.find('input[role="spinbutton"]').element as HTMLInputElement
+    const select = vi.spyOn(input, 'select')
+    input.dispatchEvent(new FocusEvent('focus'))
+    expect(select).toHaveBeenCalled()
   })
 })

@@ -21,9 +21,7 @@
           @click="winnerModel = side.position"
         >
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-slate-500">{{
-              t('resultStep.team', { number: idx + 1 })
-            }}</span>
+            <span class="truncate text-xs font-semibold text-slate-500">{{ sideLabel(side, idx) }}</span>
             <span class="flex items-center gap-2">
               <span
                 v-if="balance"
@@ -131,7 +129,7 @@
       <div class="flex items-center justify-center gap-8">
         <div v-for="(side, idx) in sidesModel" :key="side.position" class="text-center">
           <div class="text-xs text-slate-500 mb-2">
-            {{ t('resultStep.team', { number: idx + 1 }) }}
+            {{ sideLabel(side, idx) }}
           </div>
           <UInputNumber
             :model-value="scorePerSideModel[side.position] ?? 0"
@@ -142,6 +140,7 @@
             size="xl"
             class="w-20"
             :ui="{ base: 'text-center px-2' }"
+            @focus="selectAll"
             @update:model-value="(v) => setScore(side.position, v ?? 0)"
           />
         </div>
@@ -189,7 +188,12 @@ import { tournamentApi } from '@/composables/tournament/tournament.api'
 import { disciplineApi } from '@/composables/discipline/discipline.api'
 import { computeMatchBalance, toPercents } from '@/composables/match/match-balance'
 import type { PlayerStandings } from '@/composables/match/match-balance'
-import type { OutcomeType, OutcomeReason, MatchSideInput } from '@skol-arena/shared/types/index'
+import type {
+  ClientTeam,
+  OutcomeType,
+  OutcomeReason,
+  MatchSideInput,
+} from '@skol-arena/shared/types/index'
 
 interface Props {
   tournamentId: string
@@ -212,6 +216,8 @@ interface Props {
    * never be seen on those matches.
    */
   standings?: PlayerStandings | null
+  /** Static team mode: sides carry a `teamId`, names and members come from here. */
+  teams?: ClientTeam[]
 }
 
 interface Emits {
@@ -260,8 +266,23 @@ const showReasonSelect = computed(
 const balance = computed(() => computeMatchBalance(sidesModel.value, props.standings))
 const sidePercents = computed(() => (balance.value ? toPercents(balance.value) : { a: 0, b: 0 }))
 
+const teamOf = (side: MatchSideInput) =>
+  side.teamId ? props.teams?.find((team) => team.id === side.teamId) : undefined
+
 function sidePlayers(side: MatchSideInput): { id: string; name: string }[] {
+  const team = teamOf(side)
+  if (team) return team.members.map((m) => ({ id: m.userId, name: m.user.displayName }))
   return (side.playerIds ?? []).map((id) => ({ id, name: props.playerNames[id] ?? id }))
+}
+
+function sideLabel(side: MatchSideInput, idx: number): string {
+  return teamOf(side)?.name ?? t('resultStep.team', { number: idx + 1 })
+}
+
+// The field always shows a number (0 at first): typing next to it gives "08" or "80",
+// and "80" is clamped to the max on blur. Selecting on focus makes typing replace it.
+function selectAll(event: FocusEvent) {
+  ;(event.target as HTMLInputElement).select()
 }
 
 function setScore(position: number, value: number) {

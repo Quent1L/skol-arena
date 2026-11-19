@@ -116,6 +116,7 @@
               v-model:score-per-side="formState.scorePerSide"
               :tournament-id="props.tournamentId"
               :player-names="playersMap"
+              :teams="teams"
               :score-enabled="tournament?.scoreEnabled ?? true"
               :min-score="tournament?.minScore"
               :max-score="tournament?.maxScore"
