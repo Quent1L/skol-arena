@@ -216,6 +216,7 @@ export class MatchSidesRepository {
         entry: {
           with: {
             players: { with: { player: true } },
+            team: { columns: { name: true } },
           },
         },
       },

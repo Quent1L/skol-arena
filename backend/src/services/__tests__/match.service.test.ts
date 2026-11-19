@@ -2608,6 +2608,7 @@ describe("MatchService - listMatchCards", () => {
         position: 1,
         score: 2,
         entry: {
+          team: { name: "Golden Goals" },
           players: [
             {
               player: { id: "p1", displayName: "Player 1", shortName: "P1" },
@@ -2665,6 +2666,8 @@ describe("MatchService - listMatchCards", () => {
     expect(m1.sides).toHaveLength(2);
     expect(m1.sides[0].isWinner).toBe(true); // position 1 = A, winnerSide = A
     expect(m1.sides[1].isWinner).toBe(false);
+    expect(m1.sides[0].teamName).toBe("Golden Goals"); // static team
+    expect(m1.sides[1].teamName).toBeNull();
     expect(m1.outcomeType).toBeNull();
 
     const m2 = res.data.find((d) => d.id === "m-2")!;

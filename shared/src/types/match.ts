@@ -642,6 +642,8 @@ export const matchCardSideSchema = z
     position: z.number().int(),
     score: z.number().nullable(),
     isWinner: z.boolean(),
+    /** Static team mode only: the fixed team that played this side. */
+    teamName: z.string().nullish(),
     players: z.array(
       z.object({
         id: z.string(),

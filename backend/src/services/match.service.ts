@@ -327,6 +327,7 @@ export class MatchService {
         position: s.position,
         score: s.score,
         isWinner: row.winnerSide === (s.position === 1 ? 'A' : 'B'),
+        teamName: s.entry.team?.name ?? null,
         players: s.entry.players.map((p) => ({
           id: p.player.id,
           displayName: p.player.displayName,

@@ -50,6 +50,11 @@
             <i class="fa fa-trophy text-yellow-500 flex-shrink-0 text-xs"></i>
           </div>
           <PlayerAvatarStack :players="leftSide?.players ?? []" size="md" />
+          <span
+            v-if="leftSide?.teamName"
+            class="max-w-full truncate text-center text-xs font-semibold uppercase tracking-wide text-primary"
+            >{{ leftSide.teamName }}</span
+          >
           <div class="flex flex-col items-center gap-0.5">
             <span
               v-for="player in (leftSide?.players ?? []).slice(0, 2)"
@@ -88,6 +93,11 @@
             <i class="fa fa-trophy text-yellow-500 shrink-0 text-xs"></i>
           </div>
           <PlayerAvatarStack :players="rightSide?.players ?? []" size="md" />
+          <span
+            v-if="rightSide?.teamName"
+            class="max-w-full truncate text-center text-xs font-semibold uppercase tracking-wide text-primary"
+            >{{ rightSide.teamName }}</span
+          >
           <div class="flex flex-col items-center gap-0.5">
             <span
               v-for="player in (rightSide?.players ?? []).slice(0, 2)"
