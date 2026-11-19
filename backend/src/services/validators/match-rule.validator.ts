@@ -70,12 +70,7 @@ export class MatchRuleValidator {
         const allPlayerIds = sidePlayerIds.flat();
         await this.validateAtLeastOnePlayerUnderLimit(tournament, allPlayerIds, excludeMatchId);
 
-        for (const playerIds of sidePlayerIds) {
-            if (playerIds.length > 1) {
-                await this.validateTeamPartnerConstraints(tournament, playerIds, excludeMatchId);
-            }
-        }
-
+        // No partner cap here: a fixed team always plays with the same teammates.
         await this.validateTeamOpponentConstraints(
             input.tournamentId,
             sidePlayerIds[0],

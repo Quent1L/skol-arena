@@ -2173,6 +2173,7 @@
     "labelMaxMatchesPerPlayer": "Matchs max par joueur",
     "labelMaxTimesWithSameOpponent": "Max contre même adversaire",
     "labelMaxTimesWithSamePartner": "Max avec même partenaire",
+    "samePartnerIgnoredStatic": "Non pris en compte avec des équipes fixes : les coéquipiers ne changent jamais.",
     "labelMode": "Mode",
     "labelPointPerDraw": "Points par match nul",
     "labelPointPerLoss": "Points par défaite",

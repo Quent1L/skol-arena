@@ -534,21 +534,16 @@ describe("Static Team Rule Validation", () => {
     expect(result).toBeTruthy();
   });
 
-  it("should block third match when partner limit (2) is reached", async () => {
-    try {
-      await matchService.createMatch(
-        {
-          tournamentId: staticTournamentId,
-          sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamBId }],
-          status: "scheduled",
-        },
-        p1Id,
-      );
-      throw new Error("Expected ConflictError");
-    } catch (error) {
-      expect(error).toBeInstanceOf(ConflictError);
-      expect((error as ConflictError).code).toBe(ErrorCode.MAX_PARTNER_MATCHES_EXCEEDED);
-    }
+  it("should ignore the partner limit (2) in static mode", async () => {
+    const result = await matchService.createMatch(
+      {
+        tournamentId: staticTournamentId,
+        sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamBId }],
+        status: "scheduled",
+      },
+      p1Id,
+    );
+    expect(result?.id).toBeDefined();
   });
 
   it("should block match when opponent limit is reached", async () => {
@@ -558,7 +553,7 @@ describe("Static Team Rule Validation", () => {
       maxTimesWithSameOpponent: 2,
     });
 
-    // A vs B already played twice → opponent limit = 2 → should block
+    // A vs B already played three times → opponent limit = 2 → should block
     try {
       await matchService.createMatch(
         {
@@ -576,7 +571,7 @@ describe("Static Team Rule Validation", () => {
   });
 
   it("should block when all players in static teams have hit match limit", async () => {
-    // Set per-player limit to 2 (already played 2 matches) and raise other limits
+    // Set per-player limit to 2 (already played 3 matches) and raise other limits
     await setChampionshipCaps(testDb, staticTournamentId, {
       maxMatchesPerPlayer: 2,
       maxTimesWithSamePartner: 10,

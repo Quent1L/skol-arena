@@ -2173,6 +2173,7 @@
     "labelMaxMatchesPerPlayer": "Max matches per player",
     "labelMaxTimesWithSameOpponent": "Max against same opponent",
     "labelMaxTimesWithSamePartner": "Max with same partner",
+    "samePartnerIgnoredStatic": "Ignored with fixed teams: teammates never change.",
     "labelMode": "Mode",
     "labelPointPerDraw": "Points per draw",
     "labelPointPerLoss": "Points per loss",

@@ -55,6 +55,7 @@
                 :items="teamModeOptions"
                 :disabled="!isFieldEditable('teamMode')"
                 class="w-full"
+                @update:model-value="onTeamModeChange"
               />
             </UFormField>
           </template>
@@ -75,12 +76,16 @@
             />
             <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('maxMatchesPerPlayer')" />
           </UFormField>
-          <UFormField name="maxTimesWithSamePartner" :label="t('tournamentFormView.labelMaxTimesWithSamePartner')">
+          <UFormField
+            name="maxTimesWithSamePartner"
+            :label="t('tournamentFormView.labelMaxTimesWithSamePartner')"
+            :help="state.teamMode === 'static' ? t('tournamentFormView.samePartnerIgnoredStatic') : undefined"
+          >
             <UInputNumber
               v-model="state.maxTimesWithSamePartner"
               :min="CHAMPIONSHIP_LIMITS.maxTimesWithSamePartner.min"
               :max="CHAMPIONSHIP_LIMITS.maxTimesWithSamePartner.max"
-              :disabled="!isFieldEditable('maxTimesWithSamePartner')"
+              :disabled="state.teamMode === 'static' || !isFieldEditable('maxTimesWithSamePartner')"
               class="w-full"
             />
           </UFormField>
@@ -244,6 +249,11 @@ type TournamentFormState = Partial<CreateTournamentFormData & UpdateTournamentFo
 // A ref, not a reactive: the sections bind it with `v-model:state`, which needs
 // a binding it can reassign.
 const state = ref<TournamentFormState>({})
+
+// Fixed teams always play with the same partners: the cap is ignored, so put it back to default.
+function onTeamModeChange(mode: string) {
+  if (mode === 'static') state.value.maxTimesWithSamePartner = CHAMPIONSHIP_DEFAULTS.maxTimesWithSamePartner
+}
 
 /**
  * What the shared sections get: `null` while creating, which they read as "everything
