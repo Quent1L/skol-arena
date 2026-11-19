@@ -56,6 +56,7 @@ export class TournamentStatsRepository {
             entry: {
               columns: { id: true },
               with: {
+                team: { columns: { id: true, name: true } },
                 players: {
                   columns: { playerId: true },
                   with: {

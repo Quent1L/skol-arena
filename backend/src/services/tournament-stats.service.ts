@@ -614,6 +614,23 @@ function fillMomentumDays(
   return result;
 }
 
+/**
+ * Fixed teammates share every result, so a per-player board would list each team once
+ * per member. Standing each roster in for a single "player" — the team — lets every
+ * per-player computation rank teams without knowing about them.
+ */
+export function collapseToTeams(matchesData: MatchData[]): MatchData[] {
+  return matchesData.map((match) => ({
+    ...match,
+    sides: match.sides.map((side) => {
+      const team = side.entry.team;
+      if (!team) return side;
+      const player = { id: team.id, displayName: team.name, shortName: team.name };
+      return { ...side, entry: { ...side.entry, players: [{ playerId: team.id, player }] } };
+    }),
+  }));
+}
+
 class TournamentStatsService {
   async getStats(tournamentId: string): Promise<TournamentStats> {
     const cached = await tournamentStatsRepository.getComputedStats(tournamentId);
@@ -630,12 +647,15 @@ class TournamentStatsService {
       throw new NotFoundError(ErrorCode.TOURNAMENT_NOT_FOUND);
     }
 
-    const [distributionRaw, matchesData, momentumRaw, ruleset] = await Promise.all([
+    const [distributionRaw, rawMatches, momentumRaw, ruleset] = await Promise.all([
       tournamentStatsRepository.getOutcomeDistribution(tournamentId),
       tournamentStatsRepository.getMatchesWithSidesAndPlayers(tournamentId),
       tournamentStatsRepository.getMomentum(tournamentId),
       tournamentRulesetService.getForTournament(tournamentId),
     ]);
+
+    const isStatic = tournamentInfo.teamMode === "static";
+    const matchesData = isStatic ? collapseToTeams(rawMatches) : rawMatches;
 
     const momentum = fillMomentumDays(momentumRaw, tournamentInfo.startDate, tournamentInfo.endDate);
 
@@ -671,7 +691,7 @@ class TournamentStatsService {
     const bestSoloPlayers: BestPlayersBoard = computeBestSoloPlayers(matchesData);
 
     const bestAsymmetricSoloPlayers: BestPlayersBoard =
-      tournamentInfo.rankedConfig?.allowAsymmetricMatches
+      !isStatic && tournamentInfo.rankedConfig?.allowAsymmetricMatches
         ? computeBestAsymmetricSoloPlayers(matchesData)
         : EMPTY_PLAYERS_BOARD;
 
@@ -681,6 +701,7 @@ class TournamentStatsService {
     );
 
     return {
+      subject: isStatic ? "team" : "player",
       totalMatches,
       totalFinalized,
       outcomeDistribution,

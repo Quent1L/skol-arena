@@ -125,6 +125,28 @@ describe("tournamentStatsService.getStats", () => {
     expect(fixed.bestDuoPlayers.entries).toEqual([]);
   });
 
+  it("ranks fixed teams once each, never once per teammate", async () => {
+    const withTeam = (m: ReturnType<typeof match>, a: string, b: string) => ({
+      ...m,
+      sides: m.sides.map((s, i) => ({
+        ...s,
+        entry: { ...s.entry, team: { id: i === 0 ? a : b, name: (i === 0 ? a : b).toUpperCase() } },
+      })),
+    });
+    repo.getMatchesWithSidesAndPlayers.mockImplementation(async () => [
+      withTeam(match("A", ["a", "b"], ["c", "d"], 2), "red", "blue"),
+      withTeam(match("A", ["a", "b"], ["c", "d"], 1), "red", "blue"),
+    ]);
+    repo.getTournamentMode.mockImplementation(async () => ({ ...flexInfo, teamMode: "static" }));
+
+    const stats = await tournamentStatsService.getStats("t1");
+
+    expect(stats.subject).toBe("team");
+    expect(stats.winStreaks).toEqual([{ playerId: "red", displayName: "RED", shortName: "RED", currentStreak: 2 }]);
+    expect(stats.lossStreaks.map((s) => s.playerId)).toEqual(["blue"]);
+    expect(stats.bestSoloPlayers.entries.map((e) => e.playerId)).toEqual(["red", "blue"]);
+  });
+
   it("builds the asymmetric solo board only when the ranked config allows it", async () => {
     repo.getMatchesWithSidesAndPlayers.mockImplementation(async () => [
       match("A", ["a"], ["b", "c"], 2),

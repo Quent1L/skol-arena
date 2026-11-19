@@ -159,6 +159,8 @@ export type OutcomeTypeFunStat = z.infer<typeof outcomeTypeFunStatSchema>;
 
 export const tournamentStatsSchema = z
   .object({
+    /** "team" for fixed teams: every board then ranks teams, and its ids are team ids. */
+    subject: z.enum(["player", "team"]),
     totalMatches: z.number(),
     totalFinalized: z.number(),
     outcomeDistribution: z.array(outcomeTypeCountSchema),
