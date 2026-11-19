@@ -37,14 +37,14 @@
             <VoteOfTheWeek
               v-if="voteStats?.fairPlayOfTheWeek"
               kind="fairPlay"
-              :player="voteStats.fairPlayOfTheWeek.player"
+              :players="voteStats.fairPlayOfTheWeek.players"
               :count="voteStats.fairPlayOfTheWeek.ups"
               :tournament-id="store.tournament?.id"
             />
             <VoteOfTheWeek
               v-if="voteStats?.mvpOfTheWeek"
               kind="mvp"
-              :player="voteStats.mvpOfTheWeek.player"
+              :players="voteStats.mvpOfTheWeek.players"
               :count="voteStats.mvpOfTheWeek.titles"
               :tournament-id="store.tournament?.id"
             />
@@ -57,6 +57,7 @@
           :stats="voteStats"
           :hide-weekly="hasWeeklyMmr"
           :tournament-id="store.tournament?.id"
+          :min-votes="resolveVoteConfig(store.tournament?.voteConfig).fairPlayMinVotes"
         />
 
         <!-- Match outcome breakdown -->
@@ -231,9 +232,12 @@ import { formatDate } from 'date-fns'
 import {
   MIN_WEIGHTED_RATE_MATCHES,
   type BestDuoEntry,
+  resolveVoteConfig,
   type TournamentVoteStats,
+  type VoteStatsUpdatedPayload,
 } from '@skol-arena/shared/types/index'
 import { votesApi } from '@/composables/votes/votes.api'
+import { onWsEvent } from '@/composables/notification/notification.socket'
 import TopPlayersCard, { type TopPlayerItem } from '@/components/tournament/TopPlayersCard.vue'
 import MatchOutcomeDistribution from '@/components/stats/MatchOutcomeDistribution.vue'
 import OutcomeTypeFunStats from '@/components/stats/OutcomeTypeFunStats.vue'
@@ -253,18 +257,28 @@ const { t } = useI18n()
 
 // Shared by the "This week" card (players of the week) and the vote rankings.
 const voteStats = ref<TournamentVoteStats | null>(null)
-watch(
-  () => (votesEnabled.value ? store.tournament?.id : undefined),
-  async (id) => {
-    try {
-      voteStats.value = id ? await votesApi.publicStats(id) : null
-    } catch {
-      // Optional cards: they drop out rather than take the tab down.
-      voteStats.value = null
-    }
-  },
-  { immediate: true },
-)
+const voteStatsTournamentId = computed(() => (votesEnabled.value ? store.tournament?.id : undefined))
+let voteStatsRequest = 0
+
+async function loadVoteStats() {
+  const id = voteStatsTournamentId.value
+  const request = ++voteStatsRequest
+  try {
+    const stats = id ? await votesApi.publicStats(id) : null
+    // Live refreshes can overlap: only the latest answer lands.
+    if (request === voteStatsRequest) voteStats.value = stats
+  } catch {
+    // Optional cards: they drop out rather than take the tab down.
+    if (request === voteStatsRequest) voteStats.value = null
+  }
+}
+
+// A refetched tournament stats object means a match was validated: its votes count now.
+watch([voteStatsTournamentId, () => store.tournamentStats], loadVoteStats, { immediate: true })
+
+const offVoteStatsWs = onWsEvent<VoteStatsUpdatedPayload>('vote_stats_updated', (data) => {
+  if (data.tournamentId === voteStatsTournamentId.value) void loadVoteStats()
+})
 
 const isMounted = ref(false)
 
@@ -276,6 +290,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   isMounted.value = false
+  offVoteStatsWs()
 })
 
 const momentumChartData = computed(() => {

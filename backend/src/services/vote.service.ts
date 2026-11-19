@@ -23,6 +23,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const ALERT_WINDOW_DAYS = 30;
 const PROMPT_IGNORED_LIMIT = 3;
 const PROMPT_SNOOZE_DAYS = 7;
+/** Votes come in bursts after a match: one stats refresh per tournament per burst. */
+export const VOTE_STATS_NOTIFY_DELAY_MS = 1000;
 
 interface VoteContext {
   match: VoteMatch;
@@ -139,6 +141,7 @@ export class VoteService {
     await voteRepository.upsertFairPlayVotes(matchId, userId, [{ targetId, value: input.value, tags }]);
     if (input.value === "down") await this.maybeAlertAdmins(ctx, targetId);
     await this.afterVote(matchId, userId);
+    this.notifyStatsChanged(ctx);
     return await this.getMatchVotes(matchId, userId);
   }
 
@@ -148,12 +151,14 @@ export class VoteService {
     const votes = this.opponentsOf(ctx).map((p) => ({ targetId: p.id, value: "up" as const, tags: null }));
     await voteRepository.upsertFairPlayVotes(matchId, userId, votes);
     await this.afterVote(matchId, userId);
+    this.notifyStatsChanged(ctx);
     return await this.getMatchVotes(matchId, userId);
   }
 
   async removeFairPlay(matchId: string, userId: string, targetId: string) {
-    await this.fairPlayContext(matchId, userId);
+    const ctx = await this.fairPlayContext(matchId, userId);
     await voteRepository.deleteFairPlayVote(matchId, userId, targetId);
+    this.notifyStatsChanged(ctx);
     return await this.getMatchVotes(matchId, userId);
   }
 
@@ -236,6 +241,7 @@ export class VoteService {
     await voteRepository.upsertMvpVote(matchId, userId, targetId, role);
     await this.afterVote(matchId, userId);
     void this.broadcastMvpChange(ctx);
+    this.notifyStatsChanged(ctx);
     return await this.getMatchVotes(matchId, userId);
   }
 
@@ -243,6 +249,7 @@ export class VoteService {
     const ctx = await this.mvpContext(matchId, userId);
     await voteRepository.deleteMvpVote(matchId, userId);
     void this.broadcastMvpChange(ctx);
+    this.notifyStatsChanged(ctx);
     return await this.getMatchVotes(matchId, userId);
   }
 
@@ -270,6 +277,24 @@ export class VoteService {
     } catch (err) {
       logger.error({ err, matchId: match.id }, "Failed to broadcast vote update");
     }
+  }
+
+  private readonly pendingStatsNotifications = new Map<string, ReturnType<typeof setTimeout>>();
+
+  /**
+   * Tells every page open on the tournament that its vote rankings may have moved. No
+   * vote travels: the stats tab refetches the public stats, positive figures only.
+   * Only a validated match's votes count, so the others change nothing yet — its
+   * validation refreshes the tab anyway. A burst of votes collapses into one event.
+   */
+  private notifyStatsChanged(ctx: VoteContext): void {
+    const { tournamentId, status } = ctx.match;
+    if (status !== "finalized" || this.pendingStatsNotifications.has(tournamentId)) return;
+    const timer = setTimeout(() => {
+      this.pendingStatsNotifications.delete(tournamentId);
+      webSocketService.broadcastToTournament(tournamentId, { event: "vote_stats_updated", data: { tournamentId } });
+    }, VOTE_STATS_NOTIFY_DELAY_MS);
+    this.pendingStatsNotifications.set(tournamentId, timer);
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────

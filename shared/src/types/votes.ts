@@ -168,6 +168,14 @@ export const votePromptSchema = z
   .meta({ id: "VotePrompt" });
 export type VotePrompt = z.infer<typeof votePromptSchema>;
 
+/**
+ * WebSocket `vote_stats_updated`, to everyone viewing the tournament: its vote rankings
+ * may have moved. Carries nothing else — the page refetches the public stats.
+ */
+export interface VoteStatsUpdatedPayload {
+  tournamentId: string;
+}
+
 /** WebSocket `match_votes_updated`: the match's MVP now. Public — never the votes. */
 export interface MatchVotesUpdatedPayload {
   matchId: string;
@@ -235,8 +243,10 @@ export const tagCountSchema = z.object({ tag: fairPlayTagSchema, count: z.number
 /** Public vote stats of a tournament: positive data only, never a name next to a 👎. */
 export const tournamentVoteStatsSchema = z
   .object({
-    fairPlayOfTheWeek: z.object({ player: voteStatPlayerSchema, ups: z.number().int() }).nullable(),
-    mvpOfTheWeek: z.object({ player: voteStatPlayerSchema, titles: z.number().int() }).nullable(),
+    /** Every player tied on the most 👍 of the last 7 days. */
+    fairPlayOfTheWeek: z.object({ players: z.array(voteStatPlayerSchema), ups: z.number().int() }).nullable(),
+    /** Every player tied on the most MVP titles of the last 7 days. */
+    mvpOfTheWeek: z.object({ players: z.array(voteStatPlayerSchema), titles: z.number().int() }).nullable(),
     fairPlayRanking: z.array(
       z.object({ player: voteStatPlayerSchema, rate: z.number(), votes: z.number().int(), rank: z.number().int() }),
     ),

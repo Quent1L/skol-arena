@@ -7,7 +7,7 @@ import * as schema from "../../../db/schema";
 // Initialize the test database BEFORE any imports that use `db`.
 const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
-import { voteService } from "../../vote.service";
+import { voteService, VOTE_STATS_NOTIFY_DELAY_MS } from "../../vote.service";
 import { voteStatsService } from "../../vote-stats.service";
 import { notificationService } from "../../notification.service";
 import { webSocketService } from "../../websocket.service";
@@ -267,6 +267,37 @@ describe("Fair-play & MVP votes (integration)", () => {
       expect(mine.fairPlay).toMatchObject({ up: 1, down: 1, tags: [{ tag: "bad_faith", count: 1 }] });
     });
 
+    it("tells the tournament's viewers once per burst, on validated matches only", async () => {
+      const spy = spyOn(webSocketService, "broadcastToTournament");
+      const event = JSON.stringify({ event: "vote_stats_updated", data: { tournamentId } });
+      const sent = () => spy.mock.calls.filter(([, data]) => JSON.stringify(data) === event).length;
+      const pending = await match2v2();
+      await voteService.castFairPlay(pending, alice, carol, { value: "up" });
+      await Bun.sleep(VOTE_STATS_NOTIFY_DELAY_MS + 100);
+      expect(sent()).toBe(0);
+      const done = await match2v2();
+      await finalize(done);
+      await voteService.castFairPlay(done, alice, carol, { value: "up" });
+      await voteService.castFairPlay(done, bob, dave, { value: "up" });
+      await Bun.sleep(VOTE_STATS_NOTIFY_DELAY_MS + 100);
+      expect(sent()).toBe(1);
+      spy.mockRestore();
+    });
+
+    it("names every player tied for fair-play of the week", async () => {
+      await setConfig({ fairPlayMinVotes: 1 });
+      const id = await match2v2();
+      await voteService.castFairPlay(id, alice, carol, { value: "up" });
+      await voteService.castFairPlay(id, alice, dave, { value: "up" });
+      await voteService.castFairPlay(id, bob, carol, { value: "up" });
+      await voteService.castFairPlay(id, bob, dave, { value: "up" });
+      await finalize(id);
+      const pub = await voteStatsService.getPublicStats(tournamentId);
+      const tied = pub.fairPlayOfTheWeek?.players.map((p) => p.id);
+      expect(tied).toContain(carol);
+      expect(tied).toContain(dave);
+    });
+
     it("ranks fair-play on the last 30 days only", async () => {
       await setConfig({ fairPlayMinVotes: 1 });
       const id = await match2v2();
@@ -294,7 +325,8 @@ describe("Fair-play & MVP votes (integration)", () => {
       expect(mine.mvp.teamMatches).toBeGreaterThanOrEqual(1);
       const pub = await voteStatsService.getPublicStats(tournamentId);
       expect(pub.mvpRanking[0]?.player.id).toBe(bob);
-      expect(pub.mvpOfTheWeek).toMatchObject({ player: { id: bob }, titles: 1 });
+      expect(pub.mvpOfTheWeek?.titles).toBe(1);
+      expect(pub.mvpOfTheWeek?.players.map((p) => p.id)).toContain(bob);
     });
 
     it("ranks MVP titles on the last 30 days only", async () => {

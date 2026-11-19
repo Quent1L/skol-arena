@@ -6,7 +6,11 @@
       <i :class="kind === 'mvp' ? 'fa fa-medal text-amber-400' : 'fa fa-handshake text-primary'" />
       {{ t(kind === 'mvp' ? 'voteStats.mvp.weekTitle' : 'voteStats.fairPlay.weekTitle') }}
     </div>
-    <div class="flex justify-between items-center gap-2 py-1.5">
+    <div
+      v-for="player in players"
+      :key="player.id"
+      class="flex justify-between items-center gap-2 py-1.5 border-b border-gray-200 dark:border-gray-700 last:border-0"
+    >
       <RouterLink
         :to="playerLink(player.id, tournamentId)"
         class="flex items-center gap-2 min-w-0 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
@@ -46,7 +50,8 @@ import { playerLink } from '@/utils/player-link'
  */
 defineProps<{
   kind: 'fairPlay' | 'mvp'
-  player: VoteStatPlayer
+  /** Several when tied: each gets their own row, as on the rankings. */
+  players: VoteStatPlayer[]
   count: number
   tournamentId?: string | null
 }>()

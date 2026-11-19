@@ -1,14 +1,15 @@
 <template>
   <template v-if="stats">
     <div v-if="stats.fairPlayRanking.length || (showWeekly && stats.fairPlayOfTheWeek)" class="rounded-xl border border-gray-800 bg-gray-800 p-6" data-testid="fair-play-ranking">
-      <h2 class="mb-4 text-base font-semibold text-white">
-        <i class="fa fa-handshake mr-2 text-primary" />{{ t('voteStats.fairPlay.title') }}
+      <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-white">
+        <i class="fa fa-handshake text-primary" />{{ t('voteStats.fairPlay.title') }}
+        <InfoTooltip :text="t('voteStats.fairPlay.tooltip', { count: minVotes })" />
       </h2>
       <VoteOfTheWeek
         v-if="showWeekly && stats.fairPlayOfTheWeek"
         class="mb-4"
         kind="fairPlay"
-        :player="stats.fairPlayOfTheWeek.player"
+        :players="stats.fairPlayOfTheWeek.players"
         :count="stats.fairPlayOfTheWeek.ups"
         :tournament-id="tournamentId"
       />
@@ -39,7 +40,7 @@
         v-if="showWeekly && stats.mvpOfTheWeek"
         class="mb-4"
         kind="mvp"
-        :player="stats.mvpOfTheWeek.player"
+        :players="stats.mvpOfTheWeek.players"
         :count="stats.mvpOfTheWeek.titles"
         :tournament-id="tournamentId"
       />
@@ -64,6 +65,7 @@ import { computed, provide, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TournamentVoteStats } from '@skol-arena/shared/types/index'
 import StatLeaderRow from '@/components/stats/StatLeaderRow.vue'
+import InfoTooltip from '@/components/InfoTooltip.vue'
 import VoteOfTheWeek from './VoteOfTheWeek.vue'
 import { STAT_ROWS_ARE_PLAYERS } from '@/utils/player-link'
 
@@ -76,6 +78,8 @@ const props = defineProps<{
   stats: TournamentVoteStats | null
   hideWeekly?: boolean
   tournamentId?: string | null
+  /** Votes a player needs before being ranked, the smoothing weight too. */
+  minVotes: number
 }>()
 const { t } = useI18n()
 

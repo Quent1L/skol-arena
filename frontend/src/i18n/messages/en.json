@@ -3003,6 +3003,7 @@
     },
     "fairPlay": {
       "title": "Fair-play",
+      "tooltip": "Ranked over the last 30 days, from {count} votes received. Each player starts with {count} imaginary votes at the tournament's average rate: it takes many votes to move away from it, so a 100 % of 👍 shows slightly below. Each 👎 counts as one negative vote, whatever its reason. At equal rate, more votes ranks higher.",
       "weekTitle": "Fair-play of the week",
       "votes": "{count} vote | {count} votes"
     },

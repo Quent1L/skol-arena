@@ -46,6 +46,12 @@ function rankFairPlay(rows: Tally[], minVotes: number) {
   return assignCompetitionRanks(eligible, (a, b) => Math.abs(a.rate - b.rate) < 1e-9 && a.votes === b.votes);
 }
 
+/** Every player tied on the best positive score, so ex aequo share the spotlight. */
+function leaders<T extends { playerId: string }>(rows: T[], score: (r: T) => number) {
+  const best = Math.max(0, ...rows.map(score));
+  return best > 0 ? { ids: rows.filter((r) => score(r) === best).map((r) => r.playerId), count: best } : null;
+}
+
 function tagsOf(rows: { playerId: string; tag: FairPlayTag; count: number }[], playerId: string) {
   return rows
     .filter((r) => r.playerId === playerId)
@@ -94,19 +100,19 @@ export class VoteStatsService {
       [...titles].sort((a, b) => b.titles - a.titles),
       (a, b) => a.titles === b.titles,
     ).slice(0, RANKING_LIMIT);
-    const best = [...weekly].filter((r) => r.up > 0).sort((a, b) => b.up - a.up)[0];
-    const bestMvp = [...weeklyTitles].sort((a, b) => b.titles - a.titles)[0];
+    const best = leaders(weekly, (r) => r.up);
+    const bestMvp = leaders(weeklyTitles, (r) => r.titles);
     const players = await voteStatsRepository.players([
       ...fairPlay.map((e) => e.item.playerId),
       ...mvp.map((e) => e.item.playerId),
-      ...(best ? [best.playerId] : []),
-      ...(bestMvp ? [bestMvp.playerId] : []),
+      ...(best?.ids ?? []),
+      ...(bestMvp?.ids ?? []),
     ]);
     const who = (id: string) => players.get(id) ?? unknownPlayer(id);
     const total = received.reduce((n, r) => n + r.up + r.down, 0);
     return {
-      fairPlayOfTheWeek: best ? { player: who(best.playerId), ups: best.up } : null,
-      mvpOfTheWeek: bestMvp ? { player: who(bestMvp.playerId), titles: bestMvp.titles } : null,
+      fairPlayOfTheWeek: best ? { players: best.ids.map(who), ups: best.count } : null,
+      mvpOfTheWeek: bestMvp ? { players: bestMvp.ids.map(who), titles: bestMvp.count } : null,
       fairPlayRanking: fairPlay.map(({ item, rank }) => ({ player: who(item.playerId), rate: item.rate, votes: item.votes, rank })),
       mvpRanking: mvp.map(({ item, rank }) => ({ player: who(item.playerId), titles: item.titles, rank })),
       totals: { votes: total, positiveRate: total > 0 ? averageUpRate(received) : null },
