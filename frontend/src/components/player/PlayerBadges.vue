@@ -1,5 +1,5 @@
 <template>
-  <div v-if="grouped.length > 0 || tournamentId" class="rounded-2xl p-4">
+  <div v-if="visible" class="rounded-2xl p-4">
     <div class="flex items-center justify-between gap-2 mb-3">
       <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">{{ t('playerBadges.title') }}</div>
       <UButton
@@ -105,6 +105,17 @@ const grouped = computed<BadgeGroup[]>(() => {
   )
 })
 
+/** Badges this competition offers; null outside one. */
+const availableCount = ref<number | null>(null)
+
+/**
+ * In a competition, the section exists to point at what can be won there: one that
+ * offers no badge gets no section, even if the player holds badges from elsewhere.
+ */
+const visible = computed(() =>
+  props.tournamentId ? (availableCount.value ?? 0) > 0 : grouped.value.length > 0,
+)
+
 async function load(id: string) {
   if (!id) return
   try {
@@ -114,11 +125,21 @@ async function load(id: string) {
   }
 }
 
+async function loadAvailable(tournamentId: string | undefined) {
+  if (!tournamentId) return
+  try {
+    availableCount.value = (await rulesApi.getAvailableBadges(tournamentId)).length
+  } catch {
+    availableCount.value = 0
+  }
+}
+
 function formatDate(date: Date) {
   return new Date(date).toLocaleDateString('fr-FR')
 }
 
 watch(() => props.playerId, load, { immediate: true })
+watch(() => props.tournamentId, loadAvailable, { immediate: true })
 
 const reload = () => load(props.playerId)
 const offAwarded = onWsEvent('badge_awarded', reload)

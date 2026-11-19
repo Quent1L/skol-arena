@@ -134,13 +134,13 @@
           :tournament-id="store.tournament?.id"
         />
 
-        <!-- Best 1v1 player -->
+        <!-- Best 1v1 player; with fixed teams, the same board ranks the teams -->
         <TopPlayersCard
           v-if="bestSoloItems.length"
-          :title="t('tournamentStatsTab.bestSolo.title')"
-          icon="fa fa-user"
+          :title="t(teamBoards ? 'tournamentStatsTab.bestTeams.title' : 'tournamentStatsTab.bestSolo.title')"
+          :icon="teamBoards ? 'fa fa-users' : 'fa fa-user'"
           icon-class="text-green-500"
-          :tooltip="weightedTooltip('bestSolo')"
+          :tooltip="weightedTooltip(teamBoards ? 'bestTeams' : 'bestSolo')"
           bar-class="bg-green-500"
           :items="bestSoloItems"
           :is-low-sample="store.tournamentStats.bestSoloPlayers.isLowSample"
@@ -194,7 +194,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref, nextTick } from 'vue'
+import { computed, onMounted, onBeforeUnmount, provide, ref, nextTick } from 'vue'
+import { STAT_ROWS_ARE_PLAYERS } from '@/utils/player-link'
 import AppChart from '@/components/charts/AppChart.vue'
 import VoteStatsCards from '@/components/votes/VoteStatsCards.vue'
 import { useI18n } from 'vue-i18n'
@@ -208,6 +209,11 @@ import StreakLeadersCard from '@/components/stats/StreakLeadersCard.vue'
 import WeeklyMmrLeaders from '@/components/ranked/WeeklyMmrLeaders.vue'
 
 const store = useTournamentDetailStore()
+
+// Fixed teams: every board ranks teams, whose ids lead to no player page.
+const teamBoards = computed(() => store.tournamentStats?.subject === 'team')
+provide(STAT_ROWS_ARE_PLAYERS, computed(() => !teamBoards.value))
+
 const votesEnabled = computed(
   () => !!store.tournament?.voteConfig?.fairPlayEnabled || !!store.tournament?.voteConfig?.mvpEnabled,
 )

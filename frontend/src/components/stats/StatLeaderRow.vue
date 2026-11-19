@@ -17,7 +17,7 @@
           <template v-for="(player, i) in players" :key="player.id">
             <span v-if="i > 0" class="text-gray-400 dark:text-gray-600"> / </span>
             <RouterLink
-              v-if="linkPlayers"
+              v-if="linkPlayers && rowsArePlayers"
               :to="playerLink(player.id, tournamentId)"
               class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
               >{{ player.displayName }}</RouterLink
@@ -56,10 +56,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject, ref } from 'vue'
 import PlayerAvatarStack from '@/components/PlayerAvatarStack.vue'
 import InfoTooltip from '@/components/InfoTooltip.vue'
-import { playerLink } from '@/utils/player-link'
+import { playerLink, STAT_ROWS_ARE_PLAYERS } from '@/utils/player-link'
+
+const rowsArePlayers = inject(STAT_ROWS_ARE_PLAYERS, ref(true))
 
 export interface StatLeaderPlayer {
   id: string

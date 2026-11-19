@@ -231,24 +231,6 @@
       <AppChart type="line" :data="chartData" :options="chartOptions" class="h-40" />
     </div>
 
-    <!-- Outcome type distribution -->
-    <div v-if="outcomeTypeStats?.length" class="rounded-xl p-4 bg-gray-800">
-      <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">
-        {{ t('playerMmrProfile.outcomeDistribution') }}
-      </div>
-      <MatchOutcomeDistribution
-        :items="
-          outcomeTypeStats.map((s) => ({
-            label: s.outcomeTypeName,
-            count: s.matchesPlayed,
-            wins: s.wins,
-            losses: s.losses,
-            draws: s.draws,
-          }))
-        "
-      />
-    </div>
-
     <!-- Opponent quality -->
     <div v-if="opponentQuality" class="rounded-xl p-4 bg-gray-800">
       <div
@@ -309,50 +291,15 @@
       </div>
     </div>
 
-    <!-- Win rate by format: compact rows, like the head-to-head split of the comparison -->
-    <div v-if="formatStats?.length" class="rounded-xl p-4 bg-gray-800" data-test="format-stats">
-      <div
-        class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-1.5"
-      >
-        {{ t('playerMmrProfile.winrateByFormat') }}
-        <InfoTooltip :text="t('playerMmrProfile.formatTooltip')" />
-      </div>
-      <div class="space-y-1">
-        <div
-          v-for="format in formatStats"
-          :key="`${format.teamSize}v${format.opponentSize}`"
-          class="grid grid-cols-[4rem_1fr_3rem_3rem] items-center text-xs px-3 py-1.5 rounded-lg bg-gray-700/50"
-          data-test="format-row"
-        >
-          <span class="text-gray-400">
-            <i class="fa mr-1" :class="format.teamSize === 1 ? 'fa-user' : 'fa-users'" />
-            {{ format.teamSize }}v{{ format.opponentSize }}
-          </span>
-          <span class="tabular-nums font-bold text-center">
-            <span class="text-green-400">{{ format.wins }}</span>
-            <span class="text-gray-600 mx-1">-</span>
-            <template v-if="format.draws > 0">
-              <span class="text-gray-400">{{ format.draws }}</span>
-              <span class="text-gray-600 mx-1">-</span>
-            </template>
-            <span class="text-red-400">{{ format.losses }}</span>
-          </span>
-          <span class="tabular-nums font-black text-white text-right">{{ format.winRate }}%</span>
-          <span class="tabular-nums text-gray-500 text-right">{{ format.matchesPlayed }} m</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Partner / nemesis stats -->
-    <PlayerRelationStats
+    <PlayerProfileSections
+      :player-id="mmr.playerId"
+      :tournament-id="seasonId"
+      :outcome-type-stats="outcomeTypeStats"
+      :format-stats="formatStats"
       :most-frequent-partners="mostFrequentPartners"
       :best-partners="bestPartners"
       :nemeses="nemeses"
-      :tournament-id="seasonId"
     />
-
-    <!-- Earned badges -->
-    <PlayerBadges :player-id="mmr.playerId" :tournament-id="seasonId" />
   </div>
 </template>
 
@@ -371,10 +318,8 @@ import type {
 } from '@skol-arena/shared/types/index'
 import { useServerLabels } from '@/i18n/serverLabels'
 import InfoTooltip from '@/components/InfoTooltip.vue'
-import PlayerRelationStats from '@/components/player/PlayerRelationStats.vue'
-import PlayerBadges from '@/components/player/PlayerBadges.vue'
+import PlayerProfileSections from '@/components/player/PlayerProfileSections.vue'
 import RecentFormSection from '@/components/player/RecentFormSection.vue'
-import MatchOutcomeDistribution from '@/components/stats/MatchOutcomeDistribution.vue'
 import {
   getLp,
   isTopTier,

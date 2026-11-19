@@ -7,7 +7,10 @@ import PlayerBadges from '../PlayerBadges.vue'
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key: string) => key }) }))
 
 const getPlayerBadges = vi.fn()
-vi.mock('@/composables/rules/rules.api', () => ({ rulesApi: { getPlayerBadges: () => getPlayerBadges() } }))
+const getAvailableBadges = vi.fn()
+vi.mock('@/composables/rules/rules.api', () => ({
+  rulesApi: { getPlayerBadges: () => getPlayerBadges(), getAvailableBadges: () => getAvailableBadges() },
+}))
 vi.mock('@/composables/notification/notification.socket', () => ({ onWsEvent: () => () => {} }))
 
 function award(overrides: Partial<ClientPlayerBadge> = {}): ClientPlayerBadge {
@@ -27,15 +30,19 @@ function award(overrides: Partial<ClientPlayerBadge> = {}): ClientPlayerBadge {
   }
 }
 
-async function mountWith(badges: ClientPlayerBadge[], tournamentId?: string) {
+async function mountWith(badges: ClientPlayerBadge[], tournamentId?: string, available = 1) {
   getPlayerBadges.mockResolvedValue(badges)
+  getAvailableBadges.mockResolvedValue(Array.from({ length: available }, (_, i) => ({ ruleId: `r${i}` })))
   const wrapper = mountWithPlugins(PlayerBadges, { props: { playerId: 'p1', tournamentId } })
   await flushPromises()
   return wrapper
 }
 
 describe('PlayerBadges', () => {
-  beforeEach(() => getPlayerBadges.mockReset())
+  beforeEach(() => {
+    getPlayerBadges.mockReset()
+    getAvailableBadges.mockReset()
+  })
 
   it('shows one tile per badge, however many times it was won', async () => {
     const wrapper = await mountWith([
@@ -77,6 +84,12 @@ describe('PlayerBadges', () => {
     const wrapper = await mountWith([], 'season-4')
     expect(wrapper.find('[data-test="see-all-badges"]').exists()).toBe(true)
     expect(wrapper.find('.grid').exists()).toBe(false)
+  })
+
+  it('hides the whole section in a tournament that offers no badge', async () => {
+    const wrapper = await mountWith([award()], 'season-4', 0)
+    expect(wrapper.find('[data-test="see-all-badges"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('playerBadges.title')
   })
 
   it('has no link outside a tournament', async () => {

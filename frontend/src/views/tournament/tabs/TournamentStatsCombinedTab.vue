@@ -6,6 +6,7 @@
     <div class="flex-1 min-w-0">
       <div v-if="sub === 'profile'">
         <RewindEntryCard
+          v-if="isRanked"
           :season-id="store.tournamentId"
           :season-status="store.tournament?.status"
         />
@@ -27,10 +28,17 @@
           :season-id="store.tournamentId"
           :allow-draw="store.tournament?.allowDraw"
         />
+        <PlayerTournamentProfile
+          v-else-if="!isRanked && store.playerStats"
+          :stats="store.playerStats.stats"
+          :player-id="store.appUser!.id"
+          :tournament-id="store.tournamentId"
+          :fixed-team="store.tournament?.teamMode === 'static'"
+        />
         <div v-else-if="!store.playerProfileLoaded" class="flex justify-center py-12">
           <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
         </div>
-        <div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
+        <div v-else-if="isRanked" class="text-center py-12 text-gray-500 dark:text-gray-400">
           <i class="fa fa-user-slash text-4xl mb-4 block"></i>
           <p>{{ t('tournamentStatsCombinedTab.noMmr') }}</p>
           <p class="text-sm mt-2">{{ t('tournamentStatsCombinedTab.noMmrHint') }}</p>
@@ -45,6 +53,8 @@
           own
           class="mt-4"
         />
+
+        <MyVoteStatsCard v-if="votesEnabled" :tournament-id="store.tournamentId" class="mt-4" />
       </div>
       <TournamentStatsTab v-else />
     </div>
@@ -62,6 +72,8 @@ import SubTabSidebar from '@/components/ui/SubTabSidebar.vue'
 import PlayerMmrProfile from '@/components/ranked/PlayerMmrProfile.vue'
 import RankedCareerLink from '@/components/ranked/RankedCareerLink.vue'
 import RewindEntryCard from '@/components/rewind/RewindEntryCard.vue'
+import PlayerTournamentProfile from '@/components/player/PlayerTournamentProfile.vue'
+import MyVoteStatsCard from '@/components/votes/MyVoteStatsCard.vue'
 import TournamentStatsTab from './TournamentStatsTab.vue'
 
 const store = useTournamentDetailStore()
@@ -77,21 +89,22 @@ const subTabs = computed(() => [
 const { active: sub, setActive: setSub } = useSubTabs({ options: subTabs, queryKey: 'statsSub' })
 
 /**
- * The profile pane is about the viewer's own run of this season, which only a
+ * The profile pane is about the viewer's own run of this competition, which only a
  * registered participant has. A visitor who never joined gets the global stats
  * alone rather than a sub-tab that can only ever say it has nothing to show.
  */
 const hasOwnProfile = computed(
-  () =>
-    store.tournament?.mode === 'ranked' &&
-    store.isAuthenticated &&
-    !!store.appUser &&
-    store.isParticipant,
+  () => store.isAuthenticated && !!store.appUser && store.isParticipant,
+)
+
+const isRanked = computed(() => store.tournament?.mode === 'ranked')
+const votesEnabled = computed(
+  () => !!store.tournament?.voteConfig?.fairPlayEnabled || !!store.tournament?.voteConfig?.mvpEnabled,
 )
 
 onMounted(async () => {
   if (hasOwnProfile.value) {
-    await Promise.all([store.ensurePlayerProfile(), store.ensurePlayerCareer()])
+    await Promise.all([store.ensurePlayerProfile(), isRanked.value && store.ensurePlayerCareer()])
   }
 })
 </script>

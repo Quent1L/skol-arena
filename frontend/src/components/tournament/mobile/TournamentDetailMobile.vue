@@ -52,7 +52,7 @@
             @update:model-value="setStatsSubTab"
           >
             <template #profile>
-              <MobileRankedProfilePane />
+              <MobileProfilePane />
             </template>
             <template #global>
               <TournamentStatsTab />
@@ -176,7 +176,7 @@ const BracketView = defineAsyncComponent(() => import('@/components/bracket/Brac
 const RankedLeaderboard = defineAsyncComponent(() => import('@/components/ranked/RankedLeaderboard.vue'))
 const TournamentParticipantsTab = defineAsyncComponent(() => import('@/views/tournament/tabs/TournamentParticipantsTab.vue'))
 const TournamentStatsTab = defineAsyncComponent(() => import('@/views/tournament/tabs/TournamentStatsTab.vue'))
-const MobileRankedProfilePane = defineAsyncComponent(() => import('@/components/tournament/mobile/MobileRankedProfilePane.vue'))
+const MobileProfilePane = defineAsyncComponent(() => import('@/components/tournament/mobile/MobileProfilePane.vue'))
 
 const { t } = useI18n()
 
@@ -188,24 +188,28 @@ const contentAreaRef = ref<HTMLElement | null>(null)
 
 const activeTab = computed(() => (route.params.tab as string) || 'infos')
 
+/** The career only exists for ranked seasons; every mode has a profile. */
+function loadProfile() {
+  return Promise.all([
+    store.ensurePlayerProfile(),
+    store.tournament?.mode === 'ranked' && store.ensurePlayerCareer(),
+  ])
+}
+
 watch(
-  () => activeTab.value === 'stats' && store.tournament?.mode === 'ranked',
+  () => activeTab.value === 'stats' && !!store.tournament,
   async (shouldLoad) => {
-    if (shouldLoad) {
-      await Promise.all([store.ensurePlayerProfile(), store.ensurePlayerCareer()])
-    }
+    if (shouldLoad) await loadProfile()
   },
   { immediate: true },
 )
 
 /**
- * The profile pane is about the viewer's own run of this season, which only a
+ * The profile pane is about the viewer's own run of this competition, which only a
  * registered participant has. Offering it to anyone else costs a swipe that lands
  * on an empty pane, so a visitor gets the global stats alone.
  */
-const hasStatsSubTabs = computed(
-  () => store.tournament?.mode === 'ranked' && store.isAuthenticated && store.isParticipant,
-)
+const hasStatsSubTabs = computed(() => store.isAuthenticated && store.isParticipant)
 
 const statsSubTabs = computed(() => [
   { value: 'profile' as const, label: t('tournamentDetailMobile.myProfile') },
@@ -238,9 +242,7 @@ function navigate(tab: string) {
 
 async function handleNavigate(tab: string) {
   navigate(tab)
-  if (tab === 'stats' && store.tournament?.mode === 'ranked') {
-    await Promise.all([store.ensurePlayerProfile(), store.ensurePlayerCareer()])
-  }
+  if (tab === 'stats') await loadProfile()
 }
 
 function handleCreateMatch() {

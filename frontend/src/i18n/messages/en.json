@@ -364,7 +364,7 @@
     "create": "Create",
     "delete": "Delete",
     "exAequo": "tied",
-    "exAequoTooltip": "{count} players are exactly tied: they share a rank.",
+    "exAequoTooltip": "{count} are exactly tied: they share a rank.",
     "discipline": "Discipline",
     "edit": "Edit",
     "error": "Error",
@@ -1160,6 +1160,10 @@
     "searchPlaceholder": "Search a player...",
     "selectedParticipants": "Selected participants",
     "title": "Participants"
+  },
+  "playerTournamentProfile": {
+    "myTeam": "My team · {name}",
+    "noMatches": "No match played in this tournament yet."
   },
   "playerBadges": {
     "seeAll": "All tournament badges",
@@ -2258,10 +2262,6 @@
   "tournamentParticipantsTab": {
     "title": "Participants"
   },
-  "tournamentProfileTab": {
-    "noMmr": "You don't have any MMR for this season yet.",
-    "noMmrHint": "Enter your first match to join the leaderboard!"
-  },
   "tournamentService": {
     "errors": {
       "createFailed": "Error creating",
@@ -2323,13 +2323,13 @@
       "efficiency": "Efficiency",
       "efficiencyTooltip": "Ranked by success rate weighted by match count (rate × √matches), from {count} matches on this outcome type. A perfect rate over 3 matches therefore stays behind a good rate over 30.",
       "exAequo": "tied",
-      "exAequoTooltip": "{count} players have the exact same record: no criterion separates them, so they share a rank.",
+      "exAequoTooltip": "{count} have the exact same record: no criterion separates them, so they share a rank.",
       "honourRollLosers": "Took it ({count})",
       "honourRollWinners": "Pulled it off ({count})",
       "king": "Kings of {name}",
       "lossCount": "{count} loss | {count} losses",
       "matchCount": "{count} match | {count} matches",
-      "moreTied": "+{count} tied player | +{count} tied players",
+      "moreTied": "+{count} more tied | +{count} more tied",
       "noRanking": "Everyone is tied: no ranking separates them.",
       "noRateData": "No data",
       "shareOfTotal": "{pct} % of total",
@@ -2338,7 +2338,7 @@
       "viewLosers": "View losers",
       "viewWinners": "View winners",
       "volume": "Volume",
-      "volumeTooltip": "Ranked by the raw number of results of this type, with no weighting by matches played. An equal count means a shared rank: separating players on their rate is the neighbouring column's job.",
+      "volumeTooltip": "Ranked by the raw number of results of this type, with no weighting by matches played. An equal count means a shared rank: separating them on their rate is the neighbouring column's job.",
       "vulnerability": "Vulnerability",
       "vulnerabilityTooltip": "Ranked by loss rate weighted by match count (rate × √matches), from {count} matches on this outcome type. A perfect rate over 3 matches therefore stays behind a high rate over 30.",
       "winCount": "{count} win | {count} wins"

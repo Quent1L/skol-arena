@@ -364,7 +364,7 @@
     "create": "Créer",
     "delete": "Supprimer",
     "exAequo": "ex aequo",
-    "exAequoTooltip": "{count} joueurs sont exactement à égalité : ils partagent le même rang.",
+    "exAequoTooltip": "{count} ex aequo, exactement à égalité : ils partagent le même rang.",
     "discipline": "Discipline",
     "edit": "Modifier",
     "error": "Erreur",
@@ -1160,6 +1160,10 @@
     "searchPlaceholder": "Rechercher un joueur...",
     "selectedParticipants": "Participants sélectionnés",
     "title": "Participants"
+  },
+  "playerTournamentProfile": {
+    "myTeam": "Mon équipe · {name}",
+    "noMatches": "Aucun match joué dans ce tournoi pour l'instant."
   },
   "playerBadges": {
     "seeAll": "Tous les badges du tournoi",
@@ -2258,10 +2262,6 @@
   "tournamentParticipantsTab": {
     "title": "Participants"
   },
-  "tournamentProfileTab": {
-    "noMmr": "Vous n'avez pas encore de MMR pour cette saison.",
-    "noMmrHint": "Déclarez votre premier match pour rejoindre le classement !"
-  },
   "tournamentService": {
     "errors": {
       "createFailed": "Erreur lors de la création",
@@ -2323,13 +2323,13 @@
       "efficiency": "Efficacité",
       "efficiencyTooltip": "Classement par taux de réussite pondéré par le nombre de matchs (taux × √matchs), à partir de {count} matchs sur ce type de résultat. Un 100 % sur 3 matchs reste donc derrière un 90 % sur 30.",
       "exAequo": "ex aequo",
-      "exAequoTooltip": "{count} joueurs ont exactement le même résultat : aucun critère ne les départage, ils partagent donc le même rang.",
+      "exAequoTooltip": "{count} ex aequo avec exactement le même résultat : aucun critère ne les départage, ils partagent donc le même rang.",
       "honourRollLosers": "L'ont subi ({count})",
       "honourRollWinners": "Ont réussi ce coup ({count})",
       "king": "Rois de {name}",
       "lossCount": "{count} défaite | {count} défaites",
       "matchCount": "{count} match | {count} matchs",
-      "moreTied": "+{count} joueur ex aequo | +{count} joueurs ex aequo",
+      "moreTied": "+{count} autre ex aequo | +{count} autres ex aequo",
       "noRanking": "Tout le monde est à égalité : aucun classement ne les départage.",
       "noRateData": "Aucune donnée",
       "shareOfTotal": "{pct} % du total",
@@ -2338,7 +2338,7 @@
       "viewLosers": "Voir les perdants",
       "viewWinners": "Voir les gagnants",
       "volume": "Volume",
-      "volumeTooltip": "Classement au nombre brut de résultats de ce type, sans pondération par le nombre de matchs joués. À nombre égal, les joueurs partagent le même rang : c'est la colonne voisine qui les départage au taux.",
+      "volumeTooltip": "Classement au nombre brut de résultats de ce type, sans pondération par le nombre de matchs joués. À nombre égal, le rang est partagé : c'est la colonne voisine qui les départage au taux.",
       "vulnerability": "Vulnérabilité",
       "vulnerabilityTooltip": "Classement par taux de défaite pondéré par le nombre de matchs (taux × √matchs), à partir de {count} matchs sur ce type de résultat. Un 100 % sur 3 matchs reste donc derrière un 90 % sur 30.",
       "winCount": "{count} victoire | {count} victoires"

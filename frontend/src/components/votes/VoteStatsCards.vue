@@ -1,22 +1,5 @@
 <template>
   <template v-if="stats">
-    <!-- Mine: visible to the player alone -->
-    <div v-if="mine && hasMine" class="lg:col-span-2 rounded-xl border border-gray-800 bg-gray-800 p-6" data-testid="my-vote-stats">
-      <h2 class="mb-4 text-base font-semibold text-white">
-        <i class="fa fa-user-shield mr-2 text-primary" />{{ t('voteStats.mine.title') }}
-      </h2>
-      <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div v-for="kpi in myKpis" :key="kpi.label">
-          <div class="text-xl font-bold text-white tabular-nums">{{ kpi.value }}</div>
-          <div class="text-xs text-muted">{{ kpi.label }}</div>
-        </div>
-      </div>
-      <p v-if="mine.fairPlay.down > 0" class="mt-4 text-sm text-muted">
-        {{ t('voteStats.mine.downs', { count: mine.fairPlay.down }) }}
-        <span v-if="mine.fairPlay.tags.length">· {{ tagLine }}</span>
-      </p>
-    </div>
-
     <div v-if="stats.fairPlayRanking.length || stats.fairPlayOfTheWeek" class="rounded-xl border border-gray-800 bg-gray-800 p-6" data-testid="fair-play-ranking">
       <h2 class="mb-4 text-base font-semibold text-white">
         <i class="fa fa-handshake mr-2 text-primary" />{{ t('voteStats.fairPlay.title') }}
@@ -54,24 +37,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { MyVoteStats, TournamentVoteStats } from '@skol-arena/shared/types/index'
+import type { TournamentVoteStats } from '@skol-arena/shared/types/index'
 import { votesApi } from '@/composables/votes/votes.api'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 
-/** Fair-play / MVP cards of the stats tab. Public figures are positive only. */
+/**
+ * Fair-play / MVP rankings of the stats tab. Public figures are positive only; the
+ * viewer's own figures live on their profile (MyVoteStatsCard).
+ */
 const props = defineProps<{ tournamentId: string }>()
 const { t } = useI18n()
 
 const stats = ref<TournamentVoteStats | null>(null)
-const mine = ref<MyVoteStats | null>(null)
 
 watch(
   () => props.tournamentId,
   async (id) => {
     try {
-      ;[stats.value, mine.value] = await Promise.all([votesApi.publicStats(id), votesApi.myStats(id)])
+      stats.value = await votesApi.publicStats(id)
     } catch {
       // Optional cards: they drop out rather than take the tab down.
       stats.value = null
@@ -81,26 +66,4 @@ watch(
 )
 
 const percent = (rate: number | null) => (rate == null ? '—' : `${Math.round(rate * 100)} %`)
-
-const hasMine = computed(() => {
-  const m = mine.value
-  return !!m && m.fairPlay.up + m.fairPlay.down + m.cast.count + m.mvp.titles + m.spectated > 0
-})
-
-const myKpis = computed(() => {
-  const m = mine.value!
-  return [
-    {
-      label: t('voteStats.mine.fairPlayRate'),
-      value: m.fairPlay.rate == null ? '—' : `${percent(m.fairPlay.rate)}${m.fairPlay.rank ? ` (#${m.fairPlay.rank})` : ''}`,
-    },
-    { label: t('voteStats.mine.votesCast'), value: `${m.cast.count} · ${percent(m.cast.upRate)} 👍` },
-    { label: t('voteStats.mine.mvpTitles'), value: `${m.mvp.titles} / ${m.mvp.teamMatches}` },
-    { label: t('voteStats.mine.spectated'), value: m.spectated },
-  ]
-})
-
-const tagLine = computed(() =>
-  mine.value!.fairPlay.tags.map((x) => `${t(`matchVotes.fairPlay.tags.${x.tag}`)} ×${x.count}`).join(', '),
-)
 </script>

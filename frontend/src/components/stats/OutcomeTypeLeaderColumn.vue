@@ -20,10 +20,11 @@
         {{ honourRollTitle }}
       </p>
       <div class="flex flex-wrap gap-1.5">
-        <RouterLink
+        <component
+          :is="rowsArePlayers ? RouterLink : 'span'"
           v-for="p in board.leaders"
           :key="p.playerId"
-          :to="playerLink(p.playerId, tournamentId)"
+          :to="rowsArePlayers ? playerLink(p.playerId, tournamentId) : undefined"
           class="inline-flex items-center gap-1.5 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 pl-1 pr-2.5 py-1 max-w-full"
         >
           <PlayerAvatar
@@ -37,7 +38,7 @@
           <span class="text-xs text-indigo-600 dark:text-indigo-300 truncate">{{
             p.displayName
           }}</span>
-        </RouterLink>
+        </component>
       </div>
       <p v-if="board.omittedCount" class="text-[10px] text-gray-500 mt-2" data-test="more-tied">
         {{ moreTiedLabel }}
@@ -74,7 +75,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
   MIN_WEIGHTED_RATE_MATCHES,
@@ -85,7 +87,9 @@ import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import InfoTooltip from '@/components/InfoTooltip.vue'
 import LowSampleBadge from '@/components/stats/LowSampleBadge.vue'
 import StatLeaderRow from '@/components/stats/StatLeaderRow.vue'
-import { playerLink } from '@/utils/player-link'
+import { playerLink, STAT_ROWS_ARE_PLAYERS } from '@/utils/player-link'
+
+const rowsArePlayers = inject(STAT_ROWS_ARE_PLAYERS, ref(true))
 
 const props = defineProps<{
   board: OutcomeTypeLeaderboard

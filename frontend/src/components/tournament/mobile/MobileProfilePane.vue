@@ -1,6 +1,6 @@
 <template>
   <div>
-    <RewindEntryCard :season-id="store.tournamentId" :season-status="store.tournament?.status" />
+    <RewindEntryCard v-if="isRanked" :season-id="store.tournamentId" :season-status="store.tournament?.status" />
     <PlayerMmrProfile
       v-if="store.playerMmr"
       :mmr="store.playerMmr"
@@ -24,8 +24,16 @@
       between the two panes is picked up on the track, so a short empty state would
       leave most of the screen inert to the finger.
     -->
+    <PlayerTournamentProfile
+      v-else-if="!isRanked && store.playerStats"
+      class="p-2"
+      :stats="store.playerStats.stats"
+      :player-id="store.appUser!.id"
+      :tournament-id="store.tournamentId"
+      :fixed-team="store.tournament?.teamMode === 'static'"
+    />
     <div
-      v-else-if="store.playerProfileLoaded"
+      v-else-if="isRanked && store.playerProfileLoaded"
       class="flex min-h-[calc(100vh-14rem)] flex-col items-center justify-center text-center text-gray-500 dark:text-gray-400"
     >
       <i class="fa fa-user-slash text-4xl mb-4 block"></i>
@@ -49,16 +57,26 @@
       own
       class="my-4"
     />
+
+    <MyVoteStatsCard v-if="votesEnabled" :tournament-id="store.tournamentId" class="m-2" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTournamentDetailStore } from '@/stores/tournamentDetail.store'
 import PlayerMmrProfile from '@/components/ranked/PlayerMmrProfile.vue'
 import RankedCareerLink from '@/components/ranked/RankedCareerLink.vue'
 import RewindEntryCard from '@/components/rewind/RewindEntryCard.vue'
+import PlayerTournamentProfile from '@/components/player/PlayerTournamentProfile.vue'
+import MyVoteStatsCard from '@/components/votes/MyVoteStatsCard.vue'
 
 const { t } = useI18n()
 const store = useTournamentDetailStore()
+
+const isRanked = computed(() => store.tournament?.mode === 'ranked')
+const votesEnabled = computed(
+  () => !!store.tournament?.voteConfig?.fairPlayEnabled || !!store.tournament?.voteConfig?.mvpEnabled,
+)
 </script>

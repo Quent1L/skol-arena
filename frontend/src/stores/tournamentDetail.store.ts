@@ -212,7 +212,8 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
   // tournament, the participants and the leaderboard, so revalidate the rest here.
   async function revalidateWarmCaches() {
     const promises: Promise<unknown>[] = []
-    if (playerMmr.value !== null) promises.push(reloadPlayerProfile())
+    // Every mode loads the player's stats with the profile; a ranked one adds the MMR.
+    if (playerStats.value !== null) promises.push(reloadPlayerProfile())
     if (tournamentStats.value !== null) promises.push(reloadStats())
     if (weeklyMmrLeaders.value !== null) promises.push(reloadWeeklyMmrLeaders())
     await Promise.all(promises)
@@ -274,23 +275,22 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
     }
   }
 
-  // MMR only exists in ranked seasons: without the mode guard the profile tab fires
-  // ranked endpoints against a championship id, which 404s on a good day and reads as
-  // a ranked call on a non-ranked competition on any other.
+  // MMR only exists in ranked seasons: elsewhere the profile loads the player's stats
+  // alone, since a ranked endpoint called with a championship id 404s on a good day.
   // Several callers fire on the same tick (the tab watch, the navigation handler), so
   // they share the request in flight instead of each sending their own.
   async function ensurePlayerProfile() {
     if (!tournamentId.value || !appUser.value?.id) return
-    if (tournament.value?.mode !== 'ranked') return
-    if (playerMmr.value) return
-    playerProfileRequest ??= loadPlayerProfile(tournamentId.value, appUser.value.id)
+    const ranked = tournament.value?.mode === 'ranked'
+    if (ranked ? playerMmr.value : playerProfileLoaded.value) return
+    playerProfileRequest ??= loadPlayerProfile(tournamentId.value, appUser.value.id, ranked)
     await playerProfileRequest
   }
 
-  async function loadPlayerProfile(seasonId: string, playerId: string) {
+  async function loadPlayerProfile(seasonId: string, playerId: string, ranked: boolean) {
     try {
       const [chartHistory] = await Promise.all([
-        rankedSvc.loadPlayerMmr(seasonId, playerId),
+        ranked ? rankedSvc.loadPlayerMmr(seasonId, playerId) : Promise.resolve([]),
         playerApi.getStats(playerId, { tournamentId: seasonId })
           .then((s) => { playerStats.value = s }),
       ])
@@ -371,14 +371,14 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
 
   async function reloadPlayerProfile() {
     if (!tournamentId.value || !appUser.value?.id) return
-    if (tournament.value?.mode !== 'ranked') return
+    const ranked = tournament.value?.mode === 'ranked'
     const [chartHistory] = await Promise.all([
-      rankedSvc.loadPlayerMmr(tournamentId.value, appUser.value.id),
+      ranked ? rankedSvc.loadPlayerMmr(tournamentId.value, appUser.value.id) : Promise.resolve([]),
       playerApi.getStats(appUser.value.id, { tournamentId: tournamentId.value })
         .then((s) => { playerStats.value = s }),
       // A rated match can break the all-time record, so the career is refreshed
       // with the profile rather than left on the value fetched at mount.
-      playerCareer.value === null ? Promise.resolve() : loadPlayerCareer(),
+      !ranked || playerCareer.value === null ? Promise.resolve() : loadPlayerCareer(),
     ])
     profileChartHistory.value = chartHistory
     playerProfileLoaded.value = true
@@ -394,7 +394,7 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
       if (tournament.value?.mode === 'ranked' && rankedLeaderboard.value.length) {
         promises.push(reloadLeaderboard())
       }
-      if (playerMmr.value !== null) {
+      if (playerStats.value !== null) {
         promises.push(reloadPlayerProfile())
       }
       if (tournamentStats.value !== null) {
@@ -419,7 +419,7 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
       const promises: Promise<unknown>[] = [reloadLeaderboard()]
       // Already shown once: it must not stay on a ranking that has moved since.
       if (rankedProvisionalLeaderboard.value.length) promises.push(loadProvisionalLeaderboard())
-      if (playerMmr.value !== null) promises.push(reloadPlayerProfile())
+      if (playerStats.value !== null) promises.push(reloadPlayerProfile())
       if (tournamentStats.value !== null) promises.push(reloadStats())
       if (weeklyMmrLeaders.value !== null) promises.push(reloadWeeklyMmrLeaders())
       await Promise.all(promises)
