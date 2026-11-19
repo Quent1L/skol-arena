@@ -48,6 +48,8 @@
       <USkeleton class="h-[10rem] w-full rounded-xl" />
     </div>
 
+    <MyVoteStatsCard v-if="votesEnabled" :tournament-id="store.tournamentId" class="my-4" />
+
     <!-- The full history lives on the player's own page: it spans every
          discipline, which a season's profile has no room to say. -->
     <RankedCareerLink
@@ -58,7 +60,6 @@
       class="my-4"
     />
 
-    <MyVoteStatsCard v-if="votesEnabled" :tournament-id="store.tournamentId" class="m-2" />
   </div>
 </template>
 

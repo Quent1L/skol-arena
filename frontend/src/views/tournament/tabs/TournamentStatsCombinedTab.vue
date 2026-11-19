@@ -44,6 +44,8 @@
           <p class="text-sm mt-2">{{ t('tournamentStatsCombinedTab.noMmrHint') }}</p>
         </div>
 
+        <MyVoteStatsCard v-if="votesEnabled" :tournament-id="store.tournamentId" class="mt-4" />
+
         <!-- The full history lives on the player's own page: it spans every
              discipline, which a season's profile has no room to say. -->
         <RankedCareerLink
@@ -54,7 +56,6 @@
           class="mt-4"
         />
 
-        <MyVoteStatsCard v-if="votesEnabled" :tournament-id="store.tournamentId" class="mt-4" />
       </div>
       <TournamentStatsTab v-else />
     </div>

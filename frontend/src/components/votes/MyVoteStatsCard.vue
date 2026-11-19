@@ -1,6 +1,6 @@
 <template>
   <!-- Visible to the player alone -->
-  <div v-if="mine && hasMine" class="rounded-xl border border-gray-800 bg-gray-800 p-6" data-testid="my-vote-stats">
+  <div v-if="mine && hasMine" class="rounded-xl border border-gray-800 bg-gray-800 p-4 sm:p-6" data-testid="my-vote-stats">
     <h2 class="mb-4 text-base font-semibold text-white">
       <i class="fa fa-user-shield mr-2 text-primary" />{{ t('voteStats.mine.title') }}
     </h2>
