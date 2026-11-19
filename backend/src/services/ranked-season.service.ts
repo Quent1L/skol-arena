@@ -378,12 +378,11 @@ function laterIsoDate(a: string, b: string): string {
  *
  * The tier source and its scaling mode are read exactly once, by `startSeason`,
  * to lay down the ladder's thresholds — changing them later would say nothing.
- * The discipline and the team sizes are what every entered match was built on.
+ * The discipline is what every entered match was built on. Team sizes stay
+ * editable, as on a flex tournament: matches already entered keep their roster.
  */
 const SEASON_LOCKED_FIELDS = new Set([
   "disciplineId",
-  "minTeamSize",
-  "maxTeamSize",
   "sourceTierSeasonId",
   "tierScalingMode",
 ]);
@@ -410,10 +409,6 @@ function currentSeasonValue(season: SeasonWithConfig, field: string): unknown {
   switch (field) {
     case "disciplineId":
       return season.disciplineId;
-    case "minTeamSize":
-      return season.minTeamSize;
-    case "maxTeamSize":
-      return season.maxTeamSize;
     case "scoreEnabled":
       return season.scoreEnabled;
     case "minScore":
@@ -435,6 +430,14 @@ function currentSeasonValue(season: SeasonWithConfig, field: string): unknown {
 function isSameSeasonValue(submitted: unknown, current: unknown): boolean {
   if (submitted == null && current == null) return true;
   return submitted === current;
+}
+
+/** The form sends only changed fields, so one size is checked against the stored other. */
+function assertTeamSizeRange(season: SeasonWithConfig, input: UpdateRankedSeasonInput): void {
+  if (input.minTeamSize === undefined && input.maxTeamSize === undefined) return;
+  const min = input.minTeamSize ?? season.minTeamSize;
+  const max = input.maxTeamSize ?? season.maxTeamSize;
+  if (max < min) throw new BadRequestError(ErrorCode.INVALID_TEAM_SIZE);
 }
 
 export class RankedSeasonService {
@@ -705,6 +708,7 @@ export class RankedSeasonService {
     const enteredMatchCount =
       season.status === "draft" ? 0 : await matchRepository.countEnteredMatches(id);
     this.assertSeasonFieldsEditable(season, enteredMatchCount, input);
+    assertTeamSizeRange(season, input);
 
     await this.applyTournamentUpdate(id, input);
     if (input.voteConfig) await tournamentRepository.update(id, { voteConfig: input.voteConfig });
@@ -766,10 +770,13 @@ export class RankedSeasonService {
   ): Promise<void> {
     const hasTournamentUpdate =
       input.name ||
-      input.description ||
+      input.description !== undefined ||
       input.startDate ||
       input.endDate ||
       input.rulesId !== undefined ||
+      input.organizationId !== undefined ||
+      input.minTeamSize !== undefined ||
+      input.maxTeamSize !== undefined ||
       input.scoreEnabled !== undefined ||
       input.minScore !== undefined ||
       input.maxScore !== undefined ||
@@ -785,6 +792,9 @@ export class RankedSeasonService {
       startDate: input.startDate,
       endDate: input.endDate,
       rulesId: input.rulesId,
+      organizationId: input.organizationId,
+      minTeamSize: input.minTeamSize,
+      maxTeamSize: input.maxTeamSize,
       ...(input.scoreEnabled !== undefined && { scoreEnabled: input.scoreEnabled }),
       ...(input.minScore !== undefined && { minScore: input.minScore }),
       ...(input.maxScore !== undefined && { maxScore: input.maxScore }),

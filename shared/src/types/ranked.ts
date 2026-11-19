@@ -591,6 +591,8 @@ export const updateRankedSeasonSchema = z.object({
   endDate: z.iso.datetime()
     .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
     .optional(),
+  minTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
+  maxTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
   rulesId: z.uuid().nullable().optional(),
   organizationId: z.uuid().nullable().optional(),
   allowDraw: z.boolean().optional(),
@@ -609,7 +611,7 @@ export const updateRankedSeasonSchema = z.object({
   validationMode: validationModeSchema.optional(),
   validationTimerHours: z.number().int().min(1).max(168).nullable().optional(),
   voteConfig: voteConfigInputSchema.optional(),
-});
+}).refine(teamSizePredicate, teamSizeError);
 
 // ============================================
 // Types inferred from schemas

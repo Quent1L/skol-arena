@@ -68,6 +68,9 @@ export interface UpdateTournamentData {
   disciplineId?: string;
   scoreEnabled?: boolean;
   rulesId?: string | null;
+  organizationId?: string | null;
+  minTeamSize?: number;
+  maxTeamSize?: number;
   minScore?: number | null;
   maxScore?: number | null;
   validationMode?: ValidationMode;

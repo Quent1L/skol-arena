@@ -14,6 +14,7 @@ import {
   appUsers,
   disciplines,
   matches,
+  organizations,
   rankedSeasonConfigs,
   tournaments,
   user as betterAuthUser,
@@ -205,5 +206,37 @@ describe("Ranked season updates", () => {
       .from(tournaments)
       .where(eq(tournaments.id, season.id));
     expect(stored.name).toBe("Saison renommée");
+  });
+
+  it("persists team sizes, organization and a cleared description on a running season", async () => {
+    // These used to be dropped silently: the update reported success and wrote nothing.
+    const season = await createSeason("ongoing");
+    await enterResult(season.id);
+    await testDb.update(tournaments).set({ description: "À effacer" }).where(eq(tournaments.id, season.id));
+    const [org] = await testDb.insert(organizations).values({ name: `Org ${Date.now()}`, createdBy: adminId }).returning();
+
+    await rankedSeasonService.updateSeason(
+      season.id,
+      { maxTeamSize: 3, description: "", organizationId: org.id } as never,
+      adminId,
+    );
+
+    const [stored] = await testDb
+      .select({
+        min: tournaments.minTeamSize,
+        max: tournaments.maxTeamSize,
+        description: tournaments.description,
+        organizationId: tournaments.organizationId,
+      })
+      .from(tournaments)
+      .where(eq(tournaments.id, season.id));
+    expect(stored).toEqual({ min: 1, max: 3, description: "", organizationId: org.id });
+  });
+
+  it("refuses a team size range that crosses the stored bound", async () => {
+    const season = await createSeason("ongoing");
+
+    const err = await updateFails(season.id, { minTeamSize: 3 });
+    expect(err.code).toBe(ErrorCode.INVALID_TEAM_SIZE);
   });
 });
