@@ -19,6 +19,14 @@ function hold(): () => void {
   }
 }
 
+/**
+ * For a page still loading what may take the screen over (pending MMR reveals…): hold it
+ * until the returned release is called, so nothing secondary flashes in the meantime.
+ */
+export function acquireScreen(): () => void {
+  return hold()
+}
+
 /** For a component that is on screen exactly while it is mounted. */
 export function holdScreen(): void {
   let release: (() => void) | null = null

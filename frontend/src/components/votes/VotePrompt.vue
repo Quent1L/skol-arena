@@ -122,7 +122,8 @@ import { screenTakenOver, waitForFreeScreen } from '@/composables/useScreenTakeo
 import { onWsEvent } from '@/composables/notification/notification.socket'
 import { useBottomNavPresence } from '@/composables/ui/useBottomNav'
 import { useViewport } from '@/composables/useViewport'
-import { useSwipe } from '@vueuse/core'
+import { useNow, useSwipe } from '@vueuse/core'
+import { useRoute } from 'vue-router'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import { playersById } from './vote-players'
 
@@ -155,7 +156,21 @@ const settled = ref(false)
 const prompt = computed(() => current.value!.prompt)
 const players = computed(() => playersById(current.value?.prompt.sides ?? []))
 const nameOf = (id: string) => players.value.get(id)?.displayName ?? '?'
-const visible = computed(() => !!current.value && settled.value && !screenTakenOver.value)
+// The card only shows on the page of the match's tournament, where the question makes
+// sense. Elsewhere it waits — unrecorded — until the player opens that tournament, as
+// long as the match is still recent enough to vote on it.
+const TOURNAMENT_ROUTES = new Set(['tournament-detail', 'tournament-tab'])
+const route = useRoute()
+const now = useNow({ interval: 30_000 })
+const onTournamentPage = computed(
+  () =>
+    TOURNAMENT_ROUTES.has(String(route.name ?? '')) && route.params.id === current.value?.prompt.tournamentId,
+)
+const expired = computed(() => !!current.value && current.value.prompt.expiresAt.getTime() <= now.value.getTime())
+watch(expired, (isExpired) => isExpired && end())
+const visible = computed(
+  () => !!current.value && settled.value && !screenTakenOver.value && onTournamentPage.value && !expired.value,
+)
 
 
 const fairPlayQuestion = computed(() =>
@@ -260,19 +275,38 @@ function thumbsUp() {
 }
 
 // ── Lifecycle ───────────────────────────────────────────────────────────
+// Settles again on every arrival on the tournament page: the page holds the screen while
+// it finds out whether an MMR reveal is pending, and the card waits for it to be free
+// rather than flash in just before the reveal.
+let settleRun = 0
+async function settle() {
+  const run = ++settleRun
+  settled.value = false
+  if (!current.value || !onTournamentPage.value) return
+  await waitForFreeScreen(props.settleMs)
+  if (run === settleRun) settled.value = true
+}
+
 watch(
   () => current.value?.prompt.matchId,
-  async (id) => {
-    settled.value = false
-    if (!id) return
-    step.value = current.value!.prompt.mvpCandidateIds.length > 0 ? 'mvp' : 'fairPlay'
-    await waitForFreeScreen(props.settleMs)
-    settled.value = true
-    restartGauge()
-    void markShown()
+  (id) => {
+    if (id) step.value = current.value!.prompt.mvpCandidateIds.length > 0 ? 'mvp' : 'fairPlay'
+    void settle()
   },
   { immediate: true },
 )
+watch(onTournamentPage, () => void settle())
+
+// "Shown" means on screen, not merely loaded: a prompt waiting for its tournament page
+// can still be offered later.
+let shownMatchId: string | null = null
+watch(visible, (isVisible) => {
+  const id = current.value?.prompt.matchId ?? null
+  if (!isVisible || !id || id === shownMatchId) return
+  shownMatchId = id
+  restartGauge()
+  void markShown()
+})
 
 function onVisibility() {
   pageVisible.value = document.visibilityState !== 'hidden'

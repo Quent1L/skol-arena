@@ -27,12 +27,13 @@ import ui from '@nuxt/ui/vue-plugin'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import VotePrompt from '../VotePrompt.vue'
 import { useVotePrompt } from '@/composables/votes/useVotePrompt'
-import { holdScreenWhile } from '@/composables/useScreenTakeover'
+import { acquireScreen, holdScreenWhile } from '@/composables/useScreenTakeover'
 import { registerBottomNav } from '@/composables/ui/useBottomNav'
 
 const prompt = (over: Partial<VotePromptData> = {}): VotePromptData => ({
   matchId: 'm1',
   tournamentId: 't1',
+  expiresAt: new Date(Date.now() + 60 * 60_000),
   sides: [
     { position: 1, players: [{ id: 'me', displayName: 'Moi' }, { id: 'julie', displayName: 'Julie' }] },
     { position: 2, players: [{ id: 'paul', displayName: 'Paul' }, { id: 'marc', displayName: 'Marc' }] },
@@ -46,8 +47,27 @@ const i18n = createI18n({ legacy: false, locale: 'fr', fallbackLocale: 'fr', mes
 
 const mounted: { unmount(): void }[] = []
 
-async function mountPrompt(data: VotePromptData | null, props: Record<string, unknown> = { idleMs: 7000 }) {
+const blank = { render: () => null }
+function testRouter() {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/tournaments/:id', name: 'tournament-detail', component: blank },
+      { path: '/tournaments/:id/:tab', name: 'tournament-tab', component: blank },
+      { path: '/:p(.*)*', component: blank },
+    ],
+  })
+}
+let router = testRouter()
+
+async function mountPrompt(
+  data: VotePromptData | null,
+  props: Record<string, unknown> = { idleMs: 7000 },
+  at = '/tournaments/t1',
+) {
   api.pendingPrompt.mockResolvedValue(data)
+  router = testRouter()
+  await router.push(at)
   const wrapper = mount(VotePrompt, {
     props: { settleMs: 0, thanksMs: 10, ...props },
     attachTo: document.body,
@@ -55,8 +75,8 @@ async function mountPrompt(data: VotePromptData | null, props: Record<string, un
       plugins: [
         i18n,
         ui,
-        // The "More options" link is a ULink, which needs a real router.
-        createRouter({ history: createMemoryHistory(), routes: [{ path: '/:p(.*)*', component: { render: () => null } }] }),
+        // The card reads the route, and "More options" is a ULink: both need a real router.
+        router,
       ],
     },
   })
@@ -205,6 +225,48 @@ describe('VotePrompt', () => {
     await wrapper.get('[data-testid="vote-prompt"]').trigger('mouseleave')
     await vi.advanceTimersByTimeAsync(7000)
     expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
+  })
+
+  it("waits off its tournament's page, and counts as shown only once on screen", async () => {
+    const wrapper = await mountPrompt(prompt(), { idleMs: 7000 }, '/')
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
+    expect(api.recordPrompt).not.toHaveBeenCalled()
+
+    await router.push('/tournaments/other')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
+
+    await router.push('/tournaments/t1/standings')
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(1)
+    await flushPromises()
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(true)
+    expect(api.recordPrompt).toHaveBeenCalledWith('m1', 'expired')
+  })
+
+  it('does not flash in while the tournament page is still finding out about an MMR reveal', async () => {
+    const wrapper = await mountPrompt(prompt(), { idleMs: 7000, settleMs: 800 }, '/')
+    // The page arrives and holds the screen while it loads its pending reveals.
+    const release = acquireScreen()
+    await router.push('/tournaments/t1')
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
+    release()
+    await vi.advanceTimersByTimeAsync(500)
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
+    await vi.advanceTimersByTimeAsync(400)
+    await flushPromises()
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(true)
+  })
+
+  it('drops a waiting prompt once the match is too old', async () => {
+    const wrapper = await mountPrompt(prompt({ expiresAt: new Date(Date.now() + 60_000) }), { idleMs: 7000 }, '/')
+    await vi.advanceTimersByTimeAsync(90_000)
+    await router.push('/tournaments/t1')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
+    expect(useVotePrompt().current.value).toBeNull()
   })
 
   it('sits above a mobile bottom nav so the player can keep navigating', async () => {

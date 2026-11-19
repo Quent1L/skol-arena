@@ -207,6 +207,7 @@ import { useTournamentDetailStore } from '@/stores/tournamentDetail.store'
 import { useAnnouncementPopups } from '@/composables/announcement/announcement.service'
 import TournamentAnnouncementsModal from '@/components/announcement/TournamentAnnouncementsModal.vue'
 import { useViewport } from '@/composables/useViewport'
+import { acquireScreen } from '@/composables/useScreenTakeover'
 // Loaded on demand: the mobile shell is dead weight on desktop, the reveal
 // animations only exist for ranked seasons, and the rewind opens on a click.
 const TournamentDetailMobile = defineAsyncComponent(
@@ -325,7 +326,12 @@ function onVisibilityChange() {
   }
 }
 
-onMounted(async () => {
+// Until the page knows whether a recap, a reveal or the rewind will take the screen,
+// nothing secondary (vote prompt, announcement) may show: it would flash and vanish.
+const releaseBootHold = acquireScreen()
+onUnmounted(releaseBootHold)
+
+async function initialize() {
   document.addEventListener('visibilitychange', onVisibilityChange)
   try {
     await store.initialize(tournamentId.value)
@@ -423,6 +429,14 @@ onMounted(async () => {
         animationQueue.loadPending(tournamentId.value)
       }),
     )
+  }
+}
+
+onMounted(async () => {
+  try {
+    await initialize()
+  } finally {
+    releaseBootHold()
   }
 })
 

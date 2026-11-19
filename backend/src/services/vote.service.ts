@@ -347,6 +347,12 @@ export class VoteService {
     return {
       matchId: ctx.match.id,
       tournamentId: ctx.match.tournamentId,
+      expiresAt: new Date(
+        Math.min(
+          ctx.match.playedAt.getTime() + ctx.config.promptMaxMatchAgeMinutes * 60_000,
+          ctx.closesAt.getTime(),
+        ),
+      ),
       sides: [1, 2].map((position) => ({
         position,
         players: ctx.match.players.filter((p) => p.position === position).map(({ position: _, ...p }) => p),

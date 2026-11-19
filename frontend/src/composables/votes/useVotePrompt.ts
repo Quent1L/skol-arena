@@ -45,7 +45,7 @@ export function useVotePrompt() {
   }
 
   /**
-   * Called once the prompt is actually on screen. Recorded at once as `expired` so it
+   * Called once the prompt is actually on screen (on its tournament page). Recorded at once as `expired` so it
    * never shows twice, even if the app is closed under it; a vote cast from it later
    * settles it as `voted` and resets the back-off server-side.
    */

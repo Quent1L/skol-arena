@@ -155,6 +155,8 @@ export const votePromptSchema = z
   .object({
     matchId: z.string(),
     tournamentId: z.string(),
+    /** Past this, the prompt is stale and must not show: the match is too old to recall. */
+    expiresAt: z.date(),
     sides: z.array(
       z.object({ position: z.number().int(), players: z.array(votePromptPlayerSchema) }),
     ),
