@@ -168,7 +168,10 @@ bun run type-check
 bun run test:unit
 ```
 
-All three must pass. Then fill in the pull request template — what the change does, why,
+All three must pass, and CI runs them again on the pull request. The Husky hooks only
+cover part of this: `pre-commit` checks the workspaces you staged (type-check, backend
+unit tests, related frontend tests), `pre-push` runs the full `bun run test:unit`.
+Then fill in the pull request template — what the change does, why,
 and how you tested it.
 
 ## Commit convention

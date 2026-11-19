@@ -1,34 +1,49 @@
-# `bun test --isolate`, which the suite below is run with, only exists from the bun
-# version pinned in the root package.json. An older bun accepts the flag and ignores
-# it -- like any flag it does not know -- so the suite runs unisolated: mock.module
-# calls leak across files and dozens of tests fail for reasons that have nothing to do
-# with the commit. Bun does not enforce `engines` itself, so the floor is checked here.
-bun -e '
-  const required = require("./package.json").engines.bun;
-  if (Bun.semver.satisfies(Bun.version, required)) process.exit(0);
-  console.error(`\nbun ${Bun.version} is too old: this repo needs bun ${required}.`);
-  console.error("Below it, `bun test --isolate` is silently a no-op and the suite fails on its own leakage.");
-  console.error("Upgrade with: bun upgrade\n");
-  process.exit(1);
-' || exit 1
-
-# The docs/ workspace is the Astro documentation site. It imports nothing from
-# shared/backend/frontend and nothing imports it, so the application suite says
-# nothing about a docs change — it just costs ~77s on every typo fix. Run the
-# checks that do cover it instead (~9s), and keep the full suite for everything
-# else.
+# Fast checks scoped to the staged workspaces (seconds, not minutes). The full suite
+# -- backend integration tests (~150s) and the whole frontend suite (~50s) -- runs on
+# pre-push and in CI (.github/workflows/ci.yml), not on every commit.
 #
-# Anything outside docs/ in the same commit falls through to the full suite: the
-# skip has to be provably safe, so an unrecognised path is never a reason to skip.
-staged=$(git diff --cached --name-only --diff-filter=ACMR)
+# An unrecognised path (root package.json, a new workspace...) falls back to
+# type-checking everything: the skip has to be provably safe.
+#
+# One command per line: husky runs this with `sh -e`, which ignores a failure in the
+# middle of an `a && b` list.
+. .husky/check-bun-version.sh
 
-if [ -z "$staged" ]; then
-  exit 0
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -z "$staged" ] && exit 0
+
+touches() { printf '%s\n' "$staged" | grep -qE "$1"; }
+
+if touches '^shared/'; then
+  # backend and frontend type-check against shared/dist, so rebuild it first.
+  bun run build:shared
+  bun run test:unit:shared
+  bun run type-check:shared
+  bun run type-check:backend
+  bun run type-check:frontend
 fi
 
-if printf '%s\n' "$staged" | grep -qvE '^docs/'; then
-  bun run test:unit
-else
-  echo "Docs-only change — running docs checks, skipping the application suite."
-  cd docs && bun run type-check && bun run lint
+if touches '^backend/'; then
+  bun run type-check:backend
+  (cd backend && bun run test:unit)
+fi
+
+if touches '^frontend/'; then
+  bun run type-check:frontend
+  # Only the specs whose import graph reaches a staged file.
+  files=$(printf '%s\n' "$staged" | sed -n 's|^frontend/||p')
+  (cd frontend && bun x vitest related --run --passWithNoTests $files)
+fi
+
+if touches '^scripts/'; then
+  bun run test:unit:scripts
+fi
+
+if touches '^docs/'; then
+  (cd docs && bun run type-check)
+  (cd docs && bun run lint)
+fi
+
+if printf '%s\n' "$staged" | grep -qvE '^(shared|backend|frontend|scripts|docs)/'; then
+  bun run type-check
 fi

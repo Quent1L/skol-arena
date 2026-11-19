@@ -1,0 +1,35 @@
+name: CI
+
+# The full check on every pull request. The pre-commit hook only runs the fast,
+# staged-scoped subset, so this is where the backend integration tests and the whole
+# frontend suite gate a change before it reaches main.
+on:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: "0"
+    steps:
+      - uses: actions/checkout@v5
+
+      # Bun version comes from `engines.bun` in the root package.json, as in release.yml.
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run build:shared
+
+      - run: bun run type-check
+
+      # The lint scripts pass --fix: anything they rewrote was not committed clean.
+      - run: bun run lint
+      - run: git diff --exit-code
+
+      # Integration tests run on PGlite, no Postgres service needed.
+      - run: bun run test:unit

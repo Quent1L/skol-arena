@@ -1,0 +1,5 @@
+# The full suite, once per push rather than once per commit. CI runs it again on the
+# pull request; `git push --no-verify` skips it for a work-in-progress branch.
+. .husky/check-bun-version.sh
+
+bun run test:unit

@@ -219,6 +219,15 @@ SEO and GEO metadata is centralised, not spread across pages:
 - Backend: Bun's built-in test runner
 - Frontend: Vitest
 - Test files in `__tests__/` directories alongside source files
+- **Hooks are tiered.** `pre-commit` only checks the staged workspaces: type-check,
+  backend unit tests (no integration), `vitest related` for frontend files. `pre-push`
+  runs the full `bun run test:unit`, and `.github/workflows/ci.yml` runs type-check +
+  lint + the full suite on every pull request
+- **When a feature or fix is done, before handing back**, run `bun run lint`,
+  `bun run type-check` and `bun run test:unit` from the root. A commit passing the hook
+  says nothing about the backend integration tests or the rest of the frontend suite
+- `frontend`'s `type-check` (`vue-tsc --noEmit` on a `"files": []` solution tsconfig)
+  checks nothing; `vue-tsc --build` reports ~400 pre-existing errors to fix first
 
 ### API versioning (`backend/src/api/`)
 
