@@ -37,19 +37,14 @@ async function insertChunk(chunk: CreateNotification[]) {
       )
       .returning();
     if (created.length > 0) {
-      await tx.insert(notificationStatus).values(
-        created.map((n) => ({ notificationId: n.id, userId: n.userId })),
-      );
+      await tx.insert(notificationStatus).values(created.map((n) => ({ notificationId: n.id, userId: n.userId })));
     }
     return created;
   });
 }
 
 /** Flips to read the user's unread rows among the notifications `source` selects. */
-async function markUnreadAmong(
-  userId: string,
-  source: SQLWrapper,
-): Promise<string[]> {
+async function markUnreadAmong(userId: string, source: SQLWrapper): Promise<string[]> {
   const updated = await db
     .update(notificationStatus)
     .set({ read: true, readAt: new Date() })
@@ -115,18 +110,11 @@ export const notificationRepository = {
    * `cursor` is the (createdAt, id) pair of the last row served — a keyset, not an offset,
    * because the feed moves under the reader.
    */
-  async getPageForUser(
-    userId: string,
-    limit: number,
-    cursor?: { createdAt: Date; id: string },
-  ) {
+  async getPageForUser(userId: string, limit: number, cursor?: { createdAt: Date; id: string }) {
     const keyset = cursor
       ? or(
           lt(notifications.createdAt, cursor.createdAt),
-          and(
-            eq(notifications.createdAt, cursor.createdAt),
-            lt(notifications.id, cursor.id),
-          ),
+          and(eq(notifications.createdAt, cursor.createdAt), lt(notifications.id, cursor.id)),
         )
       : undefined;
 
@@ -147,10 +135,7 @@ export const notificationRepository = {
       .from(notifications)
       .innerJoin(
         notificationStatus,
-        and(
-          eq(notifications.id, notificationStatus.notificationId),
-          eq(notificationStatus.userId, userId),
-        ),
+        and(eq(notifications.id, notificationStatus.notificationId), eq(notificationStatus.userId, userId)),
       )
       .where(and(eq(notifications.userId, userId), keyset))
       .orderBy(desc(notifications.createdAt), desc(notifications.id))
@@ -172,10 +157,7 @@ export const notificationRepository = {
       .from(notifications)
       .innerJoin(
         notificationStatus,
-        and(
-          eq(notifications.id, notificationStatus.notificationId),
-          eq(notificationStatus.userId, userId),
-        ),
+        and(eq(notifications.id, notificationStatus.notificationId), eq(notificationStatus.userId, userId)),
       )
       .where(
         and(
@@ -191,9 +173,7 @@ export const notificationRepository = {
     const [row] = await db
       .select({
         total: sql<number>`count(*)`.mapWith(Number),
-        unread: sql<number>`count(*) filter (where ${notificationStatus.read} = false)`.mapWith(
-          Number,
-        ),
+        unread: sql<number>`count(*) filter (where ${notificationStatus.read} = false)`.mapWith(Number),
       })
       .from(notificationStatus)
       .where(eq(notificationStatus.userId, userId));
@@ -206,12 +186,7 @@ export const notificationRepository = {
     const updated = await db
       .update(notificationStatus)
       .set({ read: true, readAt: new Date() })
-      .where(
-        and(
-          eq(notificationStatus.userId, userId),
-          eq(notificationStatus.read, false),
-        ),
-      )
+      .where(and(eq(notificationStatus.userId, userId), eq(notificationStatus.read, false)))
       .returning({ id: notificationStatus.notificationId });
 
     return updated.length;
@@ -229,9 +204,7 @@ export const notificationRepository = {
         .where(
           and(
             eq(notificationStatus.userId, userId),
-            keepIds.length
-              ? notInArray(notificationStatus.notificationId, keepIds)
-              : undefined,
+            keepIds.length ? notInArray(notificationStatus.notificationId, keepIds) : undefined,
           ),
         )
         .returning({ id: notificationStatus.notificationId });
@@ -262,17 +235,11 @@ export const notificationRepository = {
     const stale = await db
       .select({ id: notificationStatus.notificationId })
       .from(notificationStatus)
-      .innerJoin(
-        notifications,
-        eq(notifications.id, notificationStatus.notificationId),
-      )
+      .innerJoin(notifications, eq(notifications.id, notificationStatus.notificationId))
       .where(
         and(
           eq(notificationStatus.read, true),
-          or(
-            eq(notifications.requiresAction, false),
-            eq(notificationStatus.actionCompleted, true),
-          ),
+          or(eq(notifications.requiresAction, false), eq(notificationStatus.actionCompleted, true)),
           lt(notifications.createdAt, cutoff),
         ),
       )
@@ -282,9 +249,7 @@ export const notificationRepository = {
 
     const ids = stale.map((row) => row.id);
     await db.transaction(async (tx) => {
-      await tx
-        .delete(notificationStatus)
-        .where(inArray(notificationStatus.notificationId, ids));
+      await tx.delete(notificationStatus).where(inArray(notificationStatus.notificationId, ids));
       await tx.delete(notifications).where(inArray(notifications.id, ids));
     });
 
@@ -298,12 +263,7 @@ export const notificationRepository = {
         read: true,
         readAt: new Date(),
       })
-      .where(
-        and(
-          eq(notificationStatus.notificationId, notificationId),
-          eq(notificationStatus.userId, userId),
-        ),
-      )
+      .where(and(eq(notificationStatus.notificationId, notificationId), eq(notificationStatus.userId, userId)))
       .returning();
   },
 
@@ -316,20 +276,12 @@ export const notificationRepository = {
         read: true, // Auto-mark as read when action is completed
         readAt: new Date(),
       })
-      .where(
-        and(
-          eq(notificationStatus.notificationId, notificationId),
-          eq(notificationStatus.userId, userId),
-        ),
-      )
+      .where(and(eq(notificationStatus.notificationId, notificationId), eq(notificationStatus.userId, userId)))
       .returning();
   },
 
   async getById(notificationId: string) {
-    const [notification] = await db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.id, notificationId));
+    const [notification] = await db.select().from(notifications).where(eq(notifications.id, notificationId));
     return notification;
   },
 
@@ -337,12 +289,7 @@ export const notificationRepository = {
     const [status] = await db
       .select()
       .from(notificationStatus)
-      .where(
-        and(
-          eq(notificationStatus.notificationId, notificationId),
-          eq(notificationStatus.userId, userId),
-        ),
-      );
+      .where(and(eq(notificationStatus.notificationId, notificationId), eq(notificationStatus.userId, userId)));
     return status;
   },
 
@@ -354,12 +301,7 @@ export const notificationRepository = {
   async delete(notificationId: string, userId: string) {
     await db
       .delete(notificationStatus)
-      .where(
-        and(
-          eq(notificationStatus.notificationId, notificationId),
-          eq(notificationStatus.userId, userId),
-        ),
-      );
+      .where(and(eq(notificationStatus.notificationId, notificationId), eq(notificationStatus.userId, userId)));
 
     const remainingStatuses = await db
       .select()
@@ -367,9 +309,7 @@ export const notificationRepository = {
       .where(eq(notificationStatus.notificationId, notificationId));
 
     if (remainingStatuses.length === 0) {
-      await db
-        .delete(notifications)
-        .where(eq(notifications.id, notificationId));
+      await db.delete(notifications).where(eq(notifications.id, notificationId));
     }
   },
 
@@ -386,11 +326,7 @@ export const notificationRepository = {
    * Marks read the user's unread notifications of the given types for these matches —
    * informational ones only: an actionable notification must stay until acted upon.
    */
-  async markReadByMatches(
-    userId: string,
-    matchIds: string[],
-    types: CreateNotification["type"][],
-  ): Promise<string[]> {
+  async markReadByMatches(userId: string, matchIds: string[], types: CreateNotification["type"][]): Promise<string[]> {
     if (matchIds.length === 0 || types.length === 0) return [];
     const source = db
       .select({ id: notifications.id })
@@ -406,24 +342,12 @@ export const notificationRepository = {
   },
 
   /** Recipients who still hold an unread notification of this type for the match. */
-  async getUserIdsWithUnreadOfTypeForMatch(
-    matchId: string,
-    type: CreateNotification["type"],
-  ): Promise<Set<string>> {
+  async getUserIdsWithUnreadOfTypeForMatch(matchId: string, type: CreateNotification["type"]): Promise<Set<string>> {
     const rows = await db
       .selectDistinct({ userId: notificationStatus.userId })
       .from(notifications)
-      .innerJoin(
-        notificationStatus,
-        eq(notifications.id, notificationStatus.notificationId),
-      )
-      .where(
-        and(
-          eq(notifications.matchId, matchId),
-          eq(notifications.type, type),
-          eq(notificationStatus.read, false),
-        ),
-      );
+      .innerJoin(notificationStatus, eq(notifications.id, notificationStatus.notificationId))
+      .where(and(eq(notifications.matchId, matchId), eq(notifications.type, type), eq(notificationStatus.read, false)));
 
     return new Set(rows.map((r) => r.userId));
   },
@@ -432,18 +356,11 @@ export const notificationRepository = {
    * Whether a user still has an unread notification of a given type for a match.
    * Used to avoid stacking one notification per message on a busy thread.
    */
-  async hasUnreadOfTypeForMatch(
-    userId: string,
-    matchId: string,
-    type: CreateNotification["type"],
-  ): Promise<boolean> {
+  async hasUnreadOfTypeForMatch(userId: string, matchId: string, type: CreateNotification["type"]): Promise<boolean> {
     const [existing] = await db
       .select({ id: notifications.id })
       .from(notifications)
-      .innerJoin(
-        notificationStatus,
-        eq(notifications.id, notificationStatus.notificationId),
-      )
+      .innerJoin(notificationStatus, eq(notifications.id, notificationStatus.notificationId))
       .where(
         and(
           eq(notifications.matchId, matchId),
@@ -461,10 +378,7 @@ export const notificationRepository = {
     const toDelete = await db
       .select({ id: notifications.id, userId: notificationStatus.userId })
       .from(notifications)
-      .innerJoin(
-        notificationStatus,
-        eq(notifications.id, notificationStatus.notificationId),
-      )
+      .innerJoin(notificationStatus, eq(notifications.id, notificationStatus.notificationId))
       .where(
         and(
           eq(notifications.matchId, matchId),
@@ -481,19 +395,12 @@ export const notificationRepository = {
    * Narrower than deleteActionsByMatchId: used when one situation is resolved
    * (a withdrawn dispute) while other pending actions must survive.
    */
-  async deleteActionsByMatchIdAndType(
-    matchId: string,
-    type: CreateNotification["type"],
-  ) {
+  async deleteActionsByMatchIdAndType(matchId: string, type: CreateNotification["type"]) {
     const toDelete = await db
       .select({ id: notifications.id, userId: notifications.userId })
       .from(notifications)
       .where(
-        and(
-          eq(notifications.matchId, matchId),
-          eq(notifications.type, type),
-          eq(notifications.requiresAction, true),
-        ),
+        and(eq(notifications.matchId, matchId), eq(notifications.type, type), eq(notifications.requiresAction, true)),
       );
 
     return deleteNotificationRows(toDelete);
@@ -513,12 +420,7 @@ export const notificationRepository = {
     const toDelete = await db
       .select({ id: notifications.id, userId: notifications.userId })
       .from(notifications)
-      .where(
-        and(
-          eq(notifications.matchId, matchId),
-          eq(notifications.requiresAction, true),
-        ),
-      );
+      .where(and(eq(notifications.matchId, matchId), eq(notifications.requiresAction, true)));
 
     // Cascade handles the notification_status rows
     return deleteNotificationRows(toDelete);

@@ -51,8 +51,9 @@ const TOTALS_SELECTION = {
   awardedCount: sql<number>`count(*) filter (where ${ruleFirings.result} = 'awarded')`.mapWith(Number),
   deliveredCount: sql<number>`count(*) filter (where ${ruleFirings.deliveredAt} is not null)`.mapWith(Number),
   neverDeliveredCount: sql<number>`count(*) filter (where ${ruleFirings.deliveredAt} is null)`.mapWith(Number),
-  seenCount:
-    sql<number>`count(*) filter (where ${ruleFirings.seenSurface} in ('reveal', 'reveal_skipped'))`.mapWith(Number),
+  seenCount: sql<number>`count(*) filter (where ${ruleFirings.seenSurface} in ('reveal', 'reveal_skipped'))`.mapWith(
+    Number,
+  ),
   recapCount: sql<number>`count(*) filter (where ${ruleFirings.seenSurface} = 'recap')`.mapWith(Number),
   lastFiredAt: max(ruleFirings.createdAt),
 };
@@ -177,10 +178,7 @@ export class RuleFiringRepository {
 
   /** Ties a firing to the animation event that carries its message. */
   async markDelivered(firingId: string, animationEventId: string): Promise<void> {
-    await db
-      .update(ruleFirings)
-      .set({ deliveredAt: new Date(), animationEventId })
-      .where(eq(ruleFirings.id, firingId));
+    await db.update(ruleFirings).set({ deliveredAt: new Date(), animationEventId }).where(eq(ruleFirings.id, firingId));
   }
 
   /**
@@ -271,10 +269,7 @@ export class RuleFiringRepository {
     const keyset = cursor
       ? or(
           lt(ruleFirings.createdAt, sql`${cursor.createdAt}::timestamptz`),
-          and(
-            eq(ruleFirings.createdAt, sql`${cursor.createdAt}::timestamptz`),
-            lt(ruleFirings.id, cursor.id),
-          ),
+          and(eq(ruleFirings.createdAt, sql`${cursor.createdAt}::timestamptz`), lt(ruleFirings.id, cursor.id)),
         )
       : undefined;
 

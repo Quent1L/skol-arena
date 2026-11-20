@@ -38,7 +38,13 @@ function side(position: number, playerIds: string[]) {
 }
 
 /** `minutesAgo` orders matches in time; "A" means side 1 won. */
-function match(winnerSide: "A" | "B" | null, a: string[], b: string[], minutesAgo: number, outcomeTypeId: string | null = null) {
+function match(
+  winnerSide: "A" | "B" | null,
+  a: string[],
+  b: string[],
+  minutesAgo: number,
+  outcomeTypeId: string | null = null,
+) {
   return {
     id: `m${counter++}`,
     winnerSide,
@@ -49,7 +55,13 @@ function match(winnerSide: "A" | "B" | null, a: string[], b: string[], minutesAg
   };
 }
 
-const flexInfo = { teamMode: "flex", allowDraw: true, startDate: "2020-01-01", endDate: "2020-01-03", rankedConfig: null };
+const flexInfo = {
+  teamMode: "flex",
+  allowDraw: true,
+  startDate: "2020-01-01",
+  endDate: "2020-01-03",
+  rankedConfig: null,
+};
 
 beforeEach(() => {
   for (const fn of Object.values(repo)) fn.mockClear();

@@ -64,15 +64,9 @@ export class StandingsRepository {
     });
   }
 
-  async getMatchesWithSides(
-    tournamentId: string,
-    includeStatuses: MatchStatus[]
-  ) {
+  async getMatchesWithSides(tournamentId: string, includeStatuses: MatchStatus[]) {
     return await db.query.matches.findMany({
-      where: and(
-        eq(matches.tournamentId, tournamentId),
-        inArray(matches.status, includeStatuses)
-      ),
+      where: and(eq(matches.tournamentId, tournamentId), inArray(matches.status, includeStatuses)),
       columns: {
         id: true,
         winnerSide: true,
@@ -99,15 +93,9 @@ export class StandingsRepository {
     });
   }
 
-  async getPlayerPointsForStandings(
-    tournamentId: string,
-    includeStatuses: MatchStatus[]
-  ) {
+  async getPlayerPointsForStandings(tournamentId: string, includeStatuses: MatchStatus[]) {
     return await db.query.matches.findMany({
-      where: and(
-        eq(matches.tournamentId, tournamentId),
-        inArray(matches.status, includeStatuses)
-      ),
+      where: and(eq(matches.tournamentId, tournamentId), inArray(matches.status, includeStatuses)),
       columns: { id: true, winnerSide: true, outcomeTypeId: true },
       with: {
         playerPoints: {
@@ -132,23 +120,20 @@ export class StandingsRepository {
     });
   }
 
-  async deletePlayerPointsForTournament(
-    tournamentId: string,
-    includeStatuses: MatchStatus[]
-  ) {
+  async deletePlayerPointsForTournament(tournamentId: string, includeStatuses: MatchStatus[]) {
     const matchIds = await db.query.matches.findMany({
-      where: and(
-        eq(matches.tournamentId, tournamentId),
-        inArray(matches.status, includeStatuses)
-      ),
+      where: and(eq(matches.tournamentId, tournamentId), inArray(matches.status, includeStatuses)),
       columns: { id: true },
     });
 
     if (matchIds.length === 0) return;
 
-    await db
-      .delete(matchPlayerPoints)
-      .where(inArray(matchPlayerPoints.matchId, matchIds.map((m) => m.id)));
+    await db.delete(matchPlayerPoints).where(
+      inArray(
+        matchPlayerPoints.matchId,
+        matchIds.map((m) => m.id),
+      ),
+    );
   }
 
   async insertPlayerPoints(rows: PlayerPointRow[]) {
@@ -156,15 +141,9 @@ export class StandingsRepository {
     await db.insert(matchPlayerPoints).values(rows);
   }
 
-  async getMatchesForStandings(
-    tournamentId: string,
-    includeStatuses: MatchStatus[]
-  ) {
+  async getMatchesForStandings(tournamentId: string, includeStatuses: MatchStatus[]) {
     return await db.query.matches.findMany({
-      where: and(
-        eq(matches.tournamentId, tournamentId),
-        inArray(matches.status, includeStatuses)
-      ),
+      where: and(eq(matches.tournamentId, tournamentId), inArray(matches.status, includeStatuses)),
       columns: {
         id: true,
         status: true,
@@ -191,10 +170,7 @@ export class StandingsRepository {
           },
         },
       },
-      orderBy: (matchSides, { asc }) => [
-        asc(matchSides.matchId),
-        asc(matchSides.position),
-      ],
+      orderBy: (matchSides, { asc }) => [asc(matchSides.matchId), asc(matchSides.position)],
     });
   }
 
@@ -202,10 +178,7 @@ export class StandingsRepository {
 
   async getComputedData(tournamentId: string, key: string): Promise<StandingsResult | null> {
     const row = await db.query.computedData.findFirst({
-      where: and(
-        eq(computedData.tournamentId, tournamentId),
-        eq(computedData.key, key)
-      ),
+      where: and(eq(computedData.tournamentId, tournamentId), eq(computedData.key, key)),
     });
     if (!row) return null;
     return row.data as StandingsResult;
@@ -224,12 +197,7 @@ export class StandingsRepository {
   async deleteComputedData(tournamentId: string): Promise<void> {
     await db
       .delete(computedData)
-      .where(
-        and(
-          eq(computedData.tournamentId, tournamentId),
-          notInArray(computedData.key, PRESERVED_COMPUTED_KEYS),
-        ),
-      );
+      .where(and(eq(computedData.tournamentId, tournamentId), notInArray(computedData.key, PRESERVED_COMPUTED_KEYS)));
   }
 
   async deleteComputedDataMany(tournamentIds: string[]): Promise<void> {
@@ -237,10 +205,7 @@ export class StandingsRepository {
     await db
       .delete(computedData)
       .where(
-        and(
-          inArray(computedData.tournamentId, tournamentIds),
-          notInArray(computedData.key, PRESERVED_COMPUTED_KEYS),
-        ),
+        and(inArray(computedData.tournamentId, tournamentIds), notInArray(computedData.key, PRESERVED_COMPUTED_KEYS)),
       );
   }
 }

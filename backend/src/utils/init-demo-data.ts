@@ -66,10 +66,7 @@ export async function initializeDemoDataIfRequested(): Promise<void> {
   const started = Date.now();
   try {
     const summary = await seedDemoData();
-    logger.info(
-      { ...summary, durationMs: Date.now() - started },
-      "Demo data loaded",
-    );
+    logger.info({ ...summary, durationMs: Date.now() - started }, "Demo data loaded");
     logCredentials({ email: demoEmail(DEMO_ADMIN_KEY), password: DEMO_PASSWORD });
   } catch (err) {
     logger.error(

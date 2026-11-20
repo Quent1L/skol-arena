@@ -8,9 +8,7 @@ describe("interpolate", () => {
   });
 
   it("handles spacing inside braces and multiple variables", () => {
-    expect(interpolate("{{ winStreak }} wins for {{name}}", { winStreak: 3, name: "Bob" })).toBe(
-      "3 wins for Bob",
-    );
+    expect(interpolate("{{ winStreak }} wins for {{name}}", { winStreak: 3, name: "Bob" })).toBe("3 wins for Bob");
   });
 
   it("replaces unknown/undefined variables with empty string", () => {
@@ -45,7 +43,13 @@ describe("resolveDisplay", () => {
 describe("RulesEvaluationService.simulate", () => {
   const winStreak3: RuleConditions = { all: [{ fact: "winStreak", operator: "greaterThanInclusive", value: 3 }] };
   const messageAction: MessageAction = { type: "message", variants: ["Win streak of {{winStreak}}!"] };
-  const badgeAction: BadgeAction = { type: "badge", icon: "fa fa-fire", label: "Unstoppable", description: "5 wins", recurrence: "per_season" };
+  const badgeAction: BadgeAction = {
+    type: "badge",
+    icon: "fa fa-fire",
+    label: "Unstoppable",
+    description: "5 wins",
+    recurrence: "per_season",
+  };
 
   it("returns matched=true and interpolated message when conditions pass", async () => {
     const result = await rulesEvaluationService.simulate(winStreak3, messageAction, { winStreak: 5 });
@@ -97,7 +101,13 @@ describe("RulesEvaluationService.simulate", () => {
         { fact: "matchHour", operator: "lessThanInclusive", value: 4 },
       ],
     };
-    const badge: BadgeAction = { type: "badge", icon: "fa fa-moon", label: "Night owl", description: "Night match", recurrence: "per_season" };
+    const badge: BadgeAction = {
+      type: "badge",
+      icon: "fa fa-moon",
+      label: "Night owl",
+      description: "Night match",
+      recurrence: "per_season",
+    };
 
     expect((await rulesEvaluationService.simulate(nightWindow, badge, { matchHour: 3 })).matched).toBe(true);
     expect((await rulesEvaluationService.simulate(nightWindow, badge, { matchHour: 12 })).matched).toBe(false);
@@ -110,8 +120,12 @@ describe("RulesEvaluationService.simulate", () => {
         { fact: "matchMinuteOfDay", operator: "lessThanInclusive", value: 255 }, // 04:15
       ],
     };
-    expect((await rulesEvaluationService.simulate(window, messageAction, { matchMinuteOfDay: 200 })).matched).toBe(true);
-    expect((await rulesEvaluationService.simulate(window, messageAction, { matchMinuteOfDay: 149 })).matched).toBe(false);
+    expect((await rulesEvaluationService.simulate(window, messageAction, { matchMinuteOfDay: 200 })).matched).toBe(
+      true,
+    );
+    expect((await rulesEvaluationService.simulate(window, messageAction, { matchMinuteOfDay: 149 })).matched).toBe(
+      false,
+    );
   });
 
   it("matches weekend days via matchDayOfWeek in [6,7]", async () => {
@@ -128,7 +142,9 @@ describe("RulesEvaluationService.simulate", () => {
 
   it("matches 'teammate of X' via teammateIds contains", async () => {
     const withBob: RuleConditions = { all: [{ fact: "teammateIds", operator: "contains", value: "bob" }] };
-    expect((await rulesEvaluationService.simulate(withBob, messageAction, { teammateIds: ["bob"] })).matched).toBe(true);
+    expect((await rulesEvaluationService.simulate(withBob, messageAction, { teammateIds: ["bob"] })).matched).toBe(
+      true,
+    );
     expect((await rulesEvaluationService.simulate(withBob, messageAction, { teammateIds: ["carl"] })).matched).toBe(
       false,
     );
@@ -137,24 +153,28 @@ describe("RulesEvaluationService.simulate", () => {
 
   it("matches 'against X' via opponentIds contains", async () => {
     const vsBob: RuleConditions = { all: [{ fact: "opponentIds", operator: "contains", value: "bob" }] };
-    expect((await rulesEvaluationService.simulate(vsBob, messageAction, { opponentIds: ["bob", "carl"] })).matched).toBe(
-      true,
-    );
-    expect((await rulesEvaluationService.simulate(vsBob, messageAction, { opponentIds: ["carl"] })).matched).toBe(false);
-  });
-
-  it("matches an outcome type by id, the exact form for a discipline-scoped rule", async () => {
-    const byForfeit: RuleConditions = { all: [{ fact: "outcomeType", operator: "equal", value: "ot-forfeit" }] };
-    expect((await rulesEvaluationService.simulate(byForfeit, messageAction, { outcomeType: "ot-forfeit" })).matched).toBe(
-      true,
-    );
-    expect((await rulesEvaluationService.simulate(byForfeit, messageAction, { outcomeType: "ot-normal" })).matched).toBe(
+    expect(
+      (await rulesEvaluationService.simulate(vsBob, messageAction, { opponentIds: ["bob", "carl"] })).matched,
+    ).toBe(true);
+    expect((await rulesEvaluationService.simulate(vsBob, messageAction, { opponentIds: ["carl"] })).matched).toBe(
       false,
     );
   });
 
+  it("matches an outcome type by id, the exact form for a discipline-scoped rule", async () => {
+    const byForfeit: RuleConditions = { all: [{ fact: "outcomeType", operator: "equal", value: "ot-forfeit" }] };
+    expect(
+      (await rulesEvaluationService.simulate(byForfeit, messageAction, { outcomeType: "ot-forfeit" })).matched,
+    ).toBe(true);
+    expect(
+      (await rulesEvaluationService.simulate(byForfeit, messageAction, { outcomeType: "ot-normal" })).matched,
+    ).toBe(false);
+  });
+
   it("matches an outcome type by name, the form that spans disciplines", async () => {
-    const byName: RuleConditions = { all: [{ fact: "outcomeTypeName", operator: "in", value: ["Forfeit", "Walkover"] }] };
+    const byName: RuleConditions = {
+      all: [{ fact: "outcomeTypeName", operator: "in", value: ["Forfeit", "Walkover"] }],
+    };
     expect((await rulesEvaluationService.simulate(byName, messageAction, { outcomeTypeName: "Forfeit" })).matched).toBe(
       true,
     );
@@ -165,7 +185,13 @@ describe("RulesEvaluationService.simulate", () => {
 
   it("separates a special outcome from the regular one via isDefaultOutcome", async () => {
     const special: RuleConditions = { all: [{ fact: "isDefaultOutcome", operator: "equal", value: false }] };
-    const badge: BadgeAction = { type: "badge", icon: "fa fa-ban", label: "No mercy", description: "Special result", recurrence: "per_season" };
+    const badge: BadgeAction = {
+      type: "badge",
+      icon: "fa fa-ban",
+      label: "No mercy",
+      description: "Special result",
+      recurrence: "per_season",
+    };
     expect((await rulesEvaluationService.simulate(special, badge, { isDefaultOutcome: false })).matched).toBe(true);
     expect((await rulesEvaluationService.simulate(special, badge, { isDefaultOutcome: true })).matched).toBe(false);
   });
@@ -180,7 +206,8 @@ describe("RulesEvaluationService.simulate", () => {
     const facts = { outcomeTypeName: "Forfeit", outcomeReasonName: "Injury" };
     expect((await rulesEvaluationService.simulate(injury, messageAction, facts)).matched).toBe(true);
     expect(
-      (await rulesEvaluationService.simulate(injury, messageAction, { ...facts, outcomeReasonName: "No-show" })).matched,
+      (await rulesEvaluationService.simulate(injury, messageAction, { ...facts, outcomeReasonName: "No-show" }))
+        .matched,
     ).toBe(false);
   });
 
@@ -231,9 +258,9 @@ describe("RulesEvaluationService.simulate", () => {
     const only: RuleConditions = {
       all: [{ fact: "teammateIds", operator: "containsExactly", value: ["alice", "bob"] }],
     };
-    expect((await rulesEvaluationService.simulate(only, messageAction, { teammateIds: ["bob", "alice"] })).matched).toBe(
-      true,
-    );
+    expect(
+      (await rulesEvaluationService.simulate(only, messageAction, { teammateIds: ["bob", "alice"] })).matched,
+    ).toBe(true);
     expect(
       (await rulesEvaluationService.simulate(only, messageAction, { teammateIds: ["alice", "bob", "carl"] })).matched,
     ).toBe(false);
@@ -284,16 +311,20 @@ describe("RulesEvaluationService.simulate", () => {
       ],
     };
     const winnerIds = ["alice", "bob"];
-    expect((await rulesEvaluationService.simulate(conditions, messageAction, { winnerIds, isWinner: true })).matched)
-      .toBe(true);
+    expect(
+      (await rulesEvaluationService.simulate(conditions, messageAction, { winnerIds, isWinner: true })).matched,
+    ).toBe(true);
     // A loser sees the same match-level winnerIds, but is not on that side.
-    expect((await rulesEvaluationService.simulate(conditions, messageAction, { winnerIds, isWinner: false })).matched)
-      .toBe(false);
+    expect(
+      (await rulesEvaluationService.simulate(conditions, messageAction, { winnerIds, isWinner: false })).matched,
+    ).toBe(false);
   });
 
   it("gates a rule on randomRoll so base messages can still show up", async () => {
     const thirtyPercent: RuleConditions = { all: [{ fact: "randomRoll", operator: "lessThan", value: 30 }] };
-    expect((await rulesEvaluationService.simulate(thirtyPercent, messageAction, { randomRoll: 10 })).matched).toBe(true);
+    expect((await rulesEvaluationService.simulate(thirtyPercent, messageAction, { randomRoll: 10 })).matched).toBe(
+      true,
+    );
     expect((await rulesEvaluationService.simulate(thirtyPercent, messageAction, { randomRoll: 50 })).matched).toBe(
       false,
     );

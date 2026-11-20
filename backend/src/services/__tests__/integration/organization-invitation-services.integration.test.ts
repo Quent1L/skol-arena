@@ -88,7 +88,13 @@ describe("organizationService (integration)", () => {
     it("adds the user and counts the use", async () => {
       const joiner = await seed.createUser("Joiner");
       const code = await makeCode();
-      const result = await organizationService.joinViaCode(code!.code, joiner, await externalIdOf(joiner), "j@x.io", "1.2.3.4");
+      const result = await organizationService.joinViaCode(
+        code!.code,
+        joiner,
+        await externalIdOf(joiner),
+        "j@x.io",
+        "1.2.3.4",
+      );
       expect(result.organizationName).toBe("Renamed");
       expect(await organizationRepository.isMember(orgId, joiner)).toBe(true);
       expect((await invitationRepository.findByCode(code!.code))?.usedCount).toBe(1);
@@ -128,10 +134,18 @@ describe("invitationService (integration)", () => {
     expect(plain).toMatchObject({ maxUses: 1, expiresAt: null, notes: null, organizationId: null });
 
     const org = await organizationService.createOrganization(`InviteOrg-${Date.now()}`, admin);
-    const rich = await invitationService.generateCode({ createdBy: admin, maxUses: 5, expiresInDays: 2, notes: "for the club", organizationId: org.id });
+    const rich = await invitationService.generateCode({
+      createdBy: admin,
+      maxUses: 5,
+      expiresInDays: 2,
+      notes: "for the club",
+      organizationId: org.id,
+    });
     expect(rich).toMatchObject({ maxUses: 5, notes: "for the club", organizationId: org.id });
     expect(rich!.expiresAt!.getTime()).toBeGreaterThan(Date.now() + 47 * 3_600_000);
-    expect((await invitationService.getAllCodes()).map((c) => c.id)).toEqual(expect.arrayContaining([plain!.id, rich!.id]));
+    expect((await invitationService.getAllCodes()).map((c) => c.id)).toEqual(
+      expect.arrayContaining([plain!.id, rich!.id]),
+    );
   });
 
   it("validates a code and reports remaining uses and the organisation", async () => {
@@ -154,7 +168,10 @@ describe("invitationService (integration)", () => {
     await expect(invitationService.validateCode(inactive!.code)).rejects.toBeInstanceOf(BadRequestError);
 
     const expired = await invitationService.generateCode({ createdBy: admin });
-    await testDb.update(invitationCodes).set({ expiresAt: new Date(Date.now() - 1000) }).where(eq(invitationCodes.id, expired!.id));
+    await testDb
+      .update(invitationCodes)
+      .set({ expiresAt: new Date(Date.now() - 1000) })
+      .where(eq(invitationCodes.id, expired!.id));
     await expect(invitationService.validateCode(expired!.code)).rejects.toBeInstanceOf(BadRequestError);
 
     const exhausted = await invitationService.generateCode({ createdBy: admin });
@@ -174,7 +191,9 @@ describe("invitationService (integration)", () => {
     const second = await seed.createUser("Second");
     await invitationService.consumeCode(code!.code, await externalIdOf(second), "s@x.io");
     const third = await seed.createUser("Third");
-    await expect(invitationService.consumeCode(code!.code, await externalIdOf(third), "t@x.io")).rejects.toBeInstanceOf(BadRequestError);
+    await expect(invitationService.consumeCode(code!.code, await externalIdOf(third), "t@x.io")).rejects.toBeInstanceOf(
+      BadRequestError,
+    );
   });
 
   it("refuses to consume an inactive or expired code", async () => {
@@ -184,7 +203,10 @@ describe("invitationService (integration)", () => {
     await invitationService.deactivateCode(inactive!.id);
     await expect(invitationService.consumeCode(inactive!.code, ext, "l@x.io")).rejects.toBeInstanceOf(BadRequestError);
     const expired = await invitationService.generateCode({ createdBy: admin });
-    await testDb.update(invitationCodes).set({ expiresAt: new Date(Date.now() - 1000) }).where(eq(invitationCodes.id, expired!.id));
+    await testDb
+      .update(invitationCodes)
+      .set({ expiresAt: new Date(Date.now() - 1000) })
+      .where(eq(invitationCodes.id, expired!.id));
     await expect(invitationService.consumeCode(expired!.code, ext, "l@x.io")).rejects.toBeInstanceOf(BadRequestError);
   });
 
@@ -197,7 +219,12 @@ describe("invitationService (integration)", () => {
       .values({ id: `auth-${suffix}`, name: "New <b>Player</b>", email: `${suffix}@example.com`, emailVerified: true })
       .returning();
 
-    const created = await invitationService.consumeCodeAndCreateAppUser(code!.code, auth!.id, auth!.email, "New <b>Player</b>");
+    const created = await invitationService.consumeCodeAndCreateAppUser(
+      code!.code,
+      auth!.id,
+      auth!.email,
+      "New <b>Player</b>",
+    );
     expect(created.role).toBe("player");
     expect(created.displayName).not.toContain("<");
     expect(await organizationRepository.isMember(org.id, created.id)).toBe(true);

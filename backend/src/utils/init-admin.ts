@@ -26,11 +26,7 @@ function logCredentials(email: string, password: string, hint: string): void {
  * counterpart, so we look the email up instead of inserting blindly.
  */
 async function ensureAuthUser(email: string): Promise<string> {
-  const [existing] = await db
-    .select({ id: user.id })
-    .from(user)
-    .where(eq(user.email, email))
-    .limit(1);
+  const [existing] = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
 
   if (existing) return existing.id;
 
@@ -46,18 +42,12 @@ async function ensureAuthUser(email: string): Promise<string> {
 }
 
 /** Writes the password hash on the credential account, creating it if missing. */
-async function setCredentialPassword(
-  userId: string,
-  email: string,
-  password: string,
-): Promise<void> {
+async function setCredentialPassword(userId: string, email: string, password: string): Promise<void> {
   const hashedPassword = await hashPassword(password);
   const updated = await db
     .update(account)
     .set({ password: hashedPassword })
-    .where(
-      and(eq(account.userId, userId), eq(account.providerId, "credential")),
-    )
+    .where(and(eq(account.userId, userId), eq(account.providerId, "credential")))
     .returning({ id: account.id });
 
   if (updated.length > 0) return;
@@ -142,18 +132,10 @@ export async function clearBootstrapPending(externalId: string): Promise<void> {
   const cleared = await db
     .update(appUsers)
     .set({ bootstrapPending: false })
-    .where(
-      and(
-        eq(appUsers.externalId, externalId),
-        eq(appUsers.bootstrapPending, true),
-      ),
-    )
+    .where(and(eq(appUsers.externalId, externalId), eq(appUsers.bootstrapPending, true)))
     .returning({ id: appUsers.id });
 
   if (cleared.length > 0) {
-    logger.info(
-      { externalId },
-      "Initial admin signed in for the first time: startup password rotation disabled.",
-    );
+    logger.info({ externalId }, "Initial admin signed in for the first time: startup password rotation disabled.");
   }
 }

@@ -41,9 +41,7 @@ function entryPlayer(entryId: string, playerId: string) {
 
 /** n matches on `entryId` vs `oppEntryId`, the first `wins` of them won by the player. */
 function series(prefix: string, entryId: string, oppEntryId: string, n: number, wins: number) {
-  return Array.from({ length: n }, (_, i) =>
-    result(`${prefix}${i}`, entryId, oppEntryId, i < wins ? "A" : "B"),
-  );
+  return Array.from({ length: n }, (_, i) => result(`${prefix}${i}`, entryId, oppEntryId, i < wins ? "A" : "B"));
 }
 
 function relation(playerId: string, count: number, wins: number): PlayerRelationStat {
@@ -64,19 +62,13 @@ describe("rankRelationsByWeightedRate", () => {
   const byWinRate = (r: PlayerRelationStat) => r.wins / r.count;
 
   it("drops relations below the 3-match threshold", () => {
-    const ranked = rankRelationsByWeightedRate(
-      [relation("perfect", 2, 2), relation("solid", 3, 2)],
-      byWinRate,
-    );
+    const ranked = rankRelationsByWeightedRate([relation("perfect", 2, 2), relation("solid", 3, 2)], byWinRate);
     expect(ranked.map((r) => r.playerId)).toEqual(["solid"]);
   });
 
   it("ranks a long good record above a short perfect one", () => {
     // 28 × 82% → 0.82 × √28 ≈ 4.34 ; 4 × 100% → 1 × √4 = 2
-    const ranked = rankRelationsByWeightedRate(
-      [relation("lucky", 4, 4), relation("proven", 28, 23)],
-      byWinRate,
-    );
+    const ranked = rankRelationsByWeightedRate([relation("lucky", 4, 4), relation("proven", 28, 23)], byWinRate);
     expect(ranked.map((r) => r.playerId)).toEqual(["proven", "lucky"]);
   });
 
@@ -105,16 +97,11 @@ describe("rankRelationsByWeightedRate", () => {
     });
 
     // Same rate, same sample: the more decisive record wins, id or not.
-    const byDraws = rankRelationsByWeightedRate(
-      [named("a", "Zoe"), named("z", "Alice", 2)],
-      byWinRate,
-    );
+    const byDraws = rankRelationsByWeightedRate([named("a", "Zoe"), named("z", "Alice", 2)], byWinRate);
     expect(byDraws[0]!.playerId).toBe("z");
 
     // Nothing left to compare: the id closes the chain.
-    expect(
-      rankRelationsByWeightedRate([named("z", "Zoe"), named("a", "Alice")], byWinRate)[0]!.playerId,
-    ).toBe("a");
+    expect(rankRelationsByWeightedRate([named("z", "Zoe"), named("a", "Alice")], byWinRate)[0]!.playerId).toBe("a");
   });
 
   it("ignores display names, so renaming never reshuffles the ranking", () => {
@@ -127,10 +114,7 @@ describe("rankRelationsByWeightedRate", () => {
       ["Alice", "Zoe"],
       ["Zoe", "Alice"],
     ]) {
-      const ranked = rankRelationsByWeightedRate(
-        [named("z", nameOfZ!), named("a", nameOfA!)],
-        byWinRate,
-      );
+      const ranked = rankRelationsByWeightedRate([named("z", nameOfZ!), named("a", nameOfA!)], byWinRate);
       expect(ranked.map((r) => r.playerId)).toEqual(["a", "z"]);
     }
   });
@@ -163,12 +147,7 @@ describe("computePartnerStats", () => {
       ...series("p3_", "e3", "eOpp", 2, 2), // P3: 100% over 2 → below threshold
     ];
 
-    const { best, frequent } = await (service as any).computePartnerStats(
-      matchResults,
-      ["e1", "e2", "e3"],
-      "A",
-      50,
-    );
+    const { best, frequent } = await (service as any).computePartnerStats(matchResults, ["e1", "e2", "e3"], "A", 50);
 
     expect(best.map((p: PlayerRelationStat) => p.playerId)).toEqual(["P2", "P1"]);
     expect(best[0]).toMatchObject({ count: 9, wins: 7, winRate: 78, chemistryDelta: 28 });

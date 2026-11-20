@@ -76,11 +76,7 @@ export class MatchResultRepository {
   /**
    * Mark as reported
    */
-  async markAsReported(
-    matchId: string,
-    reportedBy: string,
-    reportProof?: string
-  ) {
+  async markAsReported(matchId: string, reportedBy: string, reportProof?: string) {
     return await this.update(matchId, {
       reportedBy,
       reportedAt: new Date(),
@@ -94,7 +90,7 @@ export class MatchResultRepository {
   async markAsFinalized(
     matchId: string,
     finalizedBy: string,
-    finalizationReason: "consensus" | "auto_validation" | "admin_override" | "trust_score"
+    finalizationReason: "consensus" | "auto_validation" | "admin_override" | "trust_score",
   ) {
     return await this.update(matchId, {
       finalizedBy,

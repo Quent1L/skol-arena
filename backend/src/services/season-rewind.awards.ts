@@ -166,9 +166,7 @@ export function computePerformanceAwards(
 
 function upsetAward(aggregates: PlayerAggregate[], directory: Directory): RewindDatedAward | null {
   const withUpset = aggregates.filter((agg) => agg.biggestUpsetGap !== null);
-  const best = bestCandidate(
-    withUpset.map((agg) => ({ aggregate: agg, value: agg.biggestUpsetGap!.mmrGap })),
-  );
+  const best = bestCandidate(withUpset.map((agg) => ({ aggregate: agg, value: agg.biggestUpsetGap!.mmrGap })));
   const base = toAward(best, directory);
   if (!base || !best) return null;
 
@@ -204,11 +202,7 @@ function pairOutranks(candidate: PairCandidate, best: PairCandidate): boolean {
   return a.bId < b.bId;
 }
 
-function bestPair(
-  tallies: PairTally[],
-  minMatches: number,
-  scoreOf: (tally: PairTally) => number,
-): PairTally | null {
+function bestPair(tallies: PairTally[], minMatches: number, scoreOf: (tally: PairTally) => number): PairTally | null {
   let best: PairCandidate | null = null;
   for (const tally of tallies) {
     if (tally.matches < minMatches) continue;
@@ -219,10 +213,7 @@ function bestPair(
 }
 
 /** The most played duel of the season, whoever won it. */
-export function computeRivalry(
-  rivalries: PairTally[],
-  directory: Directory,
-): RewindPairAward | null {
+export function computeRivalry(rivalries: PairTally[], directory: Directory): RewindPairAward | null {
   const best = bestPair(rivalries, REWIND_MIN_MATCHES_RIVALRY, (tally) => tally.matches);
   if (!best) return null;
 
@@ -290,10 +281,7 @@ export function computeCombatAwards(
 // Endurance
 // ============================================
 
-export function computeEnduranceAwards(
-  aggregates: PlayerAggregate[],
-  directory: Directory,
-): RewindEnduranceAwards {
+export function computeEnduranceAwards(aggregates: PlayerAggregate[], directory: Directory): RewindEnduranceAwards {
   return {
     marathon: award(aggregates, directory, (agg) => agg.matchesPlayed),
     topOneKing: award(aggregates, directory, (agg) => agg.matchesInTop1),
@@ -374,22 +362,14 @@ export function percentileEntry(values: number[], value: number): RewindPercenti
  * few players to compare against, the whole field is used: a distorted
  * percentile still beats one computed against nobody.
  */
-export function percentilePool(
-  aggregates: PlayerAggregate[],
-  target: PlayerAggregate,
-): PlayerAggregate[] {
-  const eligible = aggregates.filter(
-    (agg) => agg.matchesPlayed >= REWIND_MIN_MATCHES_PERCENTILE,
-  );
+export function percentilePool(aggregates: PlayerAggregate[], target: PlayerAggregate): PlayerAggregate[] {
+  const eligible = aggregates.filter((agg) => agg.matchesPlayed >= REWIND_MIN_MATCHES_PERCENTILE);
   if (eligible.length < 2) return aggregates;
   if (eligible.some((agg) => agg.playerId === target.playerId)) return eligible;
   return [...eligible, target];
 }
 
-export function computePercentiles(
-  aggregates: PlayerAggregate[],
-  target: PlayerAggregate,
-): RewindPercentiles {
+export function computePercentiles(aggregates: PlayerAggregate[], target: PlayerAggregate): RewindPercentiles {
   const progression = (agg: PlayerAggregate) => agg.finalMmr - agg.initialMmr;
   // Activity is not a rate: a player with one match genuinely is last on matches
   // played, so that percentile keeps the whole field.
@@ -446,9 +426,7 @@ export function awardsWonBy(playerId: string, groups: AwardGroups): RewindAwardK
     ["fairPlayWorst", groups.votes?.fairPlayWorst ?? null],
   ];
 
-  const won = single
-    .filter(([, value]) => value?.player.playerId === playerId)
-    .map(([key]) => key);
+  const won = single.filter(([, value]) => value?.player.playerId === playerId).map(([key]) => key);
 
   const holdsPair = (award: { players: [RewindPlayerRef, RewindPlayerRef] } | null) =>
     award?.players.some((player) => player.playerId === playerId) ?? false;

@@ -71,7 +71,11 @@ export class MatchPlayerFactsRepository {
   }
 
   /** Like `listForPlayerSeason`, over every season of a discipline. */
-  async listForPlayerDiscipline(disciplineId: string, playerId: string, upTo: Date): Promise<Record<string, unknown>[]> {
+  async listForPlayerDiscipline(
+    disciplineId: string,
+    playerId: string,
+    upTo: Date,
+  ): Promise<Record<string, unknown>[]> {
     const rows = await db
       .select({ facts: matchPlayerFacts.facts })
       .from(matchPlayerFacts)

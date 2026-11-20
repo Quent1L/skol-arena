@@ -70,7 +70,11 @@ export type DescribeOptions = {
  * summary and the shape it returns.
  */
 export function describe(options: DescribeOptions): MiddlewareHandler {
-  const { status = 200, description, schema } = options.success ?? {
+  const {
+    status = 200,
+    description,
+    schema,
+  } = options.success ?? {
     description: "Success",
   };
 
@@ -81,9 +85,7 @@ export function describe(options: DescribeOptions): MiddlewareHandler {
     responses: {
       [status]: {
         description,
-        ...(schema
-          ? { content: { "application/json": { schema: resolver(schema) } } }
-          : {}),
+        ...(schema ? { content: { "application/json": { schema: resolver(schema) } } } : {}),
       },
       400: ref(400),
       ...(options.auth ? { 401: ref(401) } : {}),

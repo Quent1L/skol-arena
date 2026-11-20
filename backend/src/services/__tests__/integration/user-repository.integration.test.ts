@@ -57,7 +57,10 @@ describe("userRepository (integration)", () => {
   it("creates and updates a profile", async () => {
     const created = await userRepository.createAppUser({ displayName: "Dan", shortName: "DAN" });
     expect(created?.id).toBeDefined();
-    const updated = await userRepository.updateAppUser(created!.id, { displayName: "Daniel", role: "tournament_admin" });
+    const updated = await userRepository.updateAppUser(created!.id, {
+      displayName: "Daniel",
+      role: "tournament_admin",
+    });
     expect(updated).toMatchObject({ displayName: "Daniel", role: "tournament_admin" });
   });
 
@@ -168,7 +171,10 @@ describe("userRepository (integration)", () => {
 
   describe("admin detail and deletion blockers", () => {
     it("returns the detail with organisation memberships", async () => {
-      const [org] = await testDb.insert(organizations).values({ name: `Org-${tag}`, createdBy: admin.app.id }).returning();
+      const [org] = await testDb
+        .insert(organizations)
+        .values({ name: `Org-${tag}`, createdBy: admin.app.id })
+        .returning();
       await testDb.insert(organizationMembers).values({ organizationId: org!.id, userId: ann.app.id });
 
       const detail = await userRepository.getUserAdminDetail(ann.app.id);
@@ -187,7 +193,10 @@ describe("userRepository (integration)", () => {
     it("archives a user, dropping the identity but keeping the profile", async () => {
       const eve = await createUser("Eve");
       await testDb.insert(session).values({
-        id: `s-${tag}`, token: `tok-${tag}`, userId: eve.auth.id, expiresAt: new Date(Date.now() + 1000),
+        id: `s-${tag}`,
+        token: `tok-${tag}`,
+        userId: eve.auth.id,
+        expiresAt: new Date(Date.now() + 1000),
       } as never);
       await userRepository.revokeSessions(eve.auth.id);
       expect(await testDb.select().from(session).where(eq(session.userId, eve.auth.id))).toHaveLength(0);

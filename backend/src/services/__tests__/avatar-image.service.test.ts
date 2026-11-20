@@ -2,13 +2,7 @@ import { describe, it, expect, afterEach } from "bun:test";
 import { avatarImageService, sniffImageFormat, withPipelineSlot } from "../avatar-image.service";
 import { formatUploadLimit } from "../../config/avatar";
 import { AppError } from "../../types/errors";
-import {
-  makeJpeg,
-  makePng,
-  makePngHeaderOnly,
-  makeWebp,
-  PNG_SIGNATURE,
-} from "./helpers/image-fixtures";
+import { makeJpeg, makePng, makePngHeaderOnly, makeWebp, PNG_SIGNATURE } from "./helpers/image-fixtures";
 
 const text = (s: string) => new TextEncoder().encode(s);
 

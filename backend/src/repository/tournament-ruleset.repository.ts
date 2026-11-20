@@ -1,17 +1,7 @@
 import { and, asc, eq, inArray, isNotNull, lt, sql } from "drizzle-orm";
 import { db } from "../config/database";
-import {
-  disciplines,
-  matches,
-  outcomeReasons,
-  outcomeTypes,
-  tournamentRulesets,
-  tournaments,
-} from "../db/schema";
-import type {
-  MatchStatus,
-  TournamentRulesetPayload,
-} from "@skol-arena/shared/types/index";
+import { disciplines, matches, outcomeReasons, outcomeTypes, tournamentRulesets, tournaments } from "../db/schema";
+import type { MatchStatus, TournamentRulesetPayload } from "@skol-arena/shared/types/index";
 
 const EMPTY_PAYLOAD: TournamentRulesetPayload = { discipline: null, outcomeTypes: [] };
 
@@ -57,12 +47,7 @@ export class TournamentRulesetRepository {
     const cleared = await db
       .update(tournamentRulesets)
       .set({ recalcPendingAt: null })
-      .where(
-        and(
-          isNotNull(tournamentRulesets.recalcPendingAt),
-          lt(tournamentRulesets.recalcPendingAt, olderThan),
-        ),
-      )
+      .where(and(isNotNull(tournamentRulesets.recalcPendingAt), lt(tournamentRulesets.recalcPendingAt, olderThan)))
       .returning({ tournamentId: tournamentRulesets.tournamentId });
     return cleared.length;
   }
@@ -75,9 +60,7 @@ export class TournamentRulesetRepository {
    * outcome types are included on purpose: a match already tagged with one still
    * has to resolve its points and its multiplier.
    */
-  async buildPayloadForDiscipline(
-    disciplineId: string | null | undefined,
-  ): Promise<TournamentRulesetPayload> {
+  async buildPayloadForDiscipline(disciplineId: string | null | undefined): Promise<TournamentRulesetPayload> {
     if (!disciplineId) return EMPTY_PAYLOAD;
 
     const discipline = await db.query.disciplines.findFirst({
@@ -140,12 +123,7 @@ export class TournamentRulesetRepository {
       })
       .from(tournaments)
       .leftJoin(tournamentRulesets, eq(tournamentRulesets.tournamentId, tournaments.id))
-      .where(
-        and(
-          eq(tournaments.disciplineId, disciplineId),
-          sql`${tournaments.status} <> 'finished'`,
-        ),
-      )
+      .where(and(eq(tournaments.disciplineId, disciplineId), sql`${tournaments.status} <> 'finished'`))
       .orderBy(asc(tournaments.name));
 
     return rows;
@@ -173,9 +151,7 @@ export class TournamentRulesetRepository {
       .where(eq(matches.tournamentId, tournamentId));
 
     const known = new Set(base.outcomeTypes.map((outcome) => outcome.id));
-    const missing = referenced
-      .map((row) => row.id)
-      .filter((id): id is string => Boolean(id) && !known.has(id!));
+    const missing = referenced.map((row) => row.id).filter((id): id is string => Boolean(id) && !known.has(id!));
 
     if (missing.length === 0) return base;
 

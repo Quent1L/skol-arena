@@ -15,8 +15,7 @@ beforeEach(() => {
     sentPayloads.push(payload);
     return undefined;
   };
-  (userRepository as any).getById = async (id: string) =>
-    ({ id, displayName: `User-${id}` });
+  (userRepository as any).getById = async (id: string) => ({ id, displayName: `User-${id}` });
   (matchRepository as any).getParticipationsByMatchId = async () => [
     { playerId: "p1", teamSide: "A" },
     { playerId: "p2", teamSide: "A" },
@@ -189,13 +188,7 @@ describe("MatchNotificationBuilder", () => {
 
     await matchNotificationBuilder.notifyPostFinalizationDispute("m-8", "p1");
 
-    expect(sentPayloads.map((p) => p.userId).sort()).toEqual([
-      "admin-1",
-      "admin-2",
-      "p2",
-      "p3",
-      "p4",
-    ]);
+    expect(sentPayloads.map((p) => p.userId).sort()).toEqual(["admin-1", "admin-2", "p2", "p3", "p4"]);
     for (const payload of sentPayloads) {
       expect(payload.type).toBe("MATCH_POST_DISPUTE");
       expect(payload.matchId).toBe("m-8");
@@ -211,18 +204,12 @@ describe("MatchNotificationBuilder", () => {
       tournamentId: "t-1",
       status: "disputed",
     });
-    (notificationService as any).hasUnreadOfTypeForMatch = async (userId: string) =>
-      userId === "p3";
+    (notificationService as any).hasUnreadOfTypeForMatch = async (userId: string) => userId === "p3";
 
     await matchNotificationBuilder.notifyMatchMessage("m-7", "p1");
 
     // p1 is the author, p3 already has a pending one
-    expect(sentPayloads.map((p) => p.userId).sort()).toEqual([
-      "admin-1",
-      "admin-2",
-      "p2",
-      "p4",
-    ]);
+    expect(sentPayloads.map((p) => p.userId).sort()).toEqual(["admin-1", "admin-2", "p2", "p4"]);
     expect(sentPayloads[0].type).toBe("MATCH_MESSAGE");
     expect(sentPayloads[0].requiresAction).toBe(false);
   });

@@ -76,9 +76,7 @@ describe("MatchMessageService - access", () => {
   it("rejects a user who is neither a participant nor an organizer", async () => {
     (matchRepository as any).isUserInMatch = async () => false;
 
-    await expect(matchMessageService.list("m-1", "outsider")).rejects.toThrow(
-      ForbiddenError,
-    );
+    await expect(matchMessageService.list("m-1", "outsider")).rejects.toThrow(ForbiddenError);
   });
 
   it("lets a tournament organizer read a match they do not play", async () => {
@@ -108,22 +106,17 @@ describe("MatchMessageService - posting", () => {
   });
 
   it("refuses an empty body", async () => {
-    await expect(matchMessageService.post("m-1", "p1", "   ")).rejects.toThrow(
-      BadRequestError,
-    );
+    await expect(matchMessageService.post("m-1", "p1", "   ")).rejects.toThrow(BadRequestError);
   });
 
   it("refuses a body over the maximum length", async () => {
-    await expect(
-      matchMessageService.post("m-1", "p1", "x".repeat(1001)),
-    ).rejects.toThrow(BadRequestError);
+    await expect(matchMessageService.post("m-1", "p1", "x".repeat(1001))).rejects.toThrow(BadRequestError);
   });
 
   it("keeps the thread open on a match finalized less than a week ago", async () => {
     const finalizedAt = new Date();
     finalizedAt.setDate(finalizedAt.getDate() - 2);
-    (matchRepository as any).getById = async () =>
-      reportedMatch({ status: "finalized", result: { finalizedAt } });
+    (matchRepository as any).getById = async () => reportedMatch({ status: "finalized", result: { finalizedAt } });
 
     await expect(matchMessageService.post("m-1", "p1", "hello")).resolves.toBeDefined();
   });
@@ -131,12 +124,9 @@ describe("MatchMessageService - posting", () => {
   it("closes the thread once the dispute window has passed", async () => {
     const finalizedAt = new Date();
     finalizedAt.setDate(finalizedAt.getDate() - 8);
-    (matchRepository as any).getById = async () =>
-      reportedMatch({ status: "finalized", result: { finalizedAt } });
+    (matchRepository as any).getById = async () => reportedMatch({ status: "finalized", result: { finalizedAt } });
 
-    await expect(matchMessageService.post("m-1", "p1", "hello")).rejects.toThrow(
-      BadRequestError,
-    );
+    await expect(matchMessageService.post("m-1", "p1", "hello")).rejects.toThrow(BadRequestError);
   });
 });
 
@@ -158,8 +148,6 @@ describe("MatchMessageService - system messages", () => {
       throw new Error("db down");
     };
 
-    await expect(
-      matchMessageService.postSystem("m-1", "matchMessages.MATCH_FINALIZED", {}),
-    ).resolves.toBeUndefined();
+    await expect(matchMessageService.postSystem("m-1", "matchMessages.MATCH_FINALIZED", {})).resolves.toBeUndefined();
   });
 });

@@ -46,7 +46,7 @@ describe("handleDatabaseError", () => {
   });
 
   it("detects the name constraint from the detail text as well", () => {
-    expect(() => handleDatabaseError(pg({ detail: 'Key (name)=(Cup) already exists.' }), context)).toThrow(
+    expect(() => handleDatabaseError(pg({ detail: "Key (name)=(Cup) already exists." }), context)).toThrow(
       ConflictError,
     );
   });

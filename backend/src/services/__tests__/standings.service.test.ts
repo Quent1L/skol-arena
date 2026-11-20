@@ -146,12 +146,8 @@ mock.module("../../repository/tournament-ruleset.repository", () => ({
     getSnapshotContext: mock(() =>
       Promise.resolve({ id: "tournament-1", status: "ongoing", mode: "championship", disciplineId: null }),
     ),
-    getByTournamentId: mock(() =>
-      Promise.resolve({ payload: { discipline: null, outcomeTypes: rulesetOutcomes } }),
-    ),
-    buildPayloadForDiscipline: mock(() =>
-      Promise.resolve({ discipline: null, outcomeTypes: rulesetOutcomes }),
-    ),
+    getByTournamentId: mock(() => Promise.resolve({ payload: { discipline: null, outcomeTypes: rulesetOutcomes } })),
+    buildPayloadForDiscipline: mock(() => Promise.resolve({ discipline: null, outcomeTypes: rulesetOutcomes })),
     upsert: mock(() => Promise.resolve()),
     setRecalcPending: mock(() => Promise.resolve()),
   },
@@ -235,7 +231,9 @@ describe("StandingsService", () => {
   describe("mode static", () => {
     it("side A win: A earns 3 pts, B earns 0 pt", async () => {
       mockRepo.getMatchesWithSides.mockImplementation(() =>
-        Promise.resolve([makeMatchWithSides("m1", "A", { teamId: "team-a", score: 3 }, { teamId: "team-b", score: 1 })]),
+        Promise.resolve([
+          makeMatchWithSides("m1", "A", { teamId: "team-a", score: 3 }, { teamId: "team-b", score: 1 }),
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -261,7 +259,9 @@ describe("StandingsService", () => {
 
     it("side B win: B earns 3 pts, A earns 0 pt", async () => {
       mockRepo.getMatchesWithSides.mockImplementation(() =>
-        Promise.resolve([makeMatchWithSides("m1", "B", { teamId: "team-a", score: 1 }, { teamId: "team-b", score: 3 })]),
+        Promise.resolve([
+          makeMatchWithSides("m1", "B", { teamId: "team-a", score: 1 }, { teamId: "team-b", score: 3 }),
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -273,7 +273,9 @@ describe("StandingsService", () => {
 
     it("draw match: each team earns 1 pt", async () => {
       mockRepo.getMatchesWithSides.mockImplementation(() =>
-        Promise.resolve([makeMatchWithSides("m1", null, { teamId: "team-a", score: 2 }, { teamId: "team-b", score: 2 })]),
+        Promise.resolve([
+          makeMatchWithSides("m1", null, { teamId: "team-a", score: 2 }, { teamId: "team-b", score: 2 }),
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -286,7 +288,9 @@ describe("StandingsService", () => {
     it("pointsAwarded overrides the tournament's points", async () => {
       mockRepo.getMatchesWithSides.mockImplementation(() =>
         Promise.resolve([
-          makeMatchWithSides("m1", "A",
+          makeMatchWithSides(
+            "m1",
+            "A",
             { teamId: "team-a", score: 3, pointsAwarded: 5 },
             { teamId: "team-b", score: 1, pointsAwarded: 2 },
           ),
@@ -306,7 +310,9 @@ describe("StandingsService", () => {
         }),
       );
       mockRepo.getMatchesWithSides.mockImplementation(() =>
-        Promise.resolve([makeMatchWithSides("m1", "A", { teamId: "team-a", score: 2 }, { teamId: "team-b", score: 0 })]),
+        Promise.resolve([
+          makeMatchWithSides("m1", "A", { teamId: "team-a", score: 2 }, { teamId: "team-b", score: 0 }),
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -342,7 +348,13 @@ describe("StandingsService", () => {
     it("ignores matches with fewer than 2 sides", async () => {
       // Simulate a match with only 1 side
       mockRepo.getMatchesWithSides.mockImplementation(() =>
-        Promise.resolve([{ id: "m1", winnerSide: "A", sides: [{ position: 1, score: 3, pointsAwarded: null, entry: { teamId: "team-a", players: [] } }] }]),
+        Promise.resolve([
+          {
+            id: "m1",
+            winnerSide: "A",
+            sides: [{ position: 1, score: 3, pointsAwarded: null, entry: { teamId: "team-a", players: [] } }],
+          },
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -385,7 +397,9 @@ describe("StandingsService", () => {
 
     it("ties broken by id on a draw with all criteria equal", async () => {
       mockRepo.getMatchesWithSides.mockImplementation(() =>
-        Promise.resolve([makeMatchWithSides("m1", null, { teamId: "team-a", score: 5 }, { teamId: "team-b", score: 3 })]),
+        Promise.resolve([
+          makeMatchWithSides("m1", null, { teamId: "team-a", score: 5 }, { teamId: "team-b", score: 3 }),
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -516,7 +530,12 @@ describe("StandingsService", () => {
               { playerId: "p-a2", pointsAwarded: 3, countsForRanking: true },
             ],
             sides: [
-              { position: 1, score: 3, entryId: "entry-a", entry: { id: "entry-a", players: [{ playerId: "p-a1" }, { playerId: "p-a2" }] } },
+              {
+                position: 1,
+                score: 3,
+                entryId: "entry-a",
+                entry: { id: "entry-a", players: [{ playerId: "p-a1" }, { playerId: "p-a2" }] },
+              },
               { position: 2, score: 0, entryId: "entry-b", entry: { id: "entry-b", players: [] } },
             ],
           },
@@ -546,18 +565,27 @@ describe("StandingsService", () => {
   // ── Classement provisoire vs officiel ─────────────────────────────────────
 
   describe("provisional vs official", () => {
-    const finalizedMatch = makeMatchWithSides("m-final", "A", { teamId: "team-a", score: 3 }, { teamId: "team-b", score: 1 });
-    const reportedMatch = makeMatchWithSides("m-reported", "B", { teamId: "team-a", score: 0 }, { teamId: "team-b", score: 2 });
+    const finalizedMatch = makeMatchWithSides(
+      "m-final",
+      "A",
+      { teamId: "team-a", score: 3 },
+      { teamId: "team-b", score: 1 },
+    );
+    const reportedMatch = makeMatchWithSides(
+      "m-reported",
+      "B",
+      { teamId: "team-a", score: 0 },
+      { teamId: "team-b", score: 2 },
+    );
 
     beforeEach(() => {
-      mockRepo.getMatchesWithSides.mockImplementation(
-        (_id: any, statuses: any) =>
-          Promise.resolve(
-            [
-              { ...finalizedMatch, status: "finalized" },
-              { ...reportedMatch, status: "reported" },
-            ].filter((m: any) => statuses.includes(m.status)),
-          ),
+      mockRepo.getMatchesWithSides.mockImplementation((_id: any, statuses: any) =>
+        Promise.resolve(
+          [
+            { ...finalizedMatch, status: "finalized" },
+            { ...reportedMatch, status: "reported" },
+          ].filter((m: any) => statuses.includes(m.status)),
+        ),
       );
     });
 
@@ -607,7 +635,9 @@ describe("StandingsService", () => {
         Promise.resolve({ ...DEFAULT_TOURNAMENT, scoreEnabled: false }),
       );
       mockRepo.getMatchesWithSides.mockImplementation(() =>
-        Promise.resolve([makeMatchWithSides("m1", "A", { teamId: "team-a", score: 3 }, { teamId: "team-b", score: 1 })]),
+        Promise.resolve([
+          makeMatchWithSides("m1", "A", { teamId: "team-a", score: 3 }, { teamId: "team-b", score: 1 }),
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -631,11 +661,13 @@ describe("StandingsService", () => {
       mockRepo.getTournamentEntries.mockImplementation(() =>
         Promise.resolve([
           {
-            id: "entry-a", tournamentId: "tournament-1",
+            id: "entry-a",
+            tournamentId: "tournament-1",
             players: [{ playerId: "p-a", player: { id: "p-a", displayName: "A", shortName: "PA" } }],
           },
           {
-            id: "entry-b", tournamentId: "tournament-1",
+            id: "entry-b",
+            tournamentId: "tournament-1",
             players: [{ playerId: "p-b", player: { id: "p-b", displayName: "B", shortName: "PB" } }],
           },
         ]),
@@ -659,7 +691,9 @@ describe("StandingsService", () => {
         Promise.resolve({ ...DEFAULT_TOURNAMENT, allowDraw: false }),
       );
       mockRepo.getMatchesWithSides.mockImplementation(() =>
-        Promise.resolve([makeMatchWithSides("m1", null, { teamId: "team-a", score: 1 }, { teamId: "team-b", score: 1 })]),
+        Promise.resolve([
+          makeMatchWithSides("m1", null, { teamId: "team-a", score: 1 }, { teamId: "team-b", score: 1 }),
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -690,7 +724,9 @@ describe("StandingsService", () => {
 
     it("victoryQuality: win → +points, loss → −points", async () => {
       mockRepo.getMatchesWithSides.mockImplementation(() =>
-        Promise.resolve([makeMatchWithOutcomeType("m1", "A", { teamId: "team-a", score: 1 }, { teamId: "team-b", score: 0 }, true, 2)]),
+        Promise.resolve([
+          makeMatchWithOutcomeType("m1", "A", { teamId: "team-a", score: 1 }, { teamId: "team-b", score: 0 }, true, 2),
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -701,7 +737,9 @@ describe("StandingsService", () => {
 
     it("victoryQuality: non-default type with points=1 → +1 win, −1 loss", async () => {
       mockRepo.getMatchesWithSides.mockImplementation(() =>
-        Promise.resolve([makeMatchWithOutcomeType("m1", "A", { teamId: "team-a", score: 1 }, { teamId: "team-b", score: 0 }, false, 1)]),
+        Promise.resolve([
+          makeMatchWithOutcomeType("m1", "A", { teamId: "team-a", score: 1 }, { teamId: "team-b", score: 0 }, false, 1),
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -775,7 +813,9 @@ describe("StandingsService", () => {
 
     it("H2H draw: counted both ways", async () => {
       mockRepo.getMatchesWithSides.mockImplementation(() =>
-        Promise.resolve([makeMatchWithSides("m1", null, { teamId: "team-a", score: 1 }, { teamId: "team-b", score: 1 })]),
+        Promise.resolve([
+          makeMatchWithSides("m1", null, { teamId: "team-a", score: 1 }, { teamId: "team-b", score: 1 }),
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -839,11 +879,13 @@ describe("StandingsService", () => {
   describe("flex mode — tiebreakers", () => {
     const flexEntries1v1 = [
       {
-        id: "entry-a", tournamentId: "tournament-1",
+        id: "entry-a",
+        tournamentId: "tournament-1",
         players: [{ playerId: "p-a", player: { id: "p-a", displayName: "A", shortName: "PA" } }],
       },
       {
-        id: "entry-b", tournamentId: "tournament-1",
+        id: "entry-b",
+        tournamentId: "tournament-1",
         players: [{ playerId: "p-b", player: { id: "p-b", displayName: "B", shortName: "PB" } }],
       },
     ];
@@ -857,10 +899,12 @@ describe("StandingsService", () => {
 
     it("victoryQuality flex: outcomeType.points=2 → +2 win, −2 loss", async () => {
       mockRepo.getPlayerPointsForStandings.mockImplementation(() =>
-        Promise.resolve([{
-          ...makeFlexMatchWithPoints("m1", "A", ["p-a"], ["p-b"], 1, 0, 3, 0),
-          outcomeTypeId: registerOutcome("ot-m1", { isDefault: false, points: 2 }),
-        }]),
+        Promise.resolve([
+          {
+            ...makeFlexMatchWithPoints("m1", "A", ["p-a"], ["p-b"], 1, 0, 3, 0),
+            outcomeTypeId: registerOutcome("ot-m1", { isDefault: false, points: 2 }),
+          },
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -885,7 +929,8 @@ describe("StandingsService", () => {
       const flexEntries3 = [
         ...flexEntries1v1,
         {
-          id: "entry-c", tournamentId: "tournament-1",
+          id: "entry-c",
+          tournamentId: "tournament-1",
           players: [{ playerId: "p-c", player: { id: "p-c", displayName: "C", shortName: "PC" } }],
         },
       ];
@@ -909,18 +954,21 @@ describe("StandingsService", () => {
       // p-a.buchholz should be (3+1)/2 = 2, not 3+1 = 4
       const flexEntries2v2 = [
         {
-          id: "entry-a", tournamentId: "tournament-1",
+          id: "entry-a",
+          tournamentId: "tournament-1",
           players: [{ playerId: "p-a", player: { id: "p-a", displayName: "A", shortName: "PA" } }],
         },
         {
-          id: "entry-bc", tournamentId: "tournament-1",
+          id: "entry-bc",
+          tournamentId: "tournament-1",
           players: [
             { playerId: "p-b", player: { id: "p-b", displayName: "B", shortName: "PB" } },
             { playerId: "p-c", player: { id: "p-c", displayName: "C", shortName: "PC" } },
           ],
         },
         {
-          id: "entry-d", tournamentId: "tournament-1",
+          id: "entry-d",
+          tournamentId: "tournament-1",
           players: [{ playerId: "p-d", player: { id: "p-d", displayName: "D", shortName: "PD" } }],
         },
       ];
@@ -929,7 +977,10 @@ describe("StandingsService", () => {
       mockRepo.getPlayerPointsForStandings.mockImplementation(() =>
         Promise.resolve([
           {
-            id: "m1", winnerSide: "A" as const, outcomeTypeId: null, outcomeType: null,
+            id: "m1",
+            winnerSide: "A" as const,
+            outcomeTypeId: null,
+            outcomeType: null,
             playerPoints: [
               { playerId: "p-a", pointsAwarded: 3, countsForRanking: true },
               { playerId: "p-b", pointsAwarded: 0, countsForRanking: true },
@@ -937,11 +988,19 @@ describe("StandingsService", () => {
             ],
             sides: [
               { position: 1, score: 3, entryId: "entry-a", entry: { id: "entry-a", players: [{ playerId: "p-a" }] } },
-              { position: 2, score: 1, entryId: "entry-bc", entry: { id: "entry-bc", players: [{ playerId: "p-b" }, { playerId: "p-c" }] } },
+              {
+                position: 2,
+                score: 1,
+                entryId: "entry-bc",
+                entry: { id: "entry-bc", players: [{ playerId: "p-b" }, { playerId: "p-c" }] },
+              },
             ],
           },
           {
-            id: "m2", winnerSide: "A" as const, outcomeTypeId: null, outcomeType: null,
+            id: "m2",
+            winnerSide: "A" as const,
+            outcomeTypeId: null,
+            outcomeType: null,
             playerPoints: [
               { playerId: "p-b", pointsAwarded: 3, countsForRanking: true },
               { playerId: "p-d", pointsAwarded: 0, countsForRanking: true },
@@ -952,7 +1011,10 @@ describe("StandingsService", () => {
             ],
           },
           {
-            id: "m3", winnerSide: null, outcomeTypeId: null, outcomeType: null,
+            id: "m3",
+            winnerSide: null,
+            outcomeTypeId: null,
+            outcomeType: null,
             playerPoints: [
               { playerId: "p-c", pointsAwarded: 1, countsForRanking: true },
               { playerId: "p-d", pointsAwarded: 1, countsForRanking: true },
@@ -974,17 +1036,19 @@ describe("StandingsService", () => {
 
     it("countsForRanking=false: scores are not counted", async () => {
       mockRepo.getPlayerPointsForStandings.mockImplementation(() =>
-        Promise.resolve([{
-          id: "m1",
-          winnerSide: "A" as const,
-          outcomeTypeId: null,
-          outcomeType: null,
-          playerPoints: [{ playerId: "p-a", pointsAwarded: 0, countsForRanking: false }],
-          sides: [
-            { position: 1, score: 5, entryId: "entry-a", entry: { id: "entry-a", players: [{ playerId: "p-a" }] } },
-            { position: 2, score: 2, entryId: "entry-b", entry: { id: "entry-b", players: [] } },
-          ],
-        }]),
+        Promise.resolve([
+          {
+            id: "m1",
+            winnerSide: "A" as const,
+            outcomeTypeId: null,
+            outcomeType: null,
+            playerPoints: [{ playerId: "p-a", pointsAwarded: 0, countsForRanking: false }],
+            sides: [
+              { position: 1, score: 5, entryId: "entry-a", entry: { id: "entry-a", players: [{ playerId: "p-a" }] } },
+              { position: 2, score: 2, entryId: "entry-b", entry: { id: "entry-b", players: [] } },
+            ],
+          },
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -999,9 +1063,11 @@ describe("StandingsService", () => {
 
     it("countsForRanking=false: buchholz and victoryQuality not incremented", async () => {
       mockRepo.getPlayerPointsForStandings.mockImplementation(() =>
-        Promise.resolve([{
-          ...makeFlexMatchWithPoints("m1", "A", ["p-a"], ["p-b"], 1, 0, 3, 0, false),
-        }]),
+        Promise.resolve([
+          {
+            ...makeFlexMatchWithPoints("m1", "A", ["p-a"], ["p-b"], 1, 0, 3, 0, false),
+          },
+        ]),
       );
 
       const { standings } = await standingsService.getOfficialStandings("tournament-1");
@@ -1082,7 +1148,12 @@ describe("StandingsService", () => {
 
       await standingsService.recalculatePointsInternal("tournament-1");
 
-      const rows = (mockRepo.insertPlayerPoints.mock.calls as any)[0][0] as Array<{ matchId: string; playerId: string; countsForRanking: boolean; pointsAwarded: number }>;
+      const rows = (mockRepo.insertPlayerPoints.mock.calls as any)[0][0] as Array<{
+        matchId: string;
+        playerId: string;
+        countsForRanking: boolean;
+        pointsAwarded: number;
+      }>;
 
       const byMatch = (mid: string) => rows.find((r) => r.matchId === mid && r.playerId === "p-x")!;
 
@@ -1114,16 +1185,30 @@ describe("StandingsService", () => {
       // Same entry, 2 players: p1 and p2 — each has their own independent counter
       mockRepo.getMatchSides.mockImplementation(() =>
         Promise.resolve([
-          { matchId: "m1", entryId: "entry-a", pointsAwarded: null, entry: { players: [{ playerId: "p1" }, { playerId: "p2" }] } },
+          {
+            matchId: "m1",
+            entryId: "entry-a",
+            pointsAwarded: null,
+            entry: { players: [{ playerId: "p1" }, { playerId: "p2" }] },
+          },
           { matchId: "m1", entryId: "entry-b", pointsAwarded: null, entry: { players: [] } },
-          { matchId: "m2", entryId: "entry-a", pointsAwarded: null, entry: { players: [{ playerId: "p1" }, { playerId: "p2" }] } },
+          {
+            matchId: "m2",
+            entryId: "entry-a",
+            pointsAwarded: null,
+            entry: { players: [{ playerId: "p1" }, { playerId: "p2" }] },
+          },
           { matchId: "m2", entryId: "entry-b", pointsAwarded: null, entry: { players: [] } },
         ]),
       );
 
       await standingsService.recalculatePointsInternal("tournament-1");
 
-      const rows = (mockRepo.insertPlayerPoints.mock.calls as any)[0][0] as Array<{ matchId: string; playerId: string; countsForRanking: boolean }>;
+      const rows = (mockRepo.insertPlayerPoints.mock.calls as any)[0][0] as Array<{
+        matchId: string;
+        playerId: string;
+        countsForRanking: boolean;
+      }>;
 
       const get = (pid: string, mid: string) => rows.find((r) => r.playerId === pid && r.matchId === mid)!;
 
@@ -1163,11 +1248,15 @@ describe("StandingsService", () => {
 
       await standingsService.recalculatePointsInternal("tournament-1");
 
-      const rows = (mockRepo.insertPlayerPoints.mock.calls as any)[0][0] as Array<{ matchId: string; playerId: string; countsForRanking: boolean }>;
+      const rows = (mockRepo.insertPlayerPoints.mock.calls as any)[0][0] as Array<{
+        matchId: string;
+        playerId: string;
+        countsForRanking: boolean;
+      }>;
 
       const get = (mid: string) => rows.find((r) => r.matchId === mid && r.playerId === "p-x")!;
 
-      expect(get("m2").countsForRanking).toBe(true);  // older match counted first
+      expect(get("m2").countsForRanking).toBe(true); // older match counted first
       expect(get("m1").countsForRanking).toBe(false); // newer match excluded
     });
 
@@ -1202,7 +1291,27 @@ describe("StandingsService", () => {
 
     it("cache hit: returns the cached value without recalculating matches", async () => {
       const cachedResult = {
-        standings: [{ id: "team-a", name: "Alpha", shortName: "ALPHA", points: 99, wins: 10, draws: 0, losses: 0, scored: 0, conceded: 0, scoreDiff: 0, matchesPlayed: 10, winLossRatio: 10, buchholzScore: 0, victoryQuality: 10, victoryQualityBreakdown: [], winRate: 1, headToHead: {} }],
+        standings: [
+          {
+            id: "team-a",
+            name: "Alpha",
+            shortName: "ALPHA",
+            points: 99,
+            wins: 10,
+            draws: 0,
+            losses: 0,
+            scored: 0,
+            conceded: 0,
+            scoreDiff: 0,
+            matchesPlayed: 10,
+            winLossRatio: 10,
+            buchholzScore: 0,
+            victoryQuality: 10,
+            victoryQualityBreakdown: [],
+            winRate: 1,
+            headToHead: {},
+          },
+        ],
       };
       mockRepo.getComputedData.mockImplementation(() => Promise.resolve(cachedResult as any));
 
@@ -1220,11 +1329,13 @@ describe("StandingsService", () => {
       mockRepo.getTournamentEntries.mockImplementation(() =>
         Promise.resolve([
           {
-            id: "entry-a", tournamentId: "tournament-1",
+            id: "entry-a",
+            tournamentId: "tournament-1",
             players: [{ playerId: "p-shared", player: { id: "p-shared", displayName: "Shared", shortName: "SHR" } }],
           },
           {
-            id: "entry-b", tournamentId: "tournament-1",
+            id: "entry-b",
+            tournamentId: "tournament-1",
             players: [{ playerId: "p-shared", player: { id: "p-shared", displayName: "Shared", shortName: "SHR" } }],
           },
         ]),
@@ -1242,7 +1353,8 @@ describe("StandingsService", () => {
       mockRepo.getTournamentEntries.mockImplementation(() =>
         Promise.resolve([
           {
-            id: "entry-a", tournamentId: "tournament-1",
+            id: "entry-a",
+            tournamentId: "tournament-1",
             players: [{ playerId: "p-a", player: { id: "p-a", displayName: "A", shortName: "PA" } }],
           },
         ]),

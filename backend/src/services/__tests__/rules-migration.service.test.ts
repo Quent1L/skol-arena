@@ -45,7 +45,12 @@ describe("migrateRule — v1 → v2 (line-ups)", () => {
       v1({
         all: [
           { fact: "winnerId", operator: "equal", value: "p1" },
-          { any: [{ fact: "winStreak", operator: "greaterThan", value: 3 }, { fact: "loserId", operator: "equal", value: "p2" }] },
+          {
+            any: [
+              { fact: "winStreak", operator: "greaterThan", value: 3 },
+              { fact: "loserId", operator: "equal", value: "p2" },
+            ],
+          },
         ],
       }),
       1,

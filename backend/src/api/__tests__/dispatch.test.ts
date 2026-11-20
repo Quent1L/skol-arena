@@ -1,11 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { Hono } from "hono";
 
-import {
-  INTERNAL_PREFIX,
-  UNSUPPORTED_VERSION_PATH,
-  withApiVersion,
-} from "../dispatch";
+import { INTERNAL_PREFIX, UNSUPPORTED_VERSION_PATH, withApiVersion } from "../dispatch";
 import { errorHandler } from "../../middleware/error";
 import { BadRequestError, ErrorCode } from "../../types/errors";
 

@@ -44,12 +44,7 @@ beforeEach(() => {
 describe("startJobScheduler", () => {
   it("registers the four schedules", () => {
     startJobScheduler();
-    expect(registered.map((j) => j.pattern)).toEqual([
-      "0 * * * *",
-      "30 * * * *",
-      "0 3 * * *",
-      "30 3 * * *",
-    ]);
+    expect(registered.map((j) => j.pattern)).toEqual(["0 * * * *", "30 * * * *", "0 3 * * *", "30 3 * * *"]);
   });
 
   it("stops every schedule", () => {
@@ -73,20 +68,17 @@ describe("startJobScheduler", () => {
     expect(task).toHaveBeenCalled();
   });
 
-  it.each(["0 * * * *", "30 * * * *", "30 3 * * *"])(
-    "survives a skipped or failing run of %s",
-    async (pattern) => {
-      startJobScheduler();
+  it.each(["0 * * * *", "30 * * * *", "30 3 * * *"])("survives a skipped or failing run of %s", async (pattern) => {
+    startJobScheduler();
 
-      withAdvisoryLock.mockImplementationOnce(async () => ({ ran: false }));
-      await job(pattern).run();
+    withAdvisoryLock.mockImplementationOnce(async () => ({ ran: false }));
+    await job(pattern).run();
 
-      withAdvisoryLock.mockImplementationOnce(async () => {
-        throw new Error("db down");
-      });
-      await expect(job(pattern).run()).resolves.toBeUndefined();
-    },
-  );
+    withAdvisoryLock.mockImplementationOnce(async () => {
+      throw new Error("db down");
+    });
+    await expect(job(pattern).run()).resolves.toBeUndefined();
+  });
 
   it("enqueues the nightly badge reconciliation without forcing it", async () => {
     startJobScheduler();

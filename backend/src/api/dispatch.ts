@@ -71,8 +71,7 @@ export function withApiVersion<F extends FetchLike>(fetch: F): F {
     }
 
     const requested = request.headers.get(API_VERSION_REQUEST_HEADER);
-    const resolved: ApiVersion | null =
-      requested === null ? LATEST_API_VERSION : normalizeVersion(requested);
+    const resolved: ApiVersion | null = requested === null ? LATEST_API_VERSION : normalizeVersion(requested);
 
     url.pathname =
       resolved === null

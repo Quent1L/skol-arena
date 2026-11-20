@@ -13,13 +13,7 @@ export class OrganizationService {
     return await organizationRepository.getAll();
   }
 
-  async joinViaCode(
-    code: string,
-    appUserId: string,
-    betterAuthUserId: string,
-    email: string,
-    ipAddress?: string,
-  ) {
+  async joinViaCode(code: string, appUserId: string, betterAuthUserId: string, email: string, ipAddress?: string) {
     const invitation = await invitationRepository.findByCode(code);
     if (!invitation) {
       throw new NotFoundError(ErrorCode.INVITATION_CODE_INVALID);
@@ -37,10 +31,7 @@ export class OrganizationService {
       throw new BadRequestError(ErrorCode.INVITATION_CODE_NOT_FOR_ORGANIZATION);
     }
 
-    const alreadyMember = await organizationRepository.isMember(
-      invitation.organizationId,
-      appUserId,
-    );
+    const alreadyMember = await organizationRepository.isMember(invitation.organizationId, appUserId);
     if (alreadyMember) {
       throw new ConflictError(ErrorCode.ORGANIZATION_ALREADY_MEMBER);
     }
@@ -69,7 +60,8 @@ export class OrganizationService {
   async addMemberDirect(orgId: string, userId: string) {
     const org = await organizationRepository.findById(orgId);
     if (!org) throw new NotFoundError(ErrorCode.ORGANIZATION_NOT_FOUND);
-    if (await organizationRepository.isMember(orgId, userId)) throw new ConflictError(ErrorCode.ORGANIZATION_ALREADY_MEMBER);
+    if (await organizationRepository.isMember(orgId, userId))
+      throw new ConflictError(ErrorCode.ORGANIZATION_ALREADY_MEMBER);
     await organizationRepository.addMember(orgId, userId, "member");
   }
 

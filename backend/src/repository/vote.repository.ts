@@ -12,12 +12,7 @@ import {
   tournamentEntryPlayers,
   votePrompts,
 } from "../db/schema";
-import type {
-  FairPlayTag,
-  FairPlayVoteValue,
-  MvpBallot,
-  VotePromptOutcome,
-} from "@skol-arena/shared/types/index";
+import type { FairPlayTag, FairPlayVoteValue, MvpBallot, VotePromptOutcome } from "@skol-arena/shared/types/index";
 
 export interface VoteMatchPlayer {
   id: string;
@@ -156,9 +151,7 @@ export class VoteRepository {
     await db.transaction(async (tx) => {
       await tx
         .delete(mvpVotes)
-        .where(
-          and(eq(mvpVotes.matchId, matchId), eq(mvpVotes.voterId, userId), eq(mvpVotes.voterRole, "spectator")),
-        );
+        .where(and(eq(mvpVotes.matchId, matchId), eq(mvpVotes.voterId, userId), eq(mvpVotes.voterRole, "spectator")));
       await tx
         .delete(matchSpectators)
         .where(and(eq(matchSpectators.matchId, matchId), eq(matchSpectators.userId, userId)));
@@ -242,13 +235,17 @@ export class VoteRepository {
   }
 
   async hasVoted(matchId: string, userId: string): Promise<boolean> {
-    const [row] = await db.execute<{ voted: boolean }>(sql`
+    const [row] = await db
+      .execute<{ voted: boolean }>(
+        sql`
       SELECT EXISTS (
         SELECT 1 FROM ${fairPlayVotes} WHERE ${fairPlayVotes.matchId} = ${matchId} AND ${fairPlayVotes.voterId} = ${userId}
         UNION ALL
         SELECT 1 FROM ${mvpVotes} WHERE ${mvpVotes.matchId} = ${matchId} AND ${mvpVotes.voterId} = ${userId}
       ) AS voted
-    `).then((r) => r.rows);
+    `,
+      )
+      .then((r) => r.rows);
     return !!row?.voted;
   }
 
@@ -290,9 +287,7 @@ export class VoteRepository {
     const updated = await db
       .update(votePrompts)
       .set({ outcome })
-      .where(
-        and(eq(votePrompts.matchId, matchId), eq(votePrompts.userId, userId), ne(votePrompts.outcome, "voted")),
-      )
+      .where(and(eq(votePrompts.matchId, matchId), eq(votePrompts.userId, userId), ne(votePrompts.outcome, "voted")))
       .returning({ matchId: votePrompts.matchId });
     return updated.length > 0;
   }
@@ -305,21 +300,15 @@ export class VoteRepository {
   }
 
   async getPromptState(userId: string) {
-    const [row] = await db
-      .select()
-      .from(playerVotePromptStates)
-      .where(eq(playerVotePromptStates.userId, userId));
+    const [row] = await db.select().from(playerVotePromptStates).where(eq(playerVotePromptStates.userId, userId));
     return row ?? null;
   }
 
   async savePromptState(userId: string, consecutiveIgnored: number, snoozedUntil: Date | null) {
-    await db
-      .insert(playerVotePromptStates)
-      .values({ userId, consecutiveIgnored, snoozedUntil })
-      .onConflictDoUpdate({
-        target: playerVotePromptStates.userId,
-        set: { consecutiveIgnored, snoozedUntil },
-      });
+    await db.insert(playerVotePromptStates).values({ userId, consecutiveIgnored, snoozedUntil }).onConflictDoUpdate({
+      target: playerVotePromptStates.userId,
+      set: { consecutiveIgnored, snoozedUntil },
+    });
   }
 }
 

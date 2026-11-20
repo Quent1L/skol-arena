@@ -6,10 +6,7 @@ import type { PlayerDetailStats } from "@skol-arena/shared";
 class PlayerComputedDataRepository {
   async get(playerId: string, key: string): Promise<PlayerDetailStats | null> {
     const row = await db.query.playerComputedData.findFirst({
-      where: and(
-        eq(playerComputedData.playerId, playerId),
-        eq(playerComputedData.key, key)
-      ),
+      where: and(eq(playerComputedData.playerId, playerId), eq(playerComputedData.key, key)),
     });
     if (!row) return null;
     return row.data as PlayerDetailStats;
@@ -27,9 +24,7 @@ class PlayerComputedDataRepository {
 
   async deleteMany(playerIds: string[]): Promise<void> {
     if (playerIds.length === 0) return;
-    await db
-      .delete(playerComputedData)
-      .where(inArray(playerComputedData.playerId, playerIds));
+    await db.delete(playerComputedData).where(inArray(playerComputedData.playerId, playerIds));
   }
 }
 

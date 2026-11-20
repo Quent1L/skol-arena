@@ -1,12 +1,6 @@
 import { AVATAR_SIZES, type AvatarSize } from "@skol-arena/shared";
 import { avatarMaxUploadBytes, formatUploadLimit } from "../config/avatar";
-import {
-  AppError,
-  BadRequestError,
-  ErrorCode,
-  PayloadTooLargeError,
-  UnsupportedMediaTypeError,
-} from "../types/errors";
+import { AppError, BadRequestError, ErrorCode, PayloadTooLargeError, UnsupportedMediaTypeError } from "../types/errors";
 import { logger } from "../utils/logger";
 
 type AcceptedFormat = "jpeg" | "png" | "webp";

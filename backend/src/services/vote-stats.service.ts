@@ -113,7 +113,12 @@ export class VoteStatsService {
     return {
       fairPlayOfTheWeek: best ? { players: best.ids.map(who), ups: best.count } : null,
       mvpOfTheWeek: bestMvp ? { players: bestMvp.ids.map(who), titles: bestMvp.count } : null,
-      fairPlayRanking: fairPlay.map(({ item, rank }) => ({ player: who(item.playerId), rate: item.rate, votes: item.votes, rank })),
+      fairPlayRanking: fairPlay.map(({ item, rank }) => ({
+        player: who(item.playerId),
+        rate: item.rate,
+        votes: item.votes,
+        rank,
+      })),
       mvpRanking: mvp.map(({ item, rank }) => ({ player: who(item.playerId), titles: item.titles, rank })),
       totals: { votes: total, positiveRate: total > 0 ? averageUpRate(received) : null },
     };
@@ -137,7 +142,13 @@ export class VoteStatsService {
     const myCast = cast.find((r) => r.playerId === userId) ?? { up: 0, down: 0 };
     const fairPlayCast = myCast.up + myCast.down;
     return {
-      fairPlay: { rate: ranked?.item.rate ?? null, rank: ranked?.rank ?? null, up: mine.up, down: mine.down, tags: tagsOf(tags, userId) },
+      fairPlay: {
+        rate: ranked?.item.rate ?? null,
+        rank: ranked?.rank ?? null,
+        up: mine.up,
+        down: mine.down,
+        tags: tagsOf(tags, userId),
+      },
       cast: { count: fairPlayCast + mvpCast, upRate: fairPlayCast > 0 ? myCast.up / fairPlayCast : null },
       mvp: { titles: titles.find((r) => r.playerId === userId)?.titles ?? 0, teamMatches },
       spectated,
@@ -161,7 +172,11 @@ export class VoteStatsService {
       voteStatsRepository.fairPlayCast(tournamentId, true),
       voteStatsRepository.revealLog(tournamentId),
     ]);
-    const ids = [...downs.map((r) => r.playerId), ...cast.map((r) => r.playerId), ...log.flatMap((l) => [l.targetId, l.adminId ?? ""])];
+    const ids = [
+      ...downs.map((r) => r.playerId),
+      ...cast.map((r) => r.playerId),
+      ...log.flatMap((l) => [l.targetId, l.adminId ?? ""]),
+    ];
     const players = await voteStatsRepository.players([...new Set(ids.filter(Boolean))]);
     const who = (id: string) => players.get(id) ?? unknownPlayer(id);
     return {
@@ -176,7 +191,11 @@ export class VoteStatsService {
       voters: cast
         .map((r) => ({ player: who(r.playerId), cast: r.up + r.down, downRate: r.down / (r.up + r.down) }))
         .sort((a, b) => b.downRate - a.downRate || b.cast - a.cast),
-      revealLog: log.map((l) => ({ admin: l.adminId ? who(l.adminId) : null, target: who(l.targetId), createdAt: l.createdAt })),
+      revealLog: log.map((l) => ({
+        admin: l.adminId ? who(l.adminId) : null,
+        target: who(l.targetId),
+        createdAt: l.createdAt,
+      })),
     };
   }
 

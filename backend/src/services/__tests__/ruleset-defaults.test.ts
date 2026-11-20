@@ -32,9 +32,7 @@ describe("ruleset defaults", () => {
 
   it("defaults the interaction mode to what the engine would have applied", () => {
     expect(resolveRulesetInteractionMode(null)).toBe(DEFAULT_TEAM_INTERACTION_MODE);
-    expect(resolveRulesetInteractionMode({ discipline: null, outcomeTypes: [] })).toBe(
-      DEFAULT_TEAM_INTERACTION_MODE,
-    );
+    expect(resolveRulesetInteractionMode({ discipline: null, outcomeTypes: [] })).toBe(DEFAULT_TEAM_INTERACTION_MODE);
     // A discipline that carries no explicit mode behaves like no discipline at all.
     expect(
       resolveRulesetInteractionMode({

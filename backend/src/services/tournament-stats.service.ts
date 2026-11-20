@@ -1,10 +1,7 @@
 import { tournamentStatsRepository } from "../repository/tournament-stats.repository";
 import { tournamentRulesetService } from "./tournament-ruleset.service";
 import { NotFoundError, ErrorCode } from "../types/errors";
-import {
-  resolveRulesetOutcome,
-  type TournamentRulesetPayload,
-} from "@skol-arena/shared/types/index";
+import { resolveRulesetOutcome, type TournamentRulesetPayload } from "@skol-arena/shared/types/index";
 import {
   assignCompetitionRanks,
   cutWholeRankGroups,
@@ -53,9 +50,7 @@ function withRanks<T>(ranked: RankedEntry<T>[]): (T & CompetitionRank)[] {
   return ranked.map(({ item, rank, tiedCount }) => ({ ...item, rank, tiedCount }));
 }
 
-type MatchData = Awaited<
-  ReturnType<typeof tournamentStatsRepository.getMatchesWithSidesAndPlayers>
->[number];
+type MatchData = Awaited<ReturnType<typeof tournamentStatsRepository.getMatchesWithSidesAndPlayers>>[number];
 
 function isWinner(side: MatchData["sides"][number], winnerSide: string | null): boolean {
   if (!winnerSide) return false;
@@ -77,12 +72,7 @@ type PlayerWLStats = {
 
 type PlayerRef = { id: string; displayName: string; shortName: string };
 
-function recordPlayerResult(
-  stats: Map<string, PlayerWLStats>,
-  player: PlayerRef,
-  won: boolean,
-  lost: boolean,
-): void {
+function recordPlayerResult(stats: Map<string, PlayerWLStats>, player: PlayerRef, won: boolean, lost: boolean): void {
   const { id, displayName, shortName } = player;
   if (!stats.has(id)) {
     stats.set(id, { displayName, shortName, wins: 0, losses: 0, played: 0 });
@@ -124,18 +114,11 @@ function rankBestPlayers(stats: Map<string, PlayerWLStats>): BestPlayersBoard {
     score: weightedScore(s.played > 0 ? s.wins / s.played : 0, s.played),
   }));
 
-  const rate = (entry: (typeof entries)[number]) =>
-    entry.matchesPlayed > 0 ? entry.wins / entry.matchesPlayed : 0;
+  const rate = (entry: (typeof entries)[number]) => (entry.matchesPlayed > 0 ? entry.wins / entry.matchesPlayed : 0);
   const played = (entry: (typeof entries)[number]) => entry.matchesPlayed;
 
   // Rank the whole list before cutting: a tie straddling the cut is invisible otherwise.
-  const sorted = rankByWeightedRateOrFallback(
-    entries,
-    rate,
-    played,
-    compareBestPlayers,
-    Number.POSITIVE_INFINITY,
-  );
+  const sorted = rankByWeightedRateOrFallback(entries, rate, played, compareBestPlayers, Number.POSITIVE_INFINITY);
   const ranked = assignCompetitionRanks(sorted, weightedRateTie(rate, played));
   return {
     entries: withRanks(cutWholeRankGroups(ranked, TOP_BEST_PLAYERS, MAX_BEST_PLAYER_ROWS).shown),
@@ -149,10 +132,7 @@ function rankBestPlayers(stats: Map<string, PlayerWLStats>): BestPlayersBoard {
  * settled hierarchy.
  */
 function isBelowThreshold<T>(candidates: T[], countOf: (item: T) => number): boolean {
-  return (
-    candidates.length > 0 &&
-    !candidates.some((candidate) => countOf(candidate) >= MIN_WEIGHTED_RATE_MATCHES)
-  );
+  return candidates.length > 0 && !candidates.some((candidate) => countOf(candidate) >= MIN_WEIGHTED_RATE_MATCHES);
 }
 
 function accumulateSides(
@@ -269,8 +249,7 @@ export function computeBestTeams(matchesData: MatchData[], allowDraw = true): Be
       };
     });
 
-  const rate = (team: (typeof teams)[number]) =>
-    team.matchesPlayed > 0 ? team.wins / team.matchesPlayed : 0;
+  const rate = (team: (typeof teams)[number]) => (team.matchesPlayed > 0 ? team.wins / team.matchesPlayed : 0);
   const played = (team: (typeof teams)[number]) => team.matchesPlayed;
 
   // Same weighting as the player cards: a team that played once and won is not
@@ -369,12 +348,7 @@ function computeBestAsymmetricSoloPlayers(matchesData: MatchData[]): BestPlayers
       if (side.entry.players.length !== 1) continue;
       const ep = side.entry.players[0];
       if (!ep.player) continue;
-      recordPlayerResult(
-        playerStats,
-        ep.player,
-        isWinner(side, match.winnerSide),
-        isLoser(side, match.winnerSide),
-      );
+      recordPlayerResult(playerStats, ep.player, isWinner(side, match.winnerSide), isLoser(side, match.winnerSide));
     }
   }
 
@@ -390,12 +364,16 @@ function computeBestInvincibleStreak(matchesData: MatchData[]): WinStreakEntry[]
   const streaks: WinStreakEntry[] = [];
   for (const [playerId, data] of playerMatches) {
     const sorted = [...data.results].sort((a, b) => a.playedAt.getTime() - b.playedAt.getTime());
-    let best = 0, current = 0;
+    let best = 0,
+      current = 0;
     for (const r of sorted) {
-      if (r.notLost) { current++; best = Math.max(best, current); }
-      else current = 0;
+      if (r.notLost) {
+        current++;
+        best = Math.max(best, current);
+      } else current = 0;
     }
-    if (best >= 3) streaks.push({ playerId, displayName: data.displayName, shortName: data.shortName, currentStreak: best });
+    if (best >= 3)
+      streaks.push({ playerId, displayName: data.displayName, shortName: data.shortName, currentStreak: best });
   }
 
   return streaks.sort((a, b) => b.currentStreak - a.currentStreak);
@@ -478,16 +456,9 @@ function stripRate(candidates: (LeaderCandidate & CompetitionRank)[]): OutcomeTy
  * everybody shares rank 1 in, which is what a rare outcome type produces — is not cut to
  * a podium: the UI lists the names instead, so it gets more of them.
  */
-function toLeaderboard(
-  ranked: RankedEntry<LeaderCandidate>[],
-  isLowSample: boolean,
-): OutcomeTypeLeaderboard {
+function toLeaderboard(ranked: RankedEntry<LeaderCandidate>[], isLowSample: boolean): OutcomeTypeLeaderboard {
   const isFlat = isFlatRanking(ranked);
-  const { shown, omitted } = cutWholeRankGroups(
-    ranked,
-    MAX_DISTINCT_RANKS,
-    isFlat ? MAX_HONOUR_ROLL : MAX_LEADER_ROWS,
-  );
+  const { shown, omitted } = cutWholeRankGroups(ranked, MAX_DISTINCT_RANKS, isFlat ? MAX_HONOUR_ROLL : MAX_LEADER_ROWS);
   // Only players the cut separated from their own rank are ex aequo. The rest of the
   // ranking is simply below the podium, and announcing it as tied would be a lie.
   const tied = omittedTiedWithLast(shown, omitted);
@@ -511,9 +482,7 @@ function volumeTie(a: LeaderCandidate, b: LeaderCandidate): boolean {
 }
 
 function rankByVolume(candidates: LeaderCandidate[]): OutcomeTypeLeaderboard {
-  const sorted = [...candidates].sort(
-    (a, b) => b.count - a.count || b.ratePct - a.ratePct || compareLeaders(a, b),
-  );
+  const sorted = [...candidates].sort((a, b) => b.count - a.count || b.ratePct - a.ratePct || compareLeaders(a, b));
   return toLeaderboard(assignCompetitionRanks(sorted, volumeTie), false);
 }
 
@@ -527,14 +496,7 @@ function rankByRate(candidates: LeaderCandidate[]): OutcomeTypeLeaderboard {
   const played = (c: LeaderCandidate) => c.matchesPlayed;
   const tie = weightedRateTie(rate, played);
   const rankAll = (minMatches: number) =>
-    rankByWeightedRate(
-      candidates,
-      rate,
-      played,
-      minMatches,
-      compareLeaders,
-      Number.POSITIVE_INFINITY,
-    );
+    rankByWeightedRate(candidates, rate, played, minMatches, compareLeaders, Number.POSITIVE_INFINITY);
 
   const filtered = rankAll(MIN_WEIGHTED_RATE_MATCHES);
   if (filtered.length > 0) return toLeaderboard(assignCompetitionRanks(filtered, tie), false);
@@ -684,9 +646,7 @@ class TournamentStatsService {
     const invincibleStreaks: WinStreakEntry[] = computeBestInvincibleStreak(matchesData);
 
     const bestDuoPlayers: BestPlayersBoard =
-      tournamentInfo.teamMode === "flex"
-        ? computeBestDuoPlayers(matchesData)
-        : EMPTY_PLAYERS_BOARD;
+      tournamentInfo.teamMode === "flex" ? computeBestDuoPlayers(matchesData) : EMPTY_PLAYERS_BOARD;
 
     const bestSoloPlayers: BestPlayersBoard = computeBestSoloPlayers(matchesData);
 
@@ -695,10 +655,7 @@ class TournamentStatsService {
         ? computeBestAsymmetricSoloPlayers(matchesData)
         : EMPTY_PLAYERS_BOARD;
 
-    const outcomeTypeFunStats: OutcomeTypeFunStat[] = computeOutcomeTypeFunStats(
-      matchesData,
-      ruleset,
-    );
+    const outcomeTypeFunStats: OutcomeTypeFunStat[] = computeOutcomeTypeFunStats(matchesData, ruleset);
 
     return {
       subject: isStatic ? "team" : "player",

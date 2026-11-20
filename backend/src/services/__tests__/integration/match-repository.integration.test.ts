@@ -214,8 +214,17 @@ describe("matchRepository (integration)", () => {
     });
 
     it("counts finalized matches before a date", async () => {
-      expect(await matchRepository.countFinalizedMatchesForUserBefore(tournamentId, ann!, new Date("2026-02-10T00:00:00Z"))).toBe(1);
-      expect(await matchRepository.countFinalizedMatchesForUserBefore(tournamentId, ann!, new Date("2026-02-10T00:00:00Z"), finalizedId)).toBe(0);
+      expect(
+        await matchRepository.countFinalizedMatchesForUserBefore(tournamentId, ann!, new Date("2026-02-10T00:00:00Z")),
+      ).toBe(1);
+      expect(
+        await matchRepository.countFinalizedMatchesForUserBefore(
+          tournamentId,
+          ann!,
+          new Date("2026-02-10T00:00:00Z"),
+          finalizedId,
+        ),
+      ).toBe(0);
       expect(await matchRepository.countFinalizedMatchesForUserBefore(tournamentId, admin, new Date())).toBe(0);
     });
   });
@@ -226,7 +235,12 @@ describe("matchRepository (integration)", () => {
       expect(await matchRepository.isUserInMatch(finalizedId, admin)).toBe(false);
       expect((await matchRepository.getPlayerIdsForMatch(finalizedId)).sort()).toEqual([ann!, bob!, cat!, dan!].sort());
       const participations = await matchRepository.getParticipationsByMatchId(finalizedId);
-      expect(participations.filter((p) => p.teamSide === "A").map((p) => p.playerId).sort()).toEqual([ann!, bob!].sort());
+      expect(
+        participations
+          .filter((p) => p.teamSide === "A")
+          .map((p) => p.playerId)
+          .sort(),
+      ).toEqual([ann!, bob!].sort());
     });
 
     it("finds earlier matches with the same two entries", async () => {
@@ -262,8 +276,12 @@ describe("matchRepository (integration)", () => {
       const [teamB] = await testDb.insert(teams).values({ name: "B", tournamentId, createdBy: admin }).returning();
       await matchRepository.validateEntriesForTournament(tournamentId, teamA!.id, teamB!.id);
       await matchRepository.validateEntriesForTournament(tournamentId);
-      await expect(matchRepository.validateEntriesForTournament(tournamentId, teamA!.id, teamA!.id)).rejects.toBeInstanceOf(BadRequestError);
-      await expect(matchRepository.validateEntriesForTournament(otherTournamentId, teamA!.id)).rejects.toBeInstanceOf(BadRequestError);
+      await expect(
+        matchRepository.validateEntriesForTournament(tournamentId, teamA!.id, teamA!.id),
+      ).rejects.toBeInstanceOf(BadRequestError);
+      await expect(matchRepository.validateEntriesForTournament(otherTournamentId, teamA!.id)).rejects.toBeInstanceOf(
+        BadRequestError,
+      );
     });
   });
 

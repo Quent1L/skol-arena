@@ -38,10 +38,7 @@ export class OrganizationRepository {
 
   async isMember(organizationId: string, userId: string): Promise<boolean> {
     const membership = await db.query.organizationMembers.findFirst({
-      where: and(
-        eq(organizationMembers.organizationId, organizationId),
-        eq(organizationMembers.userId, userId),
-      ),
+      where: and(eq(organizationMembers.organizationId, organizationId), eq(organizationMembers.userId, userId)),
     });
     return !!membership;
   }

@@ -10,10 +10,7 @@
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import { eq } from "drizzle-orm";
 import * as schema from "../../../db/schema";
-import {
-  championshipConfigs,
-  tournamentScoringConfigs,
-} from "../../../db/schema";
+import { championshipConfigs, tournamentScoringConfigs } from "../../../db/schema";
 import {
   CHAMPIONSHIP_DEFAULTS,
   SCORING_DEFAULTS,
@@ -50,10 +47,7 @@ export async function setChampionshipCaps(
   tournamentId: string,
   caps: Partial<ChampionshipConfig>,
 ): Promise<void> {
-  await db
-    .update(championshipConfigs)
-    .set(caps)
-    .where(eq(championshipConfigs.tournamentId, tournamentId));
+  await db.update(championshipConfigs).set(caps).where(eq(championshipConfigs.tournamentId, tournamentId));
 }
 
 /** Replacement for the old `update(tournaments).set({ pointPer... })`. */
@@ -62,8 +56,5 @@ export async function setScoringConfig(
   tournamentId: string,
   scoring: Partial<TournamentScoringConfig>,
 ): Promise<void> {
-  await db
-    .update(tournamentScoringConfigs)
-    .set(scoring)
-    .where(eq(tournamentScoringConfigs.tournamentId, tournamentId));
+  await db.update(tournamentScoringConfigs).set(scoring).where(eq(tournamentScoringConfigs.tournamentId, tournamentId));
 }

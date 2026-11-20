@@ -13,7 +13,7 @@
     "test:unit": "DATABASE_POOL_MAX=2 bun test src/services/__tests__/*.test.ts src/utils/__tests__/*.test.ts src/api/__tests__/*.test.ts src/middleware/__tests__/*.test.ts src/routes/__tests__/*.test.ts src/workers/__tests__/*.test.ts src/jobs/__tests__/*.test.ts --isolate",
     "test:cov": "DATABASE_POOL_MAX=2 bun test --isolate --coverage --coverage-reporter=text --coverage-reporter=lcov src/services/__tests__/*.test.ts src/utils/__tests__/*.test.ts src/api/__tests__/*.test.ts src/middleware/__tests__/*.test.ts src/routes/__tests__/*.test.ts src/workers/__tests__/*.test.ts src/jobs/__tests__/*.test.ts src/services/__tests__/integration/*.test.ts",
     "test:integration": "DATABASE_POOL_MAX=2 bun test src/services/__tests__/integration/*.test.ts --isolate",
-    "lint": "eslint . --fix",
+    "lint": "eslint . --fix && prettier --check src/",
     "format": "prettier --write src/"
   },
   "dependencies": {

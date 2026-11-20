@@ -59,7 +59,7 @@ function specOptions(version: ApiVersion): Partial<GenerateSpecOptions> {
               description: ERROR_DESCRIPTIONS[name],
               content: { "application/json": { schema: resolver(apiErrorResponseSchema) } },
             },
-          ])
+          ]),
         ),
       },
     },
@@ -91,8 +91,7 @@ function documentVersionHeader(paths: Paths, version: ApiVersion): void {
     in: "header",
     name: API_VERSION_REQUEST_HEADER,
     required: false,
-    description:
-      "Pins the request to a major API version. Omit it to be served the latest.",
+    description: "Pins the request to a major API version. Omit it to be served the latest.",
     schema: { type: "string", enum: [...API_VERSIONS], default: version },
   };
 
@@ -155,8 +154,7 @@ function documentAuthentication(paths: Paths): void {
 
 type Node = Record<string, unknown>;
 
-const isNode = (value: unknown): value is Node =>
-  typeof value === "object" && value !== null;
+const isNode = (value: unknown): value is Node => typeof value === "object" && value !== null;
 
 const SCHEMA_REF_PREFIX = "#/components/schemas/";
 
@@ -320,7 +318,7 @@ export function mountApiDocs(app: AppHonoOptional): void {
         url: `${PUBLIC_PREFIX}/openapi/${version}.json`,
         title: version,
       })),
-    })
+    }),
   );
 }
 

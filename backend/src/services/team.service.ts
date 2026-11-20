@@ -2,13 +2,7 @@ import { teamRepository } from "../repository/team.repository";
 import { db } from "../config/database";
 import { tournaments, tournamentParticipants, teams } from "../db/schema";
 import { eq, and } from "drizzle-orm";
-import {
-  BadRequestError,
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  ErrorCode,
-} from "../types/errors";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, ErrorCode } from "../types/errors";
 import { webSocketService } from "./websocket.service";
 
 class TeamService {
@@ -74,12 +68,7 @@ class TeamService {
     const team = await teamRepository.create({ tournamentId, name, createdBy });
 
     if (!isAdmin) {
-      const outcome = await teamRepository.addMemberIfAllowed(
-        tournamentId,
-        team.id,
-        createdBy,
-        tournament.maxTeamSize,
-      );
+      const outcome = await teamRepository.addMemberIfAllowed(tournamentId, team.id, createdBy, tournament.maxTeamSize);
       if (outcome !== "added") {
         await teamRepository.delete(team.id);
         throw new ConflictError(ErrorCode.PLAYER_ALREADY_IN_TEAM);
@@ -96,13 +85,7 @@ class TeamService {
     return await teamRepository.getByTournament(tournamentId);
   }
 
-  async joinTeam(
-    teamId: string,
-    tournamentId: string,
-    userId: string,
-    requestedBy: string,
-    isAdmin: boolean,
-  ) {
+  async joinTeam(teamId: string, tournamentId: string, userId: string, requestedBy: string, isAdmin: boolean) {
     // Only admins can add other users
     if (userId !== requestedBy && !isAdmin) {
       throw new ForbiddenError(ErrorCode.FORBIDDEN);
@@ -125,12 +108,7 @@ class TeamService {
     this.checkTournamentEditable(tournament);
     await this.assertActiveParticipant(tournamentId, userId);
 
-    const outcome = await teamRepository.addMemberIfAllowed(
-      tournamentId,
-      teamId,
-      userId,
-      tournament.maxTeamSize,
-    );
+    const outcome = await teamRepository.addMemberIfAllowed(tournamentId, teamId, userId, tournament.maxTeamSize);
     if (outcome === "already_in_team") {
       throw new ConflictError(ErrorCode.PLAYER_ALREADY_IN_TEAM);
     }
@@ -143,13 +121,7 @@ class TeamService {
     return updated;
   }
 
-  async leaveTeam(
-    teamId: string,
-    tournamentId: string,
-    userId: string,
-    requestedBy: string,
-    isAdmin: boolean,
-  ) {
+  async leaveTeam(teamId: string, tournamentId: string, userId: string, requestedBy: string, isAdmin: boolean) {
     if (userId !== requestedBy && !isAdmin) {
       throw new ForbiddenError(ErrorCode.FORBIDDEN);
     }

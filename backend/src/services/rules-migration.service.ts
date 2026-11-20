@@ -164,9 +164,7 @@ export function migrateRule(rule: MigratableRule, from: number): MigrationOutcom
  */
 export async function migrateStoredRules(): Promise<void> {
   // Two instances booting together must not both rewrite the same rows.
-  const lockResult = await db.execute<{ locked: boolean }>(
-    sql`SELECT pg_try_advisory_lock(4919283) AS locked`,
-  );
+  const lockResult = await db.execute<{ locked: boolean }>(sql`SELECT pg_try_advisory_lock(4919283) AS locked`);
   if (lockResult.rows[0]?.locked !== true) {
     logger.info("[RulesMigration] another instance holds the lock, skipping");
     return;
@@ -190,10 +188,7 @@ export async function migrateStoredRules(): Promise<void> {
         // Left at its old version on purpose: a later patch may know how to handle it,
         // and the row keeps the shape a human needs in order to rewrite it by hand.
         disabledCount += 1;
-        await db
-          .update(rules)
-          .set({ isActive: false, disabledReason: outcome.disabled })
-          .where(eq(rules.id, row.id));
+        await db.update(rules).set({ isActive: false, disabledReason: outcome.disabled }).where(eq(rules.id, row.id));
         logger.warn({ ruleId: row.id, name: row.name, reason: outcome.disabled }, "[RulesMigration] rule deactivated");
         if (row.type === "badge") badgeTouched = true;
         continue;
@@ -217,10 +212,7 @@ export async function migrateStoredRules(): Promise<void> {
     // stops owing its own — the nightly reconciliation has to replay either way.
     if (badgeTouched) await rulesRepository.markBadgeRulesDirty();
 
-    logger.info(
-      { migrated: stale.length - disabledCount, disabled: disabledCount },
-      "[RulesMigration] done",
-    );
+    logger.info({ migrated: stale.length - disabledCount, disabled: disabledCount }, "[RulesMigration] done");
   } finally {
     await db.execute(sql`SELECT pg_advisory_unlock(4919283)`);
   }

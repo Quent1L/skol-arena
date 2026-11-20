@@ -40,7 +40,7 @@ adminOrganizations.get(
   async (c) => {
     const orgs = await organizationService.getAllOrganizations();
     return c.json(orgs);
-  }
+  },
 );
 
 adminOrganizations.post(
@@ -61,7 +61,7 @@ adminOrganizations.post(
     const { name } = c.req.valid("json");
     const org = await organizationService.createOrganization(name, appUserId);
     return c.json(org, 201);
-  }
+  },
 );
 
 adminOrganizations.get(
@@ -82,7 +82,7 @@ adminOrganizations.get(
   async (c) => {
     const members = await organizationService.getMembers(c.req.param("id"));
     return c.json(members);
-  }
+  },
 );
 
 adminOrganizations.post(
@@ -121,7 +121,7 @@ adminOrganizations.delete(
   async (c) => {
     await organizationService.removeMember(c.req.param("id"), c.req.param("userId"));
     return c.json({ success: true });
-  }
+  },
 );
 
 adminOrganizations.patch(

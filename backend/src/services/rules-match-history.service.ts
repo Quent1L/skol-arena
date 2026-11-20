@@ -30,7 +30,10 @@ export class RulesMatchHistoryService {
   /** Rewrites the players' snapshots after their history moved, from `from` on or for the whole season. */
   async refreshPlayers(seasonId: string, playerIds: string[], from?: Date): Promise<void> {
     const rows = await matchPlayerFactsRepository.listPlayersMatches(seasonId, playerIds, from);
-    await this.refreshMatches(rows.map((r) => r.matchId), seasonId);
+    await this.refreshMatches(
+      rows.map((r) => r.matchId),
+      seasonId,
+    );
   }
 
   /**
@@ -47,7 +50,10 @@ export class RulesMatchHistoryService {
   ): Promise<string[]> {
     const rows = await matchPlayerFactsRepository.listPlayersMatches(seasonId, playerIds, playedAt);
     const later = rows.filter((r) => r.matchId !== matchId);
-    await this.refreshMatches(later.map((r) => r.matchId), seasonId);
+    await this.refreshMatches(
+      later.map((r) => r.matchId),
+      seasonId,
+    );
     const active = await matchPlayerFactsRepository.listPlayersActiveInDisciplineSince(seasonId, playerIds, playedAt);
     return [...new Set([...later.map((r) => r.playerId), ...active])];
   }

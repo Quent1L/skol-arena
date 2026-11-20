@@ -41,8 +41,7 @@ mock.module("../../repository/tournament-ruleset.repository", () => stub("tourna
 
 const { taskList } = await import("../mmr-recalculation.worker");
 
-const runRewind = () =>
-  (taskList.generate_season_rewind as any)({ seasonId: "gone" }, {} as any);
+const runRewind = () => (taskList.generate_season_rewind as any)({ seasonId: "gone" }, {} as any);
 
 describe("worker task guard", () => {
   beforeEach(() => {

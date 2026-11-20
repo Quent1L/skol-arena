@@ -1,10 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { db } from "../config/database";
-import {
-  tournamentEntries,
-  tournamentEntryPlayers,
-  teamMembers,
-} from "../db/schema";
+import { tournamentEntries, tournamentEntryPlayers, teamMembers } from "../db/schema";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type * as schema from "../db/schema";
 
@@ -16,26 +12,15 @@ type EntryWithPlayers = {
 };
 
 /** Load all PLAYER entries of a tournament grouped with their player ids */
-async function loadPlayerEntries(
-  dbInstance: DbTransaction,
-  tournamentId: string,
-): Promise<EntryWithPlayers[]> {
+async function loadPlayerEntries(dbInstance: DbTransaction, tournamentId: string): Promise<EntryWithPlayers[]> {
   const rows = await dbInstance
     .select({
       entry: tournamentEntries,
       playerIds: tournamentEntryPlayers.playerId,
     })
     .from(tournamentEntries)
-    .leftJoin(
-      tournamentEntryPlayers,
-      eq(tournamentEntries.id, tournamentEntryPlayers.entryId),
-    )
-    .where(
-      and(
-        eq(tournamentEntries.tournamentId, tournamentId),
-        eq(tournamentEntries.entryType, "PLAYER"),
-      ),
-    );
+    .leftJoin(tournamentEntryPlayers, eq(tournamentEntries.id, tournamentEntryPlayers.entryId))
+    .where(and(eq(tournamentEntries.tournamentId, tournamentId), eq(tournamentEntries.entryType, "PLAYER")));
 
   const entriesMap = new Map<string, EntryWithPlayers>();
   for (const row of rows) {
@@ -53,14 +38,11 @@ async function loadPlayerEntries(
 function findEntryByComposition(
   entries: EntryWithPlayers[],
   playerIds: string[],
-): (typeof tournamentEntries.$inferSelect) | undefined {
+): typeof tournamentEntries.$inferSelect | undefined {
   const sorted = [...playerIds].sort((a, b) => a.localeCompare(b));
   return entries.find(({ playerIds: entryPlayerIds }) => {
     const sortedEntry = [...entryPlayerIds].sort((a, b) => a.localeCompare(b));
-    return (
-      sortedEntry.length === sorted.length &&
-      sorted.every((id, i) => id === sortedEntry[i])
-    );
+    return sortedEntry.length === sorted.length && sorted.every((id, i) => id === sortedEntry[i]);
   })?.entry;
 }
 
@@ -110,7 +92,7 @@ export class EntryRepository {
       teamId?: string;
       playerIds: string[];
     },
-    tx?: DbTransaction
+    tx?: DbTransaction,
   ) {
     const performCreate = async (dbInstance: DbTransaction) => {
       // Create entry
@@ -129,7 +111,7 @@ export class EntryRepository {
           data.playerIds.map((playerId) => ({
             entryId: entry.id,
             playerId,
-          }))
+          })),
         );
       }
 
@@ -149,21 +131,13 @@ export class EntryRepository {
    * For static mode: find/create entry with teamId
    * For flex mode: find/create entry with specific playerIds
    */
-  async getOrCreateForMatch(
-    tournamentId: string,
-    teamId?: string,
-    playerIds?: string[],
-    tx?: DbTransaction
-  ) {
+  async getOrCreateForMatch(tournamentId: string, teamId?: string, playerIds?: string[], tx?: DbTransaction) {
     const dbInstance = tx || db;
 
     // For static team mode
     if (teamId) {
       const existing = await dbInstance.query.tournamentEntries.findFirst({
-        where: and(
-          eq(tournamentEntries.tournamentId, tournamentId),
-          eq(tournamentEntries.teamId, teamId)
-        ),
+        where: and(eq(tournamentEntries.tournamentId, tournamentId), eq(tournamentEntries.teamId, teamId)),
         with: {
           team: true,
           players: {
@@ -190,9 +164,9 @@ export class EntryRepository {
           tournamentId,
           entryType: "TEAM",
           teamId,
-          playerIds: memberIds.length > 0 ? memberIds : (playerIds || []),
+          playerIds: memberIds.length > 0 ? memberIds : playerIds || [],
         },
-        tx
+        tx,
       );
 
       // Return with relations
@@ -214,7 +188,7 @@ export class EntryRepository {
           entryType: "PLAYER",
           playerIds,
         },
-        tx
+        tx,
       );
 
       // Return with relations
@@ -229,18 +203,11 @@ export class EntryRepository {
    * For static mode: find entry with teamId
    * For flex mode: find entry with exact same playerIds composition
    */
-  async findExistingEntry(
-    tournamentId: string,
-    teamId?: string,
-    playerIds?: string[]
-  ) {
+  async findExistingEntry(tournamentId: string, teamId?: string, playerIds?: string[]) {
     // For static team mode
     if (teamId) {
       return await db.query.tournamentEntries.findFirst({
-        where: and(
-          eq(tournamentEntries.tournamentId, tournamentId),
-          eq(tournamentEntries.teamId, teamId)
-        ),
+        where: and(eq(tournamentEntries.tournamentId, tournamentId), eq(tournamentEntries.teamId, teamId)),
         with: {
           team: true,
           players: {
@@ -279,10 +246,7 @@ export class EntryRepository {
    */
   async getByPlayerId(playerId: string, tournamentId?: string) {
     const whereConditions = tournamentId
-      ? and(
-          eq(tournamentEntryPlayers.playerId, playerId),
-          eq(tournamentEntries.tournamentId, tournamentId)
-        )
+      ? and(eq(tournamentEntryPlayers.playerId, playerId), eq(tournamentEntries.tournamentId, tournamentId))
       : eq(tournamentEntryPlayers.playerId, playerId);
 
     const results = await db
@@ -290,10 +254,7 @@ export class EntryRepository {
         entry: tournamentEntries,
       })
       .from(tournamentEntryPlayers)
-      .innerJoin(
-        tournamentEntries,
-        eq(tournamentEntryPlayers.entryId, tournamentEntries.id)
-      )
+      .innerJoin(tournamentEntries, eq(tournamentEntryPlayers.entryId, tournamentEntries.id))
       .where(whereConditions);
 
     return results.map((r) => r.entry);
@@ -304,10 +265,7 @@ export class EntryRepository {
    */
   async isPlayerInEntry(entryId: string, playerId: string) {
     const link = await db.query.tournamentEntryPlayers.findFirst({
-      where: and(
-        eq(tournamentEntryPlayers.entryId, entryId),
-        eq(tournamentEntryPlayers.playerId, playerId)
-      ),
+      where: and(eq(tournamentEntryPlayers.entryId, entryId), eq(tournamentEntryPlayers.playerId, playerId)),
     });
     return !!link;
   }

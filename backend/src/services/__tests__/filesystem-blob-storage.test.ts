@@ -12,20 +12,12 @@ describe("assertSafeKey", () => {
     expect(() => assertSafeKey("avatars/0190a1b2-c3d4/abc123/64.webp")).not.toThrow();
   });
 
-  it.each([
-    "../x",
-    "a/../../b",
-    "/etc/passwd",
-    "a//b",
-    "a/./b",
-    "a\\b",
-    "",
-    "A/B",
-    "a/b/",
-    "a/b\0.webp",
-  ])("refuses %p", (key) => {
-    expect(() => assertSafeKey(key)).toThrow();
-  });
+  it.each(["../x", "a/../../b", "/etc/passwd", "a//b", "a/./b", "a\\b", "", "A/B", "a/b/", "a/b\0.webp"])(
+    "refuses %p",
+    (key) => {
+      expect(() => assertSafeKey(key)).toThrow();
+    },
+  );
 });
 
 describe("FilesystemBlobStorage", () => {

@@ -36,14 +36,48 @@ describe("bracketRepository (integration)", () => {
     });
     configId = config!.id;
     const rounds = await bracketRepository.createRounds([
-      { bracketConfigId: configId, roundNumber: 2, roundName: "Final", roundNameKey: "final", translationParams: null, bracketType: "winners", matchesCount: 1 },
-      { bracketConfigId: configId, roundNumber: 1, roundName: "Semi", roundNameKey: "semi", translationParams: { n: 2 }, bracketType: "winners", matchesCount: 2 },
+      {
+        bracketConfigId: configId,
+        roundNumber: 2,
+        roundName: "Final",
+        roundNameKey: "final",
+        translationParams: null,
+        bracketType: "winners",
+        matchesCount: 1,
+      },
+      {
+        bracketConfigId: configId,
+        roundNumber: 1,
+        roundName: "Semi",
+        roundNameKey: "semi",
+        translationParams: { n: 2 },
+        bracketType: "winners",
+        matchesCount: 2,
+      },
     ]);
     roundIds = rounds.map((r) => r.id);
     matchIds = [
-      await seed.createMatch({ tournamentId, entryA: entryIds[0]!, entryB: entryIds[1]!, status: "scheduled", winnerSide: null }),
-      await seed.createMatch({ tournamentId, entryA: entryIds[2]!, entryB: entryIds[3]!, status: "scheduled", winnerSide: null }),
-      await seed.createMatch({ tournamentId, entryA: entryIds[0]!, entryB: entryIds[2]!, status: "scheduled", winnerSide: null }),
+      await seed.createMatch({
+        tournamentId,
+        entryA: entryIds[0]!,
+        entryB: entryIds[1]!,
+        status: "scheduled",
+        winnerSide: null,
+      }),
+      await seed.createMatch({
+        tournamentId,
+        entryA: entryIds[2]!,
+        entryB: entryIds[3]!,
+        status: "scheduled",
+        winnerSide: null,
+      }),
+      await seed.createMatch({
+        tournamentId,
+        entryA: entryIds[0]!,
+        entryB: entryIds[2]!,
+        status: "scheduled",
+        winnerSide: null,
+      }),
     ];
   });
 
@@ -72,9 +106,24 @@ describe("bracketRepository (integration)", () => {
 
   it("stores match metadata, reads it back and updates the links", async () => {
     const [semiRound, finalRound] = [roundIds[1]!, roundIds[0]!];
-    const m1 = await bracketRepository.createMatchMetadata({ matchId: matchIds[0]!, bracketRoundId: semiRound, matchNumber: 1, isByeMatch: false });
-    await bracketRepository.createMatchMetadata({ matchId: matchIds[1]!, bracketRoundId: semiRound, matchNumber: 2, isByeMatch: false });
-    await bracketRepository.createMatchMetadata({ matchId: matchIds[2]!, bracketRoundId: finalRound, matchNumber: 1, isByeMatch: false });
+    const m1 = await bracketRepository.createMatchMetadata({
+      matchId: matchIds[0]!,
+      bracketRoundId: semiRound,
+      matchNumber: 1,
+      isByeMatch: false,
+    });
+    await bracketRepository.createMatchMetadata({
+      matchId: matchIds[1]!,
+      bracketRoundId: semiRound,
+      matchNumber: 2,
+      isByeMatch: false,
+    });
+    await bracketRepository.createMatchMetadata({
+      matchId: matchIds[2]!,
+      bracketRoundId: finalRound,
+      matchNumber: 1,
+      isByeMatch: false,
+    });
     expect(m1?.isByeMatch).toBe(false);
 
     const withRound = await bracketRepository.getMetadataByMatchId(matchIds[0]!);
@@ -111,7 +160,12 @@ describe("bracketRepository (integration)", () => {
     const admin = await seed.createUser("Admin2");
     const t2 = await seed.createTournament(admin, { mode: "bracket" });
     const config = await bracketRepository.createConfig({
-      tournamentId: t2, bracketType: "single_elimination", seedingType: "random", totalParticipants: 2, roundsCount: 1, hasBronzeMatch: false,
+      tournamentId: t2,
+      bracketType: "single_elimination",
+      seedingType: "random",
+      totalParticipants: 2,
+      roundsCount: 1,
+      hasBronzeMatch: false,
     });
     await testDb.transaction(async (tx) => {
       await bracketRepository.deleteAllBracketData(t2, tx as never);

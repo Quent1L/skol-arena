@@ -4,11 +4,7 @@ import { requireAuth } from "../../middleware/auth";
 import { requireSuperAdmin } from "../../middleware/require-role";
 import { avatarStorageMigrationService } from "../../services/avatar-storage-migration.service";
 import { systemInfoService } from "../../services/system-info.service";
-import {
-  avatarMigrationResultSchema,
-  maintenanceStatusSchema,
-  systemInfoSchema,
-} from "@skol-arena/shared";
+import { avatarMigrationResultSchema, maintenanceStatusSchema, systemInfoSchema } from "@skol-arena/shared";
 
 const adminMaintenance = createAppHono();
 
@@ -30,7 +26,7 @@ adminMaintenance.get(
   }),
   async (c) => {
     return c.json(await systemInfoService.getSystemInfo());
-  }
+  },
 );
 
 adminMaintenance.get(
@@ -44,7 +40,7 @@ adminMaintenance.get(
   }),
   (c) => {
     return c.json(avatarStorageMigrationService.getStatus());
-  }
+  },
 );
 
 adminMaintenance.post(
@@ -59,7 +55,7 @@ adminMaintenance.post(
   }),
   async (c) => {
     return c.json(await avatarStorageMigrationService.migrate());
-  }
+  },
 );
 
 export default adminMaintenance;

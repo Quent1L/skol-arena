@@ -86,14 +86,10 @@ export async function runMigrations(): Promise<void> {
  * writes: taken afterwards, a second instance would already be holding a stale list
  * and would replay migrations the first one just committed.
  */
-async function withMigrationLock<T>(
-  client: PoolClient,
-  run: () => Promise<T>,
-): Promise<T> {
-  const { rows } = await client.query<{ acquired: boolean }>(
-    "SELECT pg_try_advisory_lock($1) AS acquired",
-    [MIGRATION_LOCK_KEY],
-  );
+async function withMigrationLock<T>(client: PoolClient, run: () => Promise<T>): Promise<T> {
+  const { rows } = await client.query<{ acquired: boolean }>("SELECT pg_try_advisory_lock($1) AS acquired", [
+    MIGRATION_LOCK_KEY,
+  ]);
 
   if (!rows[0]?.acquired) {
     logger.info("Another instance is migrating, waiting for it to finish...");
@@ -111,10 +107,7 @@ async function withMigrationLock<T>(
   }
 }
 
-async function applyPendingMigrations(
-  client: PoolClient,
-  migrationsFolder: string,
-): Promise<void> {
+async function applyPendingMigrations(client: PoolClient, migrationsFolder: string): Promise<void> {
   const migrations = readMigrationFiles({ migrationsFolder });
 
   await client.query(`CREATE SCHEMA IF NOT EXISTS "${MIGRATIONS_SCHEMA}"`);
@@ -147,10 +140,7 @@ async function applyPendingMigrations(
  * Same rule as Drizzle: everything stamped after the most recent applied
  * migration is pending. A gap in the middle is not detected, by design.
  */
-async function selectPending(
-  client: PoolClient,
-  migrations: MigrationMeta[],
-): Promise<MigrationMeta[]> {
+async function selectPending(client: PoolClient, migrations: MigrationMeta[]): Promise<MigrationMeta[]> {
   const { rows } = await client.query<{ created_at: string | null }>(
     `SELECT created_at FROM ${MIGRATIONS_TABLE_REF} ORDER BY created_at DESC LIMIT 1`,
   );
@@ -172,10 +162,10 @@ async function applyOne(
     for (const statement of migration.sql) {
       await client.query(statement);
     }
-    await client.query(
-      `INSERT INTO ${MIGRATIONS_TABLE_REF} ("hash", "created_at") VALUES ($1, $2)`,
-      [migration.hash, migration.folderMillis],
-    );
+    await client.query(`INSERT INTO ${MIGRATIONS_TABLE_REF} ("hash", "created_at") VALUES ($1, $2)`, [
+      migration.hash,
+      migration.folderMillis,
+    ]);
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK").catch(() => undefined);

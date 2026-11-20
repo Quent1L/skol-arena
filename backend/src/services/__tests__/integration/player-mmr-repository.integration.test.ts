@@ -22,7 +22,14 @@ describe("playerMmrRepository (integration)", () => {
   const t2 = new Date("2026-05-02T10:00:00Z");
   const t3 = new Date("2026-05-03T10:00:00Z");
 
-  const history = (playerId: string, matchId: string, before: number, after: number, outcome: "win" | "loss" | "draw" | null, n: number) => ({
+  const history = (
+    playerId: string,
+    matchId: string,
+    before: number,
+    after: number,
+    outcome: "win" | "loss" | "draw" | null,
+    n: number,
+  ) => ({
     seasonId,
     playerId,
     matchId,
@@ -50,9 +57,27 @@ describe("playerMmrRepository (integration)", () => {
   });
 
   it("creates a rating row, then updates it in place", async () => {
-    const base = { seasonId, playerId: ann, currentMmr: 1000, matchesPlayed: 0, wins: 0, losses: 0, winStreak: 0, maxWinStreak: 0, lossStreak: 0, maxLossStreak: 0 };
+    const base = {
+      seasonId,
+      playerId: ann,
+      currentMmr: 1000,
+      matchesPlayed: 0,
+      wins: 0,
+      losses: 0,
+      winStreak: 0,
+      maxWinStreak: 0,
+      lossStreak: 0,
+      maxLossStreak: 0,
+    };
     const created = await repo.upsert(base);
-    const updated = await repo.upsert({ ...base, currentMmr: 1030, matchesPlayed: 1, wins: 1, winStreak: 1, maxWinStreak: 1 });
+    const updated = await repo.upsert({
+      ...base,
+      currentMmr: 1030,
+      matchesPlayed: 1,
+      wins: 1,
+      winStreak: 1,
+      maxWinStreak: 1,
+    });
     expect(updated?.id).toBe(created?.id);
     expect(updated).toMatchObject({ currentMmr: 1030, draws: 0 });
     await repo.upsert({ ...base, playerId: bob, currentMmr: 990, matchesPlayed: 1, losses: 1, draws: 1 });
@@ -76,7 +101,9 @@ describe("playerMmrRepository (integration)", () => {
       history(bob, m3, 990, 990, null, 3),
     ]);
     expect((await repo.getMmrHistoryForPlayerAndMatch(seasonId, ann, m1))?.mmrAfter).toBe(1030);
-    expect(await repo.getMmrHistoryForPlayerAndMatch(seasonId, ann, "00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await repo.getMmrHistoryForPlayerAndMatch(seasonId, ann, "00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
   });
 
   it("orders the season with each player's recent results, legacy rows included", async () => {
@@ -128,7 +155,11 @@ describe("playerMmrRepository (integration)", () => {
 
     const first = await repo.getFinalizedMatchesPageForSeason(seasonId, undefined, 2);
     expect(first.map((m) => m.id)).toEqual([m1, m2]);
-    const next = await repo.getFinalizedMatchesPageForSeason(seasonId, { playedAt: first[1]!.playedAt, id: first[1]!.id }, 2);
+    const next = await repo.getFinalizedMatchesPageForSeason(
+      seasonId,
+      { playedAt: first[1]!.playedAt, id: first[1]!.id },
+      2,
+    );
     expect(next.map((m) => m.id)).toEqual([m3]);
   });
 

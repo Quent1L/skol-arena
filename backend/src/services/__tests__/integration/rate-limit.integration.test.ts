@@ -52,9 +52,7 @@ describe("Rate limiting (integration)", () => {
       const result = await testDb.execute(
         sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'rateLimit'`,
       );
-      const columns = (result.rows as Array<{ column_name: string }>).map(
-        (r) => r.column_name,
-      );
+      const columns = (result.rows as Array<{ column_name: string }>).map((r) => r.column_name);
 
       // The physical names, not the Drizzle property names.
       expect(columns).toContain("id");
@@ -136,9 +134,7 @@ describe("Rate limiting (integration)", () => {
       const key = `race-${Date.now()}`;
 
       // The whole decision is one statement precisely so this cannot over-admit.
-      const verdicts = await Promise.all(
-        Array.from({ length: 6 }, () => rateLimitRepository.consume(key, 60, 3)),
-      );
+      const verdicts = await Promise.all(Array.from({ length: 6 }, () => rateLimitRepository.consume(key, 60, 3)));
 
       expect(verdicts.filter((verdict) => verdict.allowed)).toHaveLength(3);
     });

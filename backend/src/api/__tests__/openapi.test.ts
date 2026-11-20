@@ -17,7 +17,7 @@ const operationsOf = (spec: Spec): Operation[] =>
   Object.values(spec.paths).flatMap((pathItem) =>
     Object.entries(pathItem)
       .filter(([key]) => OPERATION_KEYS.includes(key))
-      .map(([, operation]) => operation)
+      .map(([, operation]) => operation),
   );
 
 describe("OpenAPI specs", () => {
@@ -66,14 +66,12 @@ describe("withOverrides", () => {
     const next = withOverrides(base, { "/config": replacement });
 
     expect(next.find((m) => m.path === "/config")!.router).toBe(replacement);
-    expect(next.find((m) => m.path === "/matches")!.router).toBe(
-      base.find((m) => m.path === "/matches")!.router
-    );
+    expect(next.find((m) => m.path === "/matches")!.router).toBe(base.find((m) => m.path === "/matches")!.router);
   });
 
   it("refuses to override a path nothing is mounted on", () => {
     expect(() => withOverrides(VERSION_MOUNTS.v1, { "/nope": VERSION_MOUNTS.v1[0]!.router })).toThrow(
-      /no router is mounted/
+      /no router is mounted/,
     );
   });
 });

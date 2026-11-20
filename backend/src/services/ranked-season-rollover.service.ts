@@ -1,7 +1,4 @@
-import {
-  renderSeasonName,
-  type CreateRankedSeasonInput,
-} from "@skol-arena/shared/types/index";
+import { renderSeasonName, type CreateRankedSeasonInput } from "@skol-arena/shared/types/index";
 import {
   rankedSeasonAutomationRepository,
   type DueAutomation,
@@ -76,8 +73,7 @@ export class RankedSeasonRolloverService {
     const season = await rankedSeasonRepository.getSeasonWithConfig(seasonId);
     if (!season) throw new NotFoundError(ErrorCode.SEASON_NOT_FOUND);
 
-    const automation =
-      await rankedSeasonAutomationRepository.getByTournamentId(seasonId);
+    const automation = await rankedSeasonAutomationRepository.getByTournamentId(seasonId);
     if (!automation) {
       throw new NotFoundError(ErrorCode.SEASON_AUTOMATION_NOT_FOUND);
     }
@@ -85,11 +81,7 @@ export class RankedSeasonRolloverService {
     // particular would slip past the "one active season per discipline" guard and leave the
     // discipline with two. A close-only automation never has one either — the plain End
     // action is what ends it early.
-    if (
-      automation.mode !== "chain" ||
-      automation.nextSeasonId ||
-      season.status !== "ongoing"
-    ) {
+    if (automation.mode !== "chain" || automation.nextSeasonId || season.status !== "ongoing") {
       throw new BadRequestError(ErrorCode.TOURNAMENT_INVALID_STATUS);
     }
 
@@ -129,10 +121,7 @@ export class RankedSeasonRolloverService {
     // Claimed before the rest so a second scheduler racing this chain cannot create a
     // duplicate successor; whoever loses the claim leaves the season it just made behind
     // rather than compounding the mistake.
-    const claimed = await rankedSeasonAutomationRepository.markRolledOver(
-      season.id,
-      nextSeasonId,
-    );
+    const claimed = await rankedSeasonAutomationRepository.markRolledOver(season.id, nextSeasonId);
     if (!claimed) {
       throw new BadRequestError(ErrorCode.SEASON_ALREADY_ACTIVE);
     }
@@ -158,10 +147,7 @@ export class RankedSeasonRolloverService {
       event: "season_rolled_over",
       data: { seasonId: season.id, nextSeasonId },
     });
-    logger.info(
-      { seasonId: season.id, nextSeasonId, carriedParticipants },
-      "[SeasonRollover] season chained",
-    );
+    logger.info({ seasonId: season.id, nextSeasonId, carriedParticipants }, "[SeasonRollover] season chained");
 
     return { seasonId: season.id, nextSeasonId, carriedParticipants };
   }
@@ -183,10 +169,7 @@ export class RankedSeasonRolloverService {
     return {
       // Recounted rather than read off the automation: seasons entered by hand between two
       // rollovers count too, and the row is only a cache for the admin form.
-      name: await this.resolveUniqueName(
-        automation.nameTemplate,
-        await rankedSeasonService.nextSeasonNumber(season),
-      ),
+      name: await this.resolveUniqueName(automation.nameTemplate, await rankedSeasonService.nextSeasonNumber(season)),
       ...(season.description && { description: season.description }),
       disciplineId: season.disciplineId as string,
       startDate,
@@ -215,10 +198,7 @@ export class RankedSeasonRolloverService {
   }
 
   /** `tournaments.name` is UNIQUE, so the rendered template has to be probed before use. */
-  private async resolveUniqueName(
-    template: string,
-    seasonNumber: number,
-  ): Promise<string> {
+  private async resolveUniqueName(template: string, seasonNumber: number): Promise<string> {
     const base = renderSeasonName(template, seasonNumber);
     for (let attempt = 1; attempt <= MAX_NAME_ATTEMPTS; attempt++) {
       const candidate = attempt === 1 ? base : `${base} (${attempt})`;
@@ -258,20 +238,14 @@ export class RankedSeasonRolloverService {
     return carried;
   }
 
-  private async eligibleParticipantIds(
-    fromSeasonId: string,
-    automation: RankedSeasonAutomationRow,
-  ): Promise<string[]> {
-    const participants =
-      await participantRepository.findTournamentParticipants(fromSeasonId);
+  private async eligibleParticipantIds(fromSeasonId: string, automation: RankedSeasonAutomationRow): Promise<string[]> {
+    const participants = await participantRepository.findTournamentParticipants(fromSeasonId);
     const ids = participants.map((row) => row.userId);
     if (automation.participantsMinMatches <= 0) return ids;
 
     const played = await playerMmrRepository.getAllPlayersBySeasonId(fromSeasonId);
     const active = new Set(
-      played
-        .filter((row) => row.matchesPlayed >= automation.participantsMinMatches)
-        .map((row) => row.playerId),
+      played.filter((row) => row.matchesPlayed >= automation.participantsMinMatches).map((row) => row.playerId),
     );
     return ids.filter((id) => active.has(id));
   }

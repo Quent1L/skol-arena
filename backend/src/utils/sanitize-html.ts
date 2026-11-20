@@ -7,9 +7,29 @@ import sanitize from "sanitize-html";
  */
 const RICH_TEXT_OPTIONS: sanitize.IOptions = {
   allowedTags: [
-    "p", "br", "hr", "h1", "h2", "h3", "h4", "h5", "h6",
-    "strong", "b", "em", "i", "u", "s", "code", "pre", "blockquote",
-    "ul", "ol", "li", "a", "img",
+    "p",
+    "br",
+    "hr",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "strong",
+    "b",
+    "em",
+    "i",
+    "u",
+    "s",
+    "code",
+    "pre",
+    "blockquote",
+    "ul",
+    "ol",
+    "li",
+    "a",
+    "img",
   ],
   allowedAttributes: {
     a: ["href", "target", "rel"],
@@ -37,9 +57,7 @@ export function sanitizeRichText(html: string): string {
     ...RICH_TEXT_OPTIONS,
     // data: is only legitimate for raster images pasted into the editor
     exclusiveFilter: (frame) =>
-      frame.tag === "img" &&
-      (frame.attribs.src ?? "").startsWith("data:") &&
-      !DATA_IMAGE.test(frame.attribs.src),
+      frame.tag === "img" && (frame.attribs.src ?? "").startsWith("data:") && !DATA_IMAGE.test(frame.attribs.src),
   });
 }
 

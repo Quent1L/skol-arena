@@ -32,9 +32,7 @@ configRoute.get(
       enabled: isKeycloakEnabled,
       clientId: process.env.KEYCLOAK_CLIENT_ID || null,
       issuer: process.env.KEYCLOAK_ISSUER || null,
-      realm: process.env.KEYCLOAK_ISSUER
-        ? process.env.KEYCLOAK_ISSUER.split("/realms/")[1]?.split("/")[0]
-        : null,
+      realm: process.env.KEYCLOAK_ISSUER ? process.env.KEYCLOAK_ISSUER.split("/realms/")[1]?.split("/")[0] : null,
       loginLabel: process.env.KEYCLOAK_LOGIN_LABEL || null,
     };
 
@@ -51,7 +49,7 @@ configRoute.get(
       },
       demo: await demoCredentials(),
     });
-  }
+  },
 );
 
 export default configRoute;

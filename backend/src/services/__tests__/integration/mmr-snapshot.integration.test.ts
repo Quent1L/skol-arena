@@ -141,9 +141,7 @@ describe("MMR snapshot at a past date (integration)", () => {
 
   it("prefers the carry-over seed over the season base", async () => {
     const playerId = await createPlayer("CarriedOver");
-    await testDb
-      .insert(seasonMmrSeeds)
-      .values({ seasonId, playerId, seedMmr: 1330, sourceSeasonId: null });
+    await testDb.insert(seasonMmrSeeds).values({ seasonId, playerId, seedMmr: 1330, sourceSeasonId: null });
 
     expect((await snapshotAt([playerId], "2026-02-01T10:00:00Z"))[playerId].mmr).toBe(1330);
   });
@@ -171,8 +169,8 @@ describe("MMR snapshot at a past date (integration)", () => {
     const playerId = await createPlayer("Stray");
     seasonId = await createSeason(false);
 
-    await expect(
-      mmrCalculationService.getMmrSnapshotAt(seasonId, [playerId], new Date()),
-    ).rejects.toThrow("SEASON_NOT_FOUND");
+    await expect(mmrCalculationService.getMmrSnapshotAt(seasonId, [playerId], new Date())).rejects.toThrow(
+      "SEASON_NOT_FOUND",
+    );
   });
 });

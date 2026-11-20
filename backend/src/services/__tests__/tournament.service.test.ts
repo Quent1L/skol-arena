@@ -9,30 +9,15 @@ import {
   CreateTournamentData,
   UpdateTournamentData,
 } from "../../repository/tournament.repository";
-import {
-  participantRepository,
-  ParticipantRepository,
-} from "../../repository/participant.repository";
-import {
-  userRepository,
-  UserRepository,
-} from "../../repository/user.repository";
-import {
-  organizationRepository,
-  OrganizationRepository,
-} from "../../repository/organization.repository";
+import { participantRepository, ParticipantRepository } from "../../repository/participant.repository";
+import { userRepository, UserRepository } from "../../repository/user.repository";
+import { organizationRepository, OrganizationRepository } from "../../repository/organization.repository";
 import { tournamentRulesetService } from "../tournament-ruleset.service";
 import { matchRepository } from "../../repository/match.repository";
 import { standingsService } from "../standings.service";
 import { playerStatsService } from "../player-stats.service";
 import { webSocketService } from "../websocket.service";
-import {
-  NotFoundError,
-  BadRequestError,
-  ForbiddenError,
-  ConflictError,
-  ErrorCode,
-} from "../../types/errors";
+import { NotFoundError, BadRequestError, ForbiddenError, ConflictError, ErrorCode } from "../../types/errors";
 import type {
   CreateTournamentInput,
   UpdateTournamentInput,
@@ -71,10 +56,8 @@ beforeEach(() => {
 
   tourRepo = tournamentRepository as unknown as Partial<TournamentRepository>;
   tourRepo.getById = async (_id: string) => undefined;
-  tourRepo.create = async (data: CreateTournamentData) =>
-    ({ id: "t-1", ...data }) as any;
-  tourRepo.update = async (_id: string, data: UpdateTournamentData) =>
-    ({ id: _id, ...data }) as any;
+  tourRepo.create = async (data: CreateTournamentData) => ({ id: "t-1", ...data }) as any;
+  tourRepo.update = async (_id: string, data: UpdateTournamentData) => ({ id: _id, ...data }) as any;
   tourRepo.delete = async () => undefined;
   tourRepo.list = async () => [];
   tourRepo.countByUserAndStatus = async () => 0;
@@ -85,12 +68,9 @@ beforeEach(() => {
   partRepo = participantRepository as unknown as Partial<ParticipantRepository>;
   partRepo.findTournamentById = async (_id: string) => undefined as any;
   partRepo.findParticipationByUserAndTournament = async () => undefined as any;
-  partRepo.createParticipation = async (
-    _userId: string,
-    _tournamentId: string,
-  ) => ({ id: "p-1", userId: _userId, tournamentId: _tournamentId }) as any;
-  partRepo.findParticipationWithDetails = async (_id: string) =>
-    ({ id: _id }) as any;
+  partRepo.createParticipation = async (_userId: string, _tournamentId: string) =>
+    ({ id: "p-1", userId: _userId, tournamentId: _tournamentId }) as any;
+  partRepo.findParticipationWithDetails = async (_id: string) => ({ id: _id }) as any;
   partRepo.deleteParticipation = async () => undefined;
   partRepo.findTournamentParticipants = async () => [];
   partRepo.findParticipationAnyStatus = async () => undefined as any;
@@ -167,8 +147,7 @@ describe("TournamentService - organization access", () => {
   });
 
   it("refuses joining a tournament scoped to an organization the user is not in", async () => {
-    partRepo.findTournamentById = async () =>
-      ({ id: "t-1", status: "open", organizationId: "org-1" }) as any;
+    partRepo.findTournamentById = async () => ({ id: "t-1", status: "open", organizationId: "org-1" }) as any;
     usrRepo.getById = async () => ({ id: "u-1", role: "player" }) as any;
     orgRepo.isMember = async () => false;
 
@@ -202,8 +181,7 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("canCreateTournament should return true for tournament_admin", async () => {
-    usrRepo.getById = async () =>
-      ({ id: "u-1", role: "tournament_admin" }) as any;
+    usrRepo.getById = async () => ({ id: "u-1", role: "tournament_admin" }) as any;
     const res = await tournamentService.canCreateTournament("u-1");
     expect(res).toBe(true);
   });
@@ -246,8 +224,7 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("createTournament should throw ConflictError when max drafts exceeded", async () => {
-    usrRepo.getById = async () =>
-      ({ id: "u-1", role: "tournament_admin" }) as any;
+    usrRepo.getById = async () => ({ id: "u-1", role: "tournament_admin" }) as any;
     tourRepo.countByUserAndStatus = async () => 5;
     try {
       await tournamentService.createTournament({
@@ -267,8 +244,7 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("createTournament should throw BadRequestError when startDate >= endDate", async () => {
-    usrRepo.getById = async () =>
-      ({ id: "u-1", role: "tournament_admin" }) as any;
+    usrRepo.getById = async () => ({ id: "u-1", role: "tournament_admin" }) as any;
     tourRepo.countByUserAndStatus = async () => 0;
     try {
       await tournamentService.createTournament({
@@ -288,8 +264,7 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("createTournament should throw BadRequestError when minTeamSize < 1", async () => {
-    usrRepo.getById = async () =>
-      ({ id: "u-1", role: "tournament_admin" }) as any;
+    usrRepo.getById = async () => ({ id: "u-1", role: "tournament_admin" }) as any;
     tourRepo.countByUserAndStatus = async () => 0;
     try {
       await tournamentService.createTournament({
@@ -309,8 +284,7 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("createTournament should throw BadRequestError when maxTeamSize < minTeamSize", async () => {
-    usrRepo.getById = async () =>
-      ({ id: "u-1", role: "tournament_admin" }) as any;
+    usrRepo.getById = async () => ({ id: "u-1", role: "tournament_admin" }) as any;
     tourRepo.countByUserAndStatus = async () => 0;
     try {
       await tournamentService.createTournament({
@@ -330,11 +304,9 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("createTournament should create tournament and add creator as owner", async () => {
-    usrRepo.getById = async () =>
-      ({ id: "u-1", role: "tournament_admin" }) as any;
+    usrRepo.getById = async () => ({ id: "u-1", role: "tournament_admin" }) as any;
     tourRepo.countByUserAndStatus = async () => 0;
-    tourRepo.create = async (data: CreateTournamentData) =>
-      ({ id: "t-new", ...data }) as any;
+    tourRepo.create = async (data: CreateTournamentData) => ({ id: "t-new", ...data }) as any;
     let addedAdminTournamentId: string | null = null;
     let addedAdminUserId: string | null = null;
     tourRepo.addAdmin = async (tournamentId: string, userId: string) => {
@@ -363,11 +335,9 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("createTournament should succeed when maxTeamSize equals minTeamSize (solo tournaments)", async () => {
-    usrRepo.getById = async () =>
-      ({ id: "u-1", role: "tournament_admin" }) as any;
+    usrRepo.getById = async () => ({ id: "u-1", role: "tournament_admin" }) as any;
     tourRepo.countByUserAndStatus = async () => 0;
-    tourRepo.create = async (data: CreateTournamentData) =>
-      ({ id: "t-solo", ...data }) as any;
+    tourRepo.create = async (data: CreateTournamentData) => ({ id: "t-solo", ...data }) as any;
     let addedAdminTournamentId: string | null = null;
     tourRepo.addAdmin = async (tournamentId: string) => {
       addedAdminTournamentId = tournamentId;
@@ -402,19 +372,16 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("getTournamentById should return tournament when exists", async () => {
-    tourRepo.getById = async () =>
-      ({ id: "t-1", name: "Test Tournament" }) as any;
+    tourRepo.getById = async () => ({ id: "t-1", name: "Test Tournament" }) as any;
     const res = await tournamentService.getTournamentById("t-1");
     expect(res).toBeTruthy();
     expect(res.id).toBe("t-1");
   });
 
   it("listTournaments should return results from repository", async () => {
-    tourRepo.list = async (filters?: {
-      status?: TournamentStatus;
-      mode?: TournamentMode;
-      createdBy?: string;
-    }) => [{ id: "t-1", status: filters?.status } as any];
+    tourRepo.list = async (filters?: { status?: TournamentStatus; mode?: TournamentMode; createdBy?: string }) => [
+      { id: "t-1", status: filters?.status } as any,
+    ];
     const res = await tournamentService.listTournaments({ status: "open" });
     expect(Array.isArray(res)).toBe(true);
     expect(res[0].status).toBe("open");
@@ -482,10 +449,7 @@ describe("TournamentService - basic flows", () => {
       openTournament();
       enteredMatchCount = 0;
 
-      await expectRejected(
-        { mode: "bracket" } as UpdateTournamentInput,
-        ErrorCode.TOURNAMENT_FIELD_UPDATE_FORBIDDEN,
-      );
+      await expectRejected({ mode: "bracket" } as UpdateTournamentInput, ErrorCode.TOURNAMENT_FIELD_UPDATE_FORBIDDEN);
     });
 
     it("allows scoring semantics while nothing has been entered", async () => {
@@ -542,10 +506,7 @@ describe("TournamentService - basic flows", () => {
       } as UpdateTournamentInput);
 
       openTournament({ teamMode: "static" });
-      await expectRejected(
-        { maxTeamSize: 3 } as UpdateTournamentInput,
-        ErrorCode.TOURNAMENT_FIELD_UPDATE_FORBIDDEN,
-      );
+      await expectRejected({ maxTeamSize: 3 } as UpdateTournamentInput, ErrorCode.TOURNAMENT_FIELD_UPDATE_FORBIDDEN);
     });
 
     it("validates the status transition on the generic update route", async () => {
@@ -554,10 +515,7 @@ describe("TournamentService - basic flows", () => {
       openTournament({ status: "finished" });
       enteredMatchCount = 0;
 
-      await expectRejected(
-        { status: "draft" } as UpdateTournamentInput,
-        ErrorCode.INVALID_STATUS_TRANSITION,
-      );
+      await expectRejected({ status: "draft" } as UpdateTournamentInput, ErrorCode.INVALID_STATUS_TRANSITION);
     });
 
     it("allows a legal transition through the same route", async () => {
@@ -622,8 +580,7 @@ describe("TournamentService - basic flows", () => {
         minTeamSize: 1,
         maxTeamSize: 2,
       }) as any;
-    tourRepo.update = async (_id: string, data: UpdateTournamentData) =>
-      ({ id: _id, ...data }) as any;
+    tourRepo.update = async (_id: string, data: UpdateTournamentData) => ({ id: _id, ...data }) as any;
     const res = await tournamentService.updateTournament("t-1", "u-1", {
       name: "Updated Name",
     } as UpdateTournamentInput);
@@ -653,8 +610,7 @@ describe("TournamentService - basic flows", () => {
 
   it("deleteTournament should throw BadRequestError when tournament not in draft", async () => {
     tourRepo.getUser = async () => ({ id: "u-1", role: "super_admin" }) as any;
-    tourRepo.getById = async () =>
-      ({ id: "t-1", createdBy: "u-1", status: "open" }) as any;
+    tourRepo.getById = async () => ({ id: "t-1", createdBy: "u-1", status: "open" }) as any;
     try {
       await tournamentService.deleteTournament("t-1", "u-1");
       throw new Error("Expected BadRequestError");
@@ -665,8 +621,7 @@ describe("TournamentService - basic flows", () => {
 
   it("deleteTournament should succeed when super_admin deletes", async () => {
     tourRepo.getUser = async () => ({ id: "u-1", role: "super_admin" }) as any;
-    tourRepo.getById = async () =>
-      ({ id: "t-1", createdBy: "u-2", status: "draft" }) as any;
+    tourRepo.getById = async () => ({ id: "t-1", createdBy: "u-2", status: "draft" }) as any;
     let deletedId: string | null = null;
     tourRepo.delete = async (id: string) => {
       deletedId = id;
@@ -679,8 +634,7 @@ describe("TournamentService - basic flows", () => {
 
   it("deleteTournament should succeed when owner deletes", async () => {
     tourRepo.getUser = async () => ({ id: "u-1", role: "player" }) as any;
-    tourRepo.getById = async () =>
-      ({ id: "t-1", createdBy: "u-1", status: "draft" }) as any;
+    tourRepo.getById = async () => ({ id: "t-1", createdBy: "u-1", status: "draft" }) as any;
     let deletedId: string | null = null;
     tourRepo.delete = async (id: string) => {
       deletedId = id;
@@ -717,13 +671,8 @@ describe("TournamentService - basic flows", () => {
   it("changeTournamentStatus should succeed when valid transition", async () => {
     usrRepo.getById = async () => ({ id: "u-1", role: "super_admin" }) as any;
     tourRepo.getById = async () => ({ id: "t-1", status: "draft" }) as any;
-    tourRepo.update = async (_id: string, data: UpdateTournamentData) =>
-      ({ id: _id, ...data }) as any;
-    const res = await tournamentService.changeTournamentStatus(
-      "t-1",
-      "u-1",
-      "open",
-    );
+    tourRepo.update = async (_id: string, data: UpdateTournamentData) => ({ id: _id, ...data }) as any;
+    const res = await tournamentService.changeTournamentStatus("t-1", "u-1", "open");
     expect(res.status).toBe("open");
   });
 
@@ -740,8 +689,7 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("joinTournament should throw BadRequestError when tournament closed", async () => {
-    partRepo.findTournamentById = async () =>
-      ({ id: "t-1", status: "finished" }) as any;
+    partRepo.findTournamentById = async () => ({ id: "t-1", status: "finished" }) as any;
     try {
       await tournamentService.joinTournament("u-1", {
         tournamentId: "t-1",
@@ -753,8 +701,7 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("joinTournament should throw ConflictError when already registered", async () => {
-    partRepo.findTournamentById = async () =>
-      ({ id: "t-1", status: "open" }) as any;
+    partRepo.findTournamentById = async () => ({ id: "t-1", status: "open" }) as any;
     partRepo.findParticipationByUserAndTournament = async () =>
       ({
         id: "p-1",
@@ -775,16 +722,11 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("joinTournament should create participation when valid", async () => {
-    partRepo.findTournamentById = async () =>
-      ({ id: "t-1", status: "open" }) as any;
-    partRepo.findParticipationByUserAndTournament = async () =>
-      undefined as any;
-    partRepo.createParticipation = async (
-      userId: string,
-      tournamentId: string,
-    ) => ({ id: "p-new", userId, tournamentId }) as any;
-    partRepo.findParticipationWithDetails = async () =>
-      ({ id: "p-new", userId: "u-1", tournamentId: "t-1" }) as any;
+    partRepo.findTournamentById = async () => ({ id: "t-1", status: "open" }) as any;
+    partRepo.findParticipationByUserAndTournament = async () => undefined as any;
+    partRepo.createParticipation = async (userId: string, tournamentId: string) =>
+      ({ id: "p-new", userId, tournamentId }) as any;
+    partRepo.findParticipationWithDetails = async () => ({ id: "p-new", userId: "u-1", tournamentId: "t-1" }) as any;
     const res = await tournamentService.joinTournament("u-1", {
       tournamentId: "t-1",
     } as JoinTournamentRequest);
@@ -803,26 +745,19 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("leaveTournament should throw BadRequestError when a bracket is ongoing", async () => {
-    partRepo.findTournamentById = async () =>
-      ({ id: "t-1", mode: "bracket", status: "ongoing" }) as any;
-    await expect(tournamentService.leaveTournament("u-1", "t-1")).rejects.toBeInstanceOf(
-      BadRequestError,
-    );
+    partRepo.findTournamentById = async () => ({ id: "t-1", mode: "bracket", status: "ongoing" }) as any;
+    await expect(tournamentService.leaveTournament("u-1", "t-1")).rejects.toBeInstanceOf(BadRequestError);
   });
 
   it("leaveTournament should throw BadRequestError once a competition is finished", async () => {
     for (const mode of ["championship", "ranked", "bracket"]) {
-      partRepo.findTournamentById = async () =>
-        ({ id: "t-1", mode, status: "finished" }) as any;
-      await expect(tournamentService.leaveTournament("u-1", "t-1")).rejects.toBeInstanceOf(
-        BadRequestError,
-      );
+      partRepo.findTournamentById = async () => ({ id: "t-1", mode, status: "finished" }) as any;
+      await expect(tournamentService.leaveTournament("u-1", "t-1")).rejects.toBeInstanceOf(BadRequestError);
     }
   });
 
   it("leaveTournament tells the open pages that the standings changed", async () => {
-    partRepo.findTournamentById = async () =>
-      ({ id: "t-1", mode: "championship", status: "ongoing" }) as any;
+    partRepo.findTournamentById = async () => ({ id: "t-1", mode: "championship", status: "ongoing" }) as any;
     partRepo.findParticipationByUserAndTournament = async () => ({ id: "p-1" }) as any;
     const sent: unknown[] = [];
     const original = webSocketService.broadcastToTournament;
@@ -840,8 +775,7 @@ describe("TournamentService - basic flows", () => {
   it("leaveTournament lets a player leave an ongoing championship or ranked season", async () => {
     partRepo.findParticipationByUserAndTournament = async () => ({ id: "p-1" }) as any;
     for (const mode of ["championship", "ranked"]) {
-      partRepo.findTournamentById = async () =>
-        ({ id: "t-1", mode, status: "ongoing" }) as any;
+      partRepo.findTournamentById = async () => ({ id: "t-1", mode, status: "ongoing" }) as any;
       let withdrawn: string | null = null;
       partRepo.deleteParticipation = async (id: string) => {
         withdrawn = id;
@@ -852,10 +786,8 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("joinTournament refuses a player an organizer removed", async () => {
-    partRepo.findTournamentById = async () =>
-      ({ id: "t-1", status: "ongoing" }) as any;
-    partRepo.findParticipationAnyStatus = async () =>
-      ({ id: "p-1", status: "removed" }) as any;
+    partRepo.findTournamentById = async () => ({ id: "t-1", status: "ongoing" }) as any;
+    partRepo.findParticipationAnyStatus = async () => ({ id: "p-1", status: "removed" }) as any;
     await expect(
       tournamentService.joinTournament("u-1", { tournamentId: "t-1" } as JoinTournamentRequest),
     ).rejects.toBeInstanceOf(ForbiddenError);
@@ -873,12 +805,9 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("joinTournament lets a player who left come back", async () => {
-    partRepo.findTournamentById = async () =>
-      ({ id: "t-1", status: "ongoing" }) as any;
-    partRepo.findParticipationAnyStatus = async () =>
-      ({ id: "p-1", status: "withdrawn" }) as any;
-    partRepo.findParticipationWithDetails = async () =>
-      ({ id: "p-1", userId: "u-1", tournamentId: "t-1" }) as any;
+    partRepo.findTournamentById = async () => ({ id: "t-1", status: "ongoing" }) as any;
+    partRepo.findParticipationAnyStatus = async () => ({ id: "p-1", status: "withdrawn" }) as any;
+    partRepo.findParticipationWithDetails = async () => ({ id: "p-1", userId: "u-1", tournamentId: "t-1" }) as any;
     const res = await tournamentService.joinTournament("u-1", {
       tournamentId: "t-1",
     } as JoinTournamentRequest);
@@ -886,10 +815,8 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("leaveTournament should throw BadRequestError when not registered", async () => {
-    partRepo.findTournamentById = async () =>
-      ({ id: "t-1", status: "open" }) as any;
-    partRepo.findParticipationByUserAndTournament = async () =>
-      undefined as any;
+    partRepo.findTournamentById = async () => ({ id: "t-1", status: "open" }) as any;
+    partRepo.findParticipationByUserAndTournament = async () => undefined as any;
     try {
       await tournamentService.leaveTournament("u-1", "t-1");
       throw new Error("Expected BadRequestError");
@@ -899,10 +826,8 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("leaveTournament should delete participation when valid", async () => {
-    partRepo.findTournamentById = async () =>
-      ({ id: "t-1", status: "open" }) as any;
-    partRepo.findParticipationByUserAndTournament = async () =>
-      ({ id: "p-1" }) as any;
+    partRepo.findTournamentById = async () => ({ id: "t-1", status: "open" }) as any;
+    partRepo.findParticipationByUserAndTournament = async () => ({ id: "p-1" }) as any;
     let deletedId: string | null = null;
     partRepo.deleteParticipation = async (id: string) => {
       deletedId = id;
@@ -914,9 +839,7 @@ describe("TournamentService - basic flows", () => {
   });
 
   it("getTournamentParticipants should return results from repository", async () => {
-    partRepo.findTournamentParticipants = async () => [
-      { id: "p-1", userId: "u-1" } as any,
-    ];
+    partRepo.findTournamentParticipants = async () => [{ id: "p-1", userId: "u-1" } as any];
     const res = await tournamentService.getTournamentParticipants("t-1");
     expect(Array.isArray(res)).toBe(true);
     expect(res[0].userId).toBe("u-1");

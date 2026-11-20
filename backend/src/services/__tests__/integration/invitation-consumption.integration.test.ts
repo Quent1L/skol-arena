@@ -6,12 +6,7 @@ import * as schema from "../../../db/schema";
 // Initialize the test database BEFORE any imports that use `db`.
 const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
-import {
-  appUsers,
-  invitationCodes,
-  organizations,
-  user as betterAuthUser,
-} from "../../../db/schema";
+import { appUsers, invitationCodes, organizations, user as betterAuthUser } from "../../../db/schema";
 import { eq } from "drizzle-orm";
 import { invitationService } from "../../invitation.service";
 import { userService } from "../../user.service";
@@ -32,9 +27,7 @@ describe("Invitation consumption (integration)", () => {
 
   async function createCode(maxUses: number, orgId: string | null = null) {
     const code = `CODE-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    await testDb
-      .insert(invitationCodes)
-      .values({ code, createdBy: adminId, maxUses, organizationId: orgId });
+    await testDb.insert(invitationCodes).values({ code, createdBy: adminId, maxUses, organizationId: orgId });
     return code;
   }
 
@@ -60,9 +53,7 @@ describe("Invitation consumption (integration)", () => {
     const code = await createCode(1);
     const users = await Promise.all([1, 2, 3, 4, 5].map((i) => createAuthUser(`P${i}`)));
 
-    const outcomes = await Promise.allSettled(
-      users.map((u) => invitationService.consumeCode(code, u.id, u.email)),
-    );
+    const outcomes = await Promise.allSettled(users.map((u) => invitationService.consumeCode(code, u.id, u.email)));
 
     expect(outcomes.filter((o) => o.status === "fulfilled")).toHaveLength(1);
     const row = await testDb.query.invitationCodes.findFirst({ where: eq(invitationCodes.code, code) });

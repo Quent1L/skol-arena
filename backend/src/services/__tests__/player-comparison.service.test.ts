@@ -65,9 +65,7 @@ describe("computeDirectH2H", () => {
   });
 
   it("returns an empty record when the two never met", async () => {
-    mockPlayerStatsRepo.getPlayerMatchResults.mockResolvedValueOnce([
-      result("m1", "eC", "A"),
-    ] as any);
+    mockPlayerStatsRepo.getPlayerMatchResults.mockResolvedValueOnce([result("m1", "eC", "A")] as any);
     mockPlayerStatsRepo.getPlayersInEntries.mockResolvedValueOnce([entryPlayer("eC", "C")] as any);
 
     const h2h = await (service as any).computeDirectH2H("A", "B", {});
@@ -90,10 +88,7 @@ describe("computeTogether", () => {
 
   it("counts only matches where B is on player A's own side", async () => {
     // A on side A. m1/m2 teamed with B (own entry eA1), m3 solo entry eA2 (no B).
-    mockPlayerStatsRepo.getPlayerEntries.mockResolvedValueOnce([
-      { entryId: "eA1" },
-      { entryId: "eA2" },
-    ] as any);
+    mockPlayerStatsRepo.getPlayerEntries.mockResolvedValueOnce([{ entryId: "eA1" }, { entryId: "eA2" }] as any);
     mockPlayerStatsRepo.getPlayerMatchResults.mockResolvedValueOnce([
       { ...result("m1", "eX", "A"), entryId: "eA1" }, // team win with B
       { ...result("m2", "eX", "B"), entryId: "eA1" }, // team loss with B

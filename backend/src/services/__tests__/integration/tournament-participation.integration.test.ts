@@ -1,15 +1,5 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  afterAll,
-  beforeEach,
-} from "bun:test";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-} from "../../../config/test-database";
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
+import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 
@@ -80,9 +70,7 @@ describe("Tournament Participation Integration Tests", () => {
   beforeEach(async () => {
     // Create a fresh test tournament before each test
     const today = new Date().toISOString().split("T")[0];
-    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
     const [tournament] = await testDb
       .insert(tournaments)
@@ -163,10 +151,7 @@ describe("Tournament Participation Integration Tests", () => {
 
     it("should fail when tournament is not open", async () => {
       // Change tournament status to finished
-      await testDb
-        .update(tournaments)
-        .set({ status: "finished" })
-        .where(eq(tournaments.id, testTournamentId));
+      await testDb.update(tournaments).set({ status: "finished" }).where(eq(tournaments.id, testTournamentId));
 
       await expect(
         tournamentService.joinTournament(testUserId, {
@@ -185,27 +170,20 @@ describe("Tournament Participation Integration Tests", () => {
     });
 
     it("should allow user to leave tournament before it starts", async () => {
-      const result = await tournamentService.leaveTournament(
-        testUserId,
-        testTournamentId,
-      );
+      const result = await tournamentService.leaveTournament(testUserId, testTournamentId);
 
       expect(result.message).toBeDefined();
 
       // Verify participation is marked as withdrawn
-      const participation =
-        await participantRepository.findParticipationByUserAndTournament(
-          testUserId,
-          testTournamentId,
-        );
+      const participation = await participantRepository.findParticipationByUserAndTournament(
+        testUserId,
+        testTournamentId,
+      );
       expect(participation).toBeUndefined(); // Should not find active participation
     });
 
     it("should let a player leave an ongoing championship and list them as inactive", async () => {
-      await testDb
-        .update(tournaments)
-        .set({ status: "ongoing" })
-        .where(eq(tournaments.id, testTournamentId));
+      await testDb.update(tournaments).set({ status: "ongoing" }).where(eq(tournaments.id, testTournamentId));
 
       await tournamentService.leaveTournament(testUserId, testTournamentId);
 
@@ -219,9 +197,7 @@ describe("Tournament Participation Integration Tests", () => {
         .set({ status: "ongoing", mode: "bracket" })
         .where(eq(tournaments.id, testTournamentId));
 
-      await expect(
-        tournamentService.leaveTournament(testUserId, testTournamentId),
-      ).rejects.toThrow();
+      await expect(tournamentService.leaveTournament(testUserId, testTournamentId)).rejects.toThrow();
     });
 
     it("should make a player who left active again when they rejoin", async () => {
@@ -239,42 +215,32 @@ describe("Tournament Participation Integration Tests", () => {
       );
       await participantRepository.markRemoved(participation!.id);
 
-      await expect(
-        tournamentService.joinTournament(testUserId, { tournamentId: testTournamentId }),
-      ).rejects.toThrow("PARTICIPANT_REMOVED");
+      await expect(tournamentService.joinTournament(testUserId, { tournamentId: testTournamentId })).rejects.toThrow(
+        "PARTICIPANT_REMOVED",
+      );
       const inactive = await participantRepository.findInactivePlayerIds(testTournamentId);
       expect([...inactive]).toEqual([testUserId]);
     });
 
     it("should prevent leaving finished tournament", async () => {
       // Change tournament status to finished
-      await testDb
-        .update(tournaments)
-        .set({ status: "finished" })
-        .where(eq(tournaments.id, testTournamentId));
+      await testDb.update(tournaments).set({ status: "finished" }).where(eq(tournaments.id, testTournamentId));
 
-      await expect(
-        tournamentService.leaveTournament(testUserId, testTournamentId),
-      ).rejects.toThrow();
+      await expect(tournamentService.leaveTournament(testUserId, testTournamentId)).rejects.toThrow();
     });
 
     it("should fail when user is not registered", async () => {
-      await expect(
-        tournamentService.leaveTournament(anotherUserId, testTournamentId),
-      ).rejects.toThrow();
+      await expect(tournamentService.leaveTournament(anotherUserId, testTournamentId)).rejects.toThrow();
     });
 
     it("should fail when tournament does not exist", async () => {
-      await expect(
-        tournamentService.leaveTournament(testUserId, "non-existent-id"),
-      ).rejects.toThrow();
+      await expect(tournamentService.leaveTournament(testUserId, "non-existent-id")).rejects.toThrow();
     });
   });
 
   describe("getTournamentParticipants", () => {
     it("should return empty array when no participants", async () => {
-      const participants =
-        await tournamentService.getTournamentParticipants(testTournamentId);
+      const participants = await tournamentService.getTournamentParticipants(testTournamentId);
 
       expect(participants).toEqual([]);
     });
@@ -288,8 +254,7 @@ describe("Tournament Participation Integration Tests", () => {
         tournamentId: testTournamentId,
       });
 
-      const participants =
-        await tournamentService.getTournamentParticipants(testTournamentId);
+      const participants = await tournamentService.getTournamentParticipants(testTournamentId);
 
       expect(participants).toHaveLength(2);
       expect(participants[0].user).toBeDefined();
@@ -312,8 +277,7 @@ describe("Tournament Participation Integration Tests", () => {
       // One user leaves
       await tournamentService.leaveTournament(testUserId, testTournamentId);
 
-      const participants =
-        await tournamentService.getTournamentParticipants(testTournamentId);
+      const participants = await tournamentService.getTournamentParticipants(testTournamentId);
 
       expect(participants).toHaveLength(1);
       expect(participants[0].userId).toBe(anotherUserId);
@@ -332,8 +296,7 @@ describe("Tournament Participation Integration Tests", () => {
         tournamentId: testTournamentId,
       });
 
-      const participants =
-        await tournamentService.getTournamentParticipants(testTournamentId);
+      const participants = await tournamentService.getTournamentParticipants(testTournamentId);
 
       expect(participants).toHaveLength(2);
       // Sorted alphabetically by displayName: "Another Test User" < "Test User Participation"
@@ -370,9 +333,7 @@ describe("Tournament Participation Integration Tests", () => {
         tournamentId: testTournamentId,
       });
 
-      const listed = findTest(
-        await tournamentService.listTournaments({}, { id: testUserId, role: "player" }),
-      );
+      const listed = findTest(await tournamentService.listTournaments({}, { id: testUserId, role: "player" }));
       expect(listed.isParticipant).toBe(false);
       expect(listed.participantCount).toBe(1);
     });
@@ -403,30 +364,26 @@ describe("Tournament Participation Integration Tests", () => {
 
   describe("countActiveParticipants", () => {
     it("should count active participants correctly", async () => {
-      let count =
-        await participantRepository.countActiveParticipants(testTournamentId);
+      let count = await participantRepository.countActiveParticipants(testTournamentId);
       expect(count).toBe(0);
 
       // Join with first user
       await tournamentService.joinTournament(testUserId, {
         tournamentId: testTournamentId,
       });
-      count =
-        await participantRepository.countActiveParticipants(testTournamentId);
+      count = await participantRepository.countActiveParticipants(testTournamentId);
       expect(count).toBe(1);
 
       // Join with second user
       await tournamentService.joinTournament(anotherUserId, {
         tournamentId: testTournamentId,
       });
-      count =
-        await participantRepository.countActiveParticipants(testTournamentId);
+      count = await participantRepository.countActiveParticipants(testTournamentId);
       expect(count).toBe(2);
 
       // One user leaves
       await tournamentService.leaveTournament(testUserId, testTournamentId);
-      count =
-        await participantRepository.countActiveParticipants(testTournamentId);
+      count = await participantRepository.countActiveParticipants(testTournamentId);
       expect(count).toBe(1);
     });
   });

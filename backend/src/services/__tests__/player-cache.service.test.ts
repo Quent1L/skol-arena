@@ -55,9 +55,7 @@ beforeEach(() => {
 
 describe("PlayerCacheService", () => {
   it("drops the tournament caches the player appears in", async () => {
-    mockPlayerStatsRepo.getTournamentIdsByPlayers.mockImplementation(() =>
-      Promise.resolve(["t-1", "t-2"]),
-    );
+    mockPlayerStatsRepo.getTournamentIdsByPlayers.mockImplementation(() => Promise.resolve(["t-1", "t-2"]));
 
     await service.invalidateDenormalizedNames([PLAYER_ID]);
 
@@ -69,25 +67,17 @@ describe("PlayerCacheService", () => {
   // this player ever shared a tournament with.
   it("drops the stats of every co-participant as well", async () => {
     mockPlayerStatsRepo.getTournamentIdsByPlayers.mockImplementation(() => Promise.resolve(["t-1"]));
-    mockPlayerStatsRepo.getPlayerIdsByTournaments.mockImplementation(() =>
-      Promise.resolve(["mate-1", "mate-2"]),
-    );
+    mockPlayerStatsRepo.getPlayerIdsByTournaments.mockImplementation(() => Promise.resolve(["mate-1", "mate-2"]));
 
     await service.invalidateDenormalizedNames([PLAYER_ID]);
 
     expect(mockPlayerStatsRepo.getPlayerIdsByTournaments).toHaveBeenCalledWith(["t-1"]);
-    expect(mockPlayerComputedDataRepo.deleteMany).toHaveBeenCalledWith([
-      PLAYER_ID,
-      "mate-1",
-      "mate-2",
-    ]);
+    expect(mockPlayerComputedDataRepo.deleteMany).toHaveBeenCalledWith([PLAYER_ID, "mate-1", "mate-2"]);
   });
 
   it("does not repeat a player already returned as a co-participant", async () => {
     mockPlayerStatsRepo.getTournamentIdsByPlayers.mockImplementation(() => Promise.resolve(["t-1"]));
-    mockPlayerStatsRepo.getPlayerIdsByTournaments.mockImplementation(() =>
-      Promise.resolve([PLAYER_ID, "mate-1"]),
-    );
+    mockPlayerStatsRepo.getPlayerIdsByTournaments.mockImplementation(() => Promise.resolve([PLAYER_ID, "mate-1"]));
 
     await service.invalidateDenormalizedNames([PLAYER_ID]);
 

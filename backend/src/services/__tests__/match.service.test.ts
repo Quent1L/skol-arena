@@ -2,19 +2,9 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 
 import { matchService } from "../match.service";
-import {
-  matchRepository,
-  MatchRepository,
-  UpdateMatchData,
-} from "../../repository/match.repository";
-import {
-  tournamentRepository,
-  TournamentRepository,
-} from "../../repository/tournament.repository";
-import {
-  userRepository,
-  UserRepository,
-} from "../../repository/user.repository";
+import { matchRepository, MatchRepository, UpdateMatchData } from "../../repository/match.repository";
+import { tournamentRepository, TournamentRepository } from "../../repository/tournament.repository";
+import { userRepository, UserRepository } from "../../repository/user.repository";
 import {
   matchConfirmationRepository,
   MatchConfirmationRepository,
@@ -101,8 +91,7 @@ beforeEach(() => {
   repo.countMatchesForTeam = async () => 0;
   repo.countMatchesTeamsVsTeam = async () => 0;
   repo.getParticipationsByMatchId = async () => [];
-  repo.update = async (_id: string, _data: UpdateMatchData) =>
-    ({ id: _id }) as any;
+  repo.update = async (_id: string, _data: UpdateMatchData) => ({ id: _id }) as any;
   repo.findMatchesWithSameEntries = async () => [];
 
   tourRepo = tournamentRepository as unknown as Partial<TournamentRepository>;
@@ -135,16 +124,14 @@ beforeEach(() => {
   usrRepo.resetTrustScore = async () => undefined;
 
   // Mock match confirmation repository
-  confRepo =
-    matchConfirmationRepository as unknown as Partial<MatchConfirmationRepository>;
+  confRepo = matchConfirmationRepository as unknown as Partial<MatchConfirmationRepository>;
   confRepo.upsert = async (_data: any) => ({ id: "conf-1", ..._data }) as any;
   confRepo.getByMatchId = async () => [];
   confRepo.hasAnyContestation = async () => false;
   confRepo.deletePostFinalizationByMatchId = async () => undefined;
 
   // Mock notification service
-  notifService =
-    notificationService as unknown as Partial<NotificationServiceType>;
+  notifService = notificationService as unknown as Partial<NotificationServiceType>;
   notifService.deleteActionsByMatchId = async () => [];
   notifService.deleteActionsByMatchIdAndType = async () => [];
   notifService.deleteActionsByMatchIdForUser = async () => [];
@@ -225,10 +212,7 @@ describe("MatchService - basic flows", () => {
   it("createMatch should throw NotFoundError when tournament does not exist", async () => {
     // matchRepository.getTournament returns null by default
     try {
-      await matchService.createMatch(
-        { tournamentId: "t-1" } as CreateMatchRequestData,
-        "u-1",
-      );
+      await matchService.createMatch({ tournamentId: "t-1" } as CreateMatchRequestData, "u-1");
       throw new Error("Expected NotFoundError");
     } catch (err) {
       expect(err).toBeInstanceOf(NotFoundError);
@@ -236,17 +220,14 @@ describe("MatchService - basic flows", () => {
   });
 
   it("getMatchById should return match when exists", async () => {
-    repo.getById = async () =>
-      ({ id: "m-10", tournamentId: "t-10", status: "scheduled" }) as any;
+    repo.getById = async () => ({ id: "m-10", tournamentId: "t-10", status: "scheduled" }) as any;
     const res = await matchService.getMatchById("m-10");
     expect(res).toBeTruthy();
     expect(res.id).toBe("m-10");
   });
 
   it("listMatches should return results from repository", async () => {
-    repo.list = async (filters?: ListMatchesQuery) => [
-      { id: "m-l", tournamentId: filters?.tournamentId } as any,
-    ];
+    repo.list = async (filters?: ListMatchesQuery) => [{ id: "m-l", tournamentId: filters?.tournamentId } as any];
     const res = await matchService.listMatches({
       tournamentId: "t-l",
     } as ListMatchesQuery);
@@ -255,12 +236,9 @@ describe("MatchService - basic flows", () => {
   });
 
   it("updateMatch should succeed when user can manage matches", async () => {
-    repo.getById = async () =>
-      ({ id: "m-u", tournamentId: "t-1", status: "scheduled" }) as any;
-    usrRepo.getById = async () =>
-      ({ id: "u-admin", role: "super_admin" }) as any;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: _id, ...data }) as any;
+    repo.getById = async () => ({ id: "m-u", tournamentId: "t-1", status: "scheduled" }) as any;
+    usrRepo.getById = async () => ({ id: "u-admin", role: "super_admin" }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: _id, ...data }) as any;
     const res = await matchService.updateMatch(
       "m-u",
       { status: "reported", scoreA: 2, scoreB: 1 } as UpdateMatchRequestData,
@@ -270,10 +248,8 @@ describe("MatchService - basic flows", () => {
   });
 
   it("deleteMatch should succeed when user can manage matches", async () => {
-    repo.getById = async () =>
-      ({ id: "m-d", tournamentId: "t-1", status: "scheduled" }) as any;
-    usrRepo.getById = async () =>
-      ({ id: "u-admin", role: "super_admin" }) as any;
+    repo.getById = async () => ({ id: "m-d", tournamentId: "t-1", status: "scheduled" }) as any;
+    usrRepo.getById = async () => ({ id: "u-admin", role: "super_admin" }) as any;
     let deletedId: string | null = null;
     repo.delete = async (id: string) => {
       deletedId = id;
@@ -285,10 +261,8 @@ describe("MatchService - basic flows", () => {
   });
 
   it("deleteMatch clears the notifications pointing at the match before it disappears", async () => {
-    repo.getById = async () =>
-      ({ id: "m-d", tournamentId: "t-1", status: "scheduled" }) as any;
-    usrRepo.getById = async () =>
-      ({ id: "u-admin", role: "super_admin" }) as any;
+    repo.getById = async () => ({ id: "m-d", tournamentId: "t-1", status: "scheduled" }) as any;
+    usrRepo.getById = async () => ({ id: "u-admin", role: "super_admin" }) as any;
 
     const calls: string[] = [];
     notifService.deleteActionsByMatchId = async (id: string) => {
@@ -311,7 +285,10 @@ describe("MatchService - basic flows", () => {
         id: "m-draw",
         tournamentId: "t-1",
         status: "scheduled",
-        sides: [{ position: 1, teamId: "A" }, { position: 2, teamId: "B" }],
+        sides: [
+          { position: 1, teamId: "A" },
+          { position: 2, teamId: "B" },
+        ],
       }) as any;
     repo.isUserInMatch = async () => true;
     repo.getTournament = async () => ({ id: "t-1", allowDraw: true }) as any;
@@ -343,11 +320,7 @@ describe("MatchService - basic flows", () => {
       }) as any;
     repo.isUserInMatch = async () => false;
     try {
-      await matchService.confirmMatch(
-        "m-x",
-        {} as ConfirmMatchRequestData,
-        "u-other",
-      );
+      await matchService.confirmMatch("m-x", {} as ConfirmMatchRequestData, "u-other");
       throw new Error("Expected ForbiddenError");
     } catch (err) {
       expect(err).toBeInstanceOf(ForbiddenError);
@@ -360,8 +333,7 @@ describe("MatchService - basic flows", () => {
       tournamentId: "no",
     } as CreateMatchRequestData);
     expect(res1.valid).toBe(false);
-    repo.getTournament = async () =>
-      ({ id: "t", status: "closed", teamMode: "flex" }) as any;
+    repo.getTournament = async () => ({ id: "t", status: "closed", teamMode: "flex" }) as any;
     const res2 = await matchService.validateMatch({
       tournamentId: "t",
     } as CreateMatchRequestData);
@@ -369,13 +341,9 @@ describe("MatchService - basic flows", () => {
   });
 
   it("createMatch should throw BadRequestError when tournament status invalid", async () => {
-    repo.getTournament = async () =>
-      ({ id: "t-1", status: "closed", teamMode: "flex" }) as any;
+    repo.getTournament = async () => ({ id: "t-1", status: "closed", teamMode: "flex" }) as any;
     try {
-      await matchService.createMatch(
-        { tournamentId: "t-1" } as CreateMatchRequestData,
-        "u-1",
-      );
+      await matchService.createMatch({ tournamentId: "t-1" } as CreateMatchRequestData, "u-1");
       throw new Error("Expected BadRequestError");
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestError);
@@ -398,12 +366,14 @@ describe("MatchService - basic flows", () => {
 
     // Simulate create returning an id and getById returning full match
     repo.create = async (_data: any) => "m-1";
-    repo.getById = async (id: string) =>
-      ({ id, tournamentId: "t-1", status: "scheduled" }) as any;
+    repo.getById = async (id: string) => ({ id, tournamentId: "t-1", status: "scheduled" }) as any;
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["u-1"] }, { position: 2, playerIds: ["u-2"] }],
+      sides: [
+        { position: 1, playerIds: ["u-1"] },
+        { position: 2, playerIds: ["u-2"] },
+      ],
     } as CreateMatchRequestData;
 
     const result = await matchService.createMatch(input, "u-1");
@@ -412,16 +382,11 @@ describe("MatchService - basic flows", () => {
   });
 
   it("reportMatchResult should reject non-participant", async () => {
-    repo.getById = async () =>
-      ({ id: "m-1", tournamentId: "t-1", status: "scheduled" }) as any;
+    repo.getById = async () => ({ id: "m-1", tournamentId: "t-1", status: "scheduled" }) as any;
     repo.isUserInMatch = async () => false;
 
     try {
-      await matchService.reportMatchResult(
-        "m-1",
-        { scoreA: 1, scoreB: 0 } as ReportMatchResultRequestData,
-        "u-3",
-      );
+      await matchService.reportMatchResult("m-1", { scoreA: 1, scoreB: 0 } as ReportMatchResultRequestData, "u-3");
       throw new Error("Expected ForbiddenError");
     } catch (err) {
       expect(err).toBeInstanceOf(ForbiddenError);
@@ -434,17 +399,16 @@ describe("MatchService - basic flows", () => {
         id: "m-1",
         tournamentId: "t-1",
         status: "scheduled",
-        sides: [{ position: 1, teamId: "tA" }, { position: 2, teamId: "tB" }],
+        sides: [
+          { position: 1, teamId: "tA" },
+          { position: 2, teamId: "tB" },
+        ],
       }) as any;
     repo.isUserInMatch = async () => true;
     repo.getTournament = async () => ({ id: "t-1", allowDraw: true }) as any;
 
     try {
-      await matchService.reportMatchResult(
-        "m-1",
-        { scoreA: -1, scoreB: 0 } as ReportMatchResultRequestData,
-        "u-1",
-      );
+      await matchService.reportMatchResult("m-1", { scoreA: -1, scoreB: 0 } as ReportMatchResultRequestData, "u-1");
       throw new Error("Expected BadRequestError");
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestError);
@@ -452,21 +416,19 @@ describe("MatchService - basic flows", () => {
   });
 
   it("validateMatch should report overlapping players as error", async () => {
-    repo.getTournament = async () =>
-      ({ id: "t-1", status: "open", teamMode: "flex", name: "T" }) as any;
+    repo.getTournament = async () => ({ id: "t-1", status: "open", teamMode: "flex", name: "T" }) as any;
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["p1", "p2"] }, { position: 2, playerIds: ["p2", "p3"] }],
+      sides: [
+        { position: 1, playerIds: ["p1", "p2"] },
+        { position: 2, playerIds: ["p2", "p3"] },
+      ],
     } as CreateMatchRequestData;
 
     const res = await matchService.validateMatch(input);
     expect(res.valid).toBe(false);
-    expect(
-      res.errors.some((e: string) =>
-        e.includes("ne peut pas être dans les deux équipes"),
-      ),
-    ).toBe(true);
+    expect(res.errors.some((e: string) => e.includes("ne peut pas être dans les deux équipes"))).toBe(true);
   });
 
   it("getMatchById should throw NotFoundError when missing", async () => {
@@ -480,17 +442,12 @@ describe("MatchService - basic flows", () => {
   });
 
   it("updateMatch should throw ForbiddenError when user cannot manage matches", async () => {
-    repo.getById = async () =>
-      ({ id: "m-1", tournamentId: "t-1", status: "scheduled" }) as any;
+    repo.getById = async () => ({ id: "m-1", tournamentId: "t-1", status: "scheduled" }) as any;
     usrRepo.getById = async () => ({ id: "u-1", role: "player" }) as any;
     tourRepo.isUserTournamentAdmin = async () => false;
 
     try {
-      await matchService.updateMatch(
-        "m-1",
-        { status: "reported" } as UpdateMatchRequestData,
-        "u-1",
-      );
+      await matchService.updateMatch("m-1", { status: "reported" } as UpdateMatchRequestData, "u-1");
       throw new Error("Expected ForbiddenError");
     } catch (err) {
       expect(err).toBeInstanceOf(ForbiddenError);
@@ -498,8 +455,7 @@ describe("MatchService - basic flows", () => {
   });
 
   it("deleteMatch should throw ForbiddenError when user cannot manage matches", async () => {
-    repo.getById = async () =>
-      ({ id: "m-1", tournamentId: "t-1", status: "scheduled" }) as any;
+    repo.getById = async () => ({ id: "m-1", tournamentId: "t-1", status: "scheduled" }) as any;
     usrRepo.getById = async () => ({ id: "u-1", role: "player" }) as any;
     tourRepo.isUserTournamentAdmin = async () => false;
 
@@ -520,8 +476,7 @@ describe("MatchService - basic flows", () => {
         reportedBy: "u-rep",
       }) as any;
     repo.isUserInMatch = async () => true;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: "m-1", ...data }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: "m-1", ...data }) as any;
     repo.getParticipationsByMatchId = async () =>
       [
         { playerId: "u-rep", teamSide: "A" },
@@ -533,16 +488,10 @@ describe("MatchService - basic flows", () => {
         { playerId: "u-conf", isConfirmed: true, isContested: false },
       ] as any;
 
-    const res = await matchService.confirmMatch(
-      "m-1",
-      {} as ConfirmMatchRequestData,
-      "u-conf",
-    );
+    const res = await matchService.confirmMatch("m-1", {} as ConfirmMatchRequestData, "u-conf");
     expect(res).toBeTruthy();
     // Status might be "reported", "pending_confirmation", or "finalized" depending on confirmations
-    expect(["reported", "pending_confirmation", "finalized"]).toContain(
-      (res as any).status,
-    );
+    expect(["reported", "pending_confirmation", "finalized"]).toContain((res as any).status);
   });
 
   it("confirmMatch should set disputed when not confirmed", async () => {
@@ -556,8 +505,7 @@ describe("MatchService - basic flows", () => {
         reportedBy: "u-rep",
       }) as any;
     repo.isUserInMatch = async () => true;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: "m-2", ...data }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: "m-2", ...data }) as any;
     repo.getParticipationsByMatchId = async () =>
       [
         { playerId: "u-rep", teamSide: "A" },
@@ -570,18 +518,12 @@ describe("MatchService - basic flows", () => {
       ] as any;
     confRepo.hasAnyContestation = async () => true;
 
-    const res = await matchService.confirmMatch(
-      "m-2",
-      {} as ConfirmMatchRequestData,
-      "u-conf",
-    );
+    const res = await matchService.confirmMatch("m-2", {} as ConfirmMatchRequestData, "u-conf");
     expect(res).toBeTruthy();
     // When there's a contestation, status should be disputed
     // But confirmMatch creates a confirmation, so we need to check the final state
     // The status will be set to disputed by checkAndFinalizeMatch if there's a contestation
-    expect(["reported", "pending_confirmation", "disputed"]).toContain(
-      (res as any).status,
-    );
+    expect(["reported", "pending_confirmation", "disputed"]).toContain((res as any).status);
   });
 
   it("createMatch should throw ConflictError when max matches per player exceeded", async () => {
@@ -601,7 +543,10 @@ describe("MatchService - basic flows", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["u-1"] }, { position: 2, playerIds: ["u-2"] }],
+      sides: [
+        { position: 1, playerIds: ["u-1"] },
+        { position: 2, playerIds: ["u-2"] },
+      ],
     } as CreateMatchRequestData;
 
     try {
@@ -629,7 +574,10 @@ describe("MatchService - basic flows", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["u-1", "u-2"] }, { position: 2, playerIds: ["u-3", "u-4"] }],
+      sides: [
+        { position: 1, playerIds: ["u-1", "u-2"] },
+        { position: 2, playerIds: ["u-3", "u-4"] },
+      ],
     } as CreateMatchRequestData;
 
     try {
@@ -657,7 +605,10 @@ describe("MatchService - basic flows", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["u-1", "u-2"] }, { position: 2, playerIds: ["u-3", "u-4"] }],
+      sides: [
+        { position: 1, playerIds: ["u-1", "u-2"] },
+        { position: 2, playerIds: ["u-3", "u-4"] },
+      ],
     } as CreateMatchRequestData;
 
     try {
@@ -669,8 +620,7 @@ describe("MatchService - basic flows", () => {
   });
 
   it("canManageMatches returns true for super_admin", async () => {
-    usrRepo.getById = async () =>
-      ({ id: "u-admin", role: "super_admin" }) as any;
+    usrRepo.getById = async () => ({ id: "u-admin", role: "super_admin" }) as any;
     const res = await matchService.canManageMatches("t-1", "u-admin");
     expect(res).toBe(true);
   });
@@ -691,13 +641,9 @@ describe("MatchService - basic flows", () => {
       }) as any;
 
     // missing teams should error — use super_admin so we bypass permission check
-    usrRepo.getById = async () =>
-      ({ id: "u-admin", role: "super_admin" }) as any;
+    usrRepo.getById = async () => ({ id: "u-admin", role: "super_admin" }) as any;
     try {
-      await matchService.createMatch(
-        { tournamentId: "t-2" } as CreateMatchRequestData,
-        "u-admin",
-      );
+      await matchService.createMatch({ tournamentId: "t-2" } as CreateMatchRequestData, "u-admin");
       throw new Error("Expected BadRequestError");
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestError);
@@ -710,7 +656,10 @@ describe("MatchService - basic flows", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-2",
-      sides: [{ position: 1, teamId: "A" }, { position: 2, teamId: "B" }],
+      sides: [
+        { position: 1, teamId: "A" },
+        { position: 2, teamId: "B" },
+      ],
     } as CreateMatchRequestData;
     const result = await matchService.createMatch(input, "u-admin");
     expect(result).toBeTruthy();
@@ -718,15 +667,10 @@ describe("MatchService - basic flows", () => {
   });
 
   it("updateMatch should throw BadRequestError when match already confirmed", async () => {
-    repo.getById = async () =>
-      ({ id: "m-c", tournamentId: "t-1", status: "confirmed" }) as any;
+    repo.getById = async () => ({ id: "m-c", tournamentId: "t-1", status: "confirmed" }) as any;
     usrRepo.getById = async () => ({ id: "u-1", role: "super_admin" }) as any;
     try {
-      await matchService.updateMatch(
-        "m-c",
-        { status: "reported" } as UpdateMatchRequestData,
-        "u-1",
-      );
+      await matchService.updateMatch("m-c", { status: "reported" } as UpdateMatchRequestData, "u-1");
       throw new Error("Expected BadRequestError");
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestError);
@@ -734,8 +678,7 @@ describe("MatchService - basic flows", () => {
   });
 
   it("deleteMatch should throw BadRequestError when match confirmed", async () => {
-    repo.getById = async () =>
-      ({ id: "m-c", tournamentId: "t-1", status: "confirmed" }) as any;
+    repo.getById = async () => ({ id: "m-c", tournamentId: "t-1", status: "confirmed" }) as any;
     usrRepo.getById = async () => ({ id: "u-1", role: "super_admin" }) as any;
     try {
       await matchService.deleteMatch("m-c", "u-1");
@@ -746,8 +689,7 @@ describe("MatchService - basic flows", () => {
   });
 
   it("deleteMatch should throw BadRequestError when match finalized", async () => {
-    repo.getById = async () =>
-      ({ id: "m-f", tournamentId: "t-1", status: "finalized" }) as any;
+    repo.getById = async () => ({ id: "m-f", tournamentId: "t-1", status: "finalized" }) as any;
     usrRepo.getById = async () => ({ id: "u-1", role: "super_admin" }) as any;
     try {
       await matchService.deleteMatch("m-f", "u-1");
@@ -758,15 +700,10 @@ describe("MatchService - basic flows", () => {
   });
 
   it("updateMatch should throw BadRequestError when match finalized", async () => {
-    repo.getById = async () =>
-      ({ id: "m-f", tournamentId: "t-1", status: "finalized" }) as any;
+    repo.getById = async () => ({ id: "m-f", tournamentId: "t-1", status: "finalized" }) as any;
     usrRepo.getById = async () => ({ id: "u-1", role: "super_admin" }) as any;
     try {
-      await matchService.updateMatch(
-        "m-f",
-        { status: "reported" } as UpdateMatchRequestData,
-        "u-1",
-      );
+      await matchService.updateMatch("m-f", { status: "reported" } as UpdateMatchRequestData, "u-1");
       throw new Error("Expected BadRequestError");
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestError);
@@ -774,15 +711,10 @@ describe("MatchService - basic flows", () => {
   });
 
   it("reportMatchResult should reject when match status invalid", async () => {
-    repo.getById = async () =>
-      ({ id: "m-1", tournamentId: "t-1", status: "confirmed" }) as any;
+    repo.getById = async () => ({ id: "m-1", tournamentId: "t-1", status: "confirmed" }) as any;
     repo.isUserInMatch = async () => true;
     try {
-      await matchService.reportMatchResult(
-        "m-1",
-        { scoreA: 1, scoreB: 0 } as ReportMatchResultRequestData,
-        "u-1",
-      );
+      await matchService.reportMatchResult("m-1", { scoreA: 1, scoreB: 0 } as ReportMatchResultRequestData, "u-1");
       throw new Error("Expected BadRequestError");
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestError);
@@ -790,16 +722,11 @@ describe("MatchService - basic flows", () => {
   });
 
   it("reportMatchResult should reject draw when tournament does not allow draws", async () => {
-    repo.getById = async () =>
-      ({ id: "m-1", tournamentId: "t-1", status: "scheduled" }) as any;
+    repo.getById = async () => ({ id: "m-1", tournamentId: "t-1", status: "scheduled" }) as any;
     repo.isUserInMatch = async () => true;
     repo.getTournament = async () => ({ id: "t-1", allowDraw: false }) as any;
     try {
-      await matchService.reportMatchResult(
-        "m-1",
-        { scoreA: 1, scoreB: 1 } as ReportMatchResultRequestData,
-        "u-1",
-      );
+      await matchService.reportMatchResult("m-1", { scoreA: 1, scoreB: 1 } as ReportMatchResultRequestData, "u-1");
       throw new Error("Expected BadRequestError");
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestError);
@@ -812,7 +739,10 @@ describe("MatchService - basic flows", () => {
         id: "m-w",
         tournamentId: "t-1",
         status: "scheduled",
-        sides: [{ position: 1, teamId: "A" }, { position: 2, teamId: "B" }],
+        sides: [
+          { position: 1, teamId: "A" },
+          { position: 2, teamId: "B" },
+        ],
       }) as any;
     repo.isUserInMatch = async () => true;
     repo.update = async (_id: string, data: UpdateMatchData) => {
@@ -841,28 +771,18 @@ describe("MatchService - basic flows", () => {
         reportedBy: "u-rep",
       }) as any;
     repo.isUserInMatch = async () => true;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: "m-1", ...data }) as any;
-    repo.getParticipationsByMatchId = async () =>
-      [{ playerId: "u-rep", teamSide: "A" }] as any;
-    confRepo.getByMatchId = async () =>
-      [{ playerId: "u-rep", isConfirmed: true, isContested: false }] as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: "m-1", ...data }) as any;
+    repo.getParticipationsByMatchId = async () => [{ playerId: "u-rep", teamSide: "A" }] as any;
+    confRepo.getByMatchId = async () => [{ playerId: "u-rep", isConfirmed: true, isContested: false }] as any;
 
-    const res = await matchService.confirmMatch(
-      "m-1",
-      {} as ConfirmMatchRequestData,
-      "u-rep",
-    );
+    const res = await matchService.confirmMatch("m-1", {} as ConfirmMatchRequestData, "u-rep");
     expect(res).toBeTruthy();
     // Reporter can now confirm their own match
-    expect(["reported", "pending_confirmation", "finalized"]).toContain(
-      (res as any).status,
-    );
+    expect(["reported", "pending_confirmation", "finalized"]).toContain((res as any).status);
   });
 
   it.skip("validateMatch should add warning when similar match exists", async () => {
-    repo.getTournament = async () =>
-      ({ id: "t-1", status: "open", teamMode: "static", name: "T" }) as any;
+    repo.getTournament = async () => ({ id: "t-1", status: "open", teamMode: "static", name: "T" }) as any;
     // mock db existing match
     const dbTyped = db as unknown as {
       query?: {
@@ -875,7 +795,10 @@ describe("MatchService - basic flows", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, teamId: "A" }, { position: 2, teamId: "B" }],
+      sides: [
+        { position: 1, teamId: "A" },
+        { position: 2, teamId: "B" },
+      ],
     } as CreateMatchRequestData;
     const res = await matchService.validateMatch(input);
     expect(res.warnings.length).toBeGreaterThan(0);
@@ -909,7 +832,10 @@ describe("MatchService - Partner and Opponent Constraints", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["A1", "A2"] }, { position: 2, playerIds: ["B1", "B2"] }],
+      sides: [
+        { position: 1, playerIds: ["A1", "A2"] },
+        { position: 2, playerIds: ["B1", "B2"] },
+      ],
     } as CreateMatchRequestData;
 
     try {
@@ -917,9 +843,7 @@ describe("MatchService - Partner and Opponent Constraints", () => {
       throw new Error("Expected ConflictError");
     } catch (err) {
       expect(err).toBeInstanceOf(ConflictError);
-      expect((err as ConflictError).code).toBe(
-        ErrorCode.MAX_PARTNER_MATCHES_EXCEEDED,
-      );
+      expect((err as ConflictError).code).toBe(ErrorCode.MAX_PARTNER_MATCHES_EXCEEDED);
     }
   });
 
@@ -949,7 +873,10 @@ describe("MatchService - Partner and Opponent Constraints", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["A1", "A2"] }, { position: 2, playerIds: ["B1", "B2"] }],
+      sides: [
+        { position: 1, playerIds: ["A1", "A2"] },
+        { position: 2, playerIds: ["B1", "B2"] },
+      ],
     } as CreateMatchRequestData;
 
     try {
@@ -957,9 +884,7 @@ describe("MatchService - Partner and Opponent Constraints", () => {
       throw new Error("Expected ConflictError");
     } catch (err) {
       expect(err).toBeInstanceOf(ConflictError);
-      expect((err as ConflictError).code).toBe(
-        ErrorCode.MAX_PARTNER_MATCHES_EXCEEDED,
-      );
+      expect((err as ConflictError).code).toBe(ErrorCode.MAX_PARTNER_MATCHES_EXCEEDED);
     }
   });
 
@@ -985,7 +910,10 @@ describe("MatchService - Partner and Opponent Constraints", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["A1", "A2"] }, { position: 2, playerIds: ["B1", "B2"] }],
+      sides: [
+        { position: 1, playerIds: ["A1", "A2"] },
+        { position: 2, playerIds: ["B1", "B2"] },
+      ],
     } as CreateMatchRequestData;
 
     try {
@@ -993,9 +921,7 @@ describe("MatchService - Partner and Opponent Constraints", () => {
       throw new Error("Expected ConflictError");
     } catch (err) {
       expect(err).toBeInstanceOf(ConflictError);
-      expect((err as ConflictError).code).toBe(
-        ErrorCode.MAX_OPPONENT_MATCHES_EXCEEDED,
-      );
+      expect((err as ConflictError).code).toBe(ErrorCode.MAX_OPPONENT_MATCHES_EXCEEDED);
     }
   });
 
@@ -1021,7 +947,10 @@ describe("MatchService - Partner and Opponent Constraints", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["A1", "A2"] }, { position: 2, playerIds: ["B1", "B2"] }],
+      sides: [
+        { position: 1, playerIds: ["A1", "A2"] },
+        { position: 2, playerIds: ["B1", "B2"] },
+      ],
     } as CreateMatchRequestData;
 
     try {
@@ -1029,9 +958,7 @@ describe("MatchService - Partner and Opponent Constraints", () => {
       throw new Error("Expected ConflictError");
     } catch (err) {
       expect(err).toBeInstanceOf(ConflictError);
-      expect((err as ConflictError).code).toBe(
-        ErrorCode.MAX_OPPONENT_MATCHES_EXCEEDED,
-      );
+      expect((err as ConflictError).code).toBe(ErrorCode.MAX_OPPONENT_MATCHES_EXCEEDED);
     }
   });
 
@@ -1061,7 +988,10 @@ describe("MatchService - Partner and Opponent Constraints", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["A1", "A2", "A3"] }, { position: 2, playerIds: ["B1", "B2", "B3"] }],
+      sides: [
+        { position: 1, playerIds: ["A1", "A2", "A3"] },
+        { position: 2, playerIds: ["B1", "B2", "B3"] },
+      ],
     } as CreateMatchRequestData;
 
     try {
@@ -1069,9 +999,7 @@ describe("MatchService - Partner and Opponent Constraints", () => {
       throw new Error("Expected ConflictError");
     } catch (err) {
       expect(err).toBeInstanceOf(ConflictError);
-      expect((err as ConflictError).code).toBe(
-        ErrorCode.MAX_PARTNER_MATCHES_EXCEEDED,
-      );
+      expect((err as ConflictError).code).toBe(ErrorCode.MAX_PARTNER_MATCHES_EXCEEDED);
     }
   });
 
@@ -1106,7 +1034,10 @@ describe("MatchService - Partner and Opponent Constraints", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["A1", "A2"] }, { position: 2, playerIds: ["B1", "B2"] }],
+      sides: [
+        { position: 1, playerIds: ["A1", "A2"] },
+        { position: 2, playerIds: ["B1", "B2"] },
+      ],
     } as CreateMatchRequestData;
 
     const result = await matchService.createMatch(input, "A1");
@@ -1153,7 +1084,10 @@ describe("MatchService - Partner and Opponent Constraints", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["A1", "A2"] }, { position: 2, playerIds: ["B1", "B2"] }],
+      sides: [
+        { position: 1, playerIds: ["A1", "A2"] },
+        { position: 2, playerIds: ["B1", "B2"] },
+      ],
     } as CreateMatchRequestData;
 
     // Should succeed because partner constraint is satisfied (1 < 2)
@@ -1200,7 +1134,10 @@ describe("MatchService - Partner and Opponent Constraints", () => {
     // Creating a 2v2 match should succeed even though they played 2x in 1v1
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["A1", "A2"] }, { position: 2, playerIds: ["B1", "B2"] }],
+      sides: [
+        { position: 1, playerIds: ["A1", "A2"] },
+        { position: 2, playerIds: ["B1", "B2"] },
+      ],
     } as CreateMatchRequestData;
 
     const result = await matchService.createMatch(input, "A1");
@@ -1245,7 +1182,10 @@ describe("MatchService - Partner and Opponent Constraints", () => {
     // Creating a 2v2 match should succeed even though they played 2x against each other in 1v1
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["A1", "A2"] }, { position: 2, playerIds: ["B1", "B2"] }],
+      sides: [
+        { position: 1, playerIds: ["A1", "A2"] },
+        { position: 2, playerIds: ["B1", "B2"] },
+      ],
     } as CreateMatchRequestData;
 
     const result = await matchService.createMatch(input, "A1");
@@ -1277,7 +1217,10 @@ describe("MatchService - Partner and Opponent Constraints", () => {
 
     const input: CreateMatchRequestData = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["A1", "A2"] }, { position: 2, playerIds: ["B1", "B2"] }],
+      sides: [
+        { position: 1, playerIds: ["A1", "A2"] },
+        { position: 2, playerIds: ["B1", "B2"] },
+      ],
     } as CreateMatchRequestData;
 
     try {
@@ -1285,9 +1228,7 @@ describe("MatchService - Partner and Opponent Constraints", () => {
       throw new Error("Expected ConflictError");
     } catch (err) {
       expect(err).toBeInstanceOf(ConflictError);
-      expect((err as ConflictError).code).toBe(
-        ErrorCode.MAX_OPPONENT_MATCHES_EXCEEDED,
-      );
+      expect((err as ConflictError).code).toBe(ErrorCode.MAX_OPPONENT_MATCHES_EXCEEDED);
     }
   });
 });
@@ -1334,11 +1275,7 @@ describe("MatchService - Contestation Flow", () => {
     repo.isUserInMatch = async () => false;
 
     try {
-      await matchService.contestMatch(
-        "m-1",
-        { contestationReason: "Wrong" } as any,
-        "u-outsider",
-      );
+      await matchService.contestMatch("m-1", { contestationReason: "Wrong" } as any, "u-outsider");
       throw new Error("Expected ForbiddenError");
     } catch (err) {
       expect(err).toBeInstanceOf(ForbiddenError);
@@ -1355,11 +1292,7 @@ describe("MatchService - Contestation Flow", () => {
     repo.isUserInMatch = async () => true;
 
     try {
-      await matchService.contestMatch(
-        "m-1",
-        { contestationReason: "Too late" } as any,
-        "u-1",
-      );
+      await matchService.contestMatch("m-1", { contestationReason: "Too late" } as any, "u-1");
       throw new Error("Expected BadRequestError");
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestError);
@@ -1376,11 +1309,7 @@ describe("MatchService - Contestation Flow", () => {
     repo.isUserInMatch = async () => true;
 
     try {
-      await matchService.contestMatch(
-        "m-1",
-        { contestationReason: "Not reported yet" } as any,
-        "u-1",
-      );
+      await matchService.contestMatch("m-1", { contestationReason: "Not reported yet" } as any, "u-1");
       throw new Error("Expected BadRequestError");
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestError);
@@ -1396,14 +1325,9 @@ describe("MatchService - Finalization Logic", () => {
         tournamentId: "t-1",
         status: "reported",
       }) as any;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: _id, ...data }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: _id, ...data }) as any;
 
-    const result = await matchService.finalizeMatch(
-      "m-fin",
-      { finalizationReason: "admin_override" },
-      "u-admin",
-    );
+    const result = await matchService.finalizeMatch("m-fin", { finalizationReason: "admin_override" }, "u-admin");
 
     expect(result).toBeTruthy();
     expect((result as any).status).toBe("finalized");
@@ -1425,9 +1349,7 @@ describe("MatchService - Finalization Logic", () => {
       throw new Error("Expected BadRequestError");
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestError);
-      expect((err as BadRequestError).code).toBe(
-        ErrorCode.MATCH_ALREADY_FINALIZED,
-      );
+      expect((err as BadRequestError).code).toBe(ErrorCode.MATCH_ALREADY_FINALIZED);
     }
   });
 
@@ -1453,8 +1375,7 @@ describe("MatchService - Finalization Logic", () => {
         { playerId: "p3", isConfirmed: true, isContested: false },
         // p4 hasn't confirmed yet, but 3/4 is >50% and both teams have confirmations
       ] as any;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: _id, ...data }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: _id, ...data }) as any;
 
     // Simulate confirmation that triggers auto-finalization
     await matchService.confirmMatch("m-auto", {} as any, "p3");
@@ -1482,20 +1403,13 @@ describe("MatchService - Finalization Logic", () => {
         { playerId: "p2", isConfirmed: false, isContested: true },
       ] as any;
     confRepo.hasAnyContestation = async () => true;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: _id, ...data }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: _id, ...data }) as any;
 
     // When a player confirms but there's a contestation
-    const result = await matchService.confirmMatch(
-      "m-disputed",
-      {} as any,
-      "p1",
-    );
+    const result = await matchService.confirmMatch("m-disputed", {} as any, "p1");
 
     // Status should be disputed due to contestation
-    expect(["reported", "pending_confirmation", "disputed"]).toContain(
-      (result as any).status,
-    );
+    expect(["reported", "pending_confirmation", "disputed"]).toContain((result as any).status);
   });
 });
 
@@ -1504,18 +1418,19 @@ describe("MatchService - Auto-Finalization", () => {
     const pastDate = new Date();
     pastDate.setHours(pastDate.getHours() - 100); // 100 hours ago
 
-    repo.getMatchesPendingFinalization = async () => [
-      {
-        id: "m-expired-1",
-        status: "reported",
-        confirmationDeadline: pastDate,
-      },
-      {
-        id: "m-expired-2",
-        status: "reported",
-        confirmationDeadline: pastDate,
-      },
-    ] as any[];
+    repo.getMatchesPendingFinalization = async () =>
+      [
+        {
+          id: "m-expired-1",
+          status: "reported",
+          confirmationDeadline: pastDate,
+        },
+        {
+          id: "m-expired-2",
+          status: "reported",
+          confirmationDeadline: pastDate,
+        },
+      ] as any[];
 
     confRepo.hasAnyContestation = async () => false;
     repo.getById = async (id: string) =>
@@ -1524,8 +1439,7 @@ describe("MatchService - Auto-Finalization", () => {
         tournamentId: "t-1",
         status: "reported",
       }) as any;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: _id, ...data }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: _id, ...data }) as any;
 
     const result = await matchService.autoFinalizeExpiredMatches();
 
@@ -1554,13 +1468,14 @@ describe("MatchService - Auto-Finalization", () => {
     const pastDate = new Date();
     pastDate.setHours(pastDate.getHours() - 100);
 
-    repo.getMatchesPendingFinalization = async () => [
-      {
-        id: "m-contested",
-        status: "reported",
-        confirmationDeadline: pastDate,
-      },
-    ] as any[];
+    repo.getMatchesPendingFinalization = async () =>
+      [
+        {
+          id: "m-contested",
+          status: "reported",
+          confirmationDeadline: pastDate,
+        },
+      ] as any[];
 
     // Return a "simple contestation" (isContested: true with no proposedScoreA)
     confRepo.getByMatchId = async () => [
@@ -1580,8 +1495,7 @@ describe("MatchService - Auto-Finalization", () => {
         tournamentId: "t-1",
         status: "reported",
       }) as any;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: _id, ...data }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: _id, ...data }) as any;
 
     const result = await matchService.autoFinalizeExpiredMatches();
 
@@ -1594,13 +1508,14 @@ describe("MatchService - Auto-Finalization", () => {
     const futureDate = new Date();
     futureDate.setHours(futureDate.getHours() + 24); // 24 hours from now
 
-    repo.getMatchesPendingFinalization = async () => [
-      {
-        id: "m-future",
-        status: "reported",
-        confirmationDeadline: futureDate,
-      },
-    ] as any[];
+    repo.getMatchesPendingFinalization = async () =>
+      [
+        {
+          id: "m-future",
+          status: "reported",
+          confirmationDeadline: futureDate,
+        },
+      ] as any[];
 
     const result = await matchService.autoFinalizeExpiredMatches();
 
@@ -1617,19 +1532,17 @@ describe("MatchService - Status Transitions", () => {
         id: "m-1",
         tournamentId: "t-1",
         status: "scheduled",
-        sides: [{ position: 1, teamId: "A" }, { position: 2, teamId: "B" }],
+        sides: [
+          { position: 1, teamId: "A" },
+          { position: 2, teamId: "B" },
+        ],
       }) as any;
     repo.isUserInMatch = async () => true;
     repo.getTournament = async () => ({ id: "t-1", allowDraw: true }) as any;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: _id, ...data }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: _id, ...data }) as any;
     repo.getParticipationsByMatchId = async () => [];
 
-    const result = await matchService.reportMatchResult(
-      "m-1",
-      { scoreA: 2, scoreB: 1 } as any,
-      "u-1",
-    );
+    const result = await matchService.reportMatchResult("m-1", { scoreA: 2, scoreB: 1 } as any, "u-1");
 
     expect((result as any).status).toBe("reported");
   });
@@ -1640,19 +1553,17 @@ describe("MatchService - Status Transitions", () => {
         id: "m-1",
         tournamentId: "t-1",
         status: "reported",
-        sides: [{ position: 1, teamId: "A" }, { position: 2, teamId: "B" }],
+        sides: [
+          { position: 1, teamId: "A" },
+          { position: 2, teamId: "B" },
+        ],
       }) as any;
     repo.isUserInMatch = async () => true;
     repo.getTournament = async () => ({ id: "t-1", allowDraw: true }) as any;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: _id, ...data }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: _id, ...data }) as any;
     repo.getParticipationsByMatchId = async () => [];
 
-    const result = await matchService.reportMatchResult(
-      "m-1",
-      { scoreA: 3, scoreB: 2 } as any,
-      "u-1",
-    );
+    const result = await matchService.reportMatchResult("m-1", { scoreA: 3, scoreB: 2 } as any, "u-1");
 
     expect((result as any).status).toBe("reported");
     expect((result as any).scoreA).toBe(3);
@@ -1668,11 +1579,7 @@ describe("MatchService - Status Transitions", () => {
     repo.isUserInMatch = async () => true;
 
     try {
-      await matchService.reportMatchResult(
-        "m-1",
-        { scoreA: 1, scoreB: 0 } as any,
-        "u-1",
-      );
+      await matchService.reportMatchResult("m-1", { scoreA: 1, scoreB: 0 } as any, "u-1");
       throw new Error("Expected BadRequestError");
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestError);
@@ -1729,7 +1636,10 @@ describe("MatchService - Edge Cases", () => {
 
     const input = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["p1", "p2"] }, { position: 2, playerIds: ["p3"] }], // Mismatch!
+      sides: [
+        { position: 1, playerIds: ["p1", "p2"] },
+        { position: 2, playerIds: ["p3"] },
+      ], // Mismatch!
     } as any;
 
     try {
@@ -1737,9 +1647,7 @@ describe("MatchService - Edge Cases", () => {
       throw new Error("Expected BadRequestError");
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestError);
-      expect((err as BadRequestError).code).toBe(
-        ErrorCode.MATCH_TEAM_SIZE_MISMATCH,
-      );
+      expect((err as BadRequestError).code).toBe(ErrorCode.MATCH_TEAM_SIZE_MISMATCH);
     }
   });
 
@@ -1749,7 +1657,10 @@ describe("MatchService - Edge Cases", () => {
         id: "m-1",
         tournamentId: "t-1",
         status: "scheduled",
-        sides: [{ position: 1, teamId: "A" }, { position: 2, teamId: "B" }],
+        sides: [
+          { position: 1, teamId: "A" },
+          { position: 2, teamId: "B" },
+        ],
       }) as any;
     repo.isUserInMatch = async () => true;
     repo.getTournament = async () =>
@@ -1762,11 +1673,7 @@ describe("MatchService - Edge Cases", () => {
     };
     repo.getParticipationsByMatchId = async () => [];
 
-    await matchService.reportMatchResult(
-      "m-1",
-      { scoreA: 2, scoreB: 1 } as any,
-      "u-1",
-    );
+    await matchService.reportMatchResult("m-1", { scoreA: 2, scoreB: 1 } as any, "u-1");
 
     expect(capturedData.confirmationDeadline).toBeTruthy();
     expect(capturedData.confirmationDeadline).toBeInstanceOf(Date);
@@ -1793,8 +1700,7 @@ describe("MatchService - Edge Cases", () => {
         },
       }) as any;
     repo.create = async (_data: any) => "m-new";
-    repo.getById = async (id: string) =>
-      ({ id, tournamentId: "t-1", status: "reported" }) as any;
+    repo.getById = async (id: string) => ({ id, tournamentId: "t-1", status: "reported" }) as any;
     repo.getParticipationsByMatchId = async () => [];
 
     let confirmationCreated = false;
@@ -1807,7 +1713,10 @@ describe("MatchService - Edge Cases", () => {
 
     const input = {
       tournamentId: "t-1",
-      sides: [{ position: 1, playerIds: ["u-1"] }, { position: 2, playerIds: ["u-2"] }],
+      sides: [
+        { position: 1, playerIds: ["u-1"] },
+        { position: 2, playerIds: ["u-2"] },
+      ],
       status: "reported",
       scoreA: 2,
       scoreB: 1,
@@ -1821,38 +1730,24 @@ describe("MatchService - Edge Cases", () => {
 
 describe("MatchService - Kiosk role permissions", () => {
   it("confirmMatch should reject kiosk users", async () => {
-    repo.getById = async () =>
-      ({ id: "m-k", tournamentId: "t-1", status: "reported" }) as any;
-    usrRepo.getById = async () =>
-      ({ id: "u-kiosk", role: "kiosk" }) as any;
+    repo.getById = async () => ({ id: "m-k", tournamentId: "t-1", status: "reported" }) as any;
+    usrRepo.getById = async () => ({ id: "u-kiosk", role: "kiosk" }) as any;
 
     try {
-      await matchService.confirmMatch(
-        "m-k",
-        {} as ConfirmMatchRequestData,
-        "u-kiosk",
-      );
+      await matchService.confirmMatch("m-k", {} as ConfirmMatchRequestData, "u-kiosk");
       throw new Error("Expected ForbiddenError");
     } catch (err) {
       expect(err).toBeInstanceOf(ForbiddenError);
-      expect((err as ForbiddenError).code).toBe(
-        ErrorCode.INSUFFICIENT_PERMISSIONS,
-      );
+      expect((err as ForbiddenError).code).toBe(ErrorCode.INSUFFICIENT_PERMISSIONS);
     }
   });
 
   it("contestMatch should reject kiosk users", async () => {
-    repo.getById = async () =>
-      ({ id: "m-k", tournamentId: "t-1", status: "reported" }) as any;
-    usrRepo.getById = async () =>
-      ({ id: "u-kiosk", role: "kiosk" }) as any;
+    repo.getById = async () => ({ id: "m-k", tournamentId: "t-1", status: "reported" }) as any;
+    usrRepo.getById = async () => ({ id: "u-kiosk", role: "kiosk" }) as any;
 
     try {
-      await matchService.contestMatch(
-        "m-k",
-        { contestationReason: "x" } as any,
-        "u-kiosk",
-      );
+      await matchService.contestMatch("m-k", { contestationReason: "x" } as any, "u-kiosk");
       throw new Error("Expected ForbiddenError");
     } catch (err) {
       expect(err).toBeInstanceOf(ForbiddenError);
@@ -1867,8 +1762,7 @@ describe("MatchService - Kiosk role permissions", () => {
         status: "scheduled",
         createdBy: "u-other",
       }) as any;
-    usrRepo.getById = async () =>
-      ({ id: "u-kiosk", role: "kiosk" }) as any;
+    usrRepo.getById = async () => ({ id: "u-kiosk", role: "kiosk" }) as any;
 
     try {
       await matchService.cancelMatch("m-c", "u-kiosk");
@@ -1886,8 +1780,7 @@ describe("MatchService - Kiosk role permissions", () => {
         status: "scheduled",
         createdBy: "u-kiosk",
       }) as any;
-    usrRepo.getById = async () =>
-      ({ id: "u-kiosk", role: "kiosk" }) as any;
+    usrRepo.getById = async () => ({ id: "u-kiosk", role: "kiosk" }) as any;
     let updateCalledWith: UpdateMatchData | null = null;
     repo.update = async (_id: string, data: UpdateMatchData) => {
       updateCalledWith = data;
@@ -1906,8 +1799,7 @@ describe("MatchService - Kiosk role permissions", () => {
         status: "reported",
         createdBy: "u-other",
       }) as any;
-    usrRepo.getById = async () =>
-      ({ id: "u-admin", role: "super_admin" }) as any;
+    usrRepo.getById = async () => ({ id: "u-admin", role: "super_admin" }) as any;
 
     let deleteActionsCalled = false;
     notifService.deleteActionsByMatchId = async () => {
@@ -1929,8 +1821,7 @@ describe("MatchService - Dispute handling", () => {
         status: "reported",
         result: { reportedBy: "p2" },
       }) as any;
-    repo.getTournament = async () =>
-      ({ id: "t-1", validationMode: "auto", validationTimerHours: 24 }) as any;
+    repo.getTournament = async () => ({ id: "t-1", validationMode: "auto", validationTimerHours: 24 }) as any;
     repo.isUserInMatch = async () => true;
     repo.getParticipationsByMatchId = async () =>
       [
@@ -1967,8 +1858,7 @@ describe("MatchService - Dispute handling", () => {
         status: "reported",
         result: { reportedBy: "p2" },
       }) as any;
-    repo.getTournament = async () =>
-      ({ id: "t-1", validationMode: "auto", validationTimerHours: 24 }) as any;
+    repo.getTournament = async () => ({ id: "t-1", validationMode: "auto", validationTimerHours: 24 }) as any;
     repo.isUserInMatch = async () => true;
     repo.getParticipationsByMatchId = async () =>
       [
@@ -1983,19 +1873,11 @@ describe("MatchService - Dispute handling", () => {
     };
 
     const notes: Array<{ userId: string; body?: string | null }> = [];
-    (matchMessageService as any).postUserNote = async (
-      _matchId: string,
-      userId: string,
-      body?: string | null,
-    ) => {
+    (matchMessageService as any).postUserNote = async (_matchId: string, userId: string, body?: string | null) => {
       notes.push({ userId, body });
     };
 
-    await matchService.respondToMatch(
-      "m-1",
-      { type: "dispute", reason: "the score is reversed" } as any,
-      "p1",
-    );
+    await matchService.respondToMatch("m-1", { type: "dispute", reason: "the score is reversed" } as any, "p1");
 
     expect(upserted[0].contestationReason).toBeUndefined();
     expect(notes).toEqual([{ userId: "p1", body: "the score is reversed" }]);
@@ -2009,10 +1891,8 @@ describe("MatchService - Dispute handling", () => {
 
     repo.getMatchesPendingFinalization = async () =>
       [{ id: "m-exp", status: "reported", confirmationDeadline: pastDate }] as any[];
-    confRepo.getByMatchId = async () =>
-      [{ playerId: "p1", isContested: true, isPostFinalization: false }] as any;
-    repo.getById = async (id: string) =>
-      ({ id, tournamentId: "t-1", status: "reported" }) as any;
+    confRepo.getByMatchId = async () => [{ playerId: "p1", isContested: true, isPostFinalization: false }] as any;
+    repo.getById = async (id: string) => ({ id, tournamentId: "t-1", status: "reported" }) as any;
 
     const result = await matchService.autoFinalizeExpiredMatches();
 
@@ -2022,10 +1902,8 @@ describe("MatchService - Dispute handling", () => {
 
   it("agreeing on a disputed match withdraws the contestation and re-opens validation", async () => {
     let status = "disputed";
-    repo.getById = async (id: string) =>
-      ({ id, tournamentId: "t-1", status, result: { reportedBy: "p2" } }) as any;
-    repo.getTournament = async () =>
-      ({ id: "t-1", validationMode: "auto", validationTimerHours: 24 }) as any;
+    repo.getById = async (id: string) => ({ id, tournamentId: "t-1", status, result: { reportedBy: "p2" } }) as any;
+    repo.getTournament = async () => ({ id: "t-1", validationMode: "auto", validationTimerHours: 24 }) as any;
     repo.isUserInMatch = async () => true;
     repo.getParticipationsByMatchId = async () =>
       [
@@ -2111,8 +1989,7 @@ describe("MatchService - Dispute handling", () => {
   it("the match stays disputed while another player still contests", async () => {
     repo.getById = async (id: string) =>
       ({ id, tournamentId: "t-1", status: "disputed", result: { reportedBy: "p3" } }) as any;
-    repo.getTournament = async () =>
-      ({ id: "t-1", validationMode: "auto", validationTimerHours: 24 }) as any;
+    repo.getTournament = async () => ({ id: "t-1", validationMode: "auto", validationTimerHours: 24 }) as any;
     repo.isUserInMatch = async () => true;
     repo.getParticipationsByMatchId = async () =>
       [
@@ -2185,19 +2062,11 @@ describe("MatchService - Post-finalization contestation", () => {
       systemKeys.push(key);
     };
     const notes: Array<{ userId: string; body?: string | null }> = [];
-    (matchMessageService as any).postUserNote = async (
-      _id: string,
-      userId: string,
-      body?: string | null,
-    ) => {
+    (matchMessageService as any).postUserNote = async (_id: string, userId: string, body?: string | null) => {
       notes.push({ userId, body });
     };
 
-    await matchService.respondToMatch(
-      "m-fin",
-      { type: "dispute", reason: "the score is reversed" } as any,
-      "p1",
-    );
+    await matchService.respondToMatch("m-fin", { type: "dispute", reason: "the score is reversed" } as any, "p1");
 
     expect(upserted[0].isPostFinalization).toBe(true);
     expect(upserted[0].isContested).toBe(true);
@@ -2256,11 +2125,7 @@ describe("MatchService - Post-finalization contestation", () => {
     };
 
     await matchService.respondToMatch("m-fin", { type: "agree" } as any, "p1");
-    await matchService.respondToMatch(
-      "m-fin",
-      { type: "dispute", reason: "still wrong" } as any,
-      "p1",
-    );
+    await matchService.respondToMatch("m-fin", { type: "dispute", reason: "still wrong" } as any, "p1");
 
     expect(upserted).toHaveLength(1);
     expect(upserted[0].isPostFinalization).toBe(true);
@@ -2383,8 +2248,7 @@ describe("MatchService - Author result revision", () => {
 
   it("the author may fix a reported entry, which drops the opponents' confirmations", async () => {
     repo.getById = async (id: string) => reportedMatch(id);
-    repo.getTournament = async () =>
-      ({ id: "t-1", mode: "championship", validationMode: "strict" }) as any;
+    repo.getTournament = async () => ({ id: "t-1", mode: "championship", validationMode: "strict" }) as any;
     repo.isUserInMatch = async () => true;
 
     const resetExcept: { playerId: string | null } = { playerId: null };
@@ -2416,10 +2280,8 @@ describe("MatchService - Author result revision", () => {
   });
 
   it("a correction pulls a contested match back into the validation round", async () => {
-    repo.getById = async (id: string) =>
-      ({ ...reportedMatch(id), status: "disputed" }) as any;
-    repo.getTournament = async () =>
-      ({ id: "t-1", mode: "championship", validationMode: "strict" }) as any;
+    repo.getById = async (id: string) => ({ ...reportedMatch(id), status: "disputed" }) as any;
+    repo.getTournament = async () => ({ id: "t-1", mode: "championship", validationMode: "strict" }) as any;
     repo.isUserInMatch = async () => true;
     confRepo.resetConfirmationsExcept = async () => undefined as any;
 
@@ -2439,9 +2301,9 @@ describe("MatchService - Author result revision", () => {
     repo.getTournament = async () => ({ id: "t-1", mode: "championship" }) as any;
     repo.isUserInMatch = async () => true;
 
-    await expect(
-      matchService.updateMatch("m-rev3", { scoreA: 9, scoreB: 0 } as any, "p2"),
-    ).rejects.toThrow(ForbiddenError);
+    await expect(matchService.updateMatch("m-rev3", { scoreA: 9, scoreB: 0 } as any, "p2")).rejects.toThrow(
+      ForbiddenError,
+    );
   });
 
   it("an outcome-only correction validates against the stored score, not 0-0", async () => {
@@ -2476,10 +2338,8 @@ describe("MatchService - Author result revision", () => {
 
 describe("MatchService - finalizeMatch side-effects", () => {
   it("finalizeMatch invokes bracket advancement for both winner and loser", async () => {
-    repo.getById = async () =>
-      ({ id: "m-fin", tournamentId: "t-1", status: "reported" }) as any;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: _id, ...data }) as any;
+    repo.getById = async () => ({ id: "m-fin", tournamentId: "t-1", status: "reported" }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: _id, ...data }) as any;
 
     let advWinner = false;
     let advLoser = false;
@@ -2490,21 +2350,15 @@ describe("MatchService - finalizeMatch side-effects", () => {
       advLoser = true;
     };
 
-    await matchService.finalizeMatch(
-      "m-fin",
-      { finalizationReason: "consensus" },
-      "u-1",
-    );
+    await matchService.finalizeMatch("m-fin", { finalizationReason: "consensus" }, "u-1");
 
     expect(advWinner).toBe(true);
     expect(advLoser).toBe(true);
   });
 
   it("finalizeMatch enqueues MMR job for ranked tournament", async () => {
-    repo.getById = async () =>
-      ({ id: "m-fin", tournamentId: "t-r", status: "reported" }) as any;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: _id, ...data }) as any;
+    repo.getById = async () => ({ id: "m-fin", tournamentId: "t-r", status: "reported" }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: _id, ...data }) as any;
 
     (rankedSeasonRepository as any).getConfigByTournamentId = async () => ({
       id: "rs-1",
@@ -2519,10 +2373,8 @@ describe("MatchService - finalizeMatch side-effects", () => {
   });
 
   it("finalizeMatch defers ranked cache refresh to the worker, not synchronously", async () => {
-    repo.getById = async () =>
-      ({ id: "m-fin", tournamentId: "t-r", status: "reported" }) as any;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: _id, ...data }) as any;
+    repo.getById = async () => ({ id: "m-fin", tournamentId: "t-r", status: "reported" }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: _id, ...data }) as any;
 
     (rankedSeasonRepository as any).getConfigByTournamentId = async () => ({
       id: "rs-1",
@@ -2549,10 +2401,8 @@ describe("MatchService - finalizeMatch side-effects", () => {
   });
 
   it("finalizeMatch skips ranked caches when tournament is not ranked", async () => {
-    repo.getById = async () =>
-      ({ id: "m-fin", tournamentId: "t-nr", status: "reported" }) as any;
-    repo.update = async (_id: string, data: UpdateMatchData) =>
-      ({ id: _id, ...data }) as any;
+    repo.getById = async () => ({ id: "m-fin", tournamentId: "t-nr", status: "reported" }) as any;
+    repo.update = async (_id: string, data: UpdateMatchData) => ({ id: _id, ...data }) as any;
 
     (rankedSeasonRepository as any).getConfigByTournamentId = async () => null;
 
@@ -2581,10 +2431,13 @@ describe("MatchService - listMatchCards", () => {
       data: [],
       total: 0,
     });
-    const res = await matchService.listMatchCards({
-      offset: 0,
-      limit: 10,
-    } as any, null);
+    const res = await matchService.listMatchCards(
+      {
+        offset: 0,
+        limit: 10,
+      } as any,
+      null,
+    );
     expect(res).toEqual({ data: [], total: 0, hasMore: false });
   });
 
@@ -2671,10 +2524,13 @@ describe("MatchService - listMatchCards", () => {
       },
     ];
 
-    const res = await matchService.listMatchCards({
-      offset: 0,
-      limit: 10,
-    } as any, null);
+    const res = await matchService.listMatchCards(
+      {
+        offset: 0,
+        limit: 10,
+      } as any,
+      null,
+    );
 
     expect(res.total).toBe(50);
     expect(res.hasMore).toBe(true);
@@ -2727,7 +2583,10 @@ describe("MatchService - lifecycle guards", () => {
 
     const input = {
       tournamentId: "t-1",
-      sides: [{ position: 1, teamId: "team-a" }, { position: 2, teamId: "team-b" }],
+      sides: [
+        { position: 1, teamId: "team-a" },
+        { position: 2, teamId: "team-b" },
+      ],
     } as CreateMatchRequestData;
 
     const result = await matchService.createMatch(input, "u-member");
@@ -2744,11 +2603,7 @@ describe("MatchService - lifecycle guards", () => {
       return { id: _id } as any;
     };
 
-    await matchService.updateMatch(
-      "m-s",
-      { status: "finalized", playedAt: new Date().toISOString() } as any,
-      "u-1",
-    );
+    await matchService.updateMatch("m-s", { status: "finalized", playedAt: new Date().toISOString() } as any, "u-1");
 
     expect(written?.status).toBeUndefined();
   });
@@ -2779,11 +2634,7 @@ describe("MatchService - lifecycle guards", () => {
     repo.isUserInMatch = async () => true;
 
     await expect(
-      matchService.updateMatch(
-        "m-s",
-        { status: "reported", playedAt: new Date().toISOString() },
-        "u-1",
-      ),
+      matchService.updateMatch("m-s", { status: "reported", playedAt: new Date().toISOString() }, "u-1"),
     ).rejects.toBeInstanceOf(BadRequestError);
   });
 
@@ -2812,19 +2663,15 @@ describe("MatchService - lifecycle guards", () => {
   });
 
   it("cancelMatch refuses the opponent of the reporter", async () => {
-    repo.getById = async () =>
-      scheduled({ status: "reported", result: { reportedBy: "u-reporter" } });
+    repo.getById = async () => scheduled({ status: "reported", result: { reportedBy: "u-reporter" } });
     repo.getTournament = async () => ({ id: "t-1", mode: "championship" }) as any;
     repo.isUserInMatch = async () => true;
 
-    await expect(matchService.cancelMatch("m-s", "u-opponent")).rejects.toBeInstanceOf(
-      ForbiddenError,
-    );
+    await expect(matchService.cancelMatch("m-s", "u-opponent")).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   it("cancelMatch lets the reporter withdraw their own result", async () => {
-    repo.getById = async () =>
-      scheduled({ status: "reported", result: { reportedBy: "u-reporter" } });
+    repo.getById = async () => scheduled({ status: "reported", result: { reportedBy: "u-reporter" } });
     repo.getTournament = async () => ({ id: "t-1", mode: "championship" }) as any;
     repo.isUserInMatch = async () => true;
     let written: UpdateMatchData | undefined;
@@ -2847,8 +2694,7 @@ describe("MatchService - lifecycle guards", () => {
 
   it("a result entered by an outsider needs both sides to agree", async () => {
     const finalized: string[] = [];
-    repo.getById = async () =>
-      scheduled({ status: "reported", result: { reportedBy: "u-kiosk" } });
+    repo.getById = async () => scheduled({ status: "reported", result: { reportedBy: "u-kiosk" } });
     repo.getTournament = async () => ({ id: "t-1", validationMode: "auto" }) as any;
     repo.isUserInMatch = async () => true;
     repo.getParticipationsByMatchId = async () =>
@@ -2861,8 +2707,7 @@ describe("MatchService - lifecycle guards", () => {
       return { id: _id } as any;
     };
 
-    confRepo.getByMatchId = async () =>
-      [{ playerId: "u-a", isConfirmed: true, isContested: false }] as any;
+    confRepo.getByMatchId = async () => [{ playerId: "u-a", isConfirmed: true, isContested: false }] as any;
     await matchService.confirmMatch("m-s", {}, "u-a");
     expect(finalized).toHaveLength(0);
 
@@ -2903,8 +2748,7 @@ describe("MatchService - trust score", () => {
       reset.push(id);
     };
     repo.getById = async () => selfValidated();
-    repo.getTournament = async () =>
-      ({ id: "t-1", mode: "championship", validationMode: "none" }) as any;
+    repo.getTournament = async () => ({ id: "t-1", mode: "championship", validationMode: "none" }) as any;
     repo.isUserInMatch = async () => true;
     confRepo.hasPlayerDisputedPostFinalization = async () => false;
     (matchFinalizationOrchestrator as any).runPostCancellationEffects = async () => undefined;
@@ -3008,7 +2852,13 @@ describe("MatchService - Finalized result correction", () => {
 
   it("refuses a correction that changes nothing, before any side effect", async () => {
     repo.getById = async () => finalized({}, [opposingDispute]);
-    const unchanged = { scoreA: 3, scoreB: 1, winnerPosition: 1, outcomeTypeId: "ot-1", playedAt: playedAt.toISOString() } as any;
+    const unchanged = {
+      scoreA: 3,
+      scoreB: 1,
+      winnerPosition: 1,
+      outcomeTypeId: "ot-1",
+      playedAt: playedAt.toISOString(),
+    } as any;
 
     const err = await matchService.updateMatch("m-fin", unchanged, "p-author").catch((e) => e);
 
@@ -3019,7 +2869,13 @@ describe("MatchService - Finalized result correction", () => {
   });
 
   it("accepts a correction of the outcome type alone", async () => {
-    const outcomeOnly = { scoreA: 3, scoreB: 1, winnerPosition: 1, outcomeTypeId: "ot-2", playedAt: playedAt.toISOString() } as any;
+    const outcomeOnly = {
+      scoreA: 3,
+      scoreB: 1,
+      winnerPosition: 1,
+      outcomeTypeId: "ot-2",
+      playedAt: playedAt.toISOString(),
+    } as any;
     await matchService.updateMatch("m-fin", outcomeOnly, "p-author");
     expect(updates).toHaveLength(1);
   });
@@ -3032,8 +2888,7 @@ describe("MatchService - Finalized result correction", () => {
   });
 
   it("keeps the author's window open for the dispute window while the other side contests", async () => {
-    repo.getById = async () =>
-      finalized({ finalizedAt: new Date(Date.now() - 5 * 24 * HOUR) }, [opposingDispute]);
+    repo.getById = async () => finalized({ finalizedAt: new Date(Date.now() - 5 * 24 * HOUR) }, [opposingDispute]);
 
     await matchService.updateMatch("m-fin", correction, "p-author");
 
@@ -3043,8 +2898,7 @@ describe("MatchService - Finalized result correction", () => {
 
   it("does not let the author stretch their window by contesting their own result", async () => {
     const ownDispute = { playerId: "p-author", isContested: true, isPostFinalization: true };
-    repo.getById = async () =>
-      finalized({ finalizedAt: new Date(Date.now() - 60 * HOUR) }, [ownDispute]);
+    repo.getById = async () => finalized({ finalizedAt: new Date(Date.now() - 60 * HOUR) }, [ownDispute]);
 
     const err = await matchService.updateMatch("m-fin", correction, "p-author").catch((e) => e);
 
@@ -3052,18 +2906,14 @@ describe("MatchService - Finalized result correction", () => {
   });
 
   it("refuses an opponent", async () => {
-    await expect(matchService.updateMatch("m-fin", correction, "p-opponent")).rejects.toBeInstanceOf(
-      ForbiddenError,
-    );
+    await expect(matchService.updateMatch("m-fin", correction, "p-opponent")).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   it("refuses a kiosk, even the one that entered the result", async () => {
     repo.getById = async () => finalized({ reportedBy: "u-kiosk" });
     usrRepo.getById = async (id: string) => ({ id, role: "kiosk", displayName: "Kiosk" }) as any;
 
-    await expect(matchService.updateMatch("m-fin", correction, "u-kiosk")).rejects.toBeInstanceOf(
-      ForbiddenError,
-    );
+    await expect(matchService.updateMatch("m-fin", correction, "u-kiosk")).rejects.toBeInstanceOf(ForbiddenError);
     expect(updates).toHaveLength(0);
   });
 
@@ -3083,9 +2933,7 @@ describe("MatchService - Finalized result correction", () => {
   it("refuses a bracket match, even to an organizer", async () => {
     repo.getTournament = async () => ({ id: "t-1", mode: "bracket", scoreEnabled: true }) as any;
     usrRepo.getById = async (id: string) => ({ id, role: "super_admin", displayName: "" }) as any;
-    await expect(matchService.updateMatch("m-fin", correction, "u-admin")).rejects.toBeInstanceOf(
-      BadRequestError,
-    );
+    await expect(matchService.updateMatch("m-fin", correction, "u-admin")).rejects.toBeInstanceOf(BadRequestError);
   });
 
   it("lets an organizer correct any finalized match, at any time, as an admin override", async () => {
@@ -3125,8 +2973,7 @@ describe("MatchService - Finalized result correction", () => {
   });
 
   it("lets the author cancel past 48h while the other side contests the result", async () => {
-    repo.getById = async () =>
-      finalized({ finalizedAt: new Date(Date.now() - 3 * 24 * HOUR) }, [opposingDispute]);
+    repo.getById = async () => finalized({ finalizedAt: new Date(Date.now() - 3 * 24 * HOUR) }, [opposingDispute]);
 
     await matchService.cancelMatch("m-fin", "p-author");
 

@@ -51,8 +51,7 @@ app.get(
     tags: TAGS,
     summary: "List announcements",
     description:
-      "Every announcement for a super admin; with `tournamentId`, that tournament's, " +
-      "for whoever manages it.",
+      "Every announcement for a super admin; with `tournamentId`, that tournament's, " + "for whoever manages it.",
     auth: true,
     role: true,
     success: { description: "Announcements, newest first", schema: announcementListSchema },

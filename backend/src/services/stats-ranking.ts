@@ -73,13 +73,10 @@ export function weightedScore(rate: number, count: number): number {
  * size. The sample size is a real criterion there, so two entries that differ on it are
  * ranked apart, not tied.
  */
-export function weightedRateTie<T>(
-  rateOf: (item: T) => number,
-  countOf: (item: T) => number,
-): (a: T, b: T) => boolean {
+export function weightedRateTie<T>(rateOf: (item: T) => number, countOf: (item: T) => number): (a: T, b: T) => boolean {
   return (a, b) =>
-    Math.abs(weightedScore(rateOf(a), countOf(a)) - weightedScore(rateOf(b), countOf(b))) <=
-      SCORE_EPSILON && countOf(a) === countOf(b);
+    Math.abs(weightedScore(rateOf(a), countOf(a)) - weightedScore(rateOf(b), countOf(b))) <= SCORE_EPSILON &&
+    countOf(a) === countOf(b);
 }
 
 export interface RankedEntry<T> {
@@ -96,10 +93,7 @@ export interface RankedEntry<T> {
  * comparator, whose last term is a uuid that separates everything and would report a
  * tie as a difference.
  */
-export function assignCompetitionRanks<T>(
-  sorted: T[],
-  isTied: (a: T, b: T) => boolean,
-): RankedEntry<T>[] {
+export function assignCompetitionRanks<T>(sorted: T[], isTied: (a: T, b: T) => boolean): RankedEntry<T>[] {
   const ranked: RankedEntry<T>[] = [];
   let start = 0;
 
@@ -153,10 +147,7 @@ export function cutWholeRankGroups<T>(
  * The entries a cut left out *of the last rank it showed* — the only ones the reader is
  * owed an "and N tied" for. Everyone further down simply did not make the podium.
  */
-export function omittedTiedWithLast<T>(
-  shown: RankedEntry<T>[],
-  omitted: RankedEntry<T>[],
-): T[] {
+export function omittedTiedWithLast<T>(shown: RankedEntry<T>[], omitted: RankedEntry<T>[]): T[] {
   const lastRank = shown.at(-1)?.rank;
   if (lastRank === undefined) return [];
   return omitted.filter((entry) => entry.rank === lastRank).map((entry) => entry.item);
@@ -177,14 +168,7 @@ export function rankByWeightedRateOrFallback<T>(
   breakTie: (a: T, b: T) => number = () => 0,
   limit: number = TOP_WEIGHTED_RATE,
 ): T[] {
-  const ranked = rankByWeightedRate(
-    items,
-    rateOf,
-    countOf,
-    MIN_WEIGHTED_RATE_MATCHES,
-    breakTie,
-    limit,
-  );
+  const ranked = rankByWeightedRate(items, rateOf, countOf, MIN_WEIGHTED_RATE_MATCHES, breakTie, limit);
   if (ranked.length > 0) return ranked;
   return rankByWeightedRate(items, rateOf, countOf, 0, breakTie, limit);
 }

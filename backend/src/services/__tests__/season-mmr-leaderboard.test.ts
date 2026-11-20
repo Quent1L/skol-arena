@@ -46,10 +46,7 @@ describe("mergeSeasonMmrStats", () => {
   });
 
   it("drops players filtered out by the placement threshold", () => {
-    const merged = mergeSeasonMmrStats(
-      [player("a", 1000), player("b", 1200)],
-      [stat("b", 1300, 1210)],
-    );
+    const merged = mergeSeasonMmrStats([player("a", 1000), player("b", 1200)], [stat("b", 1300, 1210)]);
     expect(merged.map((p) => p.playerId)).toEqual(["b"]);
   });
 

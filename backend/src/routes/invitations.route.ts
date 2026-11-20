@@ -39,7 +39,7 @@ invitations.post(
     const { code } = c.req.valid("json");
     const result = await invitationService.validateCode(code);
     return c.json(result);
-  }
+  },
 );
 
 // Rate limited like /validate: a wrong code fails here with the same reasons, so
@@ -74,14 +74,14 @@ invitations.post(
       betterAuthUser.id,
       betterAuthUser.email,
       betterAuthUser.name || betterAuthUser.email,
-      ipAddress
+      ipAddress,
     );
 
     return c.json({
       success: true,
-      appUserId: appUser.id
+      appUserId: appUser.id,
     });
-  }
+  },
 );
 
 invitations.post(
@@ -113,7 +113,7 @@ invitations.post(
     );
 
     return c.json(result);
-  }
+  },
 );
 
 export default invitations;

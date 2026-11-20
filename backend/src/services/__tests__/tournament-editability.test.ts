@@ -48,19 +48,13 @@ describe("tournament editability", () => {
   });
 
   it("locks the scoring semantics at the first entered result", () => {
-    expect(resolveFieldEditability("scoreEnabled", ctx({ enteredMatchCount: 0 }))).toBe(
-      "always",
-    );
-    expect(resolveFieldEditability("scoreEnabled", ctx({ enteredMatchCount: 1 }))).toBe(
-      "locked",
-    );
+    expect(resolveFieldEditability("scoreEnabled", ctx({ enteredMatchCount: 0 }))).toBe("always");
+    expect(resolveFieldEditability("scoreEnabled", ctx({ enteredMatchCount: 1 }))).toBe("locked");
   });
 
   it("keeps the points scale editable, at the price of a recalculation", () => {
     // The one knob `recalculatePointsInternal` was built for.
-    expect(resolveFieldEditability("scoringConfig", ctx({ enteredMatchCount: 50 }))).toBe(
-      "recalculates",
-    );
+    expect(resolveFieldEditability("scoringConfig", ctx({ enteredMatchCount: 50 }))).toBe("recalculates");
     expect(updateTriggersRecalculation(["scoringConfig"], ctx())).toBe(true);
     expect(updateTriggersRecalculation(["name", "description"], ctx())).toBe(false);
   });
@@ -76,13 +70,9 @@ describe("tournament editability", () => {
   });
 
   it("restricts the per-mode configs to the modes that have them", () => {
-    expect(resolveFieldEditability("championshipConfig", ctx({ mode: "championship" }))).toBe(
-      "recalculates",
-    );
+    expect(resolveFieldEditability("championshipConfig", ctx({ mode: "championship" }))).toBe("recalculates");
     // A bracket generates its own matches and never validates against caps.
-    expect(resolveFieldEditability("championshipConfig", ctx({ mode: "bracket" }))).toBe(
-      "locked",
-    );
+    expect(resolveFieldEditability("championshipConfig", ctx({ mode: "bracket" }))).toBe("locked");
     // Ranked runs on MMR, not points.
     expect(resolveFieldEditability("scoringConfig", ctx({ mode: "ranked" }))).toBe("locked");
   });
@@ -102,9 +92,7 @@ describe("tournament editability", () => {
   });
 
   it("splits the fields into what the form needs to render", () => {
-    const { editable, recalculating, locked } = resolveEditableFields(
-      ctx({ enteredMatchCount: 4 }),
-    );
+    const { editable, recalculating, locked } = resolveEditableFields(ctx({ enteredMatchCount: 4 }));
 
     expect(editable).toContain("name");
     expect(recalculating).toContain("scoringConfig");

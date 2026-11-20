@@ -124,10 +124,7 @@ describe("MatchFinalizationOrchestrator", () => {
       mode: "ranked",
     });
 
-    await matchFinalizationOrchestrator.runPostFinalizationEffects(
-      "m-1",
-      "t-1",
-    );
+    await matchFinalizationOrchestrator.runPostFinalizationEffects("m-1", "t-1");
 
     expect(calls.deleteActions).toBe(1);
     expect(calls.advWinner).toBe(1);
@@ -148,10 +145,7 @@ describe("MatchFinalizationOrchestrator", () => {
       teamMode: "static",
     });
 
-    await matchFinalizationOrchestrator.runPostFinalizationEffects(
-      "m-1",
-      "t-1",
-    );
+    await matchFinalizationOrchestrator.runPostFinalizationEffects("m-1", "t-1");
 
     expect(calls.enqueueMmr).toBe(0);
     expect(calls.rankedOfficial).toBe(0);
@@ -168,10 +162,7 @@ describe("MatchFinalizationOrchestrator", () => {
       championshipConfig: { maxMatchesPerPlayer: 5 },
     });
 
-    await matchFinalizationOrchestrator.runPostFinalizationEffects(
-      "m-1",
-      "t-1",
-    );
+    await matchFinalizationOrchestrator.runPostFinalizationEffects("m-1", "t-1");
 
     expect(calls.standingsRecalc).toBe(1);
     expect(calls.standingsInvalidate).toBe(0);

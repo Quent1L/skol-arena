@@ -2,16 +2,8 @@ import { describe, it, expect, mock } from "bun:test";
 
 mock.module("../../config/database", () => ({ db: {} }));
 
-import {
-  compareStanding,
-  replaySeason,
-  resolveOutcome,
-  type StandingSource,
-} from "../season-rewind.replay";
-import type {
-  SeasonHistoryRow,
-  SeasonSideRow,
-} from "../../repository/season-rewind.repository";
+import { compareStanding, replaySeason, resolveOutcome, type StandingSource } from "../season-rewind.replay";
+import type { SeasonHistoryRow, SeasonSideRow } from "../../repository/season-rewind.repository";
 
 /**
  * Matches are built as 1v1 by default; playedAt increases with the match index
@@ -57,12 +49,7 @@ function build(specs: MatchSpec[]): {
           mmrDelta: mmrAfter - mmrBefore,
           opponentAvgMmr: avg(other),
           isPlacement: spec.isPlacement ?? false,
-          outcome:
-            spec.winner === "draw"
-              ? "draw"
-              : (spec.winner === "A") === (position === 1)
-                ? "win"
-                : "loss",
+          outcome: spec.winner === "draw" ? "draw" : (spec.winner === "A") === (position === 1) ? "win" : "loss",
           playedAt,
         });
       }
@@ -149,9 +136,7 @@ describe("replaySeason — per-player totals", () => {
   });
 
   it("leaves the peak match null when a player never climbs above their start", () => {
-    const result = replay([
-      { matchId: "m1", sideA: { a: [1000, 950] }, sideB: { b: [1000, 1050] }, winner: "B" },
-    ]);
+    const result = replay([{ matchId: "m1", sideA: { a: [1000, 950] }, sideB: { b: [1000, 1050] }, winner: "B" }]);
 
     const a = result.aggregates.get("a")!;
     expect(a.peakMmr).toBe(1000);
@@ -308,9 +293,7 @@ describe("replaySeason — upsets and giant killing", () => {
   it("leaves a win over a barely stronger side out of the count", () => {
     // 50 MMR above is not giant killing — the profile's opponent-level split
     // draws the same line at 100.
-    const result = replay([
-      { matchId: "m1", sideA: { a: [1000, 1015] }, sideB: { b: [1050, 1035] }, winner: "A" },
-    ]);
+    const result = replay([{ matchId: "m1", sideA: { a: [1000, 1015] }, sideB: { b: [1050, 1035] }, winner: "A" }]);
 
     const a = result.aggregates.get("a")!;
     expect(a.giantKillerWins).toBe(0);
@@ -348,9 +331,7 @@ describe("replaySeason — upsets and giant killing", () => {
   });
 
   it("ignores wins against a weaker opponent", () => {
-    const result = replay([
-      { matchId: "m1", sideA: { a: [1200, 1210] }, sideB: { b: [900, 890] }, winner: "A" },
-    ]);
+    const result = replay([{ matchId: "m1", sideA: { a: [1200, 1210] }, sideB: { b: [900, 890] }, winner: "A" }]);
 
     const a = result.aggregates.get("a")!;
     expect(a.giantKillerWins).toBe(0);
@@ -425,9 +406,7 @@ describe("replaySeason — leader hunting", () => {
 
   it("does not credit the winner for the #1 spot they take with that very win", () => {
     // a wins the opening match and becomes #1; nobody was leader before it.
-    const result = replay([
-      { matchId: "m1", sideA: { a: [1000, 1100] }, sideB: { b: [1000, 900] }, winner: "A" },
-    ]);
+    const result = replay([{ matchId: "m1", sideA: { a: [1000, 1100] }, sideB: { b: [1000, 900] }, winner: "A" }]);
 
     expect(result.aggregates.get("a")!.winsVsRank1).toBe(0);
   });
@@ -518,9 +497,7 @@ describe("replaySeason — pair tallies", () => {
   });
 
   it("counts a draw for both members of a pair", () => {
-    const result = replay([
-      { matchId: "m1", sideA: { a: [1000, 1000] }, sideB: { b: [1000, 1000] }, winner: "draw" },
-    ]);
+    const result = replay([{ matchId: "m1", sideA: { a: [1000, 1000] }, sideB: { b: [1000, 1000] }, winner: "draw" }]);
 
     expect(result.rivalries[0]).toMatchObject({ matches: 1, aWins: 0, aLosses: 0, draws: 1 });
   });
@@ -538,10 +515,7 @@ describe("replaySeason — pair tallies", () => {
  * copy of that rule would only ever drift from the first.
  */
 function referenceResidency(history: SeasonHistoryRow[]) {
-  const counters = new Map<
-    string,
-    { bestRank: number; top1: number; top3: number; top5: number }
-  >();
+  const counters = new Map<string, { bestRank: number; top1: number; top3: number; top5: number }>();
   const source: StandingSource = { currentMmr: new Map(), aggregates: new Map() };
   const settled = new Set<string>();
 
@@ -598,10 +572,7 @@ function groupRows(history: SeasonHistoryRow[]): SeasonHistoryRow[][] {
 
 describe("compareStanding", () => {
   function sourceOf(
-    players: Record<
-      string,
-      { mmr: number; wins?: number; peakMmr?: number; matchesPlayed?: number }
-    >,
+    players: Record<string, { mmr: number; wins?: number; peakMmr?: number; matchesPlayed?: number }>,
   ): StandingSource {
     const entries = Object.entries(players);
     return {
@@ -740,9 +711,7 @@ describe("replaySeason — determinism", () => {
   });
 
   it("handles a player with a single match", () => {
-    const result = replay([
-      { matchId: "m1", sideA: { a: [1000, 1016] }, sideB: { b: [1000, 984] }, winner: "A" },
-    ]);
+    const result = replay([{ matchId: "m1", sideA: { a: [1000, 1016] }, sideB: { b: [1000, 984] }, winner: "A" }]);
 
     const a = result.aggregates.get("a")!;
     expect(a).toMatchObject({ matchesPlayed: 1, wins: 1, bestWinStreak: 1, bestRank: 1 });

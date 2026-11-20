@@ -78,12 +78,8 @@ export class UserRepository {
     const rows = await db
       .select({ id: appUsers.id, avatarVersion: appUsers.avatarVersion })
       .from(appUsers)
-      .where(
-        and(inArray(appUsers.id, ids), isNotNull(appUsers.avatarVersion), isNull(appUsers.archivedAt)),
-      );
-    return rows.flatMap((r) =>
-      r.avatarVersion ? [{ id: r.id, avatarVersion: r.avatarVersion }] : [],
-    );
+      .where(and(inArray(appUsers.id, ids), isNotNull(appUsers.avatarVersion), isNull(appUsers.archivedAt)));
+    return rows.flatMap((r) => (r.avatarVersion ? [{ id: r.id, avatarVersion: r.avatarVersion }] : []));
   }
 
   /** Every current avatar, archived users included: purging theirs may have failed. */
@@ -92,9 +88,7 @@ export class UserRepository {
       .select({ id: appUsers.id, avatarVersion: appUsers.avatarVersion })
       .from(appUsers)
       .where(isNotNull(appUsers.avatarVersion));
-    return rows.flatMap((r) =>
-      r.avatarVersion ? [{ id: r.id, avatarVersion: r.avatarVersion }] : [],
-    );
+    return rows.flatMap((r) => (r.avatarVersion ? [{ id: r.id, avatarVersion: r.avatarVersion }] : []));
   }
 
   async createAppUser(appUser: typeof appUsers.$inferInsert) {
@@ -106,7 +100,7 @@ export class UserRepository {
     await db
       .update(appUsers)
       .set({ trustScoreCount: sql`${appUsers.trustScoreCount} + 1` })
-      .where(eq(appUsers.id, userId))
+      .where(eq(appUsers.id, userId));
   }
 
   /** Takes back the point a finalization credited, never below zero. */
@@ -114,11 +108,11 @@ export class UserRepository {
     await db
       .update(appUsers)
       .set({ trustScoreCount: sql`GREATEST(${appUsers.trustScoreCount} - 1, 0)` })
-      .where(eq(appUsers.id, userId))
+      .where(eq(appUsers.id, userId));
   }
 
   async resetTrustScore(userId: string): Promise<void> {
-    await db.update(appUsers).set({ trustScoreCount: 0 }).where(eq(appUsers.id, userId))
+    await db.update(appUsers).set({ trustScoreCount: 0 }).where(eq(appUsers.id, userId));
   }
 
   async updateAppUser(
@@ -131,11 +125,7 @@ export class UserRepository {
       deactivatedBy?: string | null;
     },
   ) {
-    const [updated] = await db
-      .update(appUsers)
-      .set(data)
-      .where(eq(appUsers.id, id))
-      .returning();
+    const [updated] = await db.update(appUsers).set(data).where(eq(appUsers.id, id)).returning();
     return updated;
   }
 
@@ -145,10 +135,7 @@ export class UserRepository {
   async searchByName(query: string, limit = 10) {
     const pattern = containsPattern(query);
     return await db.query.appUsers.findMany({
-      where: or(
-        foldedILike(appUsers.displayName, pattern),
-        foldedILike(appUsers.shortName, pattern),
-      ),
+      where: or(foldedILike(appUsers.displayName, pattern), foldedILike(appUsers.shortName, pattern)),
       columns: { id: true, displayName: true, shortName: true },
       orderBy: (users, { asc }) => [asc(users.displayName)],
       limit,
@@ -163,13 +150,7 @@ export class UserRepository {
     const rows = await db
       .select({ id: appUsers.id })
       .from(appUsers)
-      .where(
-        and(
-          isNull(appUsers.deactivatedAt),
-          isNull(appUsers.archivedAt),
-          ne(appUsers.role, "kiosk"),
-        ),
-      );
+      .where(and(isNull(appUsers.deactivatedAt), isNull(appUsers.archivedAt), ne(appUsers.role, "kiosk")));
     return rows.map((row) => row.id);
   }
 
@@ -200,10 +181,7 @@ export class UserRepository {
    * the session hook only knows about the external identity.
    */
   async touchLastLogin(externalId: string): Promise<void> {
-    await db
-      .update(appUsers)
-      .set({ lastLoginAt: new Date() })
-      .where(eq(appUsers.externalId, externalId));
+    await db.update(appUsers).set({ lastLoginAt: new Date() }).where(eq(appUsers.externalId, externalId));
   }
 
   /**
@@ -235,9 +213,7 @@ export class UserRepository {
    * Paginated admin listing. Counts come from scalar subqueries so that the
    * windowed COUNT(*) OVER () total stays accurate (a GROUP BY would break it).
    */
-  async listUsersAdmin(
-    filters: AdminUserListQuery,
-  ): Promise<{ data: AdminUserListItem[]; total: number }> {
+  async listUsersAdmin(filters: AdminUserListQuery): Promise<{ data: AdminUserListItem[]; total: number }> {
     const conditions = [];
 
     if (filters.search) {
@@ -520,10 +496,7 @@ export class UserRepository {
   }
 
   async updateExternalUserEmail(externalId: string, email: string): Promise<void> {
-    await db
-      .update(user)
-      .set({ email, emailVerified: false, updatedAt: new Date() })
-      .where(eq(user.id, externalId));
+    await db.update(user).set({ email, emailVerified: false, updatedAt: new Date() }).where(eq(user.id, externalId));
   }
 
   async isEmailTaken(email: string, exceptExternalId: string): Promise<boolean> {

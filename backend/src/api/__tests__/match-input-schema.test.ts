@@ -11,13 +11,9 @@ describe("match input schemas", () => {
   it("only lets a client write the scheduled and reported statuses", () => {
     for (const status of ["finalized", "confirmed", "cancelled", "disputed"]) {
       expect(createMatchSchema.safeParse({ tournamentId, sides, status }).success).toBe(false);
-      expect(
-        updateMatchSchema.safeParse({ status, playedAt: new Date().toISOString() }).success,
-      ).toBe(false);
+      expect(updateMatchSchema.safeParse({ status, playedAt: new Date().toISOString() }).success).toBe(false);
     }
-    expect(createMatchSchema.safeParse({ tournamentId, sides, status: "reported" }).success).toBe(
-      true,
-    );
+    expect(createMatchSchema.safeParse({ tournamentId, sides, status: "reported" }).success).toBe(true);
   });
 
   it("requires exactly one side at position 1 and one at position 2", () => {
@@ -30,8 +26,6 @@ describe("match input schemas", () => {
   });
 
   it("only names side 1 or 2 as the winner", () => {
-    expect(createMatchSchema.safeParse({ tournamentId, sides, winnerPosition: 3 }).success).toBe(
-      false,
-    );
+    expect(createMatchSchema.safeParse({ tournamentId, sides, winnerPosition: 3 }).success).toBe(false);
   });
 });

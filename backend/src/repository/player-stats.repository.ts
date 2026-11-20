@@ -28,7 +28,13 @@ export class PlayerStatsRepository {
    */
   async getPlayerEntries(
     playerId: string,
-    filters?: { tournamentId?: string; disciplineId?: string; tournamentMode?: string; teamMode?: string; allowedModes?: string[] },
+    filters?: {
+      tournamentId?: string;
+      disciplineId?: string;
+      tournamentMode?: string;
+      teamMode?: string;
+      allowedModes?: string[];
+    },
     visibleOrganizationIds: string[] | null = null,
   ) {
     const conditions = [
@@ -92,16 +98,16 @@ export class PlayerStatsRepository {
         outcomeTypeId: matches.outcomeTypeId,
       })
       .from(matchSides)
-      .innerJoin(sql`match_sides ms2`, sql`${matchSides.matchId} = ms2.match_id AND ms2.entry_id != ${matchSides.entryId}`)
+      .innerJoin(
+        sql`match_sides ms2`,
+        sql`${matchSides.matchId} = ms2.match_id AND ms2.entry_id != ${matchSides.entryId}`,
+      )
       .innerJoin(matches, eq(matchSides.matchId, matches.id))
       .innerJoin(tournamentEntries, eq(matchSides.entryId, tournamentEntries.id))
       .innerJoin(tournaments, eq(tournamentEntries.tournamentId, tournaments.id))
       .leftJoin(
         matchPlayerPoints,
-        and(
-          eq(matchPlayerPoints.matchId, matchSides.matchId),
-          eq(matchPlayerPoints.playerId, sql`${playerId}::uuid`),
-        ),
+        and(eq(matchPlayerPoints.matchId, matchSides.matchId), eq(matchPlayerPoints.playerId, sql`${playerId}::uuid`)),
       )
       .where(and(inArray(matchSides.entryId, playerEntryIds), eq(matches.status, "finalized")));
   }
@@ -121,10 +127,7 @@ export class PlayerStatsRepository {
       .where(inArray(tournamentEntryPlayers.entryId, entryIds));
   }
 
-  async getPlayerMatchHistory(
-    playerId: string,
-    filters: { limit?: number; offset?: number; tournamentId?: string },
-  ) {
+  async getPlayerMatchHistory(playerId: string, filters: { limit?: number; offset?: number; tournamentId?: string }) {
     const { limit = 10, offset = 0, tournamentId } = filters;
 
     const conditions = [eq(tournamentEntryPlayers.playerId, playerId)];
@@ -145,8 +148,12 @@ export class PlayerStatsRepository {
         playedAt: max(matches.playedAt),
         status: max(matches.status),
         winnerSide: max(matches.winnerSide),
-        scoreA: sql<number | null>`(SELECT score FROM match_sides WHERE match_id = ${matches.id} AND position = 1 LIMIT 1)`,
-        scoreB: sql<number | null>`(SELECT score FROM match_sides WHERE match_id = ${matches.id} AND position = 2 LIMIT 1)`,
+        scoreA: sql<
+          number | null
+        >`(SELECT score FROM match_sides WHERE match_id = ${matches.id} AND position = 1 LIMIT 1)`,
+        scoreB: sql<
+          number | null
+        >`(SELECT score FROM match_sides WHERE match_id = ${matches.id} AND position = 2 LIMIT 1)`,
         teamSizeA: sql<number>`(
           SELECT COUNT(*) FROM tournament_entry_players tep2
           JOIN match_sides ms2 ON ms2.entry_id = tep2.entry_id
@@ -287,7 +294,6 @@ export class PlayerStatsRepository {
       .where(inArray(tournamentEntryPlayers.playerId, playerIds));
     return rows.map((r) => r.tournamentId);
   }
-
 }
 
 export const playerStatsRepository = new PlayerStatsRepository();

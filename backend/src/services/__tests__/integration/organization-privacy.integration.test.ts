@@ -70,10 +70,7 @@ describe("Organization privacy of public reads (integration)", () => {
   }
 
   async function enter(tournamentId: string, userId: string) {
-    const [entry] = await testDb
-      .insert(tournamentEntries)
-      .values({ tournamentId, entryType: "PLAYER" })
-      .returning();
+    const [entry] = await testDb.insert(tournamentEntries).values({ tournamentId, entryType: "PLAYER" }).returning();
     await testDb.insert(tournamentEntryPlayers).values({ entryId: entry!.id, playerId: userId });
     return entry!.id;
   }

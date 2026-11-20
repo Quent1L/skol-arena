@@ -13,7 +13,7 @@ describe("sanitizeRichText", () => {
   it("keeps what the editor produces", () => {
     const html =
       '<h2 style="text-align:center">Title</h2><p><strong>b</strong> <em>i</em> <u>u</u> <s>s</s></p>' +
-      '<ul><li><p>one</p></li></ul><blockquote><p>q</p></blockquote>' +
+      "<ul><li><p>one</p></li></ul><blockquote><p>q</p></blockquote>" +
       '<pre><code class="language-ts">x</code></pre><img src="https://example.com/a.png" alt="a" />';
     expect(sanitizeRichText(html)).toBe(html);
   });

@@ -1,9 +1,5 @@
 import { tournamentRulesetRepository } from "../repository/tournament-ruleset.repository";
-import {
-  resolveRuleset,
-  rulesetsEqual,
-  type TournamentRulesetPayload,
-} from "@skol-arena/shared/types/index";
+import { resolveRuleset, rulesetsEqual, type TournamentRulesetPayload } from "@skol-arena/shared/types/index";
 
 /**
  * Lifecycle of the ruleset a competition is played under.
@@ -46,14 +42,8 @@ export class TournamentRulesetService {
   }
 
   /** Called when a competition is created, inside the caller's transaction scope. */
-  async seed(
-    tournamentId: string,
-    disciplineId: string | null | undefined,
-  ): Promise<TournamentRulesetPayload> {
-    const payload = await tournamentRulesetRepository.buildPayloadForTournament(
-      tournamentId,
-      disciplineId,
-    );
+  async seed(tournamentId: string, disciplineId: string | null | undefined): Promise<TournamentRulesetPayload> {
+    const payload = await tournamentRulesetRepository.buildPayloadForTournament(tournamentId, disciplineId);
     await tournamentRulesetRepository.upsert(tournamentId, payload);
     return payload;
   }
@@ -68,10 +58,7 @@ export class TournamentRulesetService {
     if (!context) return;
 
     const stored = await tournamentRulesetRepository.getByTournamentId(tournamentId);
-    const fresh = await tournamentRulesetRepository.buildPayloadForTournament(
-      tournamentId,
-      context.disciplineId,
-    );
+    const fresh = await tournamentRulesetRepository.buildPayloadForTournament(tournamentId, context.disciplineId);
 
     if (!stored || !rulesetsEqual(stored.payload, fresh)) {
       await tournamentRulesetRepository.upsert(tournamentId, fresh);
@@ -83,10 +70,7 @@ export class TournamentRulesetService {
     tournamentId: string,
     disciplineId: string | null | undefined,
   ): Promise<TournamentRulesetPayload> {
-    const fresh = await tournamentRulesetRepository.buildPayloadForTournament(
-      tournamentId,
-      disciplineId,
-    );
+    const fresh = await tournamentRulesetRepository.buildPayloadForTournament(tournamentId, disciplineId);
     const stored = await tournamentRulesetRepository.getByTournamentId(tournamentId);
 
     if (!stored || !rulesetsEqual(stored.payload, fresh)) {

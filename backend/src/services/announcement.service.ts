@@ -1,9 +1,4 @@
-import type {
-  Announcement,
-  AnnouncementPopup,
-  CreateAnnouncementInput,
-  CreateNotification,
-} from "@skol-arena/shared";
+import type { Announcement, AnnouncementPopup, CreateAnnouncementInput, CreateNotification } from "@skol-arena/shared";
 import {
   announcementRepository,
   type AnnouncementListRow,
@@ -52,11 +47,7 @@ async function isInAudience(row: AnnouncementRow, userId: string): Promise<boole
   return true;
 }
 
-function toFeedNotification(
-  row: AnnouncementRow,
-  userId: string,
-  tournamentName: string | null,
-): CreateNotification {
+function toFeedNotification(row: AnnouncementRow, userId: string, tournamentName: string | null): CreateNotification {
   return {
     userId,
     type: "ANNOUNCEMENT",
@@ -103,9 +94,7 @@ export const announcementService = {
   async create(userId: string, input: CreateAnnouncementInput) {
     const tournamentId = input.audience === "tournament" ? (input.tournamentId ?? null) : null;
     await assertCanPublish(userId, { audience: input.audience, tournamentId });
-    const tournament = tournamentId
-      ? await tournamentRepository.getByIdSimple(tournamentId)
-      : undefined;
+    const tournament = tournamentId ? await tournamentRepository.getByIdSimple(tournamentId) : undefined;
     if (tournamentId && !tournament) throw new NotFoundError(ErrorCode.TOURNAMENT_NOT_FOUND);
 
     const row = await announcementRepository.create({
@@ -121,9 +110,7 @@ export const announcementService = {
     if (row.inFeed) {
       const recipients = await resolveRecipients(row);
       const tournamentName = tournament?.name ?? null;
-      await notificationService.sendMany(
-        recipients.map((id) => toFeedNotification(row, id, tournamentName)),
-      );
+      await notificationService.sendMany(recipients.map((id) => toFeedNotification(row, id, tournamentName)));
     }
     return { id: row.id };
   },

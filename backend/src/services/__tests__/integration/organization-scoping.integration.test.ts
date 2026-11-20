@@ -6,13 +6,7 @@ import * as schema from "../../../db/schema";
 // Initialize the test database BEFORE any imports that use `db`.
 const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
-import {
-  tournaments,
-  appUsers,
-  user as betterAuthUser,
-  organizations,
-  organizationMembers,
-} from "../../../db/schema";
+import { tournaments, appUsers, user as betterAuthUser, organizations, organizationMembers } from "../../../db/schema";
 import { tournamentService } from "../../tournament.service";
 import { ForbiddenError } from "../../../types/errors";
 
@@ -85,9 +79,7 @@ describe("Organization scoping (integration)", () => {
       .values({ name: `Org-${Date.now()}`, createdBy: adminId })
       .returning();
 
-    await testDb
-      .insert(organizationMembers)
-      .values({ organizationId: org!.id, userId: memberId, role: "member" });
+    await testDb.insert(organizationMembers).values({ organizationId: org!.id, userId: memberId, role: "member" });
 
     scopedTournamentId = await createTournament("Scoped", org!.id);
     openTournamentId = await createTournament("Open", null);
@@ -98,36 +90,26 @@ describe("Organization scoping (integration)", () => {
   });
 
   it("lets a member read a tournament scoped to their organization", async () => {
-    await expect(
-      tournamentService.assertCanAccess(scopedTournamentId, memberId),
-    ).resolves.toBeUndefined();
+    await expect(tournamentService.assertCanAccess(scopedTournamentId, memberId)).resolves.toBeUndefined();
   });
 
   it("refuses a signed-in outsider", async () => {
-    await expect(
-      tournamentService.assertCanAccess(scopedTournamentId, outsiderId),
-    ).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(tournamentService.assertCanAccess(scopedTournamentId, outsiderId)).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
   });
 
   it("refuses an anonymous reader", async () => {
-    await expect(
-      tournamentService.assertCanAccess(scopedTournamentId, null),
-    ).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(tournamentService.assertCanAccess(scopedTournamentId, null)).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   it("lets a super admin read it without being a member", async () => {
-    await expect(
-      tournamentService.assertCanAccess(scopedTournamentId, adminId),
-    ).resolves.toBeUndefined();
+    await expect(tournamentService.assertCanAccess(scopedTournamentId, adminId)).resolves.toBeUndefined();
   });
 
   it("leaves a tournament with no organization open to everyone", async () => {
-    await expect(
-      tournamentService.assertCanAccess(openTournamentId, outsiderId),
-    ).resolves.toBeUndefined();
-    await expect(
-      tournamentService.assertCanAccess(openTournamentId, null),
-    ).resolves.toBeUndefined();
+    await expect(tournamentService.assertCanAccess(openTournamentId, outsiderId)).resolves.toBeUndefined();
+    await expect(tournamentService.assertCanAccess(openTournamentId, null)).resolves.toBeUndefined();
   });
 
   it("refuses an outsider trying to enter the scoped tournament", async () => {

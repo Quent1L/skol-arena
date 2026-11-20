@@ -40,9 +40,7 @@ function tierName(nameKey: string): string {
  * anyone who read it in the other one.
  */
 function isDefaultLadderLabel(nameKey: string, name: string): boolean {
-  return SUPPORTED_LANGUAGES.some(
-    (lng) => i18next.t(`ranked.tiers.${nameKey}`, { lng }) === name,
-  );
+  return SUPPORTED_LANGUAGES.some((lng) => i18next.t(`ranked.tiers.${nameKey}`, { lng }) === name);
 }
 
 export interface CreateRankedSeasonData {
@@ -100,10 +98,7 @@ export interface UpdateRankedConfigData {
 }
 
 export class RankedSeasonRepository {
-  async create(
-    tournamentData: CreateRankedSeasonData,
-    configData: CreateRankedConfigData,
-  ) {
+  async create(tournamentData: CreateRankedSeasonData, configData: CreateRankedConfigData) {
     return await db.transaction(async (tx) => {
       const [tournament] = await tx
         .insert(tournaments)
@@ -172,10 +167,7 @@ export class RankedSeasonRepository {
    * than interleaving. Drafts are left out: one abandoned before it ever started must not eat a
    * season number.
    */
-  async countStartedSeasons(scope: {
-    organizationId: string | null;
-    disciplineId: string | null;
-  }): Promise<number> {
+  async countStartedSeasons(scope: { organizationId: string | null; disciplineId: string | null }): Promise<number> {
     const [row] = await db
       .select({ total: count() })
       .from(tournaments)
@@ -186,9 +178,7 @@ export class RankedSeasonRepository {
           scope.organizationId
             ? eq(tournaments.organizationId, scope.organizationId)
             : isNull(tournaments.organizationId),
-          scope.disciplineId
-            ? eq(tournaments.disciplineId, scope.disciplineId)
-            : isNull(tournaments.disciplineId),
+          scope.disciplineId ? eq(tournaments.disciplineId, scope.disciplineId) : isNull(tournaments.disciplineId),
         ),
       );
     return row?.total ?? 0;
@@ -218,11 +208,11 @@ export class RankedSeasonRepository {
    * so a client that knows the key shows the ladder in its own locale instead.
    */
   static readonly DEFAULT_TIER_CONFIGS = [
-    { level: 1, nameKey: "ROOKIE",     percentile: 0,    minMmr: 700  },
-    { level: 2, nameKey: "CHALLENGER", percentile: 0.4,  minMmr: 900  },
-    { level: 3, nameKey: "CONFIRMED",  percentile: 0.7,  minMmr: 1100 },
-    { level: 4, nameKey: "EXPERT",     percentile: 0.9,  minMmr: 1300 },
-    { level: 5, nameKey: "LEGEND",     percentile: 0.95, minMmr: 1500 },
+    { level: 1, nameKey: "ROOKIE", percentile: 0, minMmr: 700 },
+    { level: 2, nameKey: "CHALLENGER", percentile: 0.4, minMmr: 900 },
+    { level: 3, nameKey: "CONFIRMED", percentile: 0.7, minMmr: 1100 },
+    { level: 4, nameKey: "EXPERT", percentile: 0.9, minMmr: 1300 },
+    { level: 5, nameKey: "LEGEND", percentile: 0.95, minMmr: 1500 },
   ] as const;
 
   async getRankTiers(seasonId: string, tx: DbTransaction = db) {
@@ -232,11 +222,7 @@ export class RankedSeasonRepository {
     });
   }
 
-  async upsertRankTier(
-    seasonId: string,
-    level: number,
-    data: { minMmr: number },
-  ) {
+  async upsertRankTier(seasonId: string, level: number, data: { minMmr: number }) {
     const existing = await db.query.rankTiers.findFirst({
       where: and(eq(rankTiers.seasonId, seasonId), eq(rankTiers.level, level)),
     });
@@ -244,15 +230,11 @@ export class RankedSeasonRepository {
       const [updated] = await db
         .update(rankTiers)
         .set({ minMmr: data.minMmr, calculatedAt: new Date() })
-        .where(
-          and(eq(rankTiers.seasonId, seasonId), eq(rankTiers.level, level)),
-        )
+        .where(and(eq(rankTiers.seasonId, seasonId), eq(rankTiers.level, level)))
         .returning();
       return updated;
     }
-    const config = RankedSeasonRepository.DEFAULT_TIER_CONFIGS.find(
-      (t) => t.level === level,
-    );
+    const config = RankedSeasonRepository.DEFAULT_TIER_CONFIGS.find((t) => t.level === level);
     const [created] = await db
       .insert(rankTiers)
       .values({
@@ -381,20 +363,14 @@ export class RankedSeasonRepository {
       .where(inArray(rankTiers.id, ids));
 
     for (const move of moves) {
-      await tx
-        .update(rankTiers)
-        .set({ level: move.newLevel })
-        .where(eq(rankTiers.id, move.id));
+      await tx.update(rankTiers).set({ level: move.newLevel }).where(eq(rankTiers.id, move.id));
     }
 
     return new Map(moves.map((move) => [move.level, move.newLevel]));
   }
 
   /** Close the gaps left by a deletion: levels become 1..N again. */
-  private async resequenceLevels(
-    tx: DbTransaction,
-    seasonId: string,
-  ): Promise<LevelMapping> {
+  private async resequenceLevels(tx: DbTransaction, seasonId: string): Promise<LevelMapping> {
     const remaining = await tx
       .select({ id: rankTiers.id, level: rankTiers.level })
       .from(rankTiers)
@@ -408,17 +384,11 @@ export class RankedSeasonRepository {
   }
 
   /** Free up `fromLevel` by pushing it and everything above it one level up. */
-  private async shiftLevelsUp(
-    tx: DbTransaction,
-    seasonId: string,
-    fromLevel: number,
-  ): Promise<LevelMapping> {
+  private async shiftLevelsUp(tx: DbTransaction, seasonId: string, fromLevel: number): Promise<LevelMapping> {
     const affected = await tx
       .select({ id: rankTiers.id, level: rankTiers.level })
       .from(rankTiers)
-      .where(
-        and(eq(rankTiers.seasonId, seasonId), sql`${rankTiers.level} >= ${fromLevel}`),
-      )
+      .where(and(eq(rankTiers.seasonId, seasonId), sql`${rankTiers.level} >= ${fromLevel}`))
       .orderBy(asc(rankTiers.level));
 
     const moves = affected.map((tier) => ({ ...tier, newLevel: tier.level + 1 }));
@@ -490,9 +460,7 @@ export class RankedSeasonRepository {
     // ladder's own — that is not a rename, and nulling the key on it would strip
     // the translation with no API left to restore it.
     const set =
-      data.name === undefined
-        ? data
-        : { ...data, nameKey: await this.nameKeyAfterRename(seasonId, level, data.name) };
+      data.name === undefined ? data : { ...data, nameKey: await this.nameKeyAfterRename(seasonId, level, data.name) };
 
     const [updated] = await db
       .update(rankTiers)
@@ -520,9 +488,7 @@ export class RankedSeasonRepository {
    */
   async deleteTier(seasonId: string, level: number) {
     return await db.transaction(async (tx) => {
-      await tx
-        .delete(rankTiers)
-        .where(and(eq(rankTiers.seasonId, seasonId), eq(rankTiers.level, level)));
+      await tx.delete(rankTiers).where(and(eq(rankTiers.seasonId, seasonId), eq(rankTiers.level, level)));
 
       const mapping = await this.resequenceLevels(tx, seasonId);
       await this.remapAnimationEventLevels(tx, seasonId, mapping, level);
@@ -623,20 +589,13 @@ export class RankedSeasonRepository {
       .where(inArray(playerMmr.seasonId, ids))
       .groupBy(playerMmr.seasonId);
 
-    const countBySeason = new Map(
-      counts.map((row) => [row.seasonId, Number(row.total)]),
-    );
+    const countBySeason = new Map(counts.map((row) => [row.seasonId, Number(row.total)]));
 
     const joined = viewerId
       ? await db
           .select({ seasonId: playerMmr.seasonId })
           .from(playerMmr)
-          .where(
-            and(
-              inArray(playerMmr.seasonId, ids),
-              eq(playerMmr.playerId, viewerId),
-            ),
-          )
+          .where(and(inArray(playerMmr.seasonId, ids), eq(playerMmr.playerId, viewerId)))
       : [];
 
     const joinedIds = new Set(joined.map((row) => row.seasonId));

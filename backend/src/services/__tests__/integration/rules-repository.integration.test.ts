@@ -37,7 +37,10 @@ describe("rulesRepository (integration)", () => {
     admin = await seed.createUser("Admin");
     ann = await seed.createUser("Ann");
     bob = await seed.createUser("Bob");
-    const [discipline] = await testDb.insert(disciplines).values({ name: `Discipline-${Date.now()}` }).returning();
+    const [discipline] = await testDb
+      .insert(disciplines)
+      .values({ name: `Discipline-${Date.now()}` })
+      .returning();
     disciplineId = discipline!.id;
     seasonA = await seed.createTournament(admin, { mode: "ranked" });
     seasonB = await seed.createTournament(admin, { mode: "ranked" });
@@ -50,7 +53,9 @@ describe("rulesRepository (integration)", () => {
       expect((await repo.getById(created!.id))?.name).toBe("First");
       expect(await repo.getById(MISSING)).toBeUndefined();
 
-      const inactive = await repo.create(rule({ name: "Dormant", type: "message", isActive: false, triggerEvent: "other" }));
+      const inactive = await repo.create(
+        rule({ name: "Dormant", type: "message", isActive: false, triggerEvent: "other" }),
+      );
       expect((await repo.list()).length).toBeGreaterThanOrEqual(2);
       expect((await repo.list({ type: "message" })).map((r) => r.id)).toEqual([inactive!.id]);
       expect((await repo.list({ triggerEvent: "other" })).map((r) => r.id)).toEqual([inactive!.id]);
@@ -65,11 +70,16 @@ describe("rulesRepository (integration)", () => {
 
     it("lists active rules for a trigger, global ones plus the discipline's own", async () => {
       const global = await repo.create(rule({ triggerEvent: "season_end", priority: 1 }));
-      const scoped = await repo.create(rule({ triggerEvent: "season_end", scope: "discipline", disciplineId, priority: 9 }));
+      const scoped = await repo.create(
+        rule({ triggerEvent: "season_end", scope: "discipline", disciplineId, priority: 9 }),
+      );
       await repo.create(rule({ triggerEvent: "season_end", isActive: false }));
 
       expect((await repo.listActiveByTrigger("season_end", null)).map((r) => r.id)).toEqual([global!.id]);
-      expect((await repo.listActiveByTrigger("season_end", disciplineId)).map((r) => r.id)).toEqual([scoped!.id, global!.id]);
+      expect((await repo.listActiveByTrigger("season_end", disciplineId)).map((r) => r.id)).toEqual([
+        scoped!.id,
+        global!.id,
+      ]);
     });
   });
 
@@ -78,8 +88,12 @@ describe("rulesRepository (integration)", () => {
     let seasonal: string;
 
     beforeAll(async () => {
-      once = (await repo.create(rule({ name: "Once", action: { type: "badge", label: "Once", icon: "x", recurrence: "once" } })))!.id;
-      seasonal = (await repo.create(rule({ name: "Seasonal", action: { type: "badge", label: "Seasonal", icon: "x", recurrence: "per_season" } })))!.id;
+      once = (await repo.create(
+        rule({ name: "Once", action: { type: "badge", label: "Once", icon: "x", recurrence: "once" } }),
+      ))!.id;
+      seasonal = (await repo.create(
+        rule({ name: "Seasonal", action: { type: "badge", label: "Seasonal", icon: "x", recurrence: "per_season" } }),
+      ))!.id;
     });
 
     it("awards a once-only badge a single time", async () => {
@@ -100,7 +114,9 @@ describe("rulesRepository (integration)", () => {
     });
 
     it("lists badges by season and player, with holders", async () => {
-      expect((await repo.listBadgesByPlayerAndSeason(ann, seasonA)).map((b) => b.ruleId).sort()).toEqual([once, seasonal].sort());
+      expect((await repo.listBadgesByPlayerAndSeason(ann, seasonA)).map((b) => b.ruleId).sort()).toEqual(
+        [once, seasonal].sort(),
+      );
       expect((await repo.listBadgesBySeason(seasonB)).map((b) => b.ruleId)).toEqual([seasonal]);
       expect(await repo.countBadgeHolders(once)).toBe(1);
       expect(await repo.listBadgeHolderPlayerIds(once)).toEqual([ann]);
@@ -115,9 +131,15 @@ describe("rulesRepository (integration)", () => {
       const unseen = await repo.getUnviewedBadgesForSeason(ann, seasonA);
       expect(unseen).toHaveLength(2);
       await repo.markBadgesViewed([], ann);
-      await repo.markBadgesViewed(unseen.map((b) => b.id), bob);
+      await repo.markBadgesViewed(
+        unseen.map((b) => b.id),
+        bob,
+      );
       expect(await repo.getUnviewedBadgesForSeason(ann, seasonA)).toHaveLength(2);
-      await repo.markBadgesViewed(unseen.map((b) => b.id), ann);
+      await repo.markBadgesViewed(
+        unseen.map((b) => b.id),
+        ann,
+      );
       expect(await repo.getUnviewedBadgesForSeason(ann, seasonA)).toHaveLength(0);
     });
 

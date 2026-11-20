@@ -93,7 +93,9 @@ mock.module("../../config/database", () => ({
         findMany: mock(() => Promise.resolve([MATCH_ROW])),
         findFirst: mock(() => Promise.resolve(MATCH_ROW)),
       },
-      matchSides: { findMany: mock(() => Promise.resolve(MATCH_ROW.sides.map((s: any) => ({ ...s, matchId: MATCH })))) },
+      matchSides: {
+        findMany: mock(() => Promise.resolve(MATCH_ROW.sides.map((s: any) => ({ ...s, matchId: MATCH })))),
+      },
     },
     select: mock(() => makeSelectChain()),
     selectDistinct: mock(() => makeSelectChain()),
@@ -224,8 +226,7 @@ describe("parity of the three MMR paths", () => {
     await mmrAnimationEventService.createProvisionalEventsForMatch(MATCH, SEASON);
     const preview = realCalculateMatchMmr(engineCalls.at(-1)!);
 
-    const byPlayer = (results: typeof official) =>
-      Object.fromEntries(results.map((r) => [r.playerId, r.mmrDelta]));
+    const byPlayer = (results: typeof official) => Object.fromEntries(results.map((r) => [r.playerId, r.mmrDelta]));
 
     expect(byPlayer(preview)).toEqual(byPlayer(official));
   });

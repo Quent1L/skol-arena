@@ -1,12 +1,7 @@
 import { invitationRepository } from "../repository/invitation.repository";
 import { organizationRepository } from "../repository/organization.repository";
 import { generatePassphrase } from "../utils/passphrase";
-import {
-  BadRequestError,
-  ErrorCode,
-  NotFoundError,
-  ConflictError,
-} from "../types/errors";
+import { BadRequestError, ErrorCode, NotFoundError, ConflictError } from "../types/errors";
 import { toSafeDisplayName } from "../utils/display-name";
 
 export class InvitationService {
@@ -21,9 +16,7 @@ export class InvitationService {
     do {
       code = generatePassphrase();
     } while (await invitationRepository.findByCode(code));
-    const expiresAt = data.expiresInDays
-      ? new Date(Date.now() + data.expiresInDays * 24 * 60 * 60 * 1000)
-      : null;
+    const expiresAt = data.expiresInDays ? new Date(Date.now() + data.expiresInDays * 24 * 60 * 60 * 1000) : null;
 
     return await invitationRepository.create({
       code,
@@ -106,7 +99,7 @@ export class InvitationService {
     betterAuthUserId: string,
     email: string,
     displayName: string,
-    ipAddress?: string
+    ipAddress?: string,
   ) {
     const invitation = await this.consumeCode(code, betterAuthUserId, email, ipAddress);
 

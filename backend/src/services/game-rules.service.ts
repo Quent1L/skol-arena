@@ -1,14 +1,7 @@
 import { gameRulesRepository } from "../repository/game-rules.repository";
 import { userRepository } from "../repository/user.repository";
-import type {
-  CreateGameRuleData,
-  UpdateGameRuleData,
-} from "../repository/game-rules.repository";
-import {
-  ErrorCode,
-  NotFoundError,
-  ForbiddenError,
-} from "../types/errors";
+import type { CreateGameRuleData, UpdateGameRuleData } from "../repository/game-rules.repository";
+import { ErrorCode, NotFoundError, ForbiddenError } from "../types/errors";
 import { sanitizeOptionalRichText, sanitizeRichText } from "../utils/sanitize-html";
 
 export class GameRulesService {

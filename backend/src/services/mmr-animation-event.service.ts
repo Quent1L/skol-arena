@@ -17,17 +17,10 @@ import {
   type PlayerMmrDelta,
 } from "./mmr-engine";
 import { tournamentRulesetService } from "./tournament-ruleset.service";
-import {
-  resolveRulesetInteractionMode,
-  resolveRulesetOutcome,
-} from "@skol-arena/shared/types/index";
+import { resolveRulesetInteractionMode, resolveRulesetOutcome } from "@skol-arena/shared/types/index";
 import { webSocketService } from "./websocket.service";
 import { logger } from "../utils/logger";
-import type {
-  MmrAnimationEventReason,
-  PlayerRulesOutput,
-  RuleFiringSurface,
-} from "@skol-arena/shared";
+import type { MmrAnimationEventReason, PlayerRulesOutput, RuleFiringSurface } from "@skol-arena/shared";
 
 type TierData = { level: number; name: string; minMmr: number };
 type MmrRecord = { currentMmr: number; matchesPlayed: number };
@@ -56,7 +49,12 @@ function resolveEncouragementKey(mmrDelta: number, eventType: string, rankChange
   return "ranked.LOSS_MAJOR";
 }
 
-function translateEncouragement(mmrDelta: number, eventType: string, rankChanged: boolean, lang: string): string | null {
+function translateEncouragement(
+  mmrDelta: number,
+  eventType: string,
+  rankChanged: boolean,
+  lang: string,
+): string | null {
   const key = resolveEncouragementKey(mmrDelta, eventType, rankChanged);
   if (!key) return null;
   return String(i18next.t(key, { lng: lang }));
@@ -227,13 +225,7 @@ export class MmrAnimationEventService {
       // `getPendingForPlayer` serves an event as soon as it exists, so a two-step
       // write leaves a window where the client reads it without its message and
       // falls back to the generic encouragement.
-      const events = await this.collectOfficialEvents(
-        playerId,
-        matchId,
-        tournamentId,
-        tiers,
-        ruleOutput?.message,
-      );
+      const events = await this.collectOfficialEvents(playerId, matchId, tournamentId, tiers, ruleOutput?.message);
       logger.debug(
         { matchId, playerId, events: events.length, message: ruleOutput?.message ?? null },
         "[Rules] message attachment",
@@ -580,11 +572,17 @@ export class MmrAnimationEventService {
     // Seeing the match's MMR outcome means the player knows they played it: the
     // "added to a match" notification has nothing left to say.
     await notificationService
-      .markMatchCreatedRead(playerId, viewed.map((e) => e.matchId))
+      .markMatchCreatedRead(
+        playerId,
+        viewed.map((e) => e.matchId),
+      )
       .catch((err) => logger.error({ err }, "[Notification] auto-read after MMR reveal failed"));
     if (!surface || viewed.length === 0) return;
     await ruleFiringRepository
-      .markSeen(viewed.map((e) => e.id), surface)
+      .markSeen(
+        viewed.map((e) => e.id),
+        surface,
+      )
       .catch((err) => logger.error({ err, surface }, "[Rules] marking firings seen failed"));
   }
 

@@ -19,10 +19,7 @@ function side(players: EnginePlayer[], result: MatchResult, score: number | null
   return { players, result, score };
 }
 
-function run(
-  sides: [EngineSide, EngineSide],
-  overrides: Partial<Omit<MatchMmrInput, "sides">> = {},
-): PlayerMmrDelta[] {
+function run(sides: [EngineSide, EngineSide], overrides: Partial<Omit<MatchMmrInput, "sides">> = {}): PlayerMmrDelta[] {
   return calculateMatchMmr({
     sides,
     kFactor: 32,
@@ -48,41 +45,28 @@ const MODES: TeamInteractionMode[] = ["COLLABORATIVE", "SHARED_RESOURCE", "INDIV
 describe("MMR conservation", () => {
   it("1v1 → sum of deltas is zero, in all 3 modes", () => {
     for (const mode of MODES) {
-      const results = run(
-        [side([p("a", 1000)], 1), side([p("b", 1300)], 0)],
-        { teamInteractionMode: mode },
-      );
+      const results = run([side([p("a", 1000)], 1), side([p("b", 1300)], 0)], { teamInteractionMode: mode });
       expect(totalDelta(results)).toBe(0);
     }
   });
 
   it("2v2 with heterogeneous teams → sum of deltas is zero, in all 3 modes", () => {
     for (const mode of MODES) {
-      const results = run(
-        [
-          side([p("a", 900), p("b", 1400)], 0),
-          side([p("c", 1150), p("d", 1150)], 1),
-        ],
-        { teamInteractionMode: mode },
-      );
+      const results = run([side([p("a", 900), p("b", 1400)], 0), side([p("c", 1150), p("d", 1150)], 1)], {
+        teamInteractionMode: mode,
+      });
       expect(totalDelta(results)).toBe(0);
     }
   });
 
   it("asymmetric 1v2 match → sum of deltas is zero", () => {
-    const results = run([
-      side([p("solo", 1200)], 1),
-      side([p("x", 1000), p("y", 1000)], 0),
-    ]);
+    const results = run([side([p("solo", 1200)], 1), side([p("x", 1000), p("y", 1000)], 0)]);
     expect(totalDelta(results)).toBe(0);
   });
 
   it("3v3 with extreme gaps → sum of deltas is zero", () => {
     const results = run(
-      [
-        side([p("a", 400), p("b", 1000), p("c", 2400)], 1),
-        side([p("d", 800), p("e", 1200), p("f", 1600)], 0),
-      ],
+      [side([p("a", 400), p("b", 1000), p("c", 2400)], 1), side([p("d", 800), p("e", 1200), p("f", 1600)], 0)],
       { teamInteractionMode: "SHARED_RESOURCE" },
     );
     expect(totalDelta(results)).toBe(0);
@@ -92,26 +76,33 @@ describe("MMR conservation", () => {
     // Players inside a side are spread around the side's level, so the weighted
     // modes actually allocate unequal shares instead of degenerating to 1/n.
     const spread = (n: number, base: number, tag: string) =>
-      Array.from({ length: n }, (_, i) =>
-        p(`${tag}${i}`, Math.max(MIN_MMR, base + (i - Math.floor(n / 2)) * 300)),
-      );
+      Array.from({ length: n }, (_, i) => p(`${tag}${i}`, Math.max(MIN_MMR, base + (i - Math.floor(n / 2)) * 300)));
 
     for (const [sizeA, sizeB] of [
-      [1, 1], [2, 2], [3, 3], [5, 5], [1, 2], [2, 3], [1, 7],
+      [1, 1],
+      [2, 2],
+      [3, 3],
+      [5, 5],
+      [1, 2],
+      [2, 3],
+      [1, 7],
     ]) {
       for (const mode of MODES) {
         for (const kFactor of [8, 32, 128]) {
           for (const [mmrA, mmrB] of [
-            [1000, 1000], [900, 1400], [40, 2400], [1, 1000], [300, 300],
+            [1000, 1000],
+            [900, 1400],
+            [40, 2400],
+            [1, 1000],
+            [300, 300],
           ]) {
             for (const [scoreA, scoreB] of [
-              [null, null], [10, 0], [7, 6],
+              [null, null],
+              [10, 0],
+              [7, 6],
             ] as [number | null, number | null][]) {
               const results = run(
-                [
-                  side(spread(sizeA, mmrA, "a"), 1, scoreA),
-                  side(spread(sizeB, mmrB, "b"), 0, scoreB),
-                ],
+                [side(spread(sizeA, mmrA, "a"), 1, scoreA), side(spread(sizeB, mmrB, "b"), 0, scoreB)],
                 { teamInteractionMode: mode, kFactor },
               );
               expect(totalDelta(results)).toBe(0);
@@ -124,10 +115,7 @@ describe("MMR conservation", () => {
   });
 
   it("uneven draw → sum of deltas is zero", () => {
-    const results = run([
-      side([p("a", 1000), p("b", 1000)], 0.5),
-      side([p("c", 1400), p("d", 1400)], 0.5),
-    ]);
+    const results = run([side([p("a", 1000), p("b", 1000)], 0.5), side([p("c", 1400), p("d", 1400)], 0.5)]);
     expect(totalDelta(results)).toBe(0);
   });
 });
@@ -137,9 +125,7 @@ describe("MMR conservation", () => {
 describe("1v1 invariance", () => {
   it("all 3 modes give exactly the same result", () => {
     const deltas = MODES.map((mode) =>
-      run([side([p("a", 900)], 1), side([p("b", 1400)], 0)], { teamInteractionMode: mode }).map(
-        (r) => r.mmrDelta,
-      ),
+      run([side([p("a", 900)], 1), side([p("b", 1400)], 0)], { teamInteractionMode: mode }).map((r) => r.mmrDelta),
     );
     expect(deltas[1]).toEqual(deltas[0]);
     expect(deltas[2]).toEqual(deltas[0]);
@@ -175,10 +161,7 @@ describe("format invariance", () => {
   });
 
   it("uneven sides → no scaling, one Elo delta split within each side", () => {
-    const results = run([
-      side([p("solo", 1000)], 1),
-      side([p("x", 1000), p("y", 1000)], 0),
-    ]);
+    const results = run([side([p("solo", 1000)], 1), side([p("x", 1000), p("y", 1000)], 0)]);
     expect(deltaOf(results, "solo")).toBe(16);
     expect(deltaOf(results, "x")).toBe(-8);
     expect(deltaOf(results, "y")).toBe(-8);
@@ -190,10 +173,7 @@ describe("format invariance", () => {
       // 900, 1100, 1300… averages to 900 + 100 × (size − 1), so the same match-up
       // can be posed as a 1v1 and gives the bound to hold everyone under.
       const opponents = Array.from({ length: size }, (_, i) => 900 + i * 200);
-      const oneOnOne = deltaOf(
-        run([side([p("solo", 1000)], 1), side([p("l0", 900 + 100 * (size - 1))], 0)]),
-        "solo",
-      );
+      const oneOnOne = deltaOf(run([side([p("solo", 1000)], 1), side([p("l0", 900 + 100 * (size - 1))], 0)]), "solo");
 
       for (const mode of MODES) {
         const results = run(
@@ -289,10 +269,7 @@ describe("distribution based on teamInteractionMode", () => {
 
   function team2v2(result: MatchResult, mode: TeamInteractionMode): PlayerMmrDelta[] {
     return run(
-      [
-        side([p(weak, 900), p(strong, 1400)], result),
-        side([p("c", 1150), p("d", 1150)], result === 1 ? 0 : 1),
-      ],
+      [side([p(weak, 900), p(strong, 1400)], result), side([p("c", 1150), p("d", 1150)], result === 1 ? 0 : 1)],
       { teamInteractionMode: mode },
     );
   }
@@ -345,13 +322,9 @@ describe("ratio bounds", () => {
   });
 
   it("the clamp caps the share spread of a very heterogeneous team", () => {
-    const results = run(
-      [
-        side([p("tiny", 100), p("huge", 2400)], 1),
-        side([p("c", 1200), p("d", 1200)], 0),
-      ],
-      { teamInteractionMode: "INDIVIDUAL" },
-    );
+    const results = run([side([p("tiny", 100), p("huge", 2400)], 1), side([p("c", 1200), p("d", 1200)], 0)], {
+      teamInteractionMode: "INDIVIDUAL",
+    });
     const shareTiny = results.find((r) => r.playerId === "tiny")!.share;
     const shareHuge = results.find((r) => r.playerId === "huge")!.share;
     // Ratios clamped to [0.75, 1.25] → maximum share 1.25 / (1.25 + 0.75) = 62.5%.
@@ -365,10 +338,7 @@ describe("ratio bounds", () => {
 describe("deterministic rounding", () => {
   it("the sum of one side equals exactly the team delta", () => {
     const results = run(
-      [
-        side([p("a", 900), p("b", 1100), p("c", 1400)], 1),
-        side([p("d", 1150), p("e", 1150), p("f", 1150)], 0),
-      ],
+      [side([p("a", 900), p("b", 1100), p("c", 1400)], 1), side([p("d", 1150), p("e", 1150), p("f", 1150)], 0)],
       { teamInteractionMode: "SHARED_RESOURCE" },
     );
     const winners = results.filter((r) => ["a", "b", "c"].includes(r.playerId));
@@ -382,10 +352,10 @@ describe("deterministic rounding", () => {
     // players of side A. Both remainders are tied at .5, only the id tie-break
     // decides who receives the remaining unit.
     const sides = (first: string, second: string) =>
-      [
-        side([p(first, 1000), p(second, 1000)], 1),
-        side([p("c", 1000), p("d", 1000), p("e", 1000)], 0),
-      ] as [EngineSide, EngineSide];
+      [side([p(first, 1000), p(second, 1000)], 1), side([p("c", 1000), p("d", 1000), p("e", 1000)], 0)] as [
+        EngineSide,
+        EngineSide,
+      ];
 
     const forward = run(sides("a", "b"), { kFactor: 30 });
     const reversed = run(sides("b", "a"), { kFactor: 30 });
@@ -446,32 +416,22 @@ describe("amplification by score", () => {
 
 describe("draw match", () => {
   it("the weaker team gains MMR against a favored team", () => {
-    const results = run([
-      side([p("a", 1000), p("b", 1000)], 0.5),
-      side([p("c", 1400), p("d", 1400)], 0.5),
-    ]);
+    const results = run([side([p("a", 1000), p("b", 1000)], 0.5), side([p("c", 1400), p("d", 1400)], 0.5)]);
     expect(deltaOf(results, "a")).toBeGreaterThan(0);
     expect(deltaOf(results, "c")).toBeLessThan(0);
   });
 
   it("a draw between equally-matched teams changes nothing", () => {
-    const results = run([
-      side([p("a", 1000), p("b", 1200)], 0.5),
-      side([p("c", 1100), p("d", 1100)], 0.5),
-    ]);
+    const results = run([side([p("a", 1000), p("b", 1200)], 0.5), side([p("c", 1100), p("d", 1100)], 0.5)]);
     expect(results.every((r) => r.mmrDelta === 0)).toBe(true);
   });
 
   it("the draw is distributed by mode, more evenly", () => {
     // The level gap has to be wide enough for the share difference to survive the
     // integer allocation: on a near-even team the two shares round to one delta.
-    const results = run(
-      [
-        side([p("weak", 300), p("strong", 1700)], 0.5),
-        side([p("c", 1400), p("d", 1400)], 0.5),
-      ],
-      { teamInteractionMode: "SHARED_RESOURCE" },
-    );
+    const results = run([side([p("weak", 300), p("strong", 1700)], 0.5), side([p("c", 1400), p("d", 1400)], 0.5)], {
+      teamInteractionMode: "SHARED_RESOURCE",
+    });
     expect(deltaOf(results, "weak")).toBeGreaterThan(deltaOf(results, "strong"));
   });
 });

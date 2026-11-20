@@ -11,13 +11,13 @@ const mockRulesRepo = {
   listBadgesByPlayer: mock((_p: any) => Promise.resolve([] as any[])),
   listBadgeHolderPlayerIds: mock((_r: any) => Promise.resolve([] as string[])),
   listBadgeAwards: mock((_r: any) => Promise.resolve([] as any[])),
-  awardBadge: mock((_p: any, _r: any, _m: any, _s: any, _rec: any, _at?: any) => Promise.resolve({ id: "badge-1" } as any)),
+  awardBadge: mock((_p: any, _r: any, _m: any, _s: any, _rec: any, _at?: any) =>
+    Promise.resolve({ id: "badge-1" } as any),
+  ),
   revokeBadge: mock((_p: any, _r: any, _s?: any) => Promise.resolve(1)),
   holdsBadge: mock((_p: any, _r: any) => Promise.resolve(false)),
   markBadgesViewed: mock((_ids: any, _p: any) => Promise.resolve()),
-  getReconciliationState: mock(() =>
-    Promise.resolve({ dirty: false, silentNextRun: false, lastRunAt: null } as any),
-  ),
+  getReconciliationState: mock(() => Promise.resolve({ dirty: false, silentNextRun: false, lastRunAt: null } as any)),
   clearDirtyAndStampRun: mock(() => Promise.resolve()),
 };
 mock.module("../../repository/rules.repository", () => ({ rulesRepository: mockRulesRepo }));
@@ -114,16 +114,29 @@ const CAREER_MATCHES = [
 
 function resetAll() {
   for (const m of [
-    mockRulesRepo.listBadgesByPlayer, mockPlayerMmrRepo.getSeasonsMatchesOrdered,
-    mockRulesRepo.getById, mockRulesRepo.list, mockRulesRepo.listActiveByTrigger,
-    mockRulesRepo.listBadgesByPlayerAndSeason, mockRulesRepo.listBadgeHolderPlayerIds,
+    mockRulesRepo.listBadgesByPlayer,
+    mockPlayerMmrRepo.getSeasonsMatchesOrdered,
+    mockRulesRepo.getById,
+    mockRulesRepo.list,
+    mockRulesRepo.listActiveByTrigger,
+    mockRulesRepo.listBadgesByPlayerAndSeason,
+    mockRulesRepo.listBadgeHolderPlayerIds,
     mockRulesRepo.listBadgeAwards,
-    mockRulesRepo.awardBadge, mockRulesRepo.revokeBadge, mockRulesRepo.holdsBadge, mockRulesRepo.markBadgesViewed,
-    mockRulesRepo.getReconciliationState, mockRulesRepo.clearDirtyAndStampRun,
+    mockRulesRepo.awardBadge,
+    mockRulesRepo.revokeBadge,
+    mockRulesRepo.holdsBadge,
+    mockRulesRepo.markBadgesViewed,
+    mockRulesRepo.getReconciliationState,
+    mockRulesRepo.clearDirtyAndStampRun,
     mockContextService.buildMatchSubmittedContexts,
-    mockPlayerMmrRepo.getMmrHistoryOrdered, mockPlayerMmrRepo.getSeasonMatchIdsOrdered,
-    mockRankedRepo.getSeasonWithConfig, mockRankedRepo.listSeasons, mockNotify.send, mockWs.send,
-  ]) m.mockClear();
+    mockPlayerMmrRepo.getMmrHistoryOrdered,
+    mockPlayerMmrRepo.getSeasonMatchIdsOrdered,
+    mockRankedRepo.getSeasonWithConfig,
+    mockRankedRepo.listSeasons,
+    mockNotify.send,
+    mockWs.send,
+  ])
+    m.mockClear();
   mockRankedRepo.getSeasonWithConfig.mockResolvedValue({ disciplineId: "d1" } as any);
   mockRankedRepo.listSeasons.mockResolvedValue([{ id: "season-1" }] as any);
   mockRulesRepo.list.mockResolvedValue([] as any);
@@ -165,9 +178,7 @@ describe("BadgeReconciliationService.reconcilePlayers", () => {
     mockRulesRepo.listActiveByTrigger.mockResolvedValue([STREAK_RULE] as any);
     mockPlayerMmrRepo.getMmrHistoryOrdered.mockResolvedValue([{ matchId: "m1" }] as any);
     mockContextService.buildMatchSubmittedContexts.mockResolvedValue(ctx("p1", 1) as any);
-    mockRulesRepo.listBadgesByPlayerAndSeason.mockResolvedValue([
-      { ruleId: "r1", rule: STREAK_RULE },
-    ] as any);
+    mockRulesRepo.listBadgesByPlayerAndSeason.mockResolvedValue([{ ruleId: "r1", rule: STREAK_RULE }] as any);
 
     await service.reconcilePlayers("season-1", ["p1"]);
 
@@ -206,9 +217,11 @@ describe("BadgeReconciliationService.reconcilePlayers", () => {
 
   it("awards a counted badge on the match that reaches the count", async () => {
     mockRulesRepo.listActiveByTrigger.mockResolvedValue([TWO_WINS_RULE] as any);
-    mockPlayerMmrRepo.getMmrHistoryOrdered.mockResolvedValue(
-      [{ matchId: "m1" }, { matchId: "m2" }, { matchId: "m3" }] as any,
-    );
+    mockPlayerMmrRepo.getMmrHistoryOrdered.mockResolvedValue([
+      { matchId: "m1" },
+      { matchId: "m2" },
+      { matchId: "m3" },
+    ] as any);
     mockContextService.buildMatchSubmittedContexts
       .mockResolvedValueOnce(ctx("p1", 1, PLAYED_AT, { isWinner: true }) as any)
       .mockResolvedValueOnce(ctx("p1", 0, PLAYED_AT, { isWinner: false }) as any)
@@ -225,7 +238,9 @@ describe("BadgeReconciliationService.reconcilePlayers", () => {
     mockRulesRepo.listActiveByTrigger.mockResolvedValue([CAREER_RULE] as any);
     mockRankedRepo.listSeasons.mockResolvedValue([{ id: "season-1" }, { id: "season-2" }] as any);
     mockPlayerMmrRepo.getSeasonsMatchesOrdered.mockResolvedValue(CAREER_MATCHES as any);
-    mockContextService.buildMatchSubmittedContexts.mockResolvedValue(ctx("p1", 1, PLAYED_AT, { isWinner: true }) as any);
+    mockContextService.buildMatchSubmittedContexts.mockResolvedValue(
+      ctx("p1", 1, PLAYED_AT, { isWinner: true }) as any,
+    );
     mockRulesRepo.listBadgesByPlayer.mockResolvedValue([] as any);
 
     await service.reconcilePlayers("season-1", ["p1"]);
@@ -237,7 +252,9 @@ describe("BadgeReconciliationService.reconcilePlayers", () => {
   it("revokes a discipline-wide badge once the career no longer reaches the count", async () => {
     mockRulesRepo.listActiveByTrigger.mockResolvedValue([CAREER_RULE] as any);
     mockPlayerMmrRepo.getSeasonsMatchesOrdered.mockResolvedValue(CAREER_MATCHES as any);
-    mockContextService.buildMatchSubmittedContexts.mockResolvedValue(ctx("p1", 0, PLAYED_AT, { isWinner: false }) as any);
+    mockContextService.buildMatchSubmittedContexts.mockResolvedValue(
+      ctx("p1", 0, PLAYED_AT, { isWinner: false }) as any,
+    );
     mockRulesRepo.listBadgesByPlayer.mockResolvedValue([{ ruleId: "r3" }] as any);
 
     await service.reconcilePlayers("season-1", ["p1"]);
@@ -249,7 +266,9 @@ describe("BadgeReconciliationService.reconcilePlayers", () => {
     mockRulesRepo.listActiveByTrigger.mockResolvedValue([STREAK_RULE, CAREER_RULE] as any);
     mockPlayerMmrRepo.getMmrHistoryOrdered.mockResolvedValue([] as any);
     mockPlayerMmrRepo.getSeasonsMatchesOrdered.mockResolvedValue(CAREER_MATCHES as any);
-    mockContextService.buildMatchSubmittedContexts.mockResolvedValue(ctx("p1", 1, PLAYED_AT, { isWinner: true }) as any);
+    mockContextService.buildMatchSubmittedContexts.mockResolvedValue(
+      ctx("p1", 1, PLAYED_AT, { isWinner: true }) as any,
+    );
     mockRulesRepo.listBadgesByPlayerAndSeason.mockResolvedValue([{ ruleId: "r3", rule: CAREER_RULE }] as any);
     mockRulesRepo.listBadgesByPlayer.mockResolvedValue([{ ruleId: "r3" }] as any);
 
@@ -291,7 +310,12 @@ describe("BadgeReconciliationService.reconcileRule", () => {
 
     expect(mockRulesRepo.awardBadge).toHaveBeenCalledWith("p1", "r1", "m1", "season-1", "per_season", PLAYED_AT);
     expect(mockRulesRepo.awardBadge).not.toHaveBeenCalledWith(
-      "p2", "r1", expect.anything(), expect.anything(), expect.anything(), expect.anything(),
+      "p2",
+      "r1",
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
     );
     expect(mockRulesRepo.revokeBadge).toHaveBeenCalledWith("p3", "r1", "season-1");
   });
@@ -408,7 +432,9 @@ describe("BadgeReconciliationService.reconcileRule", () => {
     mockRulesRepo.getById.mockResolvedValue(CAREER_RULE as any);
     mockRankedRepo.listSeasons.mockResolvedValue([{ id: "season-1" }, { id: "season-2" }] as any);
     mockPlayerMmrRepo.getSeasonsMatchesOrdered.mockResolvedValue(CAREER_MATCHES as any);
-    mockContextService.buildMatchSubmittedContexts.mockResolvedValue(ctx("p1", 1, PLAYED_AT, { isWinner: true }) as any);
+    mockContextService.buildMatchSubmittedContexts.mockResolvedValue(
+      ctx("p1", 1, PLAYED_AT, { isWinner: true }) as any,
+    );
 
     await service.reconcileRule("r3");
 
@@ -431,7 +457,11 @@ describe("BadgeReconciliationService.runPendingReconciliation", () => {
   beforeEach(resetAll);
 
   it("skips when not dirty and not forced", async () => {
-    mockRulesRepo.getReconciliationState.mockResolvedValue({ dirty: false, silentNextRun: false, lastRunAt: null } as any);
+    mockRulesRepo.getReconciliationState.mockResolvedValue({
+      dirty: false,
+      silentNextRun: false,
+      lastRunAt: null,
+    } as any);
 
     const result = await service.runPendingReconciliation(false);
 
@@ -441,7 +471,11 @@ describe("BadgeReconciliationService.runPendingReconciliation", () => {
   });
 
   it("runs and clears the dirty flag when dirty", async () => {
-    mockRulesRepo.getReconciliationState.mockResolvedValue({ dirty: true, silentNextRun: false, lastRunAt: null } as any);
+    mockRulesRepo.getReconciliationState.mockResolvedValue({
+      dirty: true,
+      silentNextRun: false,
+      lastRunAt: null,
+    } as any);
     mockRulesRepo.list.mockResolvedValue([STREAK_RULE] as any);
     mockRulesRepo.getById.mockResolvedValue(STREAK_RULE as any);
 
@@ -471,7 +505,11 @@ describe("BadgeReconciliationService.runPendingReconciliation", () => {
   });
 
   it("runs even when clean if forced", async () => {
-    mockRulesRepo.getReconciliationState.mockResolvedValue({ dirty: false, silentNextRun: false, lastRunAt: null } as any);
+    mockRulesRepo.getReconciliationState.mockResolvedValue({
+      dirty: false,
+      silentNextRun: false,
+      lastRunAt: null,
+    } as any);
     mockRulesRepo.list.mockResolvedValue([] as any);
 
     const result = await service.runPendingReconciliation(true);

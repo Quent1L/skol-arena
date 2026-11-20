@@ -2,25 +2,16 @@
 import { describe, it, expect, beforeEach, mock } from "bun:test";
 import { BracketService } from "../bracket.service";
 import { runWithLang } from "../../utils/i18n-context";
-import {
-  NotFoundError,
-  BadRequestError,
-  ForbiddenError,
-  ConflictError,
-} from "../../types/errors";
+import { NotFoundError, BadRequestError, ForbiddenError, ConflictError } from "../../types/errors";
 
 // Mock dependencies
 const mockBracketRepository = {
   getConfigByTournamentId: mock(() => Promise.resolve(null)),
   deleteAllBracketData: mock(() => Promise.resolve()),
-  createConfig: mock((config: any) =>
-    Promise.resolve({ id: "bracket-config-1", ...config }),
-  ),
+  createConfig: mock((config: any) => Promise.resolve({ id: "bracket-config-1", ...config })),
   createSeeds: mock(() => Promise.resolve()),
   getBracketDataByTournamentId: mock(() => Promise.resolve(null)),
-  createRounds: mock((rounds: any[]) =>
-    Promise.resolve(rounds.map((r, i) => ({ id: `round-${i}`, ...r }))),
-  ),
+  createRounds: mock((rounds: any[]) => Promise.resolve(rounds.map((r, i) => ({ id: `round-${i}`, ...r })))),
   createMatchMetadata: mock(() => Promise.resolve()),
   updateMatchMetadata: mock(() => Promise.resolve()),
 };
@@ -46,9 +37,7 @@ const mockEntryRepository = {
       { id: "entry-4", name: "Entry 4" },
     ]),
   ),
-  create: mock((_data: any, _tx?: any) =>
-    Promise.resolve({ id: "new-entry", ..._data }),
-  ),
+  create: mock((_data: any, _tx?: any) => Promise.resolve({ id: "new-entry", ..._data })),
   getById: mock(() => Promise.resolve(undefined)),
   getOrCreateForMatch: mock(() => Promise.resolve({ id: "new-entry" })),
   findExistingEntry: mock(() => Promise.resolve(undefined)),
@@ -242,16 +231,12 @@ describe("BracketService", () => {
         matches: [],
         seeds: [],
       };
-      mockBracketRepository.getBracketDataByTournamentId.mockResolvedValue(
-        mockData as any,
-      );
+      mockBracketRepository.getBracketDataByTournamentId.mockResolvedValue(mockData as any);
 
       const result = await bracketService.getBracketData("tournament-1");
 
       expect(result).toBe(mockData);
-      expect(
-        mockBracketRepository.getBracketDataByTournamentId,
-      ).toHaveBeenCalledWith("tournament-1");
+      expect(mockBracketRepository.getBracketDataByTournamentId).toHaveBeenCalledWith("tournament-1");
     });
   });
 
@@ -303,16 +288,12 @@ describe("BracketService", () => {
         disciplineId: "discipline-1",
         startDate: new Date("2026-01-20"),
       } as any);
-      mockMatchRepository.list.mockResolvedValue([
-        { id: "match-1", status: "confirmed" },
-      ] as any);
+      mockMatchRepository.list.mockResolvedValue([{ id: "match-1", status: "confirmed" }] as any);
 
       const result = await bracketService.canGenerateBracket("tournament-1");
 
       expect(result.canGenerate).toBe(false);
-      expect(result.reason).toBe(
-        "Cannot regenerate: matches already finalized/confirmed",
-      );
+      expect(result.reason).toBe("Cannot regenerate: matches already finalized/confirmed");
     });
 
     it("should return true if bracket can be generated", async () => {
@@ -323,9 +304,7 @@ describe("BracketService", () => {
         disciplineId: "discipline-1",
         startDate: new Date("2026-01-20"),
       } as any);
-      mockMatchRepository.list.mockResolvedValue([
-        { id: "match-1", status: "scheduled" },
-      ] as any);
+      mockMatchRepository.list.mockResolvedValue([{ id: "match-1", status: "scheduled" }] as any);
 
       const result = await bracketService.canGenerateBracket("tournament-1");
 
@@ -338,9 +317,7 @@ describe("BracketService", () => {
     it("should throw ForbiddenError if user cannot manage tournament", async () => {
       mockTournamentService.canManageTournament.mockResolvedValue(false);
 
-      await expect(
-        bracketService.deleteBracket("tournament-1", "user-1"),
-      ).rejects.toThrow(ForbiddenError);
+      await expect(bracketService.deleteBracket("tournament-1", "user-1")).rejects.toThrow(ForbiddenError);
     });
 
     it("should delete bracket if user can manage tournament", async () => {
@@ -348,9 +325,7 @@ describe("BracketService", () => {
 
       await bracketService.deleteBracket("tournament-1", "user-1");
 
-      expect(mockBracketRepository.deleteAllBracketData).toHaveBeenCalledWith(
-        "tournament-1",
-      );
+      expect(mockBracketRepository.deleteAllBracketData).toHaveBeenCalledWith("tournament-1");
     });
   });
 
@@ -364,18 +339,18 @@ describe("BracketService", () => {
     it("should throw ForbiddenError if user cannot manage tournament", async () => {
       mockTournamentService.canManageTournament.mockResolvedValue(false);
 
-      await expect(
-        bracketService.generateBracket("tournament-1", defaultInput, "user-1"),
-      ).rejects.toThrow(ForbiddenError);
+      await expect(bracketService.generateBracket("tournament-1", defaultInput, "user-1")).rejects.toThrow(
+        ForbiddenError,
+      );
     });
 
     it("should throw NotFoundError if tournament not found", async () => {
       mockTournamentService.canManageTournament.mockResolvedValue(true);
       mockTournamentRepository.getById.mockResolvedValue(null as any);
 
-      await expect(
-        bracketService.generateBracket("tournament-1", defaultInput, "user-1"),
-      ).rejects.toThrow(NotFoundError);
+      await expect(bracketService.generateBracket("tournament-1", defaultInput, "user-1")).rejects.toThrow(
+        NotFoundError,
+      );
     });
 
     it("should throw BadRequestError if tournament mode is not bracket", async () => {
@@ -388,9 +363,9 @@ describe("BracketService", () => {
         startDate: new Date("2026-01-20"),
       } as any);
 
-      await expect(
-        bracketService.generateBracket("tournament-1", defaultInput, "user-1"),
-      ).rejects.toThrow(BadRequestError);
+      await expect(bracketService.generateBracket("tournament-1", defaultInput, "user-1")).rejects.toThrow(
+        BadRequestError,
+      );
     });
 
     it("should throw BadRequestError if tournament status is invalid", async () => {
@@ -403,9 +378,9 @@ describe("BracketService", () => {
         startDate: new Date("2026-01-20"),
       } as any);
 
-      await expect(
-        bracketService.generateBracket("tournament-1", defaultInput, "user-1"),
-      ).rejects.toThrow(BadRequestError);
+      await expect(bracketService.generateBracket("tournament-1", defaultInput, "user-1")).rejects.toThrow(
+        BadRequestError,
+      );
     });
 
     it("should throw ConflictError if bracket cannot be regenerated", async () => {
@@ -417,13 +392,11 @@ describe("BracketService", () => {
         disciplineId: "discipline-1",
         startDate: new Date("2026-01-20"),
       } as any);
-      mockMatchRepository.list.mockResolvedValue([
-        { id: "match-1", status: "confirmed" },
-      ] as any);
+      mockMatchRepository.list.mockResolvedValue([{ id: "match-1", status: "confirmed" }] as any);
 
-      await expect(
-        bracketService.generateBracket("tournament-1", defaultInput, "user-1"),
-      ).rejects.toThrow(ConflictError);
+      await expect(bracketService.generateBracket("tournament-1", defaultInput, "user-1")).rejects.toThrow(
+        ConflictError,
+      );
     });
 
     it("should throw BadRequestError if less than 2 participants", async () => {
@@ -436,20 +409,16 @@ describe("BracketService", () => {
         startDate: new Date("2026-01-20"),
       } as any);
       mockMatchRepository.list.mockResolvedValue([]);
-      mockEntryRepository.getByTournament.mockResolvedValue([
-        { id: "entry-1", name: "Entry 1" } as any,
-      ]);
+      mockEntryRepository.getByTournament.mockResolvedValue([{ id: "entry-1", name: "Entry 1" } as any]);
       // Also set the entries returned by tx.query (used in getOrCreateEntriesFromParticipants)
-      mockEntriesForQuery = [
-        { id: "entry-1", name: "Entry 1", players: [{ playerId: "user-1" }] },
-      ];
+      mockEntriesForQuery = [{ id: "entry-1", name: "Entry 1", players: [{ playerId: "user-1" }] }];
       mockParticipantRepository.findTournamentParticipants.mockResolvedValue([
         { userId: "user-1", tournamentId: "tournament-1" },
       ]);
 
-      await expect(
-        bracketService.generateBracket("tournament-1", defaultInput, "user-1"),
-      ).rejects.toThrow(BadRequestError);
+      await expect(bracketService.generateBracket("tournament-1", defaultInput, "user-1")).rejects.toThrow(
+        BadRequestError,
+      );
     });
 
     it("should generate single elimination bracket with random seeding", async () => {
@@ -469,11 +438,7 @@ describe("BracketService", () => {
         { id: "entry-4", name: "Entry 4" },
       ] as any);
 
-      await bracketService.generateBracket(
-        "tournament-1",
-        defaultInput,
-        "user-1",
-      );
+      await bracketService.generateBracket("tournament-1", defaultInput, "user-1");
 
       expect(mockBracketRepository.createConfig).toHaveBeenCalled();
       expect(mockBracketRepository.createSeeds).toHaveBeenCalled();
@@ -579,9 +544,7 @@ describe("BracketService", () => {
 
       await bracketService.generateBracket("tournament-1", input, "user-1");
 
-      expect(mockStandingsService.getOfficialStandings).toHaveBeenCalledWith(
-        "source-tournament",
-      );
+      expect(mockStandingsService.getOfficialStandings).toHaveBeenCalledWith("source-tournament");
     });
 
     it("should throw NotFoundError if source tournament not found for championship seeding", async () => {
@@ -610,9 +573,7 @@ describe("BracketService", () => {
         sourceTournamentId: "source-tournament",
       };
 
-      await expect(
-        bracketService.generateBracket("tournament-1", input, "user-1"),
-      ).rejects.toThrow(NotFoundError);
+      await expect(bracketService.generateBracket("tournament-1", input, "user-1")).rejects.toThrow(NotFoundError);
     });
 
     it("should throw BadRequestError if source tournament is not finished", async () => {
@@ -647,9 +608,7 @@ describe("BracketService", () => {
         sourceTournamentId: "source-tournament",
       };
 
-      await expect(
-        bracketService.generateBracket("tournament-1", input, "user-1"),
-      ).rejects.toThrow(BadRequestError);
+      await expect(bracketService.generateBracket("tournament-1", input, "user-1")).rejects.toThrow(BadRequestError);
     });
 
     it("should throw BadRequestError if disciplines do not match", async () => {
@@ -684,9 +643,7 @@ describe("BracketService", () => {
         sourceTournamentId: "source-tournament",
       };
 
-      await expect(
-        bracketService.generateBracket("tournament-1", input, "user-1"),
-      ).rejects.toThrow(BadRequestError);
+      await expect(bracketService.generateBracket("tournament-1", input, "user-1")).rejects.toThrow(BadRequestError);
     });
 
     it("should delete existing bracket before regenerating", async () => {
@@ -707,11 +664,7 @@ describe("BracketService", () => {
         { id: "entry-2", name: "Entry 2" },
       ] as any);
 
-      await bracketService.generateBracket(
-        "tournament-1",
-        defaultInput,
-        "user-1",
-      );
+      await bracketService.generateBracket("tournament-1", defaultInput, "user-1");
 
       expect(mockBracketRepository.deleteAllBracketData).toHaveBeenCalled();
     });
@@ -755,10 +708,7 @@ describe("BracketService", () => {
       });
 
       const service = bracketService as any;
-      const seeds = await service.generateChampionshipSeeding(
-        entries,
-        "source-tournament",
-      );
+      const seeds = await service.generateChampionshipSeeding(entries, "source-tournament");
 
       expect(seeds).toHaveLength(4);
       // entry-4 should be seed 1 (highest points)
@@ -788,10 +738,7 @@ describe("BracketService", () => {
       });
 
       const service = bracketService as any;
-      const seeds = await service.generateChampionshipSeeding(
-        entries,
-        "source-tournament",
-      );
+      const seeds = await service.generateChampionshipSeeding(entries, "source-tournament");
 
       expect(seeds).toHaveLength(4);
       // First two should have seeding scores
@@ -891,12 +838,8 @@ describe("BracketService", () => {
         { entryId: "e4", seedNumber: 4 },
       ]);
 
-      const winnersRounds = rounds.filter(
-        (r: any) => r.bracketType === "winners",
-      );
-      const losersRounds = rounds.filter(
-        (r: any) => r.bracketType === "losers",
-      );
+      const winnersRounds = rounds.filter((r: any) => r.bracketType === "winners");
+      const losersRounds = rounds.filter((r: any) => r.bracketType === "losers");
 
       expect(winnersRounds.length).toBeGreaterThan(0);
       expect(losersRounds.length).toBeGreaterThan(0);
@@ -921,11 +864,8 @@ describe("BracketService", () => {
       const service = bracketService as any;
 
       const singleElimRounds4 = 2;
-      const doubleElimRounds4 =
-        singleElimRounds4 + (singleElimRounds4 - 1) * 2 + 1;
-      expect(service.calculateRoundsCount(4, "double_elimination")).toBe(
-        doubleElimRounds4,
-      );
+      const doubleElimRounds4 = singleElimRounds4 + (singleElimRounds4 - 1) * 2 + 1;
+      expect(service.calculateRoundsCount(4, "double_elimination")).toBe(doubleElimRounds4);
     });
 
     it("should name the last rounds after their position", () => {
@@ -1011,11 +951,7 @@ describe("BracketService", () => {
 
       it("should handle 3 participants with bye", async () => {
         const service = bracketService as any;
-        const seeds = service.generateRandomSeeding([
-          { id: "entry-1" },
-          { id: "entry-2" },
-          { id: "entry-3" },
-        ]);
+        const seeds = service.generateRandomSeeding([{ id: "entry-1" }, { id: "entry-2" }, { id: "entry-3" }]);
         const rounds = service.generateSingleEliminationBracket(seeds, false);
 
         const firstRound = rounds[0];
@@ -1086,10 +1022,7 @@ describe("BracketService", () => {
         });
 
         const service = bracketService as any;
-        const seeds = await service.generateChampionshipSeeding(
-          entries,
-          "source-tournament",
-        );
+        const seeds = await service.generateChampionshipSeeding(entries, "source-tournament");
 
         expect(seeds).toHaveLength(4);
         // All should be unseeded (no seeding scores)
@@ -1111,10 +1044,7 @@ describe("BracketService", () => {
         });
 
         const service = bracketService as any;
-        const seeds = await service.generateChampionshipSeeding(
-          entries,
-          "source-tournament",
-        );
+        const seeds = await service.generateChampionshipSeeding(entries, "source-tournament");
 
         expect(seeds).toHaveLength(2);
         // All should be seeded
@@ -1139,10 +1069,7 @@ describe("BracketService", () => {
         });
 
         const service = bracketService as any;
-        const seeds = await service.generateChampionshipSeeding(
-          entries,
-          "source-tournament",
-        );
+        const seeds = await service.generateChampionshipSeeding(entries, "source-tournament");
 
         expect(seeds).toHaveLength(3);
         // Both entry-1 and entry-2 should have seedingScore of 100
@@ -1281,9 +1208,7 @@ describe("BracketService", () => {
 
       it("should return [1, 8, 4, 5, 2, 7, 3, 6] for size 8", () => {
         const service = bracketService as any;
-        expect(service.getBalancedSeedPositions(8)).toEqual([
-          1, 8, 4, 5, 2, 7, 3, 6,
-        ]);
+        expect(service.getBalancedSeedPositions(8)).toEqual([1, 8, 4, 5, 2, 7, 3, 6]);
       });
 
       it("should always contain each number from 1 to size exactly once", () => {
@@ -1353,12 +1278,8 @@ describe("BracketService", () => {
           { entryId: "e4", seedNumber: 4 },
         ]);
 
-        const losersRounds = rounds.filter(
-          (r: any) => r.bracketType === "losers",
-        );
-        const winnersRounds = rounds.filter(
-          (r: any) => r.bracketType === "winners",
-        );
+        const losersRounds = rounds.filter((r: any) => r.bracketType === "losers");
+        const winnersRounds = rounds.filter((r: any) => r.bracketType === "winners");
 
         // For 4 participants: 2 winners rounds, (2-1)*2 = 2 losers rounds, 1 grand final
         expect(winnersRounds).toHaveLength(3); // Including grand final

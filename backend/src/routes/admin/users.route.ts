@@ -42,7 +42,7 @@ adminUsers.get(
   async (c) => {
     const filters = c.req.valid("query");
     return c.json(await userService.listUsersAdmin(filters));
-  }
+  },
 );
 
 // Registered before /:id so the static segment wins.
@@ -54,7 +54,7 @@ adminUsers.get(
   }),
   async (c) => {
     return c.json(await userService.getAdminStats());
-  }
+  },
 );
 
 adminUsers.get(
@@ -66,7 +66,7 @@ adminUsers.get(
   }),
   async (c) => {
     return c.json(await userService.getUserAdminDetail(c.req.param("id")));
-  }
+  },
 );
 
 adminUsers.patch(
@@ -82,7 +82,7 @@ adminUsers.patch(
     const actorId = c.get("appUserId");
     const updated = await userService.adminUpdateUser(actorId, c.req.param("id"), c.req.valid("json"));
     return c.json(updated);
-  }
+  },
 );
 
 adminUsers.post(
@@ -95,7 +95,7 @@ adminUsers.post(
   async (c) => {
     await userService.sendPasswordReset(c.req.param("id"));
     return c.json({ success: true });
-  }
+  },
 );
 
 adminUsers.post(
@@ -108,7 +108,7 @@ adminUsers.post(
   async (c) => {
     const actorId = c.get("appUserId");
     return c.json(await userService.deactivateUser(actorId, c.req.param("id")));
-  }
+  },
 );
 
 adminUsers.post(
@@ -120,7 +120,7 @@ adminUsers.post(
   }),
   async (c) => {
     return c.json(await userService.reactivateUser(c.req.param("id")));
-  }
+  },
 );
 
 adminUsers.post(
@@ -137,7 +137,7 @@ adminUsers.post(
   async (c) => {
     const actorId = c.get("appUserId");
     return c.json(await userService.archiveUser(actorId, c.req.param("id"), c.req.valid("json")));
-  }
+  },
 );
 
 adminUsers.post(
@@ -154,10 +154,8 @@ adminUsers.post(
   validate("json", adminRestoreUserSchema),
   async (c) => {
     const actorId = c.get("appUserId");
-    return c.json(
-      await userService.restoreArchivedUser(actorId, c.req.param("id"), c.req.valid("json")),
-    );
-  }
+    return c.json(await userService.restoreArchivedUser(actorId, c.req.param("id"), c.req.valid("json")));
+  },
 );
 
 adminUsers.delete(
@@ -173,7 +171,7 @@ adminUsers.delete(
     const actorId = c.get("appUserId");
     await userService.deleteUserPermanently(actorId, c.req.param("id"));
     return c.json({ success: true });
-  }
+  },
 );
 
 adminUsers.post(
@@ -202,7 +200,7 @@ adminUsers.delete(
   async (c) => {
     await userService.removeUserFromOrganization(c.req.param("id"), c.req.param("orgId"));
     return c.json({ success: true });
-  }
+  },
 );
 
 export default adminUsers;

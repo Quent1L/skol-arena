@@ -25,7 +25,7 @@ const BY_NAME = new Map<string, ApiVersion>(
   API_VERSIONS.flatMap((version) => [
     [version, version],
     [version.slice(1), version],
-  ])
+  ]),
 );
 
 /**

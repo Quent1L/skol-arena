@@ -143,12 +143,7 @@ function clamp(value: number, min: number, max: number): number {
  * A solo side always gets a share of 1, which is why the interaction mode has no
  * effect on a 1v1 — no branch needed for it.
  */
-function playerShares(
-  side: EngineSide,
-  oppAvgMmr: number,
-  mode: TeamInteractionMode,
-  teamDelta: number,
-): number[] {
+function playerShares(side: EngineSide, oppAvgMmr: number, mode: TeamInteractionMode, teamDelta: number): number[] {
   const alpha = MODE_ALPHA[mode] ?? MODE_ALPHA.COLLABORATIVE;
   const sign = mode === "INDIVIDUAL" && teamDelta < 0 ? -1 : 1;
   const exponent = alpha * sign;
@@ -181,9 +176,7 @@ function allocateIntegerDeltas(target: number, shares: number[], playerIds: stri
   let leftover = magnitude - base.reduce((sum, value) => sum + value, 0);
   const order = exact
     .map((value, index) => ({ index, remainder: value - base[index] }))
-    .sort((a, b) =>
-      b.remainder - a.remainder || playerIds[a.index].localeCompare(playerIds[b.index]),
-    );
+    .sort((a, b) => b.remainder - a.remainder || playerIds[a.index].localeCompare(playerIds[b.index]));
 
   for (const { index } of order) {
     if (leftover <= 0) break;
@@ -286,13 +279,7 @@ export function calculateMatchMmr(input: MatchMmrInput): PlayerMmrDelta[] {
   // in the ordinary case, where the floor is nowhere near.
   const aLoses = teamDeltaA < 0;
   const pot = Math.abs(teamDeltaA);
-  const lost = buildSideResults(
-    aLoses ? sideA : sideB,
-    -pot,
-    aLoses ? avgB : avgA,
-    teamInteractionMode,
-    kEffective,
-  );
+  const lost = buildSideResults(aLoses ? sideA : sideB, -pot, aLoses ? avgB : avgA, teamInteractionMode, kEffective);
   const won = buildSideResults(
     aLoses ? sideB : sideA,
     pot - lost.unpaid,

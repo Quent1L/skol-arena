@@ -8,11 +8,14 @@ import { logger } from "../utils/logger";
 export async function autoFinalizeMatchesJob() {
   try {
     logger.info("[Auto-finalize] Starting auto-finalization job...");
-    
+
     const result = await matchService.autoFinalizeExpiredMatches();
-    
-    logger.info({ total: result.total, finalized: result.finalized.length, disputed: result.disputed.length }, "[Auto-finalize] Job completed:");
-    
+
+    logger.info(
+      { total: result.total, finalized: result.finalized.length, disputed: result.disputed.length },
+      "[Auto-finalize] Job completed:",
+    );
+
     return result;
   } catch (error) {
     logger.error({ err: error }, "[Auto-finalize] Error during auto-finalization:");
@@ -35,4 +38,3 @@ if (import.meta.main) {
       process.exit(1);
     });
 }
-

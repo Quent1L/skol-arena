@@ -100,9 +100,7 @@ describe("UserService.recordActivity", () => {
 
   it("propagates repository failures to the caller", async () => {
     const userId = nextUserId();
-    mockUserRepo.touchLastSeen.mockImplementationOnce(() =>
-      Promise.reject(new Error("db down")),
-    );
+    mockUserRepo.touchLastSeen.mockImplementationOnce(() => Promise.reject(new Error("db down")));
 
     await expect(service.recordActivity(userId)).rejects.toThrow("db down");
   });

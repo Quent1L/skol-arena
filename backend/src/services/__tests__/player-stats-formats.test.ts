@@ -86,10 +86,7 @@ describe("tallyFormats", () => {
   });
 
   it("counts a match once even when it comes back on several rows", () => {
-    const [format] = tallyFormats(
-      [result("m1", "solo", "opp1", "A"), result("m1", "solo", "opp1", "A")],
-      SIZES,
-    );
+    const [format] = tallyFormats([result("m1", "solo", "opp1", "A"), result("m1", "solo", "opp1", "A")], SIZES);
 
     expect(format.matchesPlayed).toBe(1);
   });

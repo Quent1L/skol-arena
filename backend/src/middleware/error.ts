@@ -41,7 +41,7 @@ export async function errorHandler(err: Error, c: Context) {
   // Handle AppError (our custom errors)
   if (err instanceof AppError) {
     const message = t(`errors.${err.code}`, err.details || {});
-    
+
     logger.error({ err, request: requestInfo }, "[AppError] %s", err.code);
 
     return c.json(
@@ -52,7 +52,7 @@ export async function errorHandler(err: Error, c: Context) {
           details: err.details,
         },
       },
-      err.statusCode as ContentfulStatusCode
+      err.statusCode as ContentfulStatusCode,
     );
   }
 
@@ -80,14 +80,14 @@ export async function errorHandler(err: Error, c: Context) {
           },
         },
       },
-      400
+      400,
     );
   }
 
   // Handle unknown errors
   // Use generic message for response, but log full details
   const genericMessage = t("errors.UNKNOWN");
-  
+
   logger.error({ err, request: requestInfo }, "[UnknownError]");
 
   // Return only generic error message to client (no implementation details)
@@ -98,6 +98,6 @@ export async function errorHandler(err: Error, c: Context) {
         message: genericMessage,
       },
     },
-    500
+    500,
   );
 }

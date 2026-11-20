@@ -1,20 +1,20 @@
-import type { Task } from 'graphile-worker';
-import { mmrCalculationService } from '../services/mmr-calculation.service';
-import { mmrAnimationEventService } from '../services/mmr-animation-event.service';
-import { rankedSeasonRepository } from '../repository/ranked-season.repository';
-import { playerMmrRepository } from '../repository/player-mmr.repository';
-import { rankedSeasonService } from '../services/ranked-season.service';
-import { webSocketService } from '../services/websocket.service';
-import { rulesEvaluationService } from '../services/rules-evaluation.service';
-import { badgeReconciliationService } from '../services/badge-reconciliation.service';
-import { rulesMatchHistoryService } from '../services/rules-match-history.service';
-import { seasonRewindService } from '../services/season-rewind.service';
-import { enqueueSeasonRewindGeneration } from '../services/mmr-job-queue.service';
-import { tournamentRepository } from '../repository/tournament.repository';
-import { matchRepository } from '../repository/match.repository';
-import { tournamentRulesetRepository } from '../repository/tournament-ruleset.repository';
-import { logger } from '../utils/logger';
-import { NotFoundError } from '../types/errors';
+import type { Task } from "graphile-worker";
+import { mmrCalculationService } from "../services/mmr-calculation.service";
+import { mmrAnimationEventService } from "../services/mmr-animation-event.service";
+import { rankedSeasonRepository } from "../repository/ranked-season.repository";
+import { playerMmrRepository } from "../repository/player-mmr.repository";
+import { rankedSeasonService } from "../services/ranked-season.service";
+import { webSocketService } from "../services/websocket.service";
+import { rulesEvaluationService } from "../services/rules-evaluation.service";
+import { badgeReconciliationService } from "../services/badge-reconciliation.service";
+import { rulesMatchHistoryService } from "../services/rules-match-history.service";
+import { seasonRewindService } from "../services/season-rewind.service";
+import { enqueueSeasonRewindGeneration } from "../services/mmr-job-queue.service";
+import { tournamentRepository } from "../repository/tournament.repository";
+import { matchRepository } from "../repository/match.repository";
+import { tournamentRulesetRepository } from "../repository/tournament-ruleset.repository";
+import { logger } from "../utils/logger";
+import { NotFoundError } from "../types/errors";
 
 interface FinalizeMmrPayload {
   matchId: string;
@@ -29,43 +29,41 @@ interface CancelMmrPayload {
 
 const finalizeMatchMmr: Task = async (rawPayload) => {
   const { matchId, tournamentId } = rawPayload as FinalizeMmrPayload;
-  logger.info({ matchId, tournamentId }, '[Worker] finalize_match_mmr start');
+  logger.info({ matchId, tournamentId }, "[Worker] finalize_match_mmr start");
 
   const mmrChanges = await mmrCalculationService.processMatchFinalization(matchId);
 
   // Evaluate rules first: produces the message injected into the MMR animation
   // and the badge revealed afterwards.
-  const rulesOutputs = await rulesEvaluationService
-    .evaluateMatchSubmitted(matchId, tournamentId)
-    .catch((err) => {
-      logger.error({ err }, '[Worker] rules evaluation failed');
-      return new Map();
-    });
+  const rulesOutputs = await rulesEvaluationService.evaluateMatchSubmitted(matchId, tournamentId).catch((err) => {
+    logger.error({ err }, "[Worker] rules evaluation failed");
+    return new Map();
+  });
 
   await mmrAnimationEventService
     .createOfficialEventsAndBroadcast(matchId, tournamentId, rulesOutputs)
-    .catch((err) => logger.error({ err }, '[Worker] official animation event failed'));
+    .catch((err) => logger.error({ err }, "[Worker] official animation event failed"));
 
   // A backdated finalization can ripple to third parties beyond this match's
   // own 2 participants (already handled above via createOfficialEventsAndBroadcast).
   // Those cascade-only players never got an animation/badge pass for their
   // rebuilt history — sync them the same way the cancellation cascade does.
-  const cascadePlayerIds = [...mmrChanges].filter(([, c]) => c.reason === 'cascade').map(([playerId]) => playerId);
+  const cascadePlayerIds = [...mmrChanges].filter(([, c]) => c.reason === "cascade").map(([playerId]) => playerId);
   if (cascadePlayerIds.length > 0) {
     await mmrAnimationEventService
       .persistRecalcEvents(tournamentId, cascadePlayerIds)
-      .catch((err) => logger.error({ err }, '[Worker] finalization cascade animation event failed'));
+      .catch((err) => logger.error({ err }, "[Worker] finalization cascade animation event failed"));
   }
   await syncBackdatedFinalization(matchId, tournamentId, [...mmrChanges.keys()], cascadePlayerIds);
 
   await refreshRankedCaches(tournamentId);
 
   webSocketService.broadcastToTournament(tournamentId, {
-    event: 'leaderboard_updated',
+    event: "leaderboard_updated",
     data: { seasonId: tournamentId },
   });
 
-  logger.info({ matchId, tournamentId }, '[Worker] finalize_match_mmr done');
+  logger.info({ matchId, tournamentId }, "[Worker] finalize_match_mmr done");
 };
 
 /**
@@ -82,12 +80,12 @@ async function syncBackdatedFinalization(
 ): Promise<void> {
   if (playerIds.length === 0) return;
   const movedPlayerIds = await syncLaterSnapshots(matchId, tournamentId, playerIds).catch((err) => {
-    logger.error({ err }, '[Worker] finalization snapshot refresh failed');
+    logger.error({ err }, "[Worker] finalization snapshot refresh failed");
     return [];
   });
   await badgeReconciliationService
     .reconcilePlayers(tournamentId, [...new Set([...movedPlayerIds, ...cascadePlayerIds])])
-    .catch((err) => logger.error({ err }, '[Worker] finalization cascade badge reconciliation failed'));
+    .catch((err) => logger.error({ err }, "[Worker] finalization cascade badge reconciliation failed"));
 }
 
 /** Returns the players whose counted history moved: none while no rule counts matches. */
@@ -106,12 +104,12 @@ async function syncLaterSnapshots(matchId: string, tournamentId: string, playerI
 async function refreshMatchFacts(tournamentId: string, playerIds: string[], from?: Date): Promise<void> {
   await rulesMatchHistoryService
     .refreshPlayers(tournamentId, playerIds, from)
-    .catch((err) => logger.error({ err, tournamentId }, '[Worker] match facts refresh failed'));
+    .catch((err) => logger.error({ err, tournamentId }, "[Worker] match facts refresh failed"));
 }
 
 const cancelMatchMmr: Task = async (rawPayload) => {
   const { matchId, tournamentId, cancelledMatchPlayedAt } = rawPayload as CancelMmrPayload;
-  logger.info({ matchId, tournamentId }, '[Worker] cancel_match_mmr start');
+  logger.info({ matchId, tournamentId }, "[Worker] cancel_match_mmr start");
 
   const rankedConfig = await rankedSeasonRepository.getConfigByTournamentId(tournamentId);
   if (!rankedConfig) return;
@@ -128,10 +126,10 @@ const cancelMatchMmr: Task = async (rawPayload) => {
   // refetch all pending events as one grouped recap.
   await mmrAnimationEventService
     .persistCancellationEvents(matchId, tournamentId, mmrChanges)
-    .catch((err) => logger.error({ err }, '[Worker] cancellation animation event failed'));
+    .catch((err) => logger.error({ err }, "[Worker] cancellation animation event failed"));
   await mmrAnimationEventService
     .persistRecalcEvents(tournamentId, [...mmrChanges.keys()])
-    .catch((err) => logger.error({ err }, '[Worker] cascade recalc animation event failed'));
+    .catch((err) => logger.error({ err }, "[Worker] cascade recalc animation event failed"));
 
   await refreshMatchFacts(tournamentId, [...mmrChanges.keys()], new Date(cancelledMatchPlayedAt));
 
@@ -139,20 +137,20 @@ const cancelMatchMmr: Task = async (rawPayload) => {
   // player — reconcile their badges (revoke now-invalid, award newly-valid).
   await badgeReconciliationService
     .reconcilePlayers(tournamentId, [...mmrChanges.keys()])
-    .catch((err) => logger.error({ err }, '[Worker] badge reconciliation failed'));
+    .catch((err) => logger.error({ err }, "[Worker] badge reconciliation failed"));
 
   await refreshRankedCaches(tournamentId);
 
   webSocketService.broadcastToTournament(tournamentId, {
-    event: 'mmr_recap_ready',
+    event: "mmr_recap_ready",
     data: { seasonId: tournamentId, tournamentId },
   });
   webSocketService.broadcastToTournament(tournamentId, {
-    event: 'leaderboard_updated',
+    event: "leaderboard_updated",
     data: { seasonId: tournamentId },
   });
 
-  logger.info({ matchId, tournamentId }, '[Worker] cancel_match_mmr done');
+  logger.info({ matchId, tournamentId }, "[Worker] cancel_match_mmr done");
 };
 
 /**
@@ -161,19 +159,19 @@ const cancelMatchMmr: Task = async (rawPayload) => {
  */
 const correctMatchMmr: Task = async (rawPayload) => {
   const { matchId, tournamentId } = rawPayload as FinalizeMmrPayload;
-  logger.info({ matchId, tournamentId }, '[Worker] correct_match_mmr start');
+  logger.info({ matchId, tournamentId }, "[Worker] correct_match_mmr start");
 
   const rankedConfig = await rankedSeasonRepository.getConfigByTournamentId(tournamentId);
   const match = await matchRepository.getByIdSimple(matchId);
   // A match cancelled since its correction is replayed by its cancellation job.
-  if (!rankedConfig || match?.status !== 'finalized' || !match.playedAt) return;
+  if (!rankedConfig || match?.status !== "finalized" || !match.playedAt) return;
 
   const mmrChanges = await mmrCalculationService.cascadeRecalculateAfterCorrection(
     matchId,
     tournamentId,
     match.playedAt,
   );
-  const directPlayerIds = [...mmrChanges].filter(([, c]) => c.reason === 'match_corrected').map(([id]) => id);
+  const directPlayerIds = [...mmrChanges].filter(([, c]) => c.reason === "match_corrected").map(([id]) => id);
   await refreshMatchFacts(tournamentId, [...mmrChanges.keys()], match.playedAt);
   await syncCorrectionAftermath(matchId, tournamentId, [...mmrChanges.keys()], directPlayerIds);
 
@@ -181,7 +179,7 @@ const correctMatchMmr: Task = async (rawPayload) => {
   broadcastCorrectionRecap(tournamentId, directPlayerIds);
   await regenerateRewindIfFinished(tournamentId);
 
-  logger.info({ matchId, tournamentId }, '[Worker] correct_match_mmr done');
+  logger.info({ matchId, tournamentId }, "[Worker] correct_match_mmr done");
 };
 
 /**
@@ -198,13 +196,13 @@ async function syncCorrectionAftermath(
 ): Promise<void> {
   await mmrAnimationEventService
     .persistCorrectionEvents(matchId, tournamentId, directPlayerIds)
-    .catch((err) => logger.error({ err }, '[Worker] correction animation event failed'));
+    .catch((err) => logger.error({ err }, "[Worker] correction animation event failed"));
   await mmrAnimationEventService
     .persistRecalcEvents(tournamentId, playerIds)
-    .catch((err) => logger.error({ err }, '[Worker] correction recalc animation event failed'));
+    .catch((err) => logger.error({ err }, "[Worker] correction recalc animation event failed"));
   await badgeReconciliationService
     .reconcilePlayers(tournamentId, playerIds)
-    .catch((err) => logger.error({ err }, '[Worker] correction badge reconciliation failed'));
+    .catch((err) => logger.error({ err }, "[Worker] correction badge reconciliation failed"));
 }
 
 /**
@@ -213,7 +211,7 @@ async function syncCorrectionAftermath(
  * does not subscribe, and a subscribed one must not refetch twice.
  */
 function broadcastCorrectionRecap(tournamentId: string, directPlayerIds: string[]): void {
-  const recap = { event: 'mmr_recap_ready', data: { seasonId: tournamentId, tournamentId } };
+  const recap = { event: "mmr_recap_ready", data: { seasonId: tournamentId, tournamentId } };
   webSocketService.broadcastToTournament(tournamentId, recap);
   for (const playerId of directPlayerIds) {
     if (!webSocketService.isSubscribedToTournament(tournamentId, playerId)) {
@@ -221,30 +219,30 @@ function broadcastCorrectionRecap(tournamentId: string, directPlayerIds: string[
     }
   }
   webSocketService.broadcastToTournament(tournamentId, {
-    event: 'leaderboard_updated',
+    event: "leaderboard_updated",
     data: { seasonId: tournamentId },
   });
 }
 
 const reconcilePendingBadges: Task = async (rawPayload) => {
   const { force } = (rawPayload ?? {}) as { force?: boolean };
-  logger.info({ force }, '[Worker] reconcile_pending_badges start');
+  logger.info({ force }, "[Worker] reconcile_pending_badges start");
   const result = await badgeReconciliationService.runPendingReconciliation(!!force);
-  logger.info({ force, ran: result.ran }, '[Worker] reconcile_pending_badges done');
+  logger.info({ force, ran: result.ran }, "[Worker] reconcile_pending_badges done");
 };
 
 async function refreshRankedCaches(tournamentId: string): Promise<void> {
   await rankedSeasonService
     .computeAndCacheOfficial(tournamentId)
-    .catch((err) => logger.error({ err }, '[Worker] official cache refresh failed'));
+    .catch((err) => logger.error({ err }, "[Worker] official cache refresh failed"));
   await rankedSeasonService
     .computeAndCacheProvisional(tournamentId)
-    .catch((err) => logger.error({ err }, '[Worker] provisional cache refresh failed'));
+    .catch((err) => logger.error({ err }, "[Worker] provisional cache refresh failed"));
 }
 
 const recalculateSeasonMmr: Task = async (rawPayload) => {
   const { tournamentId } = rawPayload as { tournamentId: string };
-  logger.info({ tournamentId }, '[Worker] recalculate_season_mmr start');
+  logger.info({ tournamentId }, "[Worker] recalculate_season_mmr start");
 
   const rankedConfig = await rankedSeasonRepository.getConfigByTournamentId(tournamentId);
   if (!rankedConfig) {
@@ -260,7 +258,7 @@ const recalculateSeasonMmr: Task = async (rawPayload) => {
     // "recalculation running" banner up forever.
     await tournamentRulesetRepository
       .setRecalcPending(tournamentId, null)
-      .catch((err) => logger.error({ err, tournamentId }, '[Worker] clearing recalc marker failed'));
+      .catch((err) => logger.error({ err, tournamentId }, "[Worker] clearing recalc marker failed"));
   }
 };
 
@@ -268,24 +266,30 @@ async function runSeasonRecalculation(tournamentId: string): Promise<void> {
   const players = await playerMmrRepository.getAllPlayersBySeasonId(tournamentId);
 
   await mmrCalculationService.recalculateSeasonMmrDeterministic(tournamentId);
-  await refreshMatchFacts(tournamentId, players.map((p) => p.playerId));
+  await refreshMatchFacts(
+    tournamentId,
+    players.map((p) => p.playerId),
+  );
 
   // History was rebuilt: re-sync animation events for the matches whose MMR
   // actually changed (no need to wait for a new match). Batched, no per-event
   // broadcast — a single mmr_recap_ready ping makes clients refetch as one
   // grouped recap.
   await mmrAnimationEventService
-    .persistRecalcEvents(tournamentId, players.map((p) => p.playerId))
-    .catch((err) => logger.error({ err }, '[Worker] recalc animation event failed'));
+    .persistRecalcEvents(
+      tournamentId,
+      players.map((p) => p.playerId),
+    )
+    .catch((err) => logger.error({ err }, "[Worker] recalc animation event failed"));
 
   await refreshRankedCaches(tournamentId);
 
   webSocketService.broadcastToTournament(tournamentId, {
-    event: 'mmr_recap_ready',
+    event: "mmr_recap_ready",
     data: { seasonId: tournamentId, tournamentId },
   });
   webSocketService.broadcastToTournament(tournamentId, {
-    event: 'leaderboard_updated',
+    event: "leaderboard_updated",
     data: { seasonId: tournamentId },
   });
 
@@ -294,36 +298,36 @@ async function runSeasonRecalculation(tournamentId: string): Promise<void> {
   // promotion window and viewed state.
   await regenerateRewindIfFinished(tournamentId);
 
-  logger.info({ tournamentId, playerCount: players.length }, '[Worker] recalculate_season_mmr done');
+  logger.info({ tournamentId, playerCount: players.length }, "[Worker] recalculate_season_mmr done");
 }
 
 async function regenerateRewindIfFinished(seasonId: string): Promise<void> {
   const season = await tournamentRepository.getById(seasonId);
-  if (season?.status !== 'finished') return;
+  if (season?.status !== "finished") return;
   await enqueueSeasonRewindGeneration(seasonId);
 }
 
 const generateSeasonRewind: Task = async (rawPayload) => {
   const { seasonId } = rawPayload as { seasonId: string };
-  logger.info({ seasonId }, '[Worker] generate_season_rewind start');
+  logger.info({ seasonId }, "[Worker] generate_season_rewind start");
 
   await seasonRewindService.generateForSeason(seasonId);
 
   webSocketService.broadcastToTournament(seasonId, {
-    event: 'rewind_ready',
+    event: "rewind_ready",
     data: { seasonId },
   });
 
-  logger.info({ seasonId }, '[Worker] generate_season_rewind done');
+  logger.info({ seasonId }, "[Worker] generate_season_rewind done");
 };
 
 const refreshRewindIdentities: Task = async (rawPayload) => {
   const { playerIds } = rawPayload as { playerIds: string[] };
-  logger.info({ players: playerIds.length }, '[Worker] refresh_rewind_identities start');
+  logger.info({ players: playerIds.length }, "[Worker] refresh_rewind_identities start");
 
   await seasonRewindService.refreshPlayerIdentities(playerIds);
 
-  logger.info({ players: playerIds.length }, '[Worker] refresh_rewind_identities done');
+  logger.info({ players: playerIds.length }, "[Worker] refresh_rewind_identities done");
 };
 
 /**
@@ -340,7 +344,7 @@ function dropWhenSubjectIsGone(name: string, task: Task): Task {
       await task(payload, helpers);
     } catch (err) {
       if (!(err instanceof NotFoundError)) throw err;
-      logger.warn({ err, payload, task: name }, '[Worker] subject no longer exists, job dropped');
+      logger.warn({ err, payload, task: name }, "[Worker] subject no longer exists, job dropped");
     }
   };
 }

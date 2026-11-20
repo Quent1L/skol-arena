@@ -25,9 +25,7 @@ beforeEach(() => {
     statusQueries.push(ids);
     return ids.map((id) => ({ id, status: "finalized" }));
   };
-  (matchConfirmationRepository as any).getMatchIdsWithOpenPostDispute = async (
-    ids: string[],
-  ) => ids;
+  (matchConfirmationRepository as any).getMatchIdsWithOpenPostDispute = async (ids: string[]) => ids;
 });
 
 afterEach(() => {
@@ -57,31 +55,19 @@ describe("NotificationActionService", () => {
   });
 
   it("releases an escalation once the match has left the conflict", async () => {
-    (matchRepository as any).getStatusesByIds = async () => [
-      { id: "m-1", status: "reported" },
-    ];
+    (matchRepository as any).getStatusesByIds = async () => [{ id: "m-1", status: "reported" }];
 
     const escalation = notif({ type: "MATCH_DISPUTE_ESCALATED" });
-    expect(
-      (await notificationActionService.resolvePendingActions([escalation])).size,
-    ).toBe(0);
+    expect((await notificationActionService.resolvePendingActions([escalation])).size).toBe(0);
 
-    (matchRepository as any).getStatusesByIds = async () => [
-      { id: "m-1", status: "disputed" },
-    ];
-    expect([
-      ...(await notificationActionService.resolvePendingActions([escalation])),
-    ]).toEqual(["n-1"]);
+    (matchRepository as any).getStatusesByIds = async () => [{ id: "m-1", status: "disputed" }];
+    expect([...(await notificationActionService.resolvePendingActions([escalation]))]).toEqual(["n-1"]);
   });
 
   it("keeps a validation request pending while the result awaits an answer", async () => {
-    (matchRepository as any).getStatusesByIds = async () => [
-      { id: "m-1", status: "reported" },
-    ];
+    (matchRepository as any).getStatusesByIds = async () => [{ id: "m-1", status: "reported" }];
 
-    const pending = await notificationActionService.resolvePendingActions([
-      notif({ type: "MATCH_VALIDATION" }),
-    ]);
+    const pending = await notificationActionService.resolvePendingActions([notif({ type: "MATCH_VALIDATION" })]);
 
     expect([...pending]).toEqual(["n-1"]);
   });

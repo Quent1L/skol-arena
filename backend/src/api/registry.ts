@@ -73,10 +73,7 @@ const BASE_MOUNTS: RouteMount[] = [
  * Throws on a path that is not mounted, so a typo fails at boot instead of silently
  * serving the old router.
  */
-export function withOverrides(
-  base: RouteMount[],
-  overrides: Record<string, RouteMount["router"]>
-): RouteMount[] {
+export function withOverrides(base: RouteMount[], overrides: Record<string, RouteMount["router"]>): RouteMount[] {
   const known = new Set(base.map((mount) => mount.path));
   for (const path of Object.keys(overrides)) {
     if (!known.has(path)) {
@@ -84,9 +81,7 @@ export function withOverrides(
     }
   }
 
-  return base.map((mount) =>
-    overrides[mount.path] ? { ...mount, router: overrides[mount.path]! } : mount
-  );
+  return base.map((mount) => (overrides[mount.path] ? { ...mount, router: overrides[mount.path]! } : mount));
 }
 
 export const VERSION_MOUNTS: Record<ApiVersion, RouteMount[]> = {

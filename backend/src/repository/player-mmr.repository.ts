@@ -67,17 +67,14 @@ type PlayerCareerMmrStatsRawRow = {
 };
 
 function legacyOutcome(delta: number): MmrHistoryOutcome {
-  if (delta > 0) return 'win';
-  return delta < 0 ? 'loss' : 'draw';
+  if (delta > 0) return "win";
+  return delta < 0 ? "loss" : "draw";
 }
 
 export class PlayerMmrRepository {
   async getBySeasonAndPlayer(seasonId: string, playerId: string) {
     return await db.query.playerMmr.findFirst({
-      where: and(
-        eq(playerMmr.seasonId, seasonId),
-        eq(playerMmr.playerId, playerId),
-      ),
+      where: and(eq(playerMmr.seasonId, seasonId), eq(playerMmr.playerId, playerId)),
     });
   }
 
@@ -106,11 +103,11 @@ export class PlayerMmrRepository {
         WHERE rn <= 5
       `);
 
-      const resultsByPlayer = new Map<string, { outcome: 'win' | 'loss' | 'draw' }[]>();
+      const resultsByPlayer = new Map<string, { outcome: "win" | "loss" | "draw" }[]>();
       for (const row of recentRows.rows as { player_id: string; outcome: string | null; mmr_delta: number }[]) {
         const list = resultsByPlayer.get(row.player_id) ?? [];
-        let outcome: 'win' | 'loss' | 'draw';
-        if (row.outcome === 'win' || row.outcome === 'loss' || row.outcome === 'draw') {
+        let outcome: "win" | "loss" | "draw";
+        if (row.outcome === "win" || row.outcome === "loss" || row.outcome === "draw") {
           outcome = row.outcome;
         } else {
           // Legacy rows without a stored outcome: fall back to delta sign
@@ -129,10 +126,7 @@ export class PlayerMmrRepository {
   }
 
   async upsert(data: UpsertPlayerMmrData) {
-    const existing = await this.getBySeasonAndPlayer(
-      data.seasonId,
-      data.playerId,
-    );
+    const existing = await this.getBySeasonAndPlayer(data.seasonId, data.playerId);
     if (existing) {
       const [updated] = await db
         .update(playerMmr)
@@ -151,10 +145,7 @@ export class PlayerMmrRepository {
         .returning();
       return updated;
     }
-    const [created] = await db
-      .insert(playerMmr)
-      .values(data)
-      .returning();
+    const [created] = await db.insert(playerMmr).values(data).returning();
     return created;
   }
 
@@ -189,12 +180,7 @@ export class PlayerMmrRepository {
       })
       .from(mmrHistory)
       .innerJoin(matches, eq(mmrHistory.matchId, matches.id))
-      .where(
-        and(
-          eq(mmrHistory.seasonId, seasonId),
-          eq(mmrHistory.playerId, playerId),
-        ),
-      )
+      .where(and(eq(mmrHistory.seasonId, seasonId), eq(mmrHistory.playerId, playerId)))
       .orderBy(desc(matches.playedAt))
       .limit(limit)
       .offset(offset);
@@ -211,12 +197,7 @@ export class PlayerMmrRepository {
       })
       .from(mmrHistory)
       .innerJoin(matches, eq(mmrHistory.matchId, matches.id))
-      .where(
-        and(
-          eq(mmrHistory.seasonId, seasonId),
-          eq(mmrHistory.playerId, playerId),
-        ),
-      )
+      .where(and(eq(mmrHistory.seasonId, seasonId), eq(mmrHistory.playerId, playerId)))
       .orderBy(asc(matches.playedAt));
   }
 
@@ -241,12 +222,7 @@ export class PlayerMmrRepository {
       })
       .from(mmrHistory)
       .innerJoin(matches, eq(mmrHistory.matchId, matches.id))
-      .where(
-        and(
-          eq(mmrHistory.seasonId, seasonId),
-          eq(mmrHistory.playerId, playerId),
-        ),
-      )
+      .where(and(eq(mmrHistory.seasonId, seasonId), eq(mmrHistory.playerId, playerId)))
       .orderBy(asc(matches.playedAt));
   }
 
@@ -268,12 +244,7 @@ export class PlayerMmrRepository {
       })
       .from(mmrHistory)
       .innerJoin(matches, eq(mmrHistory.matchId, matches.id))
-      .where(
-        and(
-          eq(mmrHistory.seasonId, seasonId),
-          inArray(mmrHistory.playerId, playerIds),
-        ),
-      )
+      .where(and(eq(mmrHistory.seasonId, seasonId), inArray(mmrHistory.playerId, playerIds)))
       .orderBy(asc(matches.playedAt));
     for (const r of rows) {
       const list = result.get(r.playerId) ?? [];
@@ -284,10 +255,7 @@ export class PlayerMmrRepository {
   }
 
   async createMmrHistory(data: CreateMmrHistoryData) {
-    const [created] = await db
-      .insert(mmrHistory)
-      .values(data)
-      .returning();
+    const [created] = await db.insert(mmrHistory).values(data).returning();
     return created;
   }
 
@@ -341,11 +309,7 @@ export class PlayerMmrRepository {
 
   async getMmrHistoryForPlayerAndMatch(seasonId: string, playerId: string, matchId: string) {
     return await db.query.mmrHistory.findFirst({
-      where: and(
-        eq(mmrHistory.seasonId, seasonId),
-        eq(mmrHistory.playerId, playerId),
-        eq(mmrHistory.matchId, matchId),
-      ),
+      where: and(eq(mmrHistory.seasonId, seasonId), eq(mmrHistory.playerId, playerId), eq(mmrHistory.matchId, matchId)),
     });
   }
 
@@ -360,21 +324,10 @@ export class PlayerMmrRepository {
       await db
         .delete(mmrHistory)
         .where(
-          and(
-            eq(mmrHistory.seasonId, seasonId),
-            eq(mmrHistory.playerId, playerId),
-            inArray(mmrHistory.matchId, ids),
-          ),
+          and(eq(mmrHistory.seasonId, seasonId), eq(mmrHistory.playerId, playerId), inArray(mmrHistory.matchId, ids)),
         );
     } else {
-      await db
-        .delete(mmrHistory)
-        .where(
-          and(
-            eq(mmrHistory.seasonId, seasonId),
-            eq(mmrHistory.playerId, playerId),
-          ),
-        );
+      await db.delete(mmrHistory).where(and(eq(mmrHistory.seasonId, seasonId), eq(mmrHistory.playerId, playerId)));
     }
   }
 
@@ -382,29 +335,46 @@ export class PlayerMmrRepository {
     seasonId: string,
     playerId: string,
     beforePlayedAt: Date,
-  ): Promise<{ mmr: number; wins: number; losses: number; draws: number; winStreak: number; maxWinStreak: number; lossStreak: number; maxLossStreak: number } | null> {
+  ): Promise<{
+    mmr: number;
+    wins: number;
+    losses: number;
+    draws: number;
+    winStreak: number;
+    maxWinStreak: number;
+    lossStreak: number;
+    maxLossStreak: number;
+  } | null> {
     const rows = await db
       .select({ mmrAfter: mmrHistory.mmrAfter, outcome: mmrHistory.outcome })
       .from(mmrHistory)
       .innerJoin(matches, eq(mmrHistory.matchId, matches.id))
       .where(
-        and(
-          eq(mmrHistory.seasonId, seasonId),
-          eq(mmrHistory.playerId, playerId),
-          lt(matches.playedAt, beforePlayedAt),
-        ),
+        and(eq(mmrHistory.seasonId, seasonId), eq(mmrHistory.playerId, playerId), lt(matches.playedAt, beforePlayedAt)),
       )
       .orderBy(asc(matches.playedAt));
 
     if (rows.length === 0) return null;
 
-    let wins = 0, losses = 0, draws = 0, winStreak = 0, maxWinStreak = 0, lossStreak = 0, maxLossStreak = 0;
+    let wins = 0,
+      losses = 0,
+      draws = 0,
+      winStreak = 0,
+      maxWinStreak = 0,
+      lossStreak = 0,
+      maxLossStreak = 0;
     for (const row of rows) {
-      if (row.outcome === 'win') {
-        wins++; winStreak++; maxWinStreak = Math.max(maxWinStreak, winStreak); lossStreak = 0;
-      } else if (row.outcome === 'loss') {
-        losses++; winStreak = 0; lossStreak++; maxLossStreak = Math.max(maxLossStreak, lossStreak);
-      } else if (row.outcome === 'draw') {
+      if (row.outcome === "win") {
+        wins++;
+        winStreak++;
+        maxWinStreak = Math.max(maxWinStreak, winStreak);
+        lossStreak = 0;
+      } else if (row.outcome === "loss") {
+        losses++;
+        winStreak = 0;
+        lossStreak++;
+        maxLossStreak = Math.max(maxLossStreak, lossStreak);
+      } else if (row.outcome === "draw") {
         draws++;
       }
     }
@@ -435,10 +405,7 @@ export class PlayerMmrRepository {
     return map;
   }
 
-  async getPlayerCurrentMmrs(
-    seasonId: string,
-    playerIds: string[],
-  ): Promise<Map<string, number>> {
+  async getPlayerCurrentMmrs(seasonId: string, playerIds: string[]): Promise<Map<string, number>> {
     if (playerIds.length === 0) return new Map();
     const rows = await db.query.playerMmr.findMany({
       where: and(eq(playerMmr.seasonId, seasonId), inArray(playerMmr.playerId, playerIds)),
@@ -447,9 +414,7 @@ export class PlayerMmrRepository {
   }
 
   async deleteBySeasonAndPlayer(seasonId: string, playerId: string): Promise<void> {
-    await db
-      .delete(playerMmr)
-      .where(and(eq(playerMmr.seasonId, seasonId), eq(playerMmr.playerId, playerId)));
+    await db.delete(playerMmr).where(and(eq(playerMmr.seasonId, seasonId), eq(playerMmr.playerId, playerId)));
   }
 
   async getAllPlayersBySeasonId(seasonId: string) {
@@ -605,7 +570,11 @@ export class PlayerMmrRepository {
     const result = { vsStronger: emptyBucket(), vsEqual: emptyBucket(), vsWeaker: emptyBucket() };
 
     const rows = await db
-      .select({ mmrBefore: mmrHistory.mmrBefore, opponentAvgMmr: mmrHistory.opponentAvgMmr, outcome: mmrHistory.outcome })
+      .select({
+        mmrBefore: mmrHistory.mmrBefore,
+        opponentAvgMmr: mmrHistory.opponentAvgMmr,
+        outcome: mmrHistory.outcome,
+      })
       .from(mmrHistory)
       .where(and(eq(mmrHistory.seasonId, seasonId), eq(mmrHistory.playerId, playerId)));
 
@@ -615,8 +584,8 @@ export class PlayerMmrRepository {
       if (diff > STRONGER_OPPONENT_MMR_GAP) bucket = result.vsStronger;
       else if (diff < -STRONGER_OPPONENT_MMR_GAP) bucket = result.vsWeaker;
       bucket.matchesPlayed++;
-      if (row.outcome === 'win') bucket.wins++;
-      else if (row.outcome === 'loss') bucket.losses++;
+      if (row.outcome === "win") bucket.wins++;
+      else if (row.outcome === "loss") bucket.losses++;
       else bucket.draws++;
     }
 

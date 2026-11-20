@@ -61,10 +61,7 @@ describe("getPlayerMatchHistory", () => {
 
   it("assembles each match with the players of both sides", async () => {
     statsRepo.getPlayerMatchHistory.mockImplementation(async () => [row()]);
-    sidesRepo.getByMatchIds.mockImplementation(async () => [
-      side("m1", 1, ["Ann"]),
-      side("m1", 2, ["Bob", "Cy"]),
-    ]);
+    sidesRepo.getByMatchIds.mockImplementation(async () => [side("m1", 1, ["Ann"]), side("m1", 2, ["Bob", "Cy"])]);
 
     const [entry] = await playerStatsService.getPlayerMatchHistory("p1", { limit: 5 } as any);
 
@@ -86,7 +83,14 @@ describe("getPlayerMatchHistory", () => {
 
   it("fills in the defaults for a match without status, date, delta or outcome", async () => {
     statsRepo.getPlayerMatchHistory.mockImplementation(async () => [
-      row({ playedAt: null, status: null, winnerSide: null, mmrDelta: null, outcomeTypeId: null, outcomeTypeName: null }),
+      row({
+        playedAt: null,
+        status: null,
+        winnerSide: null,
+        mmrDelta: null,
+        outcomeTypeId: null,
+        outcomeTypeName: null,
+      }),
     ]);
 
     const [entry] = await playerStatsService.getPlayerMatchHistory("p1", {} as any);

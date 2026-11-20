@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "bun:test";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-  resetTestDatabase,
-} from "../../../config/test-database";
+import { createTestDatabase, closeTestDatabase, resetTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 
@@ -101,10 +97,7 @@ describe("user search", () => {
     // No contrib extension registered: CREATE EXTENSION fails like it would on a
     // server without contrib or for a role lacking CREATE on the database.
     const bare = new PGlite();
-    const migration = readFileSync(
-      join(import.meta.dir, "../../../../drizzle/0085_unaccent.sql"),
-      "utf-8",
-    );
+    const migration = readFileSync(join(import.meta.dir, "../../../../drizzle/0085_unaccent.sql"), "utf-8");
     try {
       await bare.exec(migration);
       const { rows } = await bare.query<{ n: number }>(

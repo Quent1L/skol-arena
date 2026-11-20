@@ -21,9 +21,7 @@ export interface ActionableNotification {
  * state — counts as settled rather than blocking forever.
  */
 export const notificationActionService = {
-  async resolvePendingActions(
-    notifications: ActionableNotification[],
-  ): Promise<Set<string>> {
+  async resolvePendingActions(notifications: ActionableNotification[]): Promise<Set<string>> {
     const actionable = notifications.filter((n) => n.requiresAction && n.matchId);
     if (actionable.length === 0) return new Set();
 
@@ -31,12 +29,8 @@ export const notificationActionService = {
     const statusRows = await matchRepository.getStatusesByIds(matchIds);
     const statusById = new Map(statusRows.map((row) => [row.id, row.status]));
 
-    const finalizedIds = statusRows
-      .filter((row) => row.status === "finalized")
-      .map((row) => row.id);
-    const withOpenPostDispute = new Set(
-      await matchConfirmationRepository.getMatchIdsWithOpenPostDispute(finalizedIds),
-    );
+    const finalizedIds = statusRows.filter((row) => row.status === "finalized").map((row) => row.id);
+    const withOpenPostDispute = new Set(await matchConfirmationRepository.getMatchIdsWithOpenPostDispute(finalizedIds));
 
     const pending = new Set<string>();
     for (const notification of actionable) {
@@ -51,11 +45,7 @@ export const notificationActionService = {
     return pending;
   },
 
-  isPending(
-    type: NotificationType,
-    matchStatus: string,
-    hasOpenPostDispute: boolean,
-  ): boolean {
+  isPending(type: NotificationType, matchStatus: string, hasOpenPostDispute: boolean): boolean {
     switch (type) {
       // An organizer is asked to arbitrate for as long as the match sits in conflict.
       case "MATCH_DISPUTE_ESCALATED":

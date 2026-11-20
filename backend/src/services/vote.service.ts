@@ -81,8 +81,7 @@ export class VoteService {
   async getMatchVotes(matchId: string, userId: string): Promise<MatchVotes> {
     const ctx = await this.loadContext(matchId, userId);
     const canSeeMvp =
-      ctx.role !== "none" ||
-      (await matchPermissionValidator.canManageMatches(ctx.match.tournamentId, userId));
+      ctx.role !== "none" || (await matchPermissionValidator.canManageMatches(ctx.match.tournamentId, userId));
     return {
       matchId,
       closesAt: ctx.closesAt,
@@ -374,10 +373,7 @@ export class VoteService {
       matchId: ctx.match.id,
       tournamentId: ctx.match.tournamentId,
       expiresAt: new Date(
-        Math.min(
-          ctx.match.playedAt.getTime() + ctx.config.promptMaxMatchAgeMinutes * 60_000,
-          ctx.closesAt.getTime(),
-        ),
+        Math.min(ctx.match.playedAt.getTime() + ctx.config.promptMaxMatchAgeMinutes * 60_000, ctx.closesAt.getTime()),
       ),
       sides: [1, 2].map((position) => ({
         position,

@@ -193,7 +193,12 @@ describe("automation", () => {
     expect(automationRepo.setNextSeasonNumber).not.toHaveBeenCalled();
 
     seasonRepo.getSeasonWithConfig.mockImplementation(async () => ({
-      id: "s1", status: "draft", startDate: "2026-01-01", endDate: "2026-03-15", organizationId: null, disciplineId: null,
+      id: "s1",
+      status: "draft",
+      startDate: "2026-01-01",
+      endDate: "2026-03-15",
+      organizationId: null,
+      disciplineId: null,
     }));
     await service.setAutomation("s1", { enabled: true, mode: "close", durationDays: 30 } as any, "u1");
     expect(automationRepo.scheduleRollover).not.toHaveBeenCalled();

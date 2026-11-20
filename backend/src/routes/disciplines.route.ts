@@ -41,7 +41,7 @@ disciplines.post(
     const data = c.req.valid("json");
     const discipline = await disciplineService.createDiscipline(data);
     return c.json(discipline, 201);
-  }
+  },
 );
 
 // GET /disciplines - List all disciplines
@@ -58,7 +58,7 @@ disciplines.get(
     const includeArchived = c.req.query("includeArchived") === "true";
     const disciplinesList = await disciplineService.listDisciplines(includeArchived);
     return c.json(disciplinesList);
-  }
+  },
 );
 
 // GET /disciplines/interaction-modes - List team interaction mode options (i18n labels)
@@ -79,9 +79,9 @@ disciplines.get(
       TEAM_INTERACTION_MODES.map((value) => ({
         value,
         label: String(i18next.t(`disciplines.interaction_modes.${value}`, { lng: lang })),
-      }))
+      })),
     );
-  }
+  },
 );
 
 // GET /disciplines/:id - Get single discipline
@@ -97,7 +97,7 @@ disciplines.get(
     const id = c.req.param("id")!;
     const discipline = await disciplineService.getDisciplineById(id);
     return c.json(discipline);
-  }
+  },
 );
 
 // PATCH /disciplines/:id - Update discipline
@@ -119,7 +119,7 @@ disciplines.patch(
     const data = c.req.valid("json");
     const discipline = await disciplineService.updateDiscipline(id, data);
     return c.json(discipline);
-  }
+  },
 );
 
 // GET /disciplines/:id/impacted-competitions - What a propagation could reach
@@ -147,7 +147,7 @@ disciplines.get(
     await disciplineService.getDisciplineById(id);
     const impacted = await rulesetPropagationService.listImpactedCompetitions(id);
     return c.json(impacted);
-  }
+  },
 );
 
 // POST /disciplines/:id/propagate - Apply the discipline to the chosen competitions
@@ -177,7 +177,7 @@ disciplines.post(
     const { tournamentIds } = c.req.valid("json");
     const results = await rulesetPropagationService.propagate(id, tournamentIds);
     return c.json(results);
-  }
+  },
 );
 
 // POST /disciplines/:id/archive - Archive discipline (non-destructive retirement)
@@ -200,7 +200,7 @@ disciplines.post(
     const id = c.req.param("id")!;
     const discipline = await disciplineService.archiveDiscipline(id, c.get("appUserId"));
     return c.json(discipline);
-  }
+  },
 );
 
 // POST /disciplines/:id/restore - Restore an archived discipline
@@ -221,7 +221,7 @@ disciplines.post(
     const id = c.req.param("id")!;
     const discipline = await disciplineService.restoreDiscipline(id);
     return c.json(discipline);
-  }
+  },
 );
 
 // DELETE /disciplines/:id - Delete discipline
@@ -244,7 +244,7 @@ disciplines.delete(
     const id = c.req.param("id")!;
     const result = await disciplineService.deleteDiscipline(id);
     return c.json(result);
-  }
+  },
 );
 
 export default disciplines;

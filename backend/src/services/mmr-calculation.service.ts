@@ -95,7 +95,10 @@ async function loadSeasonRuleset(seasonId: string): Promise<SeasonRuleset> {
  * orphaned before the restrict foreign keys landed — falls back to the neutral
  * defaults, which is exactly what the old inline fallback did.
  */
-function outcomeOf(ruleset: SeasonRuleset, outcomeTypeId: string | null): {
+function outcomeOf(
+  ruleset: SeasonRuleset,
+  outcomeTypeId: string | null,
+): {
   scoreCountsForMmr: boolean;
   mmrMultiplier: number;
 } {
@@ -127,11 +130,7 @@ export class MmrCalculationService {
    * A player with no earlier match in the season falls back to the same entry
    * MMR a replay would use — the carry-over seed, then the season's base.
    */
-  async getMmrSnapshotAt(
-    seasonId: string,
-    playerIds: string[],
-    at: Date,
-  ): Promise<MmrSnapshotEntry[]> {
+  async getMmrSnapshotAt(seasonId: string, playerIds: string[], at: Date): Promise<MmrSnapshotEntry[]> {
     const uniqueIds = [...new Set(playerIds)];
     if (uniqueIds.length === 0) return [];
     if (uniqueIds.length > MMR_SNAPSHOT_MAX_PLAYERS) {
@@ -147,9 +146,7 @@ export class MmrCalculationService {
       uniqueIds.map(async (playerId) => {
         const checkpoint = await playerMmrRepository.getCheckpointState(seasonId, playerId, at);
         const entryMmr = seedMap.get(playerId) ?? config.baseMmr;
-        const matchesPlayed = checkpoint
-          ? checkpoint.wins + checkpoint.losses + checkpoint.draws
-          : 0;
+        const matchesPlayed = checkpoint ? checkpoint.wins + checkpoint.losses + checkpoint.draws : 0;
         return {
           playerId,
           mmr: checkpoint?.mmr ?? entryMmr,
@@ -173,9 +170,27 @@ export class MmrCalculationService {
     let state: CheckpointState;
     if (fromPlayedAt) {
       checkpoint = await playerMmrRepository.getCheckpointState(seasonId, playerId, fromPlayedAt);
-      state = checkpoint ?? { mmr: entryMmr, wins: 0, losses: 0, draws: 0, winStreak: 0, maxWinStreak: 0, lossStreak: 0, maxLossStreak: 0 };
+      state = checkpoint ?? {
+        mmr: entryMmr,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        winStreak: 0,
+        maxWinStreak: 0,
+        lossStreak: 0,
+        maxLossStreak: 0,
+      };
     } else {
-      state = { mmr: entryMmr, wins: 0, losses: 0, draws: 0, winStreak: 0, maxWinStreak: 0, lossStreak: 0, maxLossStreak: 0 };
+      state = {
+        mmr: entryMmr,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        winStreak: 0,
+        maxWinStreak: 0,
+        lossStreak: 0,
+        maxLossStreak: 0,
+      };
     }
 
     await playerMmrRepository.deleteMmrHistoryForPlayer(seasonId, playerId, fromPlayedAt);
@@ -185,7 +200,9 @@ export class MmrCalculationService {
     if (playerMatches.length > 0) {
       const matchIds = playerMatches.map((m) => m.id);
       const sidesMap = await this.preloadMatchSides(matchIds, playerId);
-      const allOtherPlayerIds = [...new Set([...sidesMap.values()].flatMap((s) => [...s.opponentPlayerIds, ...(s.sameTeamPlayerIds ?? [])]))];
+      const allOtherPlayerIds = [
+        ...new Set([...sidesMap.values()].flatMap((s) => [...s.opponentPlayerIds, ...(s.sameTeamPlayerIds ?? [])])),
+      ];
       const historiesMap = await playerMmrRepository.preloadOpponentHistories(seasonId, matchIds, allOtherPlayerIds);
       const currentMmrMap = await playerMmrRepository.getPlayerCurrentMmrs(seasonId, allOtherPlayerIds);
       const ruleset = await loadSeasonRuleset(seasonId);
@@ -231,15 +248,18 @@ export class MmrCalculationService {
   ): Promise<CheckpointState> {
     const { sidesMap, historiesMap, currentMmrMap, entryMmrMap, ruleset } = lookups;
     const isPlacement = state.wins + state.losses + state.draws < config.placementMatches;
-    const raw = sidesMap.get(match.id) ?? { opponentPlayerIds: [], sameTeamPlayerIds: [], scoreForPlayer: 0, scoreForOpponent: 0, playerWon: null };
+    const raw = sidesMap.get(match.id) ?? {
+      opponentPlayerIds: [],
+      sameTeamPlayerIds: [],
+      scoreForPlayer: 0,
+      scoreForOpponent: 0,
+      playerWon: null,
+    };
     const { opponentPlayerIds, playerWon } = raw;
     const sameTeamPlayerIds = raw.sameTeamPlayerIds ?? [];
 
     const getOtherPlayerMmr = (id: string) =>
-      historiesMap.get(`${id}:${match.id}`) ??
-      currentMmrMap.get(id) ??
-      entryMmrMap.get(id) ??
-      config.baseMmr;
+      historiesMap.get(`${id}:${match.id}`) ?? currentMmrMap.get(id) ?? entryMmrMap.get(id) ?? config.baseMmr;
 
     // Only this player's placement status is known here — the teammates' deltas
     // are discarded anyway, and placement is applied per player after the split,
@@ -299,11 +319,7 @@ export class MmrCalculationService {
     return newState;
   }
 
-  private advanceState(
-    state: CheckpointState,
-    playerWon: boolean | null,
-    mmrAfter: number,
-  ): CheckpointState {
+  private advanceState(state: CheckpointState, playerWon: boolean | null, mmrAfter: number): CheckpointState {
     const newState: CheckpointState = { ...state, mmr: mmrAfter };
     if (playerWon === true) {
       newState.wins = state.wins + 1;
@@ -396,13 +412,7 @@ export class MmrCalculationService {
 
       for (const playerId of nextWave) processedIds.add(playerId);
 
-      changedIds = await this.recalcWaveAndCollectChanges(
-        seasonId,
-        nextWave,
-        fromPlayedAt,
-        "cascade",
-        result,
-      );
+      changedIds = await this.recalcWaveAndCollectChanges(seasonId, nextWave, fromPlayedAt, "cascade", result);
     }
 
     return result;
@@ -702,7 +712,13 @@ export class MmrCalculationService {
     for (const matchId of matchIds) {
       const sides = sidesByMatch.get(matchId);
       if (!sides || sides.length < 2) {
-        result.set(matchId, { opponentPlayerIds: [], sameTeamPlayerIds: [], scoreForPlayer: 0, scoreForOpponent: 0, playerWon: null });
+        result.set(matchId, {
+          opponentPlayerIds: [],
+          sameTeamPlayerIds: [],
+          scoreForPlayer: 0,
+          scoreForOpponent: 0,
+          playerWon: null,
+        });
         continue;
       }
 
@@ -787,11 +803,7 @@ export class MmrCalculationService {
     return [...new Set(rows.map((r) => r.playerId))];
   }
 
-  private async ensurePlayerMmrExists(
-    seasonId: string,
-    baseMmr: number,
-    playerId: string,
-  ): Promise<void> {
+  private async ensurePlayerMmrExists(seasonId: string, baseMmr: number, playerId: string): Promise<void> {
     const existing = await playerMmrRepository.getBySeasonAndPlayer(seasonId, playerId);
     if (!existing) {
       // A carried-over player enters the season at their seeded MMR: this is the
@@ -811,7 +823,6 @@ export class MmrCalculationService {
       });
     }
   }
-
 }
 
 export const mmrCalculationService = new MmrCalculationService();

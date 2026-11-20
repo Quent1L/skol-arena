@@ -35,7 +35,7 @@ outcomeTypes.post(
     const data = c.req.valid("json");
     const outcomeType = await outcomeTypeService.createOutcomeType(data);
     return c.json(outcomeType, 201);
-  }
+  },
 );
 
 // GET /outcome-types - List all outcome types (with optional disciplineId filter)
@@ -57,12 +57,9 @@ outcomeTypes.get(
   ),
   async (c) => {
     const { disciplineId, includeArchived } = c.req.valid("query");
-    const outcomeTypesList = await outcomeTypeService.listOutcomeTypes(
-      disciplineId,
-      includeArchived ?? false,
-    );
+    const outcomeTypesList = await outcomeTypeService.listOutcomeTypes(disciplineId, includeArchived ?? false);
     return c.json(outcomeTypesList);
-  }
+  },
 );
 
 // GET /outcome-types/:id - Get single outcome type
@@ -78,7 +75,7 @@ outcomeTypes.get(
     const id = c.req.param("id")!;
     const outcomeType = await outcomeTypeService.getOutcomeTypeById(id);
     return c.json(outcomeType);
-  }
+  },
 );
 
 // PATCH /outcome-types/:id - Update outcome type
@@ -100,7 +97,7 @@ outcomeTypes.patch(
     const data = c.req.valid("json");
     const outcomeType = await outcomeTypeService.updateOutcomeType(id, data);
     return c.json(outcomeType);
-  }
+  },
 );
 
 // POST /outcome-types/:id/archive - Archive outcome type (non-destructive retirement)
@@ -123,7 +120,7 @@ outcomeTypes.post(
     const id = c.req.param("id")!;
     const outcomeType = await outcomeTypeService.archiveOutcomeType(id, c.get("appUserId"));
     return c.json(outcomeType);
-  }
+  },
 );
 
 // POST /outcome-types/:id/restore - Restore an archived outcome type
@@ -144,7 +141,7 @@ outcomeTypes.post(
     const id = c.req.param("id")!;
     const outcomeType = await outcomeTypeService.restoreOutcomeType(id);
     return c.json(outcomeType);
-  }
+  },
 );
 
 // DELETE /outcome-types/:id - Delete outcome type
@@ -167,7 +164,7 @@ outcomeTypes.delete(
     const id = c.req.param("id")!;
     const result = await outcomeTypeService.deleteOutcomeType(id);
     return c.json(result);
-  }
+  },
 );
 
 export default outcomeTypes;

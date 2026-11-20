@@ -113,16 +113,9 @@ export class SeasonRewindRepository {
       })
       .from(matchSides)
       .innerJoin(matches, eq(matchSides.matchId, matches.id))
-      .innerJoin(
-        tournamentEntryPlayers,
-        eq(tournamentEntryPlayers.entryId, matchSides.entryId),
-      )
+      .innerJoin(tournamentEntryPlayers, eq(tournamentEntryPlayers.entryId, matchSides.entryId))
       .where(eq(matches.tournamentId, seasonId))
-      .orderBy(
-        asc(matchSides.matchId),
-        asc(matchSides.position),
-        asc(tournamentEntryPlayers.playerId),
-      );
+      .orderBy(asc(matchSides.matchId), asc(matchSides.position), asc(tournamentEntryPlayers.playerId));
   }
 
   async getSeasonRewind(seasonId: string): Promise<{
@@ -176,9 +169,7 @@ export class SeasonRewindRepository {
   }
 
   /** Current names of the given players, to write over the ones a payload froze. */
-  async getIdentities(
-    playerIds: string[],
-  ): Promise<Map<string, { displayName: string; shortName: string }>> {
+  async getIdentities(playerIds: string[]): Promise<Map<string, { displayName: string; shortName: string }>> {
     if (playerIds.length === 0) return new Map();
     const rows = await db
       .select({
@@ -189,9 +180,7 @@ export class SeasonRewindRepository {
       .from(appUsers)
       .where(inArray(appUsers.id, playerIds));
 
-    return new Map(
-      rows.map((row) => [row.id, { displayName: row.displayName, shortName: row.shortName }]),
-    );
+    return new Map(rows.map((row) => [row.id, { displayName: row.displayName, shortName: row.shortName }]));
   }
 
   /** Payloads of one rewind, in the shape the identity rewrite works on. */
@@ -228,10 +217,7 @@ export class SeasonRewindRepository {
   ): Promise<void> {
     await db.transaction(async (tx) => {
       if (season) {
-        await tx
-          .update(seasonRewinds)
-          .set({ payload: season })
-          .where(eq(seasonRewinds.id, rewindId));
+        await tx.update(seasonRewinds).set({ payload: season }).where(eq(seasonRewinds.id, rewindId));
       }
       for (const player of players) {
         await tx
@@ -242,10 +228,7 @@ export class SeasonRewindRepository {
     });
   }
 
-  async getPlayerRewind(
-    seasonId: string,
-    playerId: string,
-  ): Promise<StoredPlayerRewind | null> {
+  async getPlayerRewind(seasonId: string, playerId: string): Promise<StoredPlayerRewind | null> {
     const [row] = await db
       .select({
         payload: playerSeasonRewinds.payload,
@@ -333,19 +316,11 @@ export class SeasonRewindRepository {
   }
 
   /** Drops player decks that no longer belong to the rewind (players wiped by a recalculation). */
-  async deleteStalePlayerRewinds(
-    rewindId: string,
-    keepPlayerIds: string[],
-    tx: DbTransaction = db,
-  ): Promise<void> {
+  async deleteStalePlayerRewinds(rewindId: string, keepPlayerIds: string[], tx: DbTransaction = db): Promise<void> {
     const scope = eq(playerSeasonRewinds.rewindId, rewindId);
     await tx
       .delete(playerSeasonRewinds)
-      .where(
-        keepPlayerIds.length > 0
-          ? and(scope, notInArray(playerSeasonRewinds.playerId, keepPlayerIds))
-          : scope,
-      );
+      .where(keepPlayerIds.length > 0 ? and(scope, notInArray(playerSeasonRewinds.playerId, keepPlayerIds)) : scope);
   }
 
   async markOpened(seasonId: string, playerId: string): Promise<void> {
@@ -357,11 +332,7 @@ export class SeasonRewindRepository {
   }
 
   /** Idempotent: the first stamp wins, later calls are no-ops. */
-  private async stampOnce(
-    seasonId: string,
-    playerId: string,
-    column: "opened_at" | "viewed_at",
-  ): Promise<void> {
+  private async stampOnce(seasonId: string, playerId: string, column: "opened_at" | "viewed_at"): Promise<void> {
     await db.execute(sql`
       UPDATE player_season_rewinds AS p
       SET ${sql.raw(column)} = now()

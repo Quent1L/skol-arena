@@ -1,8 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import {
-  reportEmailDeliveryFailure,
-  withStrictEmailDelivery,
-} from "../email-delivery-context";
+import { reportEmailDeliveryFailure, withStrictEmailDelivery } from "../email-delivery-context";
 
 describe("email delivery context", () => {
   it("rethrows a failure reported from inside the strict scope", async () => {

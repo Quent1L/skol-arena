@@ -5,10 +5,7 @@ import { enqueueMmrSeasonRecalculation } from "./mmr-job-queue.service";
 import { logger } from "../utils/logger";
 import { BadRequestError, ErrorCode } from "../types/errors";
 import { rulesetsEqual } from "@skol-arena/shared/types/index";
-import type {
-  ImpactedCompetition,
-  PropagationResult,
-} from "@skol-arena/shared/types/index";
+import type { ImpactedCompetition, PropagationResult } from "@skol-arena/shared/types/index";
 
 /**
  * Pushing a discipline edit onto competitions that are still running.
@@ -27,17 +24,11 @@ export class RulesetPropagationService {
    * the live discipline.
    */
   async listImpactedCompetitions(disciplineId: string): Promise<ImpactedCompetition[]> {
-    const targets = await tournamentRulesetRepository.listPropagationTargets(
-      disciplineId,
-      PROVISIONAL_MATCH_STATUSES,
-    );
+    const targets = await tournamentRulesetRepository.listPropagationTargets(disciplineId, PROVISIONAL_MATCH_STATUSES);
 
     return await Promise.all(
       targets.map(async (target) => {
-        const fresh = await tournamentRulesetRepository.buildPayloadForTournament(
-          target.id,
-          disciplineId,
-        );
+        const fresh = await tournamentRulesetRepository.buildPayloadForTournament(target.id, disciplineId);
         return {
           id: target.id,
           name: target.name,
@@ -65,10 +56,7 @@ export class RulesetPropagationService {
     return results;
   }
 
-  private async propagateOne(
-    tournamentId: string,
-    disciplineId: string,
-  ): Promise<PropagationResult> {
+  private async propagateOne(tournamentId: string, disciplineId: string): Promise<PropagationResult> {
     try {
       // Re-checked server-side: the dialog the ids came from may have been open
       // while the competition finished or changed discipline.
@@ -80,10 +68,7 @@ export class RulesetPropagationService {
         throw new BadRequestError(ErrorCode.TOURNAMENT_INVALID_STATUS);
       }
 
-      const payload = await tournamentRulesetRepository.buildPayloadForTournament(
-        tournamentId,
-        disciplineId,
-      );
+      const payload = await tournamentRulesetRepository.buildPayloadForTournament(tournamentId, disciplineId);
       await tournamentRulesetRepository.upsert(tournamentId, payload);
       await tournamentRulesetRepository.setRecalcPending(tournamentId, new Date());
 
@@ -100,9 +85,7 @@ export class RulesetPropagationService {
       return { tournamentId, status: "recalculated" };
     } catch (err) {
       logger.error({ err, tournamentId, disciplineId }, "[Ruleset] propagation failed");
-      await tournamentRulesetRepository
-        .setRecalcPending(tournamentId, null)
-        .catch(() => undefined);
+      await tournamentRulesetRepository.setRecalcPending(tournamentId, null).catch(() => undefined);
       return {
         tournamentId,
         status: "failed",

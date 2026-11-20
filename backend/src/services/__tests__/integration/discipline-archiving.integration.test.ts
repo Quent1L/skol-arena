@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-} from "../../../config/test-database";
+import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 
@@ -37,9 +34,7 @@ describe("Discipline and outcome archiving", () => {
 
   const dates = () => {
     const today = new Date().toISOString().split("T")[0];
-    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
     return { startDate: today, endDate: nextWeek };
   };
 
@@ -52,10 +47,7 @@ describe("Discipline and outcome archiving", () => {
   }
 
   async function createOutcomeType(disciplineId: string, name: string, isDefault = false) {
-    const [outcomeType] = await testDb
-      .insert(outcomeTypes)
-      .values({ disciplineId, name, isDefault })
-      .returning();
+    const [outcomeType] = await testDb.insert(outcomeTypes).values({ disciplineId, name, isDefault }).returning();
     return outcomeType;
   }
 
@@ -131,14 +123,9 @@ describe("Discipline and outcome archiving", () => {
 
       // Raw delete, bypassing the service preflight: this is the database itself
       // refusing, which is what keeps history safe even on paths that forget to check.
-      await expect(
-        testDb.delete(outcomeTypes).where(eq(outcomeTypes.id, outcomeType.id)).execute(),
-      ).rejects.toThrow();
+      await expect(testDb.delete(outcomeTypes).where(eq(outcomeTypes.id, outcomeType.id)).execute()).rejects.toThrow();
 
-      const [survivor] = await testDb
-        .select()
-        .from(outcomeTypes)
-        .where(eq(outcomeTypes.id, outcomeType.id));
+      const [survivor] = await testDb.select().from(outcomeTypes).where(eq(outcomeTypes.id, outcomeType.id));
       expect(survivor).toBeDefined();
     });
 
@@ -152,24 +139,17 @@ describe("Discipline and outcome archiving", () => {
       const tournament = await createTournament(discipline.id);
       await createMatch(tournament.id, outcomeType.id, reason.id);
 
-      await expect(
-        testDb.delete(outcomeReasons).where(eq(outcomeReasons.id, reason.id)).execute(),
-      ).rejects.toThrow();
+      await expect(testDb.delete(outcomeReasons).where(eq(outcomeReasons.id, reason.id)).execute()).rejects.toThrow();
     });
 
     it("still deletes an outcome type nothing was played under, reasons included", async () => {
       const discipline = await createDiscipline(`FK Unused ${Date.now()}`);
       const outcomeType = await createOutcomeType(discipline.id, "Jamais joué");
-      await testDb
-        .insert(outcomeReasons)
-        .values({ outcomeTypeId: outcomeType.id, name: "Sans usage" });
+      await testDb.insert(outcomeReasons).values({ outcomeTypeId: outcomeType.id, name: "Sans usage" });
 
       await outcomeTypeService.deleteOutcomeType(outcomeType.id);
 
-      const remaining = await testDb
-        .select()
-        .from(outcomeTypes)
-        .where(eq(outcomeTypes.id, outcomeType.id));
+      const remaining = await testDb.select().from(outcomeTypes).where(eq(outcomeTypes.id, outcomeType.id));
       expect(remaining).toHaveLength(0);
 
       // The reason cascaded with its parent rather than blocking it.
@@ -185,10 +165,7 @@ describe("Discipline and outcome archiving", () => {
       const tournament = await createTournament(discipline.id);
       const match = await createMatch(tournament.id, null);
 
-      const [stored] = await testDb
-        .select()
-        .from(matches)
-        .where(eq(matches.id, match.id));
+      const [stored] = await testDb.select().from(matches).where(eq(matches.id, match.id));
       expect(stored.outcomeTypeId).toBeNull();
     });
   });
@@ -237,10 +214,7 @@ describe("Discipline and outcome archiving", () => {
 
       await disciplineService.deleteDiscipline(discipline.id);
 
-      const remainingTypes = await testDb
-        .select()
-        .from(outcomeTypes)
-        .where(eq(outcomeTypes.id, outcomeType.id));
+      const remainingTypes = await testDb.select().from(outcomeTypes).where(eq(outcomeTypes.id, outcomeType.id));
       expect(remainingTypes).toHaveLength(0);
     });
   });
@@ -268,14 +242,10 @@ describe("Discipline and outcome archiving", () => {
       const discipline = await createDiscipline(`Twice ${Date.now()}`);
 
       await disciplineService.archiveDiscipline(discipline.id, actorId);
-      await expect(
-        disciplineService.archiveDiscipline(discipline.id, actorId),
-      ).rejects.toThrow(ConflictError);
+      await expect(disciplineService.archiveDiscipline(discipline.id, actorId)).rejects.toThrow(ConflictError);
 
       await disciplineService.restoreDiscipline(discipline.id);
-      await expect(
-        disciplineService.restoreDiscipline(discipline.id),
-      ).rejects.toThrow(ConflictError);
+      await expect(disciplineService.restoreDiscipline(discipline.id)).rejects.toThrow(ConflictError);
     });
 
     it("drops the default flag when an outcome type is archived", async () => {

@@ -68,9 +68,7 @@ export async function recalculateOutdatedRankedSeasons(): Promise<void> {
  * stand forever. Boot is the natural place to notice.
  */
 export async function clearStaleRecalcMarkers(): Promise<void> {
-  const cleared = await tournamentRulesetRepository.clearStalePending(
-    new Date(Date.now() - STALE_RECALC_MS),
-  );
+  const cleared = await tournamentRulesetRepository.clearStalePending(new Date(Date.now() - STALE_RECALC_MS));
   if (cleared > 0) {
     logger.warn({ cleared }, "[Ruleset] cleared abandoned recalculation markers");
   }

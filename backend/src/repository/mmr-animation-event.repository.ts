@@ -1,6 +1,13 @@
 import { eq, and, isNull, inArray, sql } from "drizzle-orm";
 import { db } from "../config/database";
-import { mmrAnimationEvents, matches, matchSides, tournamentEntries, tournamentEntryPlayers, appUsers } from "../db/schema";
+import {
+  mmrAnimationEvents,
+  matches,
+  matchSides,
+  tournamentEntries,
+  tournamentEntryPlayers,
+  appUsers,
+} from "../db/schema";
 
 // One match's stored official deltas: mmrDelta is the full match delta (sync
 // key); seenDelta is the full delta as of the player's last view (displayDelta
@@ -113,7 +120,10 @@ export class MmrAnimationEventRepository {
       orderBy: (t, { asc }) => [asc(t.createdAt)],
     });
     if (events.length === 0) return events.map((e) => ({ ...e, opponents: [], teammates: [] }));
-    const context = await this.getMatchContext(playerId, events.map((e) => e.matchId));
+    const context = await this.getMatchContext(
+      playerId,
+      events.map((e) => e.matchId),
+    );
     return events.map((e) => ({ ...e, ...context(e.matchId) }));
   }
 
@@ -125,10 +135,7 @@ export class MmrAnimationEventRepository {
   async getMatchContext(playerId: string, matchIds: string[]) {
     const unique = [...new Set(matchIds)];
     const [{ opponents, teammates }, playedAtMap] = unique.length
-      ? await Promise.all([
-          this.fetchMatchParticipants(unique, playerId),
-          this.fetchPlayedAtByMatchIds(unique),
-        ])
+      ? await Promise.all([this.fetchMatchParticipants(unique, playerId), this.fetchPlayedAtByMatchIds(unique)])
       : [{ opponents: new Map(), teammates: new Map() }, new Map<string, Date>()];
     return (matchId: string) => ({
       opponents: (opponents.get(matchId) ?? []) as MatchPlayerRef[],
@@ -184,10 +191,7 @@ export class MmrAnimationEventRepository {
     return new Map(rows.map((r) => [r.id, r.playedAt]));
   }
 
-  async getOfficialEventDeltasByPlayer(
-    seasonId: string,
-    playerId: string,
-  ): Promise<Map<string, EventDelta>> {
+  async getOfficialEventDeltasByPlayer(seasonId: string, playerId: string): Promise<Map<string, EventDelta>> {
     const rows = await db
       .select({
         id: mmrAnimationEvents.id,
@@ -234,7 +238,12 @@ export class MmrAnimationEventRepository {
     for (const r of rows) {
       const byMatch = result.get(r.playerId) ?? new Map();
       const seenDelta = r.seenDelta ?? 0;
-      byMatch.set(r.matchId, { id: r.id, mmrDelta: r.mmrDelta, seenDelta, viewed: r.viewedAt !== null || seenDelta !== 0 });
+      byMatch.set(r.matchId, {
+        id: r.id,
+        mmrDelta: r.mmrDelta,
+        seenDelta,
+        viewed: r.viewedAt !== null || seenDelta !== 0,
+      });
       result.set(r.playerId, byMatch);
     }
     return result;
@@ -278,10 +287,7 @@ export class MmrAnimationEventRepository {
   // Mark events viewed and advance their seenDelta baseline to the current full
   // delta — so a later recalc of the same match shows only the change since now.
   // Scoped to the player's own events: an id belonging to someone else is ignored.
-  async markViewed(
-    ids: string[],
-    playerId: string,
-  ): Promise<Array<{ id: string; matchId: string }>> {
+  async markViewed(ids: string[], playerId: string): Promise<Array<{ id: string; matchId: string }>> {
     if (ids.length === 0) return [];
     return await db
       .update(mmrAnimationEvents)

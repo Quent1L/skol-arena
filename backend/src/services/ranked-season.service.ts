@@ -3,25 +3,15 @@ import { rankedSeasonRepository } from "../repository/ranked-season.repository";
 import { rankedSeasonAutomationRepository } from "../repository/ranked-season-automation.repository";
 import { playerMmrRepository } from "../repository/player-mmr.repository";
 import { mmrSeedRepository } from "../repository/mmr-seed.repository";
-import type {
-  SeasonMmrStatsRow,
-  PlayerCareerMmrStatsRow,
-} from "../repository/player-mmr.repository";
+import type { SeasonMmrStatsRow, PlayerCareerMmrStatsRow } from "../repository/player-mmr.repository";
 import { tournamentRepository } from "../repository/tournament.repository";
 import { userRepository } from "../repository/user.repository";
 import { rankedCacheRepository } from "../repository/ranked-cache.repository";
 import { participantRepository } from "../repository/participant.repository";
 import { partitionInactive } from "../utils/inactive-players";
 import { seasonRewindRepository } from "../repository/season-rewind.repository";
-import {
-  calculateMatchMmr,
-  toEnginePlayers,
-  type EnginePlayer,
-} from "./mmr-engine";
-import {
-  enqueueMmrSeasonRecalculation,
-  enqueueSeasonRewindGeneration,
-} from "./mmr-job-queue.service";
+import { calculateMatchMmr, toEnginePlayers, type EnginePlayer } from "./mmr-engine";
+import { enqueueMmrSeasonRecalculation, enqueueSeasonRewindGeneration } from "./mmr-job-queue.service";
 import { tournamentRulesetService } from "./tournament-ruleset.service";
 import { tournamentRulesetRepository } from "../repository/tournament-ruleset.repository";
 import { matchRepository } from "../repository/match.repository";
@@ -52,13 +42,7 @@ import type {
   TeamInteractionMode,
   RulesetOutcomeType,
 } from "@skol-arena/shared/types/index";
-import {
-  ErrorCode,
-  NotFoundError,
-  ConflictError,
-  ForbiddenError,
-  BadRequestError,
-} from "../types/errors";
+import { ErrorCode, NotFoundError, ConflictError, ForbiddenError, BadRequestError } from "../types/errors";
 import { sanitizeOptionalRichText } from "../utils/sanitize-html";
 import { isOrganizationVisible, visibleOrganizationIdsFor } from "./visibility";
 
@@ -117,10 +101,7 @@ export function splitWeeklyMmrLeaders(
 // player relation. Players missing from `stats` are dropped: they sit under the
 // placement threshold, or have no history row at all. Left unsorted on purpose — the
 // ranking metric depends on the view the client is showing.
-export function mergeSeasonMmrStats(
-  players: ClientPlayerMmr[],
-  stats: SeasonMmrStatsRow[],
-): ClientSeasonMmrPlayer[] {
+export function mergeSeasonMmrStats(players: ClientPlayerMmr[], stats: SeasonMmrStatsRow[]): ClientSeasonMmrPlayer[] {
   const byPlayer = new Map(stats.map((s) => [s.playerId, s]));
   return players.flatMap((player) => {
     const stat = byPlayer.get(player.playerId);
@@ -223,12 +204,7 @@ export function medianMmr(values: number[]): number | null {
 // percentiles, so absolute MMR values drift from one season to the next and the
 // same absolute formula would push everyone up or down depending on how far the
 // previous ladder had spread.
-export function computeSoftResetMmr(input: {
-  mmr: number;
-  anchor: number;
-  baseMmr: number;
-  factor: number;
-}): number {
+export function computeSoftResetMmr(input: { mmr: number; anchor: number; baseMmr: number; factor: number }): number {
   const { mmr, anchor, baseMmr, factor } = input;
   return Math.max(1, Math.round(baseMmr + (mmr - anchor) * factor));
 }
@@ -279,17 +255,17 @@ export function startOfWeekUtc(now: Date): Date {
 }
 
 function countLeadingWins(results: { outcome: string }[]): number {
-  let n = 0
-  for (const r of results) { if (r.outcome === 'win') n++; else break }
-  return n
+  let n = 0;
+  for (const r of results) {
+    if (r.outcome === "win") n++;
+    else break;
+  }
+  return n;
 }
 
 function loadUnfinalizedMatches(seasonId: string) {
   return db.query.matches.findMany({
-    where: and(
-      eq(matches.tournamentId, seasonId),
-      inArray(matches.status, ["reported", "disputed"]),
-    ),
+    where: and(eq(matches.tournamentId, seasonId), inArray(matches.status, ["reported", "disputed"])),
     // outcomeTypeId only: what it is worth comes from the season snapshot.
     columns: { id: true, winnerSide: true, playedAt: true, outcomeTypeId: true },
     with: {
@@ -335,10 +311,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * `endDate` is the calendar day, `rolloverAt` the instant the scheduler compares against — the
  * end of that day, so a one-day season gets its full day rather than expiring at midnight.
  */
-export function seasonTerm(
-  startDate: string,
-  durationDays: number,
-): { endDate: string; rolloverAt: Date } {
+export function seasonTerm(startDate: string, durationDays: number): { endDate: string; rolloverAt: Date } {
   const start = new Date(`${startDate}T00:00:00.000Z`);
   const rolloverAt = new Date(start.getTime() + durationDays * DAY_MS);
   return { endDate: rolloverAt.toISOString().slice(0, 10), rolloverAt };
@@ -381,11 +354,7 @@ function laterIsoDate(a: string, b: string): string {
  * The discipline is what every entered match was built on. Team sizes stay
  * editable, as on a flex tournament: matches already entered keep their roster.
  */
-const SEASON_LOCKED_FIELDS = new Set([
-  "disciplineId",
-  "sourceTierSeasonId",
-  "tierScalingMode",
-]);
+const SEASON_LOCKED_FIELDS = new Set(["disciplineId", "sourceTierSeasonId", "tierScalingMode"]);
 
 /** Scoring semantics: correctable until a result exists, meaningless to change after. */
 const SEASON_SCORE_FIELDS = new Set(["scoreEnabled", "minScore", "maxScore", "allowDraw"]);
@@ -400,9 +369,7 @@ const SEASON_MMR_FIELDS = [
   "sourceMmrSeasonId",
 ] as const;
 
-type SeasonWithConfig = NonNullable<
-  Awaited<ReturnType<typeof rankedSeasonRepository.getSeasonWithConfig>>
->;
+type SeasonWithConfig = NonNullable<Awaited<ReturnType<typeof rankedSeasonRepository.getSeasonWithConfig>>>;
 
 /** The value a locked field currently holds, wherever it is stored. */
 function currentSeasonValue(season: SeasonWithConfig, field: string): unknown {
@@ -454,9 +421,7 @@ export class RankedSeasonService {
    * same code path instead of inventing a system account.
    */
   async runCreateSeason(input: CreateRankedSeasonInput, createdBy: string) {
-    const existing = await rankedSeasonRepository.getActiveSeasonByDiscipline(
-      input.disciplineId,
-    );
+    const existing = await rankedSeasonRepository.getActiveSeasonByDiscipline(input.disciplineId);
     if (existing) {
       throw new ConflictError(ErrorCode.SEASON_ALREADY_ACTIVE);
     }
@@ -697,16 +662,11 @@ export class RankedSeasonService {
    * make the ladder inconsistent are locked now; the MMR knobs stay editable but
    * replay the season so the standings never disagree with the configuration.
    */
-  async updateSeason(
-    id: string,
-    input: UpdateRankedSeasonInput,
-    userId: string,
-  ) {
+  async updateSeason(id: string, input: UpdateRankedSeasonInput, userId: string) {
     await this.assertCanManage(userId);
     const season = await this.getSeasonOrThrow(id);
 
-    const enteredMatchCount =
-      season.status === "draft" ? 0 : await matchRepository.countEnteredMatches(id);
+    const enteredMatchCount = season.status === "draft" ? 0 : await matchRepository.countEnteredMatches(id);
     this.assertSeasonFieldsEditable(season, enteredMatchCount, input);
     assertTeamSizeRange(season, input);
 
@@ -764,10 +724,7 @@ export class RankedSeasonService {
     }
   }
 
-  private async applyTournamentUpdate(
-    id: string,
-    input: UpdateRankedSeasonInput,
-  ): Promise<void> {
+  private async applyTournamentUpdate(id: string, input: UpdateRankedSeasonInput): Promise<void> {
     const hasTournamentUpdate =
       input.name ||
       input.description !== undefined ||
@@ -807,27 +764,17 @@ export class RankedSeasonService {
   }
 
   /** @returns whether the change alters what past matches were worth. */
-  private async applyConfigUpdate(
-    id: string,
-    input: UpdateRankedSeasonInput,
-  ): Promise<boolean> {
+  private async applyConfigUpdate(id: string, input: UpdateRankedSeasonInput): Promise<boolean> {
     const configUpdate: Record<string, unknown> = {};
     if (input.baseMmr !== undefined) configUpdate.baseMmr = input.baseMmr;
     if (input.kFactor !== undefined) configUpdate.kFactor = input.kFactor;
-    if (input.placementMatches !== undefined)
-      configUpdate.placementMatches = input.placementMatches;
-    if (input.usePreviousMmr !== undefined)
-      configUpdate.usePreviousMmr = input.usePreviousMmr;
-    if (input.softResetFactor !== undefined)
-      configUpdate.softResetFactor = input.softResetFactor;
-    if (input.allowAsymmetricMatches !== undefined)
-      configUpdate.allowAsymmetricMatches = input.allowAsymmetricMatches;
-    if (input.sourceTierSeasonId !== undefined)
-      configUpdate.sourceTierSeasonId = input.sourceTierSeasonId;
-    if (input.tierScalingMode !== undefined)
-      configUpdate.tierScalingMode = input.tierScalingMode;
-    if (input.sourceMmrSeasonId !== undefined)
-      configUpdate.sourceMmrSeasonId = input.sourceMmrSeasonId;
+    if (input.placementMatches !== undefined) configUpdate.placementMatches = input.placementMatches;
+    if (input.usePreviousMmr !== undefined) configUpdate.usePreviousMmr = input.usePreviousMmr;
+    if (input.softResetFactor !== undefined) configUpdate.softResetFactor = input.softResetFactor;
+    if (input.allowAsymmetricMatches !== undefined) configUpdate.allowAsymmetricMatches = input.allowAsymmetricMatches;
+    if (input.sourceTierSeasonId !== undefined) configUpdate.sourceTierSeasonId = input.sourceTierSeasonId;
+    if (input.tierScalingMode !== undefined) configUpdate.tierScalingMode = input.tierScalingMode;
+    if (input.sourceMmrSeasonId !== undefined) configUpdate.sourceMmrSeasonId = input.sourceMmrSeasonId;
 
     if (Object.keys(configUpdate).length === 0) return false;
 
@@ -853,11 +800,7 @@ export class RankedSeasonService {
   }
 
   /** Seasons of organizations the viewer is not part of are left out. */
-  async listSeasons(filters?: {
-    disciplineId?: string;
-    status?: TournamentStatus;
-    viewerId?: string;
-  }) {
+  async listSeasons(filters?: { disciplineId?: string; status?: TournamentStatus; viewerId?: string }) {
     const visibleOrganizationIds = await visibleOrganizationIdsFor(filters?.viewerId ?? null);
     return await rankedSeasonRepository.listSeasons({ ...filters, visibleOrganizationIds });
   }
@@ -879,12 +822,7 @@ export class RankedSeasonService {
     return await rankedSeasonRepository.insertTier(seasonId, data);
   }
 
-  async updateTier(
-    seasonId: string,
-    level: number,
-    data: UpdateRankTierInput,
-    userId: string,
-  ) {
+  async updateTier(seasonId: string, level: number, data: UpdateRankTierInput, userId: string) {
     await this.assertCanManage(userId);
     const tier = await rankedSeasonRepository.updateTier(seasonId, level, data);
     if (!tier) {
@@ -947,9 +885,7 @@ export class RankedSeasonService {
       // The bottom tier is a floor, not a percentile: it has to catch the weakest
       // player, who may well sit below baseMmr.
       const minMmr =
-        tier.percentile === 0
-          ? Math.min(baseMmr, sorted[0])
-          : (sorted[Math.floor(n * tier.percentile)] ?? baseMmr);
+        tier.percentile === 0 ? Math.min(baseMmr, sorted[0]) : (sorted[Math.floor(n * tier.percentile)] ?? baseMmr);
       await rankedSeasonRepository.upsertRankTier(seasonId, tier.level, {
         minMmr,
       });
@@ -1001,16 +937,11 @@ export class RankedSeasonService {
     );
   }
 
-  private async resolveMmrSourceSeasonId(
-    seasonId: string,
-    configuredSourceId: string | null,
-  ): Promise<string | null> {
+  private async resolveMmrSourceSeasonId(seasonId: string, configuredSourceId: string | null): Promise<string | null> {
     if (configuredSourceId) return configuredSourceId;
     const season = await rankedSeasonRepository.getSeasonWithConfig(seasonId);
     if (!season?.disciplineId) return null;
-    const lastSeason = await rankedSeasonRepository.getLastFinishedSeason(
-      season.disciplineId,
-    );
+    const lastSeason = await rankedSeasonRepository.getLastFinishedSeason(season.disciplineId);
     return lastSeason?.id ?? null;
   }
 
@@ -1024,8 +955,7 @@ export class RankedSeasonService {
   }
 
   private async getCarryOverMinMatches(sourceSeasonId: string): Promise<number> {
-    const sourceConfig =
-      await rankedSeasonRepository.getConfigByTournamentId(sourceSeasonId);
+    const sourceConfig = await rankedSeasonRepository.getConfigByTournamentId(sourceSeasonId);
     return Math.max(1, sourceConfig?.placementMatches ?? 1);
   }
 
@@ -1096,9 +1026,7 @@ export class RankedSeasonService {
       playerMmrRepository.getByPlayerAcrossSeasons(playerId),
     ]);
 
-    const placementBySeason = new Map(
-      configs.map((config) => [config.tournamentId, config.placementMatches]),
-    );
+    const placementBySeason = new Map(configs.map((config) => [config.tournamentId, config.placementMatches]));
     const career = buildPlayerCareer(
       stats,
       seasons as CareerSeasonRef[],
@@ -1106,9 +1034,7 @@ export class RankedSeasonService {
       mmrRows,
       placementBySeason,
     );
-    return career.sort(
-      (a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime(),
-    );
+    return career.sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
   }
 
   /** A season of an organization the viewer is not part of stays out of the career. */
@@ -1120,9 +1046,7 @@ export class RankedSeasonService {
     if (allStats.length === 0) return { stats: allStats, seasons: [] };
 
     const allSeasons = await rankedSeasonRepository.getSeasonsByIds(allStats.map((s) => s.seasonId));
-    const seasons = allSeasons.filter((season) =>
-      isOrganizationVisible(season.organizationId, visibleOrganizationIds),
-    );
+    const seasons = allSeasons.filter((season) => isOrganizationVisible(season.organizationId, visibleOrganizationIds));
     const visibleIds = new Set(seasons.map((season) => season.id));
     return { stats: allStats.filter((stat) => visibleIds.has(stat.seasonId)), seasons };
   }
@@ -1172,18 +1096,8 @@ export class RankedSeasonService {
       this.replayMatch(match, ctx, touchedPlayerIds);
     }
 
-    const provisionalOnlyPlayers = await this.collectProvisionalOnlyPlayers(
-      unfinalizedMatches,
-      players,
-      seasonId,
-      ctx,
-    );
-    const provisionalPlayers = this.buildProvisionalPlayers(
-      players,
-      provisionalOnlyPlayers,
-      ctx,
-      touchedPlayerIds,
-    );
+    const provisionalOnlyPlayers = await this.collectProvisionalOnlyPlayers(unfinalizedMatches, players, seasonId, ctx);
+    const provisionalPlayers = this.buildProvisionalPlayers(players, provisionalOnlyPlayers, ctx, touchedPlayerIds);
 
     await rankedCacheRepository.upsertProvisional(seasonId, {
       players: provisionalPlayers,
@@ -1204,8 +1118,7 @@ export class RankedSeasonService {
 
     const resultA = sideResult(match.winnerSide, "A");
     const matchOutcome =
-      (match.outcomeTypeId ? ctx.outcomes.get(match.outcomeTypeId) : undefined) ??
-      RULESET_OUTCOME_DEFAULTS;
+      (match.outcomeTypeId ? ctx.outcomes.get(match.outcomeTypeId) : undefined) ?? RULESET_OUTCOME_DEFAULTS;
     const deltas = calculateMatchMmr({
       sides: [
         { players: toReplayPlayers(idsA, ctx), score: sideA.score ?? 0, result: resultA },
@@ -1230,10 +1143,7 @@ export class RankedSeasonService {
     }
   }
 
-  private findProvisionalOnlyPlayerIds(
-    unfinalizedMatches: UnfinalizedMatch[],
-    players: SeasonPlayers,
-  ): string[] {
+  private findProvisionalOnlyPlayerIds(unfinalizedMatches: UnfinalizedMatch[], players: SeasonPlayers): string[] {
     const allUnfinalizedPlayerIds = new Set<string>();
     for (const match of unfinalizedMatches) {
       for (const p of match.sides[0]?.entry?.players ?? []) allUnfinalizedPlayerIds.add(p.playerId);
@@ -1307,11 +1217,7 @@ export class RankedSeasonService {
    * a reason to replay the whole season, and a duration or a name template must never cost a
    * recalculation.
    */
-  async setAutomation(
-    id: string,
-    input: RankedSeasonAutomationInput,
-    userId: string,
-  ) {
+  async setAutomation(id: string, input: RankedSeasonAutomationInput, userId: string) {
     await this.assertCanManage(userId);
     const season = await this.getSeasonOrThrow(id);
 
@@ -1324,7 +1230,7 @@ export class RankedSeasonService {
       await this.scheduleTerm(id, automationTerm(input, season));
     }
     if (input.enabled) await this.refreshNextSeasonNumber(id);
-    return await rankedSeasonAutomationRepository.getByTournamentId(id) ?? row;
+    return (await rankedSeasonAutomationRepository.getByTournamentId(id)) ?? row;
   }
 
   async deleteAutomation(id: string, userId: string) {
@@ -1349,8 +1255,7 @@ export class RankedSeasonService {
     seasonId: string,
     season: { startDate: string; endDate: string },
   ): Promise<SeasonTerm | null> {
-    const automation =
-      await rankedSeasonAutomationRepository.getByTournamentId(seasonId);
+    const automation = await rankedSeasonAutomationRepository.getByTournamentId(seasonId);
     if (!automation?.enabled) return null;
     return automationTerm(automation, season);
   }
@@ -1385,10 +1290,7 @@ export class RankedSeasonService {
 
   private async scheduleTerm(id: string, term: SeasonTerm): Promise<void> {
     const now = new Date();
-    await rankedSeasonAutomationRepository.scheduleRollover(
-      id,
-      term.rolloverAt > now ? term.rolloverAt : now,
-    );
+    await rankedSeasonAutomationRepository.scheduleRollover(id, term.rolloverAt > now ? term.rolloverAt : now);
   }
 
   /**

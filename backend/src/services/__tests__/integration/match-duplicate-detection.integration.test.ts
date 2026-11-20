@@ -1,15 +1,5 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  afterAll,
-  afterEach,
-} from "bun:test";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-} from "../../../config/test-database";
+import { describe, it, expect, beforeAll, afterAll, afterEach } from "bun:test";
+import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 
@@ -131,9 +121,7 @@ describe("Match Duplicate Detection Integration Tests", () => {
 
     // Create test tournament (static mode for team-based tests)
     const today = new Date().toISOString().split("T")[0];
-    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
     const [tournament] = await testDb
       .insert(tournaments)
@@ -191,9 +179,7 @@ describe("Match Duplicate Detection Integration Tests", () => {
 
   describe("Static mode duplicate detection", () => {
     afterEach(async () => {
-      await testDb
-        .delete(matches)
-        .where(eq(matches.tournamentId, testTournamentId));
+      await testDb.delete(matches).where(eq(matches.tournamentId, testTournamentId));
     });
 
     it("should detect duplicate match with same teams", async () => {
@@ -201,7 +187,10 @@ describe("Match Duplicate Detection Integration Tests", () => {
       await matchService.createMatch(
         {
           tournamentId: testTournamentId,
-          sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamBId }],
+          sides: [
+            { position: 1, teamId: teamAId },
+            { position: 2, teamId: teamBId },
+          ],
           scoreA: 2,
           scoreB: 1,
           status: "reported",
@@ -212,7 +201,10 @@ describe("Match Duplicate Detection Integration Tests", () => {
       // Validate second match - should warn about duplicate
       const validation = await matchService.validateMatch({
         tournamentId: testTournamentId,
-        sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamBId }],
+        sides: [
+          { position: 1, teamId: teamAId },
+          { position: 2, teamId: teamBId },
+        ],
       });
 
       expect(validation.valid).toBe(true);
@@ -239,13 +231,14 @@ describe("Match Duplicate Detection Integration Tests", () => {
       // Validate match with different team
       const validation = await matchService.validateMatch({
         tournamentId: testTournamentId,
-        sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamC.id }],
+        sides: [
+          { position: 1, teamId: teamAId },
+          { position: 2, teamId: teamC.id },
+        ],
       });
 
       expect(validation.valid).toBe(true);
-      expect(validation.warnings).not.toContain(
-        "Un match similaire existe déjà",
-      );
+      expect(validation.warnings).not.toContain("Un match similaire existe déjà");
     });
 
     it("should exclude current match when validating for edit", async () => {
@@ -253,7 +246,10 @@ describe("Match Duplicate Detection Integration Tests", () => {
       const matchResult = await matchService.createMatch(
         {
           tournamentId: testTournamentId,
-          sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamBId }],
+          sides: [
+            { position: 1, teamId: teamAId },
+            { position: 2, teamId: teamBId },
+          ],
           scoreA: 0,
           scoreB: 0,
           status: "scheduled",
@@ -264,14 +260,15 @@ describe("Match Duplicate Detection Integration Tests", () => {
       // Validate the same match (edit mode) - should NOT warn
       const validation = await matchService.validateMatch({
         tournamentId: testTournamentId,
-        sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamBId }],
+        sides: [
+          { position: 1, teamId: teamAId },
+          { position: 2, teamId: teamBId },
+        ],
         matchId: matchResult!.id,
       });
 
       // Should not warn about itself
-      expect(validation.warnings).not.toContain(
-        "Un match similaire existe déjà",
-      );
+      expect(validation.warnings).not.toContain("Un match similaire existe déjà");
     });
   });
 
@@ -281,9 +278,7 @@ describe("Match Duplicate Detection Integration Tests", () => {
     beforeAll(async () => {
       // Create flex mode tournament
       const today = new Date().toISOString().split("T")[0];
-      const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0];
+      const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
       const [tournament] = await testDb
         .insert(tournaments)
@@ -331,9 +326,7 @@ describe("Match Duplicate Detection Integration Tests", () => {
     });
 
     afterEach(async () => {
-      await testDb
-        .delete(matches)
-        .where(eq(matches.tournamentId, flexTournamentId));
+      await testDb.delete(matches).where(eq(matches.tournamentId, flexTournamentId));
     });
 
     it("should detect duplicate match with same player composition", async () => {
@@ -341,7 +334,10 @@ describe("Match Duplicate Detection Integration Tests", () => {
       await matchService.createMatch(
         {
           tournamentId: flexTournamentId,
-          sides: [{ position: 1, playerIds: [player1Id, player2Id] }, { position: 2, playerIds: [player3Id, player4Id] }],
+          sides: [
+            { position: 1, playerIds: [player1Id, player2Id] },
+            { position: 2, playerIds: [player3Id, player4Id] },
+          ],
           scoreA: 2,
           scoreB: 1,
           status: "reported",
@@ -352,7 +348,10 @@ describe("Match Duplicate Detection Integration Tests", () => {
       // Validate second match with same players - should warn
       const validation = await matchService.validateMatch({
         tournamentId: flexTournamentId,
-        sides: [{ position: 1, playerIds: [player1Id, player2Id] }, { position: 2, playerIds: [player3Id, player4Id] }],
+        sides: [
+          { position: 1, playerIds: [player1Id, player2Id] },
+          { position: 2, playerIds: [player3Id, player4Id] },
+        ],
       });
 
       expect(validation.valid).toBe(true);
@@ -364,7 +363,10 @@ describe("Match Duplicate Detection Integration Tests", () => {
       await matchService.createMatch(
         {
           tournamentId: flexTournamentId,
-          sides: [{ position: 1, playerIds: [player1Id, player2Id] }, { position: 2, playerIds: [player3Id, player4Id] }],
+          sides: [
+            { position: 1, playerIds: [player1Id, player2Id] },
+            { position: 2, playerIds: [player3Id, player4Id] },
+          ],
           scoreA: 2,
           scoreB: 1,
           status: "reported",
@@ -375,7 +377,10 @@ describe("Match Duplicate Detection Integration Tests", () => {
       // Validate with same players but different order
       const validation = await matchService.validateMatch({
         tournamentId: flexTournamentId,
-        sides: [{ position: 1, playerIds: [player2Id, player1Id] }, { position: 2, playerIds: [player4Id, player3Id] }],
+        sides: [
+          { position: 1, playerIds: [player2Id, player1Id] },
+          { position: 2, playerIds: [player4Id, player3Id] },
+        ],
       });
 
       expect(validation.valid).toBe(true);
@@ -386,13 +391,14 @@ describe("Match Duplicate Detection Integration Tests", () => {
       // Validate match with different players
       const validation = await matchService.validateMatch({
         tournamentId: flexTournamentId,
-        sides: [{ position: 1, playerIds: [player1Id, player3Id] }, { position: 2, playerIds: [player2Id, player4Id] }],
+        sides: [
+          { position: 1, playerIds: [player1Id, player3Id] },
+          { position: 2, playerIds: [player2Id, player4Id] },
+        ],
       });
 
       expect(validation.valid).toBe(true);
-      expect(validation.warnings).not.toContain(
-        "Un match similaire existe déjà",
-      );
+      expect(validation.warnings).not.toContain("Un match similaire existe déjà");
     });
   });
 });

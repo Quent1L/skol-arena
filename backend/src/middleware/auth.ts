@@ -34,7 +34,7 @@ export async function requireAuth(c: AppContext, next: () => Promise<void>) {
   try {
     const appUserId = await userService.getOrCreateAppUser(
       betterAuthUser.id,
-      betterAuthUser.name || betterAuthUser.email
+      betterAuthUser.name || betterAuthUser.email,
     );
 
     c.set("appUserId", appUserId);
@@ -51,7 +51,7 @@ export async function requireAuth(c: AppContext, next: () => Promise<void>) {
             message: t("errors.USER_DEACTIVATED"),
           },
         },
-        403
+        403,
       );
     }
 
@@ -66,9 +66,9 @@ export async function requireAuth(c: AppContext, next: () => Promise<void>) {
           error: {
             code: "INVITATION_CODE_REQUIRED",
             message: t("messages.INVITATION_CODE_REQUIRED_TO_ACTIVATE"),
-          }
+          },
         },
-        403 // Forbidden (authenticated but not authorized)
+        403, // Forbidden (authenticated but not authorized)
       );
     }
 
@@ -134,9 +134,7 @@ export async function addUserContext(c: Context, next: Next) {
   // Fire-and-forget: recording activity must never block or fail a request.
   void userService
     .recordActivity(session.user.id)
-    .catch((error) =>
-      logger.warn({ err: error, userId: session.user.id }, "Failed to record activity")
-    );
+    .catch((error) => logger.warn({ err: error, userId: session.user.id }, "Failed to record activity"));
 
   await next();
   forwardAuthCookies(c, authHeaders);

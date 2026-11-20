@@ -69,7 +69,10 @@ describe("Badge holders of a tournament (integration)", () => {
   }
 
   async function holdersFor(viewerId: string | null) {
-    const badges = await rulesService.listAvailableBadgesWithHolders({ id: currentSeasonId, disciplineId: null }, viewerId);
+    const badges = await rulesService.listAvailableBadgesWithHolders(
+      { id: currentSeasonId, disciplineId: null },
+      viewerId,
+    );
     return badges.find((b) => b.ruleId === ruleId)!.holders!;
   }
 

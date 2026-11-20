@@ -95,9 +95,19 @@ export function buildAwards(data: VoteData, config: VoteConfig, directory: Direc
     fairPlayPrize: podium[0] ?? null,
     fairPlayPodium: podium,
     teamCarrier: first(count(data.titles.map((r) => ({ playerId: r.playerId, n: r.titles }))), directory),
-    mostInvolved: voterAwards ? first(voters.involved.filter((r) => r.value > 0), directory) : null,
+    mostInvolved: voterAwards
+      ? first(
+          voters.involved.filter((r) => r.value > 0),
+          directory,
+        )
+      : null,
     kindest: voterAwards ? first(voters.kindest, directory) : null,
-    strictestJudge: voterAwards ? first(voters.strictest.filter((r) => r.value > 0), directory) : null,
+    strictestJudge: voterAwards
+      ? first(
+          voters.strictest.filter((r) => r.value > 0),
+          directory,
+        )
+      : null,
     topSupporter: first(count(data.spectated), directory),
     fairPlayWorst: config.fairPlayPublicNegativeAward ? first(fairPlay, directory, "asc") : null,
     totals: totals(data),

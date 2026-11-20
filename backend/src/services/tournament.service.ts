@@ -26,13 +26,7 @@ import {
   TOURNAMENT_FIELD_POLICY,
   TOURNAMENT_STATUS_TRANSITIONS,
 } from "@skol-arena/shared";
-import {
-  ErrorCode,
-  NotFoundError,
-  BadRequestError,
-  ForbiddenError,
-  ConflictError,
-} from "../types/errors";
+import { ErrorCode, NotFoundError, BadRequestError, ForbiddenError, ConflictError } from "../types/errors";
 import { sanitizeOptionalRichText } from "../utils/sanitize-html";
 import { gameRulesRepository } from "../repository/game-rules.repository";
 import { t } from "../utils/i18n-context";
@@ -58,10 +52,7 @@ export class TournamentService {
    * The same rule, for callers that already hold the row. Saves re-reading the
    * tournament in the middle of a flow that has just fetched it.
    */
-  async assertOrganizationAccess(
-    organizationId: string | null | undefined,
-    appUserId: string | null,
-  ): Promise<void> {
+  async assertOrganizationAccess(organizationId: string | null | undefined, appUserId: string | null): Promise<void> {
     if (!organizationId) return;
 
     if (!appUserId) {
@@ -83,20 +74,14 @@ export class TournamentService {
   /**
    * Check if user can manage tournament (owner, co_admin, or super_admin)
    */
-  async canManageTournament(
-    tournamentId: string,
-    userId: string,
-  ): Promise<boolean> {
+  async canManageTournament(tournamentId: string, userId: string): Promise<boolean> {
     const user = await userRepository.getById(userId);
 
     if (!user) return false;
     if (user.role === "super_admin") return true;
 
     // Check if user is tournament admin (owner or co_admin)
-    return await tournamentRepository.isUserTournamentAdmin(
-      tournamentId,
-      userId,
-    );
+    return await tournamentRepository.isUserTournamentAdmin(tournamentId, userId);
   }
 
   /**
@@ -181,8 +166,7 @@ export class TournamentService {
     input: UpdateTournamentInput,
   ) {
     const changesOrganization =
-      input.organizationId !== undefined &&
-      (input.organizationId ?? null) !== tournament.organizationId;
+      input.organizationId !== undefined && (input.organizationId ?? null) !== tournament.organizationId;
     if (changesOrganization) {
       const user = await userRepository.getById(userId);
       if (user?.role !== "super_admin") {
@@ -300,23 +284,15 @@ export class TournamentService {
 
     if (isAdmin) return allTournaments;
 
-    const userOrgIds = appUser
-      ? await organizationRepository.getUserOrganizationIds(appUser.id)
-      : [];
+    const userOrgIds = appUser ? await organizationRepository.getUserOrganizationIds(appUser.id) : [];
 
-    return allTournaments.filter(
-      (t) => !t.organizationId || userOrgIds.includes(t.organizationId),
-    );
+    return allTournaments.filter((t) => !t.organizationId || userOrgIds.includes(t.organizationId));
   }
 
   /**
    * Update tournament
    */
-  async updateTournament(
-    id: string,
-    userId: string,
-    input: UpdateTournamentInput,
-  ) {
+  async updateTournament(id: string, userId: string, input: UpdateTournamentInput) {
     await this.checkUpdatePermissions(id, userId);
     const tournament = await this.getTournamentById(id);
     const ctx = await this.buildEditabilityContext(tournament);
@@ -368,10 +344,7 @@ export class TournamentService {
       mode: tournament.mode,
       teamMode: tournament.teamMode,
       // A draft cannot have matches, so skip the query entirely.
-      enteredMatchCount:
-        tournament.status === "draft"
-          ? 0
-          : await matchRepository.countEnteredMatches(tournament.id),
+      enteredMatchCount: tournament.status === "draft" ? 0 : await matchRepository.countEnteredMatches(tournament.id),
     };
   }
 
@@ -409,10 +382,7 @@ export class TournamentService {
    * because results have started coming in, and only the second can be explained
    * by a number.
    */
-  private async validateUpdateFields(
-    ctx: EditabilityContext,
-    input: UpdateTournamentInput,
-  ) {
+  private async validateUpdateFields(ctx: EditabilityContext, input: UpdateTournamentInput) {
     const attempted = Object.keys(input);
     const structural: string[] = [];
     const blockedByMatches: string[] = [];
@@ -447,10 +417,7 @@ export class TournamentService {
    * not enforced and any status could be set from any other, `finished` back to
    * `draft` included.
    */
-  private validateStatusChange(
-    tournament: { status: TournamentStatus },
-    input: UpdateTournamentInput,
-  ) {
+  private validateStatusChange(tournament: { status: TournamentStatus }, input: UpdateTournamentInput) {
     if (input.status === undefined || input.status === tournament.status) return;
     this.validateStatusTransition(tournament.status, input.status);
   }
@@ -525,11 +492,7 @@ export class TournamentService {
   /**
    * Change tournament status
    */
-  async changeTournamentStatus(
-    id: string,
-    userId: string,
-    newStatus: TournamentStatus,
-  ) {
+  async changeTournamentStatus(id: string, userId: string, newStatus: TournamentStatus) {
     await this.checkUpdatePermissions(id, userId);
     const tournament = await this.getTournamentById(id);
     this.validateStatusTransition(tournament.status, newStatus);
@@ -551,10 +514,7 @@ export class TournamentService {
   /**
    * Validate status transition is allowed
    */
-  private validateStatusTransition(
-    currentStatus: TournamentStatus,
-    newStatus: TournamentStatus,
-  ) {
+  private validateStatusTransition(currentStatus: TournamentStatus, newStatus: TournamentStatus) {
     const allowedTransitions = TOURNAMENT_STATUS_TRANSITIONS[currentStatus];
     if (!allowedTransitions.includes(newStatus)) {
       throw new BadRequestError(ErrorCode.INVALID_STATUS_TRANSITION, {
@@ -578,24 +538,18 @@ export class TournamentService {
     await this.checkNotAlreadyRegistered(userId, data.tournamentId);
     await this.checkNotRemoved(userId, data.tournamentId);
 
-    const participation = await participantRepository.createParticipation(
-      userId,
-      data.tournamentId,
-    );
+    const participation = await participantRepository.createParticipation(userId, data.tournamentId);
     // A player coming back leaves the inactive section
     notifyRankingChanged(tournament);
 
-    return await participantRepository.findParticipationWithDetails(
-      participation.id,
-    );
+    return await participantRepository.findParticipationWithDetails(participation.id);
   }
 
   /**
    * Get tournament for join validation
    */
   private async getTournamentForJoin(tournamentId: string) {
-    const tournament =
-      await participantRepository.findTournamentById(tournamentId);
+    const tournament = await participantRepository.findTournamentById(tournamentId);
     if (!tournament) {
       throw new NotFoundError(ErrorCode.TOURNAMENT_NOT_FOUND);
     }
@@ -606,9 +560,7 @@ export class TournamentService {
    * Validate tournament is open for joining
    */
   private validateTournamentOpenForJoin(
-    tournament: Awaited<
-      ReturnType<typeof participantRepository.findTournamentById>
-    >,
+    tournament: Awaited<ReturnType<typeof participantRepository.findTournamentById>>,
   ) {
     if (!tournament || !["open", "ongoing"].includes(tournament.status)) {
       throw new BadRequestError(ErrorCode.TOURNAMENT_CLOSED);
@@ -618,15 +570,11 @@ export class TournamentService {
   /**
    * Check user is not already registered
    */
-  private async checkNotAlreadyRegistered(
-    userId: string,
-    tournamentId: string,
-  ) {
-    const existingParticipation =
-      await participantRepository.findParticipationByUserAndTournament(
-        userId,
-        tournamentId,
-      );
+  private async checkNotAlreadyRegistered(userId: string, tournamentId: string) {
+    const existingParticipation = await participantRepository.findParticipationByUserAndTournament(
+      userId,
+      tournamentId,
+    );
 
     if (existingParticipation) {
       throw new ConflictError(ErrorCode.ALREADY_REGISTERED);
@@ -637,10 +585,7 @@ export class TournamentService {
    * A player an organizer removed cannot register again by themselves
    */
   private async checkNotRemoved(userId: string, tournamentId: string) {
-    const participation = await participantRepository.findParticipationAnyStatus(
-      userId,
-      tournamentId,
-    );
+    const participation = await participantRepository.findParticipationAnyStatus(userId, tournamentId);
     if (participation?.status === "removed") {
       throw new ForbiddenError(ErrorCode.PARTICIPANT_REMOVED);
     }
@@ -649,11 +594,7 @@ export class TournamentService {
   /**
    * Admin adds a participant to tournament
    */
-  async adminAddParticipant(
-    adminUserId: string,
-    tournamentId: string,
-    targetUserId: string,
-  ) {
+  async adminAddParticipant(adminUserId: string, tournamentId: string, targetUserId: string) {
     const canManage = await this.canManageTournament(tournamentId, adminUserId);
     if (!canManage) {
       throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
@@ -671,15 +612,10 @@ export class TournamentService {
 
     await this.checkNotAlreadyRegistered(targetUserId, tournamentId);
 
-    const participation = await participantRepository.createParticipation(
-      targetUserId,
-      tournamentId,
-    );
+    const participation = await participantRepository.createParticipation(targetUserId, tournamentId);
     notifyRankingChanged(tournament);
 
-    return await participantRepository.findParticipationWithDetails(
-      participation.id,
-    );
+    return await participantRepository.findParticipationWithDetails(participation.id);
   }
 
   /**
@@ -687,8 +623,7 @@ export class TournamentService {
    */
   async leaveTournament(userId: string, tournamentId: string) {
     // Verify tournament exists
-    const tournament =
-      await participantRepository.findTournamentById(tournamentId);
+    const tournament = await participantRepository.findTournamentById(tournamentId);
 
     if (!tournament) {
       throw new NotFoundError(ErrorCode.TOURNAMENT_NOT_FOUND);
@@ -699,11 +634,7 @@ export class TournamentService {
     }
 
     // Verify user is registered
-    const participation =
-      await participantRepository.findParticipationByUserAndTournament(
-        userId,
-        tournamentId,
-      );
+    const participation = await participantRepository.findParticipationByUserAndTournament(userId, tournamentId);
 
     if (!participation) {
       throw new BadRequestError(ErrorCode.NOT_REGISTERED);
@@ -737,21 +668,13 @@ export class TournamentService {
   /**
    * Admin removes a participant from tournament
    */
-  async adminRemoveParticipant(
-    adminUserId: string,
-    tournamentId: string,
-    targetUserId: string,
-  ) {
+  async adminRemoveParticipant(adminUserId: string, tournamentId: string, targetUserId: string) {
     const canManage = await this.canManageTournament(tournamentId, adminUserId);
     if (!canManage) {
       throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
     }
 
-    const participation =
-      await participantRepository.findParticipationByUserAndTournament(
-        targetUserId,
-        tournamentId,
-      );
+    const participation = await participantRepository.findParticipationByUserAndTournament(targetUserId, tournamentId);
 
     if (!participation) {
       throw new NotFoundError(ErrorCode.NOT_REGISTERED);

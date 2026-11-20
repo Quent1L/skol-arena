@@ -170,7 +170,8 @@ export class RulesRepository {
 
   async markBadgesViewed(ids: string[], playerId: string): Promise<void> {
     if (ids.length === 0) return;
-    await db.update(playerBadges)
+    await db
+      .update(playerBadges)
       .set({ viewedAt: new Date() })
       .where(and(inArray(playerBadges.id, ids), eq(playerBadges.playerId, playerId)));
   }
@@ -310,9 +311,7 @@ export class RulesRepository {
    */
   async clearDirtyAndStampRun(): Promise<void> {
     await this.getReconciliationState();
-    await db
-      .update(badgeReconciliationState)
-      .set({ dirty: false, silentNextRun: false, lastRunAt: new Date() });
+    await db.update(badgeReconciliationState).set({ dirty: false, silentNextRun: false, lastRunAt: new Date() });
   }
 }
 

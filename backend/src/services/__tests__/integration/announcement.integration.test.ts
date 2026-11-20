@@ -121,9 +121,9 @@ describe("Announcements (integration)", () => {
     });
 
     it("refuses a player who does not manage the tournament", async () => {
-      await expect(
-        announcementService.create(alice, input({ audience: "tournament", tournamentId })),
-      ).rejects.toThrow("INSUFFICIENT_PERMISSIONS");
+      await expect(announcementService.create(alice, input({ audience: "tournament", tournamentId }))).rejects.toThrow(
+        "INSUFFICIENT_PERMISSIONS",
+      );
       await expect(announcementService.list(alice)).rejects.toThrow("INSUFFICIENT_PERMISSIONS");
     });
   });

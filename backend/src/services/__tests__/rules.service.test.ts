@@ -50,7 +50,13 @@ describe("RulesService — non-deterministic facts", () => {
     const badgeRule = baseRule({
       type: "badge",
       conditions: randomCondition,
-      action: { type: "badge", icon: "fa fa-dice", label: "Chanceux", description: "Coup de bol", recurrence: "per_season" },
+      action: {
+        type: "badge",
+        icon: "fa fa-dice",
+        label: "Chanceux",
+        description: "Coup de bol",
+        recurrence: "per_season",
+      },
     });
     await expect(rulesService.create(badgeRule, "admin-1")).rejects.toThrow("RANDOM_NOT_ALLOWED_ON_BADGE");
     expect(mockRulesRepo.create).not.toHaveBeenCalled();
@@ -82,7 +88,13 @@ describe("RulesService — non-deterministic facts", () => {
     const badgeRule = baseRule({
       type: "badge",
       conditions: { all: [{ fact: "teammateIds", operator: "contains", value: "player-1" }] },
-      action: { type: "badge", icon: "fa fa-users", label: "Duo", description: "With this player", recurrence: "per_season" },
+      action: {
+        type: "badge",
+        icon: "fa fa-users",
+        label: "Duo",
+        description: "With this player",
+        recurrence: "per_season",
+      },
     });
     await rulesService.create(badgeRule, "admin-1");
     expect(mockRulesRepo.create).toHaveBeenCalled();
@@ -107,7 +119,13 @@ describe("RulesService — non-deterministic facts", () => {
           { fact: "outcomeReasonName", operator: "equal", value: "Injury" },
         ],
       },
-      action: { type: "badge", icon: "fa fa-ban", label: "No mercy", description: "Won by forfeit", recurrence: "per_season" },
+      action: {
+        type: "badge",
+        icon: "fa fa-ban",
+        label: "No mercy",
+        description: "Won by forfeit",
+        recurrence: "per_season",
+      },
     });
     await rulesService.create(badgeRule, "admin-1");
     expect(mockRulesRepo.create).toHaveBeenCalled();

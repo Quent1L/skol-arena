@@ -77,7 +77,6 @@ export enum ErrorCode {
   MAX_PARTNER_MATCHES_EXCEEDED = "MAX_PARTNER_MATCHES_EXCEEDED",
   MAX_OPPONENT_MATCHES_EXCEEDED = "MAX_OPPONENT_MATCHES_EXCEEDED",
 
-
   // Participant errors
   NOT_A_PARTICIPANT = "NOT_A_PARTICIPANT",
   PLAYER_NOT_IN_TOURNAMENT = "PLAYER_NOT_IN_TOURNAMENT",
@@ -180,7 +179,10 @@ export enum ErrorCode {
 
 // Base error class
 export abstract class AppError extends Error {
-  constructor(public code: ErrorCode, public details?: Record<string, unknown>) {
+  constructor(
+    public code: ErrorCode,
+    public details?: Record<string, unknown>,
+  ) {
     super(code);
     this.name = this.constructor.name;
     Object.setPrototypeOf(this, new.target.prototype);

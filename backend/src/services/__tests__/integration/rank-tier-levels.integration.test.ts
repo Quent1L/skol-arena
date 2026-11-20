@@ -1,11 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "bun:test";
 import { readFileSync } from "fs";
 import { join } from "path";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-  getPgliteInstance,
-} from "../../../config/test-database";
+import { createTestDatabase, closeTestDatabase, getPgliteInstance } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 
@@ -194,12 +190,7 @@ describe("Rank tier levels stay contiguous (integration)", () => {
       const tiers = await rankedSeasonRepository.deleteTier(seasonId, 3);
 
       expect(tiers.map((tier) => tier.level)).toEqual([1, 2, 3, 4]);
-      expect(tiers.map((tier) => tier.name)).toEqual([
-        "Rookie",
-        "Challenger",
-        "Expert",
-        "Légende",
-      ]);
+      expect(tiers.map((tier) => tier.name)).toEqual(["Rookie", "Challenger", "Expert", "Légende"]);
       // The tiers keep their own minMmr, only the level moves.
       expect(tiers.map((tier) => tier.minMmr)).toEqual([700, 900, 1300, 1500]);
     });
@@ -312,10 +303,7 @@ describe("Rank tier levels stay contiguous (integration)", () => {
   // replayed here against a season that actually has holes.
   describe("migration 0063_resequence_rank_tiers", () => {
     async function runResequenceMigration() {
-      const sql = readFileSync(
-        join(__dirname, "../../../../drizzle/0063_resequence_rank_tiers.sql"),
-        "utf-8",
-      );
+      const sql = readFileSync(join(__dirname, "../../../../drizzle/0063_resequence_rank_tiers.sql"), "utf-8");
       await getPgliteInstance()!.exec(sql);
     }
 
@@ -337,12 +325,7 @@ describe("Rank tier levels stay contiguous (integration)", () => {
 
       const tiers = await rankedSeasonRepository.getRankTiers(seasonId);
       expect(tiers.map((tier) => tier.level)).toEqual([1, 2, 3, 4]);
-      expect(tiers.map((tier) => tier.name)).toEqual([
-        "Tier 1",
-        "Tier 2",
-        "Tier 4",
-        "Tier 7",
-      ]);
+      expect(tiers.map((tier) => tier.name)).toEqual(["Tier 1", "Tier 2", "Tier 4", "Tier 7"]);
       expect(await readAnimationEvent(shifted)).toEqual({ before: 2, after: 3 });
       // Level 3 never existed in that season: nothing to point at anymore.
       expect(await readAnimationEvent(dangling)).toEqual({ before: null, after: null });

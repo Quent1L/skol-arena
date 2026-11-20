@@ -48,10 +48,7 @@ export class RulesContextService {
    * rather than the player's live state. Required to replay past matches during
    * badge reconciliation. Defaults to false (live, used at finalization).
    */
-  async buildMatchSubmittedContexts(
-    matchId: string,
-    historical = false,
-  ): Promise<MatchSubmittedContexts> {
+  async buildMatchSubmittedContexts(matchId: string, historical = false): Promise<MatchSubmittedContexts> {
     const empty: MatchSubmittedContexts = { contexts: [], displayNames: new Map() };
     const match = await db.query.matches.findFirst({
       where: eq(matches.id, matchId),
@@ -118,7 +115,15 @@ export class RulesContextService {
     const allPlayerTasks = ([sideA, sideB] as const).flatMap((side) => {
       const opponent = side === sideA ? sideB : sideA;
       return side.playerIds.map(async (playerId) => {
-        const personal = await this.buildPersonalFacts(tournamentId, matchId, playerId, opponent, tiers, !!rankedConfig, historical);
+        const personal = await this.buildPersonalFacts(
+          tournamentId,
+          matchId,
+          playerId,
+          opponent,
+          tiers,
+          !!rankedConfig,
+          historical,
+        );
         const lineUp = {
           playerId,
           teammateIds: side.playerIds.filter((id) => id !== playerId),
@@ -132,7 +137,9 @@ export class RulesContextService {
     return { contexts, displayNames, playedAt: match.playedAt };
   }
 
-  private extractSides(rawSides: Array<{ position: number; score: number | null; entry: { players: { playerId: string }[] } }>): SideInfo[] {
+  private extractSides(
+    rawSides: Array<{ position: number; score: number | null; entry: { players: { playerId: string }[] } }>,
+  ): SideInfo[] {
     return rawSides.map((s) => ({
       position: s.position,
       score: s.score ?? 0,
@@ -141,9 +148,12 @@ export class RulesContextService {
   }
 
   /** Date/time facts for the match, computed in the app timezone. */
-  private dateFacts(
-    playedAt: Date,
-  ): { matchHour: number; matchMinuteOfDay: number; matchDayOfWeek: number; matchDate: string } {
+  private dateFacts(playedAt: Date): {
+    matchHour: number;
+    matchMinuteOfDay: number;
+    matchDayOfWeek: number;
+    matchDate: string;
+  } {
     const parts = new Intl.DateTimeFormat("en-GB", {
       timeZone: APP_TIMEZONE,
       year: "numeric",

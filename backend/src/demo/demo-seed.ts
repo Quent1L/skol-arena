@@ -110,11 +110,7 @@ function eveningOf(ctx: DemoContext, days: number): Date {
 }
 
 function wins(ctx: DemoContext, playerA: string, playerB: string): boolean {
-  return favouredWins(
-    ctx.random,
-    ctx.strength.get(playerA) ?? 0.5,
-    ctx.strength.get(playerB) ?? 0.5,
-  );
+  return favouredWins(ctx.random, ctx.strength.get(playerA) ?? 0.5, ctx.strength.get(playerB) ?? 0.5);
 }
 
 // ---------------------------------------------------------------------------
@@ -176,13 +172,23 @@ function poolResult(ctx: DemoContext, pool: SeededDiscipline, aWins: boolean): P
   if (roll < 0.05) {
     const reason = ctx.random.next() < 0.5 ? FORFEIT_REASONS.noShow : FORFEIT_REASONS.withdrawal;
     const [scoreA, scoreB] = order(POOL_RACE_TO, reason === FORFEIT_REASONS.noShow ? 0 : ctx.random.int(0, 2));
-    return { scoreA, scoreB, outcomeTypeId: outcomeOf(pool, POOL_OUTCOMES.forfeit).id, outcomeReasonId: reasonOf(pool, POOL_OUTCOMES.forfeit, reason) };
+    return {
+      scoreA,
+      scoreB,
+      outcomeTypeId: outcomeOf(pool, POOL_OUTCOMES.forfeit).id,
+      outcomeReasonId: reasonOf(pool, POOL_OUTCOMES.forfeit, reason),
+    };
   }
 
   const [scoreA, scoreB] = order(POOL_RACE_TO, ctx.random.int(0, POOL_RACE_TO - 1));
   if (roll < 0.2) {
     const reason = POOL_FOUL_REASONS[ctx.random.int(0, POOL_FOUL_REASONS.length - 1)]!;
-    return { scoreA, scoreB, outcomeTypeId: outcomeOf(pool, POOL_OUTCOMES.foul).id, outcomeReasonId: reasonOf(pool, POOL_OUTCOMES.foul, reason) };
+    return {
+      scoreA,
+      scoreB,
+      outcomeTypeId: outcomeOf(pool, POOL_OUTCOMES.foul).id,
+      outcomeReasonId: reasonOf(pool, POOL_OUTCOMES.foul, reason),
+    };
   }
   return { scoreA, scoreB, outcomeTypeId: outcomeOf(pool, POOL_OUTCOMES.standard).id };
 }
@@ -245,7 +251,9 @@ function baseRow(
 }
 
 async function addChampionshipConfig(tournamentId: string, maxMatchesPerPlayer: number) {
-  await db.insert(tournamentScoringConfigs).values({ tournamentId, pointPerVictory: 3, pointPerDraw: 1, pointPerLoss: 0 });
+  await db
+    .insert(tournamentScoringConfigs)
+    .values({ tournamentId, pointPerVictory: 3, pointPerDraw: 1, pointPerLoss: 0 });
   await db.insert(championshipConfigs).values({
     tournamentId,
     maxMatchesPerPlayer,
@@ -277,7 +285,12 @@ async function createLeague(ctx: DemoContext, pool: SeededDiscipline, opts: Leag
 }
 
 /** Plays `matchCount` finalized matches spread from the start date to today (or the end). */
-async function playLeague(ctx: DemoContext, pool: SeededDiscipline, tournamentId: string, opts: LeagueOptions): Promise<number> {
+async function playLeague(
+  ctx: DemoContext,
+  pool: SeededDiscipline,
+  tournamentId: string,
+  opts: LeagueOptions,
+): Promise<number> {
   const playerIds = opts.playerKeys.map((key) => idOf(ctx, key));
   const pairs = buildPairings(ctx.random, playerIds, 2).slice(0, opts.matchCount);
   const lastDay = Math.max(opts.endDaysAgo, 1);
@@ -302,7 +315,12 @@ async function playLeague(ctx: DemoContext, pool: SeededDiscipline, tournamentId
  * Matches still in flight, all involving the admin since that is who the visitor
  * signs in as: two to confirm, one waiting on the opponent, one disputed.
  */
-async function playPendingForAdmin(ctx: DemoContext, pool: SeededDiscipline, tournamentId: string, opponents: string[]): Promise<number> {
+async function playPendingForAdmin(
+  ctx: DemoContext,
+  pool: SeededDiscipline,
+  tournamentId: string,
+  opponents: string[],
+): Promise<number> {
   const admin = adminId(ctx);
   const plan: { opponent: string; status: MatchStatus; adminReports: boolean }[] = [
     { opponent: opponents[0]!, status: "reported", adminReports: false },
@@ -317,7 +335,9 @@ async function playPendingForAdmin(ctx: DemoContext, pool: SeededDiscipline, tou
     await insertMatch({
       tournamentId,
       // The reporter is on side A; for the dispute the contester is side B: the admin.
-      sides: entry.adminReports ? oneVsOne(admin, opponent, { ...result, scoreA: result.scoreB, scoreB: result.scoreA }) : oneVsOne(opponent, admin, result),
+      sides: entry.adminReports
+        ? oneVsOne(admin, opponent, { ...result, scoreA: result.scoreB, scoreB: result.scoreA })
+        : oneVsOne(opponent, admin, result),
       outcomeTypeId: result.outcomeTypeId,
       outcomeReasonId: result.outcomeReasonId,
       playedAt: hoursAgo(ctx, 4 + index * 7),
@@ -393,8 +413,13 @@ async function createRankedSeason(ctx: DemoContext, pool: SeededDiscipline): Pro
     endDate: dateStr(daysAgo(ctx, -30)),
     createdAt: daysAgo(ctx, 63),
   });
-  const seasonId = await createCompetition(row, DEMO_PEOPLE.map((p) => idOf(ctx, p.key)));
-  await db.insert(rankedSeasonConfigs).values({ tournamentId: seasonId, baseMmr: 1000, kFactor: 32, placementMatches: 5 });
+  const seasonId = await createCompetition(
+    row,
+    DEMO_PEOPLE.map((p) => idOf(ctx, p.key)),
+  );
+  await db
+    .insert(rankedSeasonConfigs)
+    .values({ tournamentId: seasonId, baseMmr: 1000, kFactor: 32, placementMatches: 5 });
   // The default ladder: tiers named by key, so they follow the visitor's language.
   await rankedSeasonRepository.initDefaultTiers(seasonId, 1000);
   return seasonId;
@@ -429,7 +454,10 @@ async function computeSeasonStandings(seasonId: string): Promise<void> {
   // sit in the bottom tier behind the placeholder minMmr values.
   await rankedSeasonService.recalculateTierMinMmr(seasonId, 1000);
   const players = await playerMmrRepository.getAllPlayersBySeasonId(seasonId);
-  await rulesMatchHistoryService.refreshPlayers(seasonId, players.map((p) => p.playerId));
+  await rulesMatchHistoryService.refreshPlayers(
+    seasonId,
+    players.map((p) => p.playerId),
+  );
   await rankedSeasonService.computeAndCacheOfficial(seasonId);
   await rankedSeasonService.computeAndCacheProvisional(seasonId);
 }
@@ -476,7 +504,10 @@ async function createCup(ctx: DemoContext, pool: SeededDiscipline): Promise<stri
     endDate: dateStr(daysAgo(ctx, -3)),
     createdAt: daysAgo(ctx, 12),
   });
-  const tournamentId = await createCompetition(row, keys.map((key) => idOf(ctx, key)));
+  const tournamentId = await createCompetition(
+    row,
+    keys.map((key) => idOf(ctx, key)),
+  );
   await db.insert(tournamentScoringConfigs).values({ tournamentId });
   await bracketService.generateBracket(
     tournamentId,
@@ -497,7 +528,8 @@ async function seedCup(ctx: DemoContext, pool: SeededDiscipline): Promise<number
     .sort((a, b) => a.roundNumber - b.roundNumber)
     .slice(0, 2);
 
-  const decide = (playerA: string, playerB: string): BracketResult => poolResult(ctx, pool, wins(ctx, playerA, playerB));
+  const decide = (playerA: string, playerB: string): BracketResult =>
+    poolResult(ctx, pool, wins(ctx, playerA, playerB));
   for (const round of rounds) {
     await playBracketRound(round.id, daysAgo(ctx, 6 - round.roundNumber * 2, 20, 30), decide);
   }
@@ -517,7 +549,10 @@ const DOUBLES_TEAMS: { name: string; members: [string, string] }[] = [
   { name: "Rod Squad", members: ["grace", "lucas"] },
 ];
 
-async function createDoublesLeague(ctx: DemoContext, discipline: SeededDiscipline): Promise<{ tournamentId: string; teams: { id: string; players: string[] }[] }> {
+async function createDoublesLeague(
+  ctx: DemoContext,
+  discipline: SeededDiscipline,
+): Promise<{ tournamentId: string; teams: { id: string; players: string[] }[] }> {
   const players = DOUBLES_TEAMS.flatMap((t) => t.members.map((key) => idOf(ctx, key)));
   const row = baseRow(ctx, discipline, {
     name: "Table Football Doubles",
@@ -593,7 +628,10 @@ async function seedDartsOpen(ctx: DemoContext, darts: SeededDiscipline): Promise
     endDate: dateStr(daysAgo(ctx, -60)),
     createdAt: daysAgo(ctx, 2),
   });
-  const tournamentId = await createCompetition(row, keys.map((key) => idOf(ctx, key)));
+  const tournamentId = await createCompetition(
+    row,
+    keys.map((key) => idOf(ctx, key)),
+  );
   await addChampionshipConfig(tournamentId, 10);
 }
 

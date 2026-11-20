@@ -16,7 +16,7 @@ export function extractPostgresError(error: unknown): {
   }
 
   const err = error as Record<string, unknown>;
-  
+
   // Helper to extract error from an object
   const extractFrom = (obj: Record<string, unknown>) => {
     if (obj.code && typeof obj.code === "string") {
@@ -53,13 +53,16 @@ export function extractPostgresError(error: unknown): {
   }
 
   // Log the error structure for debugging
-  logger.error({
-    keys: Object.keys(err),
-    hasCode: "code" in err,
-    hasCause: "cause" in err,
-    hasOriginalError: "originalError" in err,
-    errorType: err.constructor?.name,
-  }, "Could not extract PostgreSQL error. Error structure:");
+  logger.error(
+    {
+      keys: Object.keys(err),
+      hasCode: "code" in err,
+      hasCause: "cause" in err,
+      hasOriginalError: "originalError" in err,
+      errorType: err.constructor?.name,
+    },
+    "Could not extract PostgreSQL error. Error structure:",
+  );
 
   return null;
 }
@@ -67,22 +70,22 @@ export function extractPostgresError(error: unknown): {
 /**
  * Handle database errors and convert to appropriate AppError
  */
-export function handleDatabaseError(
-  error: unknown,
-  context: { operation: string; name?: string }
-): never {
+export function handleDatabaseError(error: unknown, context: { operation: string; name?: string }): never {
   // Log full error structure for debugging
   logger.error({ err: error }, `Tournament ${context.operation} error:`);
   if (error && typeof error === "object") {
     const err = error as Record<string, unknown>;
-    logger.error({
-      constructor: err.constructor?.name,
-      keys: Object.keys(err),
-      code: err.code,
-      message: err.message,
-      cause: err.cause,
-      originalError: err.originalError,
-    }, "Error structure:");
+    logger.error(
+      {
+        constructor: err.constructor?.name,
+        keys: Object.keys(err),
+        code: err.code,
+        message: err.message,
+        cause: err.cause,
+        originalError: err.originalError,
+      },
+      "Error structure:",
+    );
   }
 
   const pgError = extractPostgresError(error);
@@ -123,4 +126,3 @@ export function handleDatabaseError(
 
   throw error;
 }
-

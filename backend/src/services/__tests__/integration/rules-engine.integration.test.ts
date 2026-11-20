@@ -166,7 +166,10 @@ describe("Rules engine — line-up facts & random gating (integration)", () => {
     tournamentId = tournament.id;
     matchId = await createMatch();
 
-    const [discipline] = await testDb.insert(disciplines).values({ name: `Discipline ${Date.now()}` }).returning();
+    const [discipline] = await testDb
+      .insert(disciplines)
+      .values({ name: `Discipline ${Date.now()}` })
+      .returning();
     const [forfeitType] = await testDb
       .insert(outcomeTypes)
       .values({ disciplineId: discipline.id, name: "Forfeit", isDefault: false })
@@ -386,7 +389,9 @@ describe("Rules engine — line-up facts & random gating (integration)", () => {
 
     it("still applies a global rule on a match whose tournament has a discipline", async () => {
       const [alice] = playerIds;
-      await addMessageRule("Global rule", { all: [{ fact: "playerId", operator: "equal", value: alice }] }, ["Global rule"]);
+      await addMessageRule("Global rule", { all: [{ fact: "playerId", operator: "equal", value: alice }] }, [
+        "Global rule",
+      ]);
 
       const outputs = await rulesEvaluationService.evaluateMatchSubmitted(disciplineMatchId);
 
@@ -417,12 +422,18 @@ describe("Rules engine — line-up facts & random gating (integration)", () => {
 
     it("fires a global containsExactly rule on a 2 v 1 scoreless match", async () => {
       const [alice, bob] = playerIds;
-      await addMessageRule("Exact pair", { all: [{ fact: "winnerIds", operator: "containsExactly", value: [alice, bob] }] }, [
-        "Blue team wins!",
-      ]);
+      await addMessageRule(
+        "Exact pair",
+        { all: [{ fact: "winnerIds", operator: "containsExactly", value: [alice, bob] }] },
+        ["Blue team wins!"],
+      );
 
       const { contexts } = await rulesContextService.buildMatchSubmittedContexts(unevenMatchId);
-      expect(contexts.map((c) => c.context.winnerIds)).toEqual([[alice, bob], [alice, bob], [alice, bob]]);
+      expect(contexts.map((c) => c.context.winnerIds)).toEqual([
+        [alice, bob],
+        [alice, bob],
+        [alice, bob],
+      ]);
 
       const outputs = await rulesEvaluationService.evaluateMatchSubmitted(unevenMatchId);
       expect(outputs.get(alice)?.message).toBe("Blue team wins!");
@@ -744,7 +755,9 @@ describe("Rules engine — line-up facts & random gating (integration)", () => {
 
       // The rule still fired in season B — it simply had nothing left to give.
       const firings = await firingsFor(rule.id);
-      expect(firings.filter((f) => f.seasonId === seasonB.seasonId).every((f) => f.result === "already_held")).toBe(true);
+      expect(firings.filter((f) => f.seasonId === seasonB.seasonId).every((f) => f.result === "already_held")).toBe(
+        true,
+      );
     });
 
     it("stamps the surface the message was read on, and keeps the first one", async () => {
@@ -905,7 +918,10 @@ describe("Rules engine — line-up facts & random gating (integration)", () => {
         all: [
           {
             fact: "matchCount",
-            params: { window: "discipline", conditions: { all: [{ fact: "isWinner", operator: "equal", value: true }] } },
+            params: {
+              window: "discipline",
+              conditions: { all: [{ fact: "isWinner", operator: "equal", value: true }] },
+            },
             operator: "greaterThanInclusive",
             value: 2,
           },
@@ -931,7 +947,9 @@ describe("Rules engine — line-up facts & random gating (integration)", () => {
         const b = await seasonInDiscipline(career);
         await addMessageRule("Career", careerWins, ["Career"]);
 
-        expect((await rulesEvaluationService.evaluateMatchSubmitted(a.matchId, a.seasonId)).get(playerIds[0])).toBeUndefined();
+        expect(
+          (await rulesEvaluationService.evaluateMatchSubmitted(a.matchId, a.seasonId)).get(playerIds[0]),
+        ).toBeUndefined();
         const outputs = await rulesEvaluationService.evaluateMatchSubmitted(b.matchId, b.seasonId);
 
         expect(outputs.get(playerIds[0])?.message).toBe("Career");

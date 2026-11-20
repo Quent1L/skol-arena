@@ -144,9 +144,12 @@ export class BadgeReconciliationService {
     const seasons = await rankedSeasonRepository.listSeasons({ disciplineId });
     const engine = this.buildEngine(rules);
     for (const playerId of playerIds) {
-      await this.reconcileDisciplinePlayer(seasons.map((s) => s.id), playerId, engine, rules).catch((err) =>
-        logger.error({ err, disciplineId, playerId }, "[BadgeReconcile] discipline player failed"),
-      );
+      await this.reconcileDisciplinePlayer(
+        seasons.map((s) => s.id),
+        playerId,
+        engine,
+        rules,
+      ).catch((err) => logger.error({ err, disciplineId, playerId }, "[BadgeReconcile] discipline player failed"));
     }
   }
 
@@ -166,7 +169,8 @@ export class BadgeReconciliationService {
     }
     const heldRuleIds = new Set(held.map((b) => b.ruleId));
     for (const [ruleId, earning] of desired) {
-      if (!heldRuleIds.has(ruleId)) await this.award(playerId, ruleId, earning, earning.seasonId, ruleById.get(ruleId)!);
+      if (!heldRuleIds.has(ruleId))
+        await this.award(playerId, ruleId, earning, earning.seasonId, ruleById.get(ruleId)!);
     }
   }
 
@@ -259,7 +263,11 @@ export class BadgeReconciliationService {
       rule.scope === "discipline" && rule.disciplineId ? { disciplineId: rule.disciplineId } : undefined,
     );
 
-    const desired = await this.desiredAwards(badgeRule, engine, seasons.map((s) => s.id));
+    const desired = await this.desiredAwards(
+      badgeRule,
+      engine,
+      seasons.map((s) => s.id),
+    );
 
     const existing = new Map(
       (await rulesRepository.listBadgeAwards(rule.id)).map((award) => [
@@ -291,7 +299,11 @@ export class BadgeReconciliationService {
    * sameness: a seasonal badge is earned once per season, a lifetime one once ever.
    * In both cases the earliest matching match under that key is the one that earned it.
    */
-  private async desiredAwards(rule: BadgeRule, engine: Engine, seasonIds: string[]): Promise<Map<string, DesiredAward>> {
+  private async desiredAwards(
+    rule: BadgeRule,
+    engine: Engine,
+    seasonIds: string[],
+  ): Promise<Map<string, DesiredAward>> {
     const desired = new Map<string, DesiredAward>();
     const seasonHistories = new Map<string, Facts[]>();
     const disciplineHistories = new Map<string, Facts[]>();

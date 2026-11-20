@@ -42,22 +42,14 @@ export class TeamRepository {
     const entries = await db
       .selectDistinct({ teamId: tournamentEntries.teamId })
       .from(tournamentEntries)
-      .where(
-        and(
-          eq(tournamentEntries.tournamentId, tournamentId),
-          isNotNull(tournamentEntries.teamId),
-        )
-      );
+      .where(and(eq(tournamentEntries.tournamentId, tournamentId), isNotNull(tournamentEntries.teamId)));
     const teamsWithMatch = new Set(entries.map((e) => e.teamId));
 
     return teamList.map((team) => ({ ...team, hasMatch: teamsWithMatch.has(team.id) }));
   }
 
   async addMember(teamId: string, userId: string) {
-    const [member] = await db
-      .insert(teamMembers)
-      .values({ teamId, userId })
-      .returning();
+    const [member] = await db.insert(teamMembers).values({ teamId, userId }).returning();
     return member;
   }
 
@@ -72,17 +64,17 @@ export class TeamRepository {
     maxTeamSize: number,
   ): Promise<"added" | "full" | "already_in_team"> {
     return await db.transaction(async (tx) => {
-      await tx.select({ id: tournaments.id }).from(tournaments)
-        .where(eq(tournaments.id, tournamentId)).for("update");
+      await tx.select({ id: tournaments.id }).from(tournaments).where(eq(tournaments.id, tournamentId)).for("update");
 
-      const [existing] = await tx.select({ id: teamMembers.id }).from(teamMembers)
+      const [existing] = await tx
+        .select({ id: teamMembers.id })
+        .from(teamMembers)
         .innerJoin(teams, eq(teamMembers.teamId, teams.id))
         .where(and(eq(teams.tournamentId, tournamentId), eq(teamMembers.userId, userId)))
         .limit(1);
       if (existing) return "already_in_team";
 
-      const [{ value }] = await tx.select({ value: count() }).from(teamMembers)
-        .where(eq(teamMembers.teamId, teamId));
+      const [{ value }] = await tx.select({ value: count() }).from(teamMembers).where(eq(teamMembers.teamId, teamId));
       if (value >= maxTeamSize) return "full";
 
       await tx.insert(teamMembers).values({ teamId, userId });
@@ -91,9 +83,7 @@ export class TeamRepository {
   }
 
   async removeMember(teamId: string, userId: string) {
-    await db
-      .delete(teamMembers)
-      .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
+    await db.delete(teamMembers).where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
   }
 
   async isMember(teamId: string, userId: string): Promise<boolean> {
@@ -104,10 +94,7 @@ export class TeamRepository {
   }
 
   async getMemberCount(teamId: string): Promise<number> {
-    const [result] = await db
-      .select({ count: count() })
-      .from(teamMembers)
-      .where(eq(teamMembers.teamId, teamId));
+    const [result] = await db.select({ count: count() }).from(teamMembers).where(eq(teamMembers.teamId, teamId));
     return result?.count ?? 0;
   }
 
@@ -116,12 +103,7 @@ export class TeamRepository {
       .select({ team: teams })
       .from(teamMembers)
       .innerJoin(teams, eq(teamMembers.teamId, teams.id))
-      .where(
-        and(
-          eq(teams.tournamentId, tournamentId),
-          eq(teamMembers.userId, userId),
-        )
-      )
+      .where(and(eq(teams.tournamentId, tournamentId), eq(teamMembers.userId, userId)))
       .limit(1);
     return result[0]?.team ?? null;
   }

@@ -46,17 +46,15 @@ describe("push device registration", () => {
       "https://169.254.169.254/latest/meta-data",
       "https://fcm.googleapis.com.evil.com/x",
     ]) {
-      expect(
-        RegisterDeviceSchema.safeParse({ deviceType: "WEB", subscriptionEndpoint }).success,
-      ).toBe(false);
+      expect(RegisterDeviceSchema.safeParse({ deviceType: "WEB", subscriptionEndpoint }).success).toBe(false);
     }
   });
 
   it("refuses to move another user's device without its auth secret", async () => {
     existingDevice("victim", "secret");
-    await expect(
-      notificationService.registerPushDevice("attacker", registration("guess")),
-    ).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(notificationService.registerPushDevice("attacker", registration("guess"))).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
     expect(registered).toEqual([]);
   });
 

@@ -16,10 +16,7 @@ export interface UpdateOutcomeReasonData {
 
 export class OutcomeReasonRepository {
   async create(data: CreateOutcomeReasonData) {
-    const [outcomeReason] = await db
-      .insert(outcomeReasons)
-      .values(data)
-      .returning();
+    const [outcomeReason] = await db.insert(outcomeReasons).values(data).returning();
     return outcomeReason;
   }
 
@@ -38,7 +35,7 @@ export class OutcomeReasonRepository {
 
   async list(outcomeTypeId?: string) {
     const conditions = [];
-    
+
     if (outcomeTypeId) {
       conditions.push(eq(outcomeReasons.outcomeTypeId, outcomeTypeId));
     }
@@ -57,11 +54,7 @@ export class OutcomeReasonRepository {
   }
 
   async update(id: string, data: UpdateOutcomeReasonData) {
-    const [updated] = await db
-      .update(outcomeReasons)
-      .set(data)
-      .where(eq(outcomeReasons.id, id))
-      .returning();
+    const [updated] = await db.update(outcomeReasons).set(data).where(eq(outcomeReasons.id, id)).returning();
     return updated;
   }
 
@@ -70,10 +63,7 @@ export class OutcomeReasonRepository {
    * It simply cannot be deleted once a match was recorded with it.
    */
   async getDeletionBlockers(id: string): Promise<DeletionBlocker[]> {
-    const [row] = await db
-      .select({ total: count() })
-      .from(matches)
-      .where(eq(matches.outcomeReasonId, id));
+    const [row] = await db.select({ total: count() }).from(matches).where(eq(matches.outcomeReasonId, id));
 
     return row?.total ? [{ resource: "matches", count: row.total }] : [];
   }
@@ -88,4 +78,3 @@ export class OutcomeReasonRepository {
 }
 
 export const outcomeReasonRepository = new OutcomeReasonRepository();
-

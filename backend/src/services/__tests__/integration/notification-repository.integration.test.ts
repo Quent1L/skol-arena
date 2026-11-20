@@ -94,7 +94,9 @@ describe("notificationRepository (integration)", () => {
 
   it("deletes one copy, and the notification once nobody holds it", async () => {
     const n = await notificationRepository.create(base(ann));
-    await testDb.insert(notificationStatus).values({ notificationId: n.id, userId: bob, read: false, actionCompleted: false });
+    await testDb
+      .insert(notificationStatus)
+      .values({ notificationId: n.id, userId: bob, read: false, actionCompleted: false });
 
     await notificationRepository.delete(n.id, ann);
     expect(await notificationRepository.getById(n.id)).toBeDefined();

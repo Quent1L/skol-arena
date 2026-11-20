@@ -23,7 +23,11 @@ describe("mmrAnimationEventRepository (integration)", () => {
   let matchA: string;
   let matchB: string;
 
-  const event = (playerId: string, matchId: string, extra: Partial<UpsertMmrAnimationEventData> = {}): UpsertMmrAnimationEventData => ({
+  const event = (
+    playerId: string,
+    matchId: string,
+    extra: Partial<UpsertMmrAnimationEventData> = {},
+  ): UpsertMmrAnimationEventData => ({
     playerId,
     seasonId,
     matchId,
@@ -43,7 +47,11 @@ describe("mmrAnimationEventRepository (integration)", () => {
 
   beforeAll(async () => {
     const admin = await seed.createUser("Admin");
-    [ann, bob, cat] = await Promise.all(["Ann", "Bob", "Cat"].map((n) => seed.createUser(n))) as [string, string, string];
+    [ann, bob, cat] = (await Promise.all(["Ann", "Bob", "Cat"].map((n) => seed.createUser(n)))) as [
+      string,
+      string,
+      string,
+    ];
     seasonId = await seed.createTournament(admin, { mode: "ranked" });
     const [eAB, eC, eB, eA] = await Promise.all([
       seed.createEntry(seasonId, [ann, bob]),
@@ -122,7 +130,9 @@ describe("mmrAnimationEventRepository (integration)", () => {
     await repo.retireUnseenForMatch(seasonId, matchA, [ann, bob, cat]);
 
     // ann had already seen part of this delta: that event stays, only never-seen ones retire.
-    expect((await repo.getPendingForPlayer(ann, seasonId)).map((e) => e.matchId).sort()).toEqual([matchA, matchB].sort());
+    expect((await repo.getPendingForPlayer(ann, seasonId)).map((e) => e.matchId).sort()).toEqual(
+      [matchA, matchB].sort(),
+    );
     expect(await repo.getPendingForPlayer(cat, seasonId)).toEqual([]);
     const bobEvent = (await repo.getOfficialEventDeltasForPlayers(seasonId, [bob])).get(bob)?.get(matchA);
     expect(bobEvent?.seenDelta).toBe(25);

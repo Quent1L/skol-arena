@@ -25,7 +25,10 @@ describe("getFinalizedAmendRights", () => {
       isArbitration: false,
       denial: null,
     });
-    expect(getFinalizedAmendRights(match({ finalizationReason: "auto_validation", finalizedAt: hoursAgo(47) }), author, now).canCorrect).toBe(true);
+    expect(
+      getFinalizedAmendRights(match({ finalizationReason: "auto_validation", finalizedAt: hoursAgo(47) }), author, now)
+        .canCorrect,
+    ).toBe(true);
   });
 
   it("closes the author's window after 48h without a contestation", () => {
@@ -36,8 +39,12 @@ describe("getFinalizedAmendRights", () => {
 
   it("stretches the author's window to the dispute window while someone contests", () => {
     const contested = { hasOpenPostDispute: true };
-    expect(getFinalizedAmendRights(match({ ...contested, finalizedAt: hoursAgo(6 * 24) }), author, now).canCancel).toBe(true);
-    expect(getFinalizedAmendRights(match({ ...contested, finalizedAt: hoursAgo(8 * 24) }), author, now).canCancel).toBe(false);
+    expect(getFinalizedAmendRights(match({ ...contested, finalizedAt: hoursAgo(6 * 24) }), author, now).canCancel).toBe(
+      true,
+    );
+    expect(getFinalizedAmendRights(match({ ...contested, finalizedAt: hoursAgo(8 * 24) }), author, now).canCancel).toBe(
+      false,
+    );
   });
 
   it("refuses the author on a result someone else signed", () => {
@@ -73,10 +80,7 @@ describe("getFinalizedAmendRights", () => {
 });
 
 describe("hasOpposingPostDispute", () => {
-  const sides = [
-    { players: [{ id: "author" }, { id: "mate" }] },
-    { players: [{ id: "opp1" }, { id: "opp2" }] },
-  ];
+  const sides = [{ players: [{ id: "author" }, { id: "mate" }] }, { players: [{ id: "opp1" }, { id: "opp2" }] }];
   const contest = (playerId: string, isPostFinalization = true) => ({
     playerId,
     isContested: true,

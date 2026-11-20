@@ -27,11 +27,7 @@ export const storedBlobRepository = {
   },
 
   async exists(key: string): Promise<boolean> {
-    const [row] = await db
-      .select({ key: storedBlobs.key })
-      .from(storedBlobs)
-      .where(eq(storedBlobs.key, key))
-      .limit(1);
+    const [row] = await db.select({ key: storedBlobs.key }).from(storedBlobs).where(eq(storedBlobs.key, key)).limit(1);
     return row != null;
   },
 

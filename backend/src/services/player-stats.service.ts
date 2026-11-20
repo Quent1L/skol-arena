@@ -54,7 +54,14 @@ function isLossResult(r: SideOutcome): boolean {
 
 type EntryPlayer = { playerId: string; displayName: string; shortName: string };
 
-type FormatAcc = { teamSize: number; opponentSize: number; played: number; wins: number; losses: number; draws: number };
+type FormatAcc = {
+  teamSize: number;
+  opponentSize: number;
+  played: number;
+  wins: number;
+  losses: number;
+  draws: number;
+};
 
 /**
  * Splits a player's record by match format, from their side of the table: 2v1 (two of
@@ -102,12 +109,7 @@ function groupPlayersByEntry(
 
 type H2HAcc = { played: number; playerAWins: number; playerBWins: number; draws: number };
 
-function tabulateH2HMatch(
-  r: MatchResult,
-  playerCounts: Map<string, number>,
-  soloAcc: H2HAcc,
-  teamAcc: H2HAcc,
-) {
+function tabulateH2HMatch(r: MatchResult, playerCounts: Map<string, number>, soloAcc: H2HAcc, teamAcc: H2HAcc) {
   const aCount = playerCounts.get(r.entryId) ?? 1;
   const bCount = playerCounts.get(r.oppEntryId) ?? 1;
   const acc = aCount === 1 && bCount === 1 ? soloAcc : teamAcc;
@@ -136,13 +138,7 @@ type RelationAcc = {
   count: number;
 };
 
-function accumulatePlayer(
-  acc: Map<string, RelationAcc>,
-  p: EntryPlayer,
-  win: boolean,
-  loss: boolean,
-  draw: boolean,
-) {
+function accumulatePlayer(acc: Map<string, RelationAcc>, p: EntryPlayer, win: boolean, loss: boolean, draw: boolean) {
   if (!acc.has(p.playerId)) {
     acc.set(p.playerId, { displayName: p.displayName, shortName: p.shortName, wins: 0, losses: 0, draws: 0, count: 0 });
   }
@@ -205,13 +201,7 @@ export function rankRelationsByWeightedRate(
   relations: PlayerRelationStat[],
   rateOf: (r: PlayerRelationStat) => number,
 ): PlayerRelationStat[] {
-  return rankByWeightedRate(
-    relations,
-    rateOf,
-    (r) => r.count,
-    MIN_WEIGHTED_RATE_MATCHES,
-    compareRelations,
-  );
+  return rankByWeightedRate(relations, rateOf, (r) => r.count, MIN_WEIGHTED_RATE_MATCHES, compareRelations);
 }
 
 function accumulateTournamentMatches(
@@ -269,13 +259,19 @@ export class PlayerStatsService {
    * by that scope: a member's cached page must never be served to an outsider.
    */
   private statsCacheKey(filters: ExtendedFilters, visibleOrganizationIds: string[] | null): string | null {
-    const isNarrowed = !!(filters.disciplineId || filters.tournamentMode || filters.teamMode || filters.allowedModes?.length);
+    const isNarrowed = !!(
+      filters.disciplineId ||
+      filters.tournamentMode ||
+      filters.teamMode ||
+      filters.allowedModes?.length
+    );
     if (isNarrowed) return null;
     if (filters.tournamentId) return `stats:tournament:${filters.tournamentId}`;
 
-    const scope = visibleOrganizationIds === null
-      ? "all"
-      : Bun.hash([...visibleOrganizationIds].sort(compareCodeUnits).join(",")).toString(36);
+    const scope =
+      visibleOrganizationIds === null
+        ? "all"
+        : Bun.hash([...visibleOrganizationIds].sort(compareCodeUnits).join(",")).toString(36);
     return `stats:global:${scope}`;
   }
 
@@ -354,15 +350,15 @@ export class PlayerStatsService {
     viewerId: string | null,
   ): Promise<PlayerComparisonResponse> {
     const visibleOrganizationIds = await visibleOrganizationIdsFor(viewerId);
-    const validModes = ['championship', 'ranked'] as const;
-    const mode = validModes.includes(userFilters.tournamentMode as typeof validModes[number])
+    const validModes = ["championship", "ranked"] as const;
+    const mode = validModes.includes(userFilters.tournamentMode as (typeof validModes)[number])
       ? userFilters.tournamentMode
       : undefined;
 
     const filters: ExtendedFilters = {
       disciplineId: userFilters.disciplineId,
       tournamentId: userFilters.tournamentId,
-      teamMode: 'flex',
+      teamMode: "flex",
       ...(mode ? { tournamentMode: mode } : { allowedModes: [...validModes] }),
     };
 
@@ -402,7 +398,9 @@ export class PlayerStatsService {
     );
 
     const seenMatches = new Set<string>();
-    let wins = 0, losses = 0, draws = 0;
+    let wins = 0,
+      losses = 0,
+      draws = 0;
 
     for (const r of matchResults) {
       if (seenMatches.has(r.matchId)) continue;
@@ -430,8 +428,18 @@ export class PlayerStatsService {
     filters: ExtendedFilters,
     visibleOrganizationIds: string[] | null,
   ): Promise<PlayerHeadToHeadRecord> {
-    const emptySubRecord: H2HSubRecord = { matchesPlayed: 0, playerAWins: 0, playerBWins: 0, draws: 0, playerAWinRate: 0 };
-    const empty: PlayerHeadToHeadRecord = { ...emptySubRecord, solo: { ...emptySubRecord }, team: { ...emptySubRecord } };
+    const emptySubRecord: H2HSubRecord = {
+      matchesPlayed: 0,
+      playerAWins: 0,
+      playerBWins: 0,
+      draws: 0,
+      playerAWinRate: 0,
+    };
+    const empty: PlayerHeadToHeadRecord = {
+      ...emptySubRecord,
+      solo: { ...emptySubRecord },
+      team: { ...emptySubRecord },
+    };
 
     const entries = await playerStatsRepository.getPlayerEntries(playerAId, filters, visibleOrganizationIds);
     if (entries.length === 0) return empty;
@@ -450,13 +458,14 @@ export class PlayerStatsService {
         .map(([entryId]) => entryId),
     );
 
-    const relevantOwnEntryIds = [...new Set(
-      matchResults
-        .filter((r) => oppEntriesWithB.has(r.oppEntryId))
-        .map((r) => r.entryId),
-    )];
+    const relevantOwnEntryIds = [
+      ...new Set(matchResults.filter((r) => oppEntriesWithB.has(r.oppEntryId)).map((r) => r.entryId)),
+    ];
     const relevantOppEntryIds = [...oppEntriesWithB];
-    const playerCounts = await playerStatsRepository.getEntryPlayerCounts([...relevantOwnEntryIds, ...relevantOppEntryIds]);
+    const playerCounts = await playerStatsRepository.getEntryPlayerCounts([
+      ...relevantOwnEntryIds,
+      ...relevantOppEntryIds,
+    ]);
 
     const seenMatches = new Set<string>();
     const soloAcc: H2HAcc = { played: 0, playerAWins: 0, playerBWins: 0, draws: 0 };
@@ -500,7 +509,10 @@ export class PlayerStatsService {
 
   private aggregateBaseStats(matchResults: MatchResult[]) {
     const seen = new Set<string>();
-    let wins = 0, draws = 0, losses = 0, totalScore = 0;
+    let wins = 0,
+      draws = 0,
+      losses = 0,
+      totalScore = 0;
 
     for (const r of matchResults) {
       if (seen.has(r.matchId)) continue;
@@ -526,13 +538,13 @@ export class PlayerStatsService {
     playerId: string,
     tournamentId: string | undefined,
     visibleOrganizationIds: string[] | null,
-  ): Promise<Array<'V' | 'D' | 'N'>> {
+  ): Promise<Array<"V" | "D" | "N">> {
     const rows = await playerStatsRepository.getPlayerRecentForm(playerId, 10, tournamentId, visibleOrganizationIds);
     // Reverse so index 0 = oldest, last = most recent (left→right = old→recent)
     return [...rows].reverse().map((r) => {
-      if (isWinResult(r)) return 'V';
-      if (isLossResult(r)) return 'D';
-      return 'N';
+      if (isWinResult(r)) return "V";
+      if (isLossResult(r)) return "D";
+      return "N";
     });
   }
 
@@ -581,10 +593,7 @@ export class PlayerStatsService {
     return tallyFormats(matchResults, sizes);
   }
 
-  private async computeH2HStats(
-    matchResults: MatchResult[],
-    playerId: string,
-  ): Promise<PlayerH2HStat[]> {
+  private async computeH2HStats(matchResults: MatchResult[], playerId: string): Promise<PlayerH2HStat[]> {
     const oppEntryIds = [...new Set(matchResults.map((r) => r.oppEntryId))];
     const playersInOppEntries = await playerStatsRepository.getPlayersInEntries(oppEntryIds);
     const entryToPlayers = groupPlayersByEntry(playersInOppEntries);
@@ -643,7 +652,7 @@ export class PlayerStatsService {
   private async computeNemesisStats(
     matchResults: MatchResult[],
     _playerEntryIds: string[],
-    _playerId: string
+    _playerId: string,
   ): Promise<PlayerRelationStat[]> {
     const oppEntryIds = [...new Set(matchResults.map((r) => r.oppEntryId))];
     const playersInOppEntries = await playerStatsRepository.getPlayersInEntries(oppEntryIds);
@@ -667,8 +676,14 @@ export class PlayerStatsService {
   }
 
   private async buildTournamentHistory(
-    entries: Array<{ entryId: string; tournamentId: string; tournamentName: string; tournamentMode: string; disciplineName: string | null }>,
-    matchResults: MatchResult[]
+    entries: Array<{
+      entryId: string;
+      tournamentId: string;
+      tournamentName: string;
+      tournamentMode: string;
+      disciplineName: string | null;
+    }>,
+    matchResults: MatchResult[],
   ): Promise<PlayerTournamentEntry[]> {
     const matchesByEntry = new Map<string, MatchResult[]>();
     for (const r of matchResults) {
@@ -678,8 +693,7 @@ export class PlayerStatsService {
 
     const entryIdsByTournament = new Map<string, string[]>();
     for (const entry of entries) {
-      if (!entryIdsByTournament.has(entry.tournamentId))
-        entryIdsByTournament.set(entry.tournamentId, []);
+      if (!entryIdsByTournament.has(entry.tournamentId)) entryIdsByTournament.set(entry.tournamentId, []);
       entryIdsByTournament.get(entry.tournamentId)!.push(entry.entryId);
     }
 
@@ -693,14 +707,16 @@ export class PlayerStatsService {
         tournamentName: entry.tournamentName,
         mode: entry.tournamentMode,
         disciplineName: entry.disciplineName ?? undefined,
-        matchesPlayed: 0, wins: 0, draws: 0, losses: 0,
+        matchesPlayed: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
       };
 
       const entryIds = entryIdsByTournament.get(entry.tournamentId) ?? [];
       const totalPoints = accumulateTournamentMatches(base, entryIds, matchesByEntry);
 
-      if (entry.tournamentMode === "championship" && totalPoints > 0)
-        base.points = totalPoints;
+      if (entry.tournamentMode === "championship" && totalPoints > 0) base.points = totalPoints;
 
       seen.set(entry.tournamentId, base);
     }
@@ -708,10 +724,7 @@ export class PlayerStatsService {
     return Array.from(seen.values());
   }
 
-  async getPlayerMatchHistory(
-    playerId: string,
-    filters: PlayerMatchHistoryQuery,
-  ): Promise<ClientMatchHistoryEntry[]> {
+  async getPlayerMatchHistory(playerId: string, filters: PlayerMatchHistoryQuery): Promise<ClientMatchHistoryEntry[]> {
     const rows = await playerStatsRepository.getPlayerMatchHistory(playerId, filters);
     if (rows.length === 0) return [];
 
@@ -738,7 +751,12 @@ export class PlayerStatsService {
         id: `${playerId}-${row.matchId}`,
         matchId: row.matchId,
         playerId,
-        tournament: { id: row.tournamentId, name: row.tournamentName, mode: row.tournamentMode, scoreEnabled: row.tournamentScoreEnabled },
+        tournament: {
+          id: row.tournamentId,
+          name: row.tournamentName,
+          mode: row.tournamentMode,
+          scoreEnabled: row.tournamentScoreEnabled,
+        },
         playedAt: row.playedAt ?? new Date(),
         status: row.status ?? "finalized",
         scoreA: row.scoreA,
@@ -748,9 +766,7 @@ export class PlayerStatsService {
         teamSizeB: row.teamSizeB,
         sides,
         mmrDelta: row.mmrDelta ?? null,
-        outcomeType: row.outcomeTypeId
-          ? { id: row.outcomeTypeId, name: row.outcomeTypeName ?? '' }
-          : null,
+        outcomeType: row.outcomeTypeId ? { id: row.outcomeTypeId, name: row.outcomeTypeName ?? "" } : null,
       };
     });
   }

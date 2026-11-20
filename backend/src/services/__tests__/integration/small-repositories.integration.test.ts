@@ -21,7 +21,10 @@ describe("outcome reasons (integration)", () => {
   let otherTypeId: string;
 
   beforeAll(async () => {
-    const [discipline] = await testDb.insert(disciplines).values({ name: `Disc-${Date.now()}` }).returning();
+    const [discipline] = await testDb
+      .insert(disciplines)
+      .values({ name: `Disc-${Date.now()}` })
+      .returning();
     const [a, b] = await testDb
       .insert(outcomeTypes)
       .values([
@@ -80,7 +83,12 @@ describe("push devices (integration)", () => {
   let userId: string;
   let otherId: string;
   const device = (endpoint: string, extra: Record<string, unknown> = {}) =>
-    ({ deviceType: "WEB", subscriptionEndpoint: endpoint, subscriptionData: { keys: { p256dh: "x", auth: "y" } }, ...extra }) as never;
+    ({
+      deviceType: "WEB",
+      subscriptionEndpoint: endpoint,
+      subscriptionData: { keys: { p256dh: "x", auth: "y" } },
+      ...extra,
+    }) as never;
 
   beforeAll(async () => {
     userId = await seed.createUser("Pusher");
@@ -88,7 +96,10 @@ describe("push devices (integration)", () => {
   });
 
   it("registers a device and finds it by endpoint", async () => {
-    const [created] = await pushDeviceRepository.register(userId, device("https://push.example/a", { locale: "fr", timezone: "Europe/Paris" }));
+    const [created] = await pushDeviceRepository.register(
+      userId,
+      device("https://push.example/a", { locale: "fr", timezone: "Europe/Paris" }),
+    );
     expect(created).toMatchObject({ userId, active: true, locale: "fr", timezone: "Europe/Paris" });
     expect((await pushDeviceRepository.findByEndpoint("https://push.example/a"))?.id).toBe(created!.id);
     expect(await pushDeviceRepository.findByEndpoint("https://push.example/none")).toBeNull();

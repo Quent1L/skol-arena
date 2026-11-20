@@ -1,6 +1,6 @@
-import { makeWorkerUtils, type WorkerUtils } from 'graphile-worker';
-import { webSocketService } from './websocket.service';
-import { logger } from '../utils/logger';
+import { makeWorkerUtils, type WorkerUtils } from "graphile-worker";
+import { webSocketService } from "./websocket.service";
+import { logger } from "../utils/logger";
 
 let _utils: WorkerUtils | null = null;
 
@@ -16,16 +16,16 @@ export async function enqueueMmrFinalization(matchId: string, tournamentId: stri
   try {
     const utils = await getUtils();
     await utils.addJob(
-      'finalize_match_mmr',
+      "finalize_match_mmr",
       { matchId, tournamentId },
       { jobKey: `finalize:${matchId}`, queueName: `mmr:${tournamentId}` },
     );
     webSocketService.broadcastToTournament(tournamentId, {
-      event: 'leaderboard_recalculating',
+      event: "leaderboard_recalculating",
       data: { seasonId: tournamentId },
     });
   } catch (err) {
-    logger.error({ err, matchId, tournamentId }, '[MMRQueue] Failed to enqueue finalization');
+    logger.error({ err, matchId, tournamentId }, "[MMRQueue] Failed to enqueue finalization");
   }
 }
 
@@ -33,16 +33,16 @@ export async function enqueueMmrSeasonRecalculation(tournamentId: string): Promi
   try {
     const utils = await getUtils();
     await utils.addJob(
-      'recalculate_season_mmr',
+      "recalculate_season_mmr",
       { tournamentId },
       { jobKey: `recalculate_season:${tournamentId}`, queueName: `mmr:${tournamentId}` },
     );
     webSocketService.broadcastToTournament(tournamentId, {
-      event: 'leaderboard_recalculating',
+      event: "leaderboard_recalculating",
       data: { seasonId: tournamentId },
     });
   } catch (err) {
-    logger.error({ err, tournamentId }, '[MMRQueue] Failed to enqueue season recalculation');
+    logger.error({ err, tournamentId }, "[MMRQueue] Failed to enqueue season recalculation");
   }
 }
 
@@ -55,12 +55,12 @@ export async function enqueueSeasonRewindGeneration(seasonId: string): Promise<v
   try {
     const utils = await getUtils();
     await utils.addJob(
-      'generate_season_rewind',
+      "generate_season_rewind",
       { seasonId },
       { jobKey: `rewind:${seasonId}`, queueName: `mmr:${seasonId}` },
     );
   } catch (err) {
-    logger.error({ err, seasonId }, '[MMRQueue] Failed to enqueue rewind generation');
+    logger.error({ err, seasonId }, "[MMRQueue] Failed to enqueue rewind generation");
   }
 }
 
@@ -75,13 +75,13 @@ export async function enqueueRewindIdentityRefresh(playerIds: string[]): Promise
     const utils = await getUtils();
     for (const playerId of playerIds) {
       await utils.addJob(
-        'refresh_rewind_identities',
+        "refresh_rewind_identities",
         { playerIds: [playerId] },
         { jobKey: `rewind-identity:${playerId}` },
       );
     }
   } catch (err) {
-    logger.error({ err, playerIds }, '[MMRQueue] Failed to enqueue rewind identity refresh');
+    logger.error({ err, playerIds }, "[MMRQueue] Failed to enqueue rewind identity refresh");
   }
 }
 
@@ -90,13 +90,9 @@ export async function enqueueBadgeReconciliation(force = false): Promise<void> {
     const utils = await getUtils();
     // Single shared job key: collapses the nightly tick and any manual triggers
     // into one queued run (no overlap with concurrency:1).
-    await utils.addJob(
-      'reconcile_pending_badges',
-      { force },
-      { jobKey: 'reconcile_pending_badges' },
-    );
+    await utils.addJob("reconcile_pending_badges", { force }, { jobKey: "reconcile_pending_badges" });
   } catch (err) {
-    logger.error({ err, force }, '[MMRQueue] Failed to enqueue badge reconciliation');
+    logger.error({ err, force }, "[MMRQueue] Failed to enqueue badge reconciliation");
   }
 }
 
@@ -108,16 +104,16 @@ export async function enqueueMmrCascade(
   try {
     const utils = await getUtils();
     await utils.addJob(
-      'cancel_match_mmr',
+      "cancel_match_mmr",
       { matchId, tournamentId, cancelledMatchPlayedAt: cancelledMatchPlayedAt.toISOString() },
       { jobKey: `cancel:${matchId}`, queueName: `mmr:${tournamentId}` },
     );
     webSocketService.broadcastToTournament(tournamentId, {
-      event: 'leaderboard_recalculating',
+      event: "leaderboard_recalculating",
       data: { seasonId: tournamentId },
     });
   } catch (err) {
-    logger.error({ err, matchId, tournamentId }, '[MMRQueue] Failed to enqueue cascade');
+    logger.error({ err, matchId, tournamentId }, "[MMRQueue] Failed to enqueue cascade");
   }
 }
 
@@ -127,15 +123,15 @@ export async function enqueueMmrCorrection(matchId: string, tournamentId: string
     // Keyed per match: corrections made back to back collapse into one replay, which
     // reads the result as it stands when it runs.
     await utils.addJob(
-      'correct_match_mmr',
+      "correct_match_mmr",
       { matchId, tournamentId },
       { jobKey: `correct:${matchId}`, queueName: `mmr:${tournamentId}` },
     );
     webSocketService.broadcastToTournament(tournamentId, {
-      event: 'leaderboard_recalculating',
+      event: "leaderboard_recalculating",
       data: { seasonId: tournamentId },
     });
   } catch (err) {
-    logger.error({ err, matchId, tournamentId }, '[MMRQueue] Failed to enqueue correction');
+    logger.error({ err, matchId, tournamentId }, "[MMRQueue] Failed to enqueue correction");
   }
 }

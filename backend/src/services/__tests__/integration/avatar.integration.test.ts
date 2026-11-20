@@ -12,13 +12,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Hono } from "hono";
 import { eq, sql } from "drizzle-orm";
-import {
-  appUsers,
-  organizations,
-  organizationMembers,
-  storedBlobs,
-  user as betterAuthUser,
-} from "../../../db/schema";
+import { appUsers, organizations, organizationMembers, storedBlobs, user as betterAuthUser } from "../../../db/schema";
 import { avatarService } from "../../avatar.service";
 import { setAvatarStorage } from "../../../storage";
 import { PostgresBlobStorage } from "../../../storage/postgres-blob-storage";
@@ -46,10 +40,12 @@ async function createOrganization(ownerId: string, memberIds: string[]) {
     .insert(organizations)
     .values({ name: `Org-${Math.random().toString(16).slice(2)}`, createdBy: ownerId })
     .returning();
-  await testDb.insert(organizationMembers).values([
-    { organizationId: org!.id, userId: ownerId, role: "owner" },
-    ...memberIds.map((userId) => ({ organizationId: org!.id, userId, role: "member" as const })),
-  ]);
+  await testDb
+    .insert(organizationMembers)
+    .values([
+      { organizationId: org!.id, userId: ownerId, role: "owner" },
+      ...memberIds.map((userId) => ({ organizationId: org!.id, userId, role: "member" as const })),
+    ]);
 }
 
 async function blobCount(userId: string): Promise<number> {
@@ -116,10 +112,7 @@ describe("Avatars (integration)", () => {
         avatarService.setAvatar(userId, makePng(320, 300)),
       ]);
 
-      const current = await testDb
-        .select({ v: appUsers.avatarVersion })
-        .from(appUsers)
-        .where(eq(appUsers.id, userId));
+      const current = await testDb.select({ v: appUsers.avatarVersion }).from(appUsers).where(eq(appUsers.id, userId));
       expect([a, b]).toContain(current[0]!.v!);
       expect(await blobCount(userId)).toBe(AVATAR_SIZES.length);
     });

@@ -159,11 +159,7 @@ function createAggregate(playerId: string, initialMmr: number): PlayerAggregate 
  * of equal length are separated by that figure — the richest win streak and the
  * costliest losing one are the ones worth telling.
  */
-function updateStreaks(
-  agg: PlayerAggregate,
-  outcome: MmrHistoryOutcome,
-  mmrDelta: number,
-): void {
+function updateStreaks(agg: PlayerAggregate, outcome: MmrHistoryOutcome, mmrDelta: number): void {
   if (outcome === "win") {
     agg.currentWinStreak++;
     agg.currentWinStreakMmr += mmrDelta;
@@ -193,8 +189,7 @@ function updateStreaks(
   }
   if (
     agg.currentLossStreak > agg.worstLossStreak ||
-    (agg.currentLossStreak === agg.worstLossStreak &&
-      agg.currentLossStreakMmr < agg.worstLossStreakMmr)
+    (agg.currentLossStreak === agg.worstLossStreak && agg.currentLossStreakMmr < agg.worstLossStreakMmr)
   ) {
     agg.worstLossStreak = agg.currentLossStreak;
     agg.worstLossStreakMmr = agg.currentLossStreakMmr;
@@ -202,12 +197,7 @@ function updateStreaks(
   agg.bestUnbeatenStreak = Math.max(agg.bestUnbeatenStreak, agg.currentUnbeatenStreak);
 }
 
-function draftFeat(
-  row: SeasonHistoryRow,
-  opponent: string | null,
-  side: SideContext,
-  mmrGap: number,
-): FeatDraft {
+function draftFeat(row: SeasonHistoryRow, opponent: string | null, side: SideContext, mmrGap: number): FeatDraft {
   return {
     matchId: row.matchId,
     playedAt: row.playedAt,
@@ -235,12 +225,7 @@ function draftFeat(
  * one of the season, so a threshold would only hide the whole line from a player
  * who never faced anyone far above them.
  */
-function updateUpsets(
-  agg: PlayerAggregate,
-  row: SeasonHistoryRow,
-  opponent: string | null,
-  side: SideContext,
-): void {
+function updateUpsets(agg: PlayerAggregate, row: SeasonHistoryRow, opponent: string | null, side: SideContext): void {
   const gap = row.opponentAvgMmr - side.allyAvgMmr;
   if (gap <= 0) return;
 
@@ -256,12 +241,7 @@ function updateUpsets(
  * multiplier, so the best-paying match of a season is often a normal-looking win
  * scored in a way the discipline rewards more.
  */
-function updateBestGain(
-  agg: PlayerAggregate,
-  row: SeasonHistoryRow,
-  opponent: string | null,
-  side: SideContext,
-): void {
+function updateBestGain(agg: PlayerAggregate, row: SeasonHistoryRow, opponent: string | null, side: SideContext): void {
   if (row.mmrDelta <= 0) return;
   if (agg.bestMmrGain && row.mmrDelta <= agg.bestMmrGain.mmrDelta) return;
   agg.bestMmrGain = draftFeat(row, opponent, side, row.opponentAvgMmr - side.allyAvgMmr);
@@ -299,11 +279,7 @@ function addToTally(
   store.set(key, tally);
 }
 
-function recordTeammates(
-  state: ReplayState,
-  team: string[],
-  outcomes: Map<string, MmrHistoryOutcome>,
-): void {
+function recordTeammates(state: ReplayState, team: string[], outcomes: Map<string, MmrHistoryOutcome>): void {
   for (let i = 0; i < team.length; i++) {
     for (let j = i + 1; j < team.length; j++) {
       const outcome = outcomes.get(team[i]!);
@@ -312,11 +288,7 @@ function recordTeammates(
   }
 }
 
-function recordPairs(
-  state: ReplayState,
-  sides: Map<number, string[]>,
-  outcomes: Map<string, MmrHistoryOutcome>,
-): void {
+function recordPairs(state: ReplayState, sides: Map<number, string[]>, outcomes: Map<string, MmrHistoryOutcome>): void {
   const teamA = sides.get(1) ?? [];
   const teamB = sides.get(2) ?? [];
 
@@ -452,15 +424,10 @@ function returnToStandings(state: ReplayState, participants: string[]): void {
  * a match recorded without its sides — falls on the same branch as a side B
  * player, which keeps `opponents` reading team A as it always did.
  */
-function sideOf(
-  playerId: string,
-  sides: Map<number, string[]>,
-): { allies: string[]; opponents: string[] } {
+function sideOf(playerId: string, sides: Map<number, string[]>): { allies: string[]; opponents: string[] } {
   const teamA = sides.get(1) ?? [];
   const teamB = sides.get(2) ?? [];
-  return teamA.includes(playerId)
-    ? { allies: teamA, opponents: teamB }
-    : { allies: teamB, opponents: teamA };
+  return teamA.includes(playerId) ? { allies: teamA, opponents: teamB } : { allies: teamB, opponents: teamA };
 }
 
 /**
@@ -469,10 +436,7 @@ function sideOf(
  * is the pre-match one — the same instant `opponentAvgMmr` was frozen at when
  * the match was rated.
  */
-export function buildSideContexts(
-  rows: SeasonHistoryRow[],
-  sides: Map<number, string[]>,
-): Map<string, SideContext> {
+export function buildSideContexts(rows: SeasonHistoryRow[], sides: Map<number, string[]>): Map<string, SideContext> {
   const mmrBefore = new Map(rows.map((row) => [row.playerId, row.mmrBefore]));
   const contexts = new Map<string, SideContext>();
 
@@ -480,9 +444,7 @@ export function buildSideContexts(
     const { allies, opponents } = sideOf(row.playerId, sides);
     // A player absent from the side rows is treated as their own side of one.
     const roster = allies.includes(row.playerId) ? allies : [row.playerId];
-    const rated = roster
-      .map((playerId) => mmrBefore.get(playerId))
-      .filter((mmr): mmr is number => mmr !== undefined);
+    const rated = roster.map((playerId) => mmrBefore.get(playerId)).filter((mmr): mmr is number => mmr !== undefined);
     const pool = rated.length > 0 ? rated : [row.mmrBefore];
 
     contexts.set(row.playerId, {
@@ -501,8 +463,7 @@ function applyRow(
   side: SideContext,
   leaderId: string | null,
 ): MmrHistoryOutcome {
-  const agg =
-    state.aggregates.get(row.playerId) ?? createAggregate(row.playerId, row.mmrBefore);
+  const agg = state.aggregates.get(row.playerId) ?? createAggregate(row.playerId, row.mmrBefore);
   state.aggregates.set(row.playerId, agg);
 
   const resolved = resolveOutcome(row);
@@ -587,10 +548,7 @@ function currentLeader(state: ReplayState): string | null {
   return state.ranking[0] ?? null;
 }
 
-export function replaySeason(
-  history: SeasonHistoryRow[],
-  sides: SeasonSideRow[],
-): ReplayResult {
+export function replaySeason(history: SeasonHistoryRow[], sides: SeasonSideRow[]): ReplayResult {
   const state: ReplayState = {
     aggregates: new Map(),
     currentMmr: new Map(),

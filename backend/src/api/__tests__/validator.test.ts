@@ -7,16 +7,10 @@ import { errorHandler } from "../../middleware/error";
 
 function makeApp() {
   const app = new Hono();
-  app.post(
-    "/thing",
-    validate("json", z.object({ name: z.string().min(3), age: z.number().int() })),
-    (c) => c.json(c.req.valid("json"))
+  app.post("/thing", validate("json", z.object({ name: z.string().min(3), age: z.number().int() })), (c) =>
+    c.json(c.req.valid("json")),
   );
-  app.get(
-    "/search",
-    validate("query", z.object({ q: z.string().min(1) })),
-    (c) => c.json(c.req.valid("query"))
-  );
+  app.get("/search", validate("query", z.object({ q: z.string().min(1) })), (c) => c.json(c.req.valid("query")));
   app.onError(errorHandler);
   return app;
 }
@@ -54,9 +48,7 @@ describe("validate", () => {
     };
     expect(body.error.code).toBe("VALIDATION_ERROR");
     expect(body.error.details.target).toBe("json");
-    expect(body.error.details.issues).toEqual(
-      expect.arrayContaining([expect.objectContaining({ path: "name" })])
-    );
+    expect(body.error.details.issues).toEqual(expect.arrayContaining([expect.objectContaining({ path: "name" })]));
   });
 
   it("never echoes the rejected payload back to the caller", async () => {

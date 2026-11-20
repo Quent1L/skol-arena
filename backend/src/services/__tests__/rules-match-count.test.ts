@@ -1,10 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { Engine } from "json-rules-engine";
-import {
-  MATCH_HISTORY_FACT,
-  createMatchCounter,
-  registerMatchCountFact,
-} from "../rules-match-count";
+import { MATCH_HISTORY_FACT, createMatchCounter, registerMatchCountFact } from "../rules-match-count";
 import { usesMatchCount, type RuleConditions } from "@skol-arena/shared";
 
 const GOLD_WIN: RuleConditions = {
@@ -83,7 +79,9 @@ describe("registerMatchCountFact", () => {
     registerMatchCountFact(engine);
     engine.addRule({
       conditions: {
-        all: [{ fact: "matchCount", params: { conditions: GOLD_WIN }, operator: "greaterThanInclusive", value: atLeast }],
+        all: [
+          { fact: "matchCount", params: { conditions: GOLD_WIN }, operator: "greaterThanInclusive", value: atLeast },
+        ],
       } as never,
       event: { type: "hit" },
     });

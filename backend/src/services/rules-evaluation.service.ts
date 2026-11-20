@@ -95,7 +95,7 @@ export function resolveDisplay(facts: Facts, displayNames: Map<string, string>):
     const value = facts[key];
     // List facts (teammateIds/opponentIds) render as a comma-separated name list.
     if (Array.isArray(value)) {
-      out[key] = value.map((id) => (typeof id === "string" ? displayNames.get(id) ?? id : id)).join(", ");
+      out[key] = value.map((id) => (typeof id === "string" ? (displayNames.get(id) ?? id) : id)).join(", ");
     } else if (typeof value === "string" && displayNames.has(value)) {
       out[key] = displayNames.get(value);
     }
@@ -199,7 +199,11 @@ export class RulesEvaluationService {
         [MATCH_HISTORY_FACT]: await rulesMatchHistoryService.loadSeason(seasonId, playerId, playedAt),
       };
       if (wholeDiscipline) {
-        facts[DISCIPLINE_HISTORY_FACT] = await rulesMatchHistoryService.loadDiscipline(disciplineId!, playerId, playedAt);
+        facts[DISCIPLINE_HISTORY_FACT] = await rulesMatchHistoryService.loadDiscipline(
+          disciplineId!,
+          playerId,
+          playedAt,
+        );
       }
       return facts;
     } catch (err) {
@@ -324,7 +328,10 @@ export class RulesEvaluationService {
     const byId = new Map<string, EvaluableRule>();
     for (const rule of rules) {
       byId.set(rule.id, rule);
-      engine.addRule({ conditions: rule.conditions as never, event: { type: "rule_matched", params: { ruleId: rule.id } } });
+      engine.addRule({
+        conditions: rule.conditions as never,
+        event: { type: "rule_matched", params: { ruleId: rule.id } },
+      });
     }
     return {
       engine,
@@ -334,10 +341,7 @@ export class RulesEvaluationService {
     };
   }
 
-  private async runEngine(
-    { engine, byId }: EngineBundle,
-    facts: Facts,
-  ): Promise<EvaluableRule[]> {
+  private async runEngine({ engine, byId }: EngineBundle, facts: Facts): Promise<EvaluableRule[]> {
     const { events } = await engine.run(facts);
     const matched: EvaluableRule[] = [];
     for (const event of events) {

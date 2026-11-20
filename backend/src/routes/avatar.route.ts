@@ -1,10 +1,6 @@
 import { z } from "zod";
 import { bodyLimit } from "hono/body-limit";
-import {
-  avatarLookupRequestSchema,
-  avatarLookupResponseSchema,
-  avatarUploadResponseSchema,
-} from "@skol-arena/shared";
+import { avatarLookupRequestSchema, avatarLookupResponseSchema, avatarUploadResponseSchema } from "@skol-arena/shared";
 import { requireAuth } from "../middleware/auth";
 import { rateLimit } from "../middleware/rate-limit";
 import { avatarService } from "../services/avatar.service";
@@ -67,7 +63,7 @@ avatars.put(
     const bytes = await readUploadedFile(form);
     const avatarVersion = await avatarService.setAvatar(c.get("appUserId"), bytes);
     return c.json({ avatarVersion });
-  }
+  },
 );
 
 // DELETE /users/me/avatar - Remove the current user's avatar
@@ -84,7 +80,7 @@ avatars.delete(
     const appUserId = c.get("appUserId");
     await avatarService.removeAvatar(appUserId, appUserId);
     return c.body(null, 204);
-  }
+  },
 );
 
 // DELETE /users/:id/avatar - Moderation: remove another player's avatar
@@ -106,7 +102,7 @@ avatars.delete(
     const { id } = c.req.valid("param");
     await avatarService.removeAvatar(c.get("appUserId"), id);
     return c.body(null, 204);
-  }
+  },
 );
 
 // POST /users/avatars/lookup - Current avatar version of a batch of players
@@ -124,7 +120,7 @@ avatars.post(
   async (c) => {
     const { ids } = c.req.valid("json");
     return c.json({ avatars: await avatarService.lookup(ids) });
-  }
+  },
 );
 
 export default avatars;

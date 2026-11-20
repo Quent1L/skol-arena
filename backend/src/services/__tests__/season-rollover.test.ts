@@ -40,9 +40,7 @@ describe("automationTerm", () => {
   const season = { startDate: "2026-01-01", endDate: "2026-03-15" };
 
   it("counts a chain's term from the start and ignores the typed end date", () => {
-    expect(automationTerm({ mode: "chain", durationDays: 30 }, season).endDate).toBe(
-      "2026-01-31",
-    );
+    expect(automationTerm({ mode: "chain", durationDays: 30 }, season).endDate).toBe("2026-01-31");
   });
 
   it("keeps a close-only season on the end date the admin chose", () => {
@@ -87,15 +85,11 @@ describe("rankedSeasonAutomationInputSchema", () => {
   });
 
   it("accepts a close-only automation", () => {
-    expect(
-      rankedSeasonAutomationInputSchema.safeParse({ ...valid, mode: "close" }).success,
-    ).toBe(true);
+    expect(rankedSeasonAutomationInputSchema.safeParse({ ...valid, mode: "close" }).success).toBe(true);
   });
 
   it("rejects an unknown mode", () => {
-    expect(
-      rankedSeasonAutomationInputSchema.safeParse({ ...valid, mode: "pause" }).success,
-    ).toBe(false);
+    expect(rankedSeasonAutomationInputSchema.safeParse({ ...valid, mode: "pause" }).success).toBe(false);
   });
 
   it("rejects a name template without the placeholder", () => {
@@ -109,15 +103,11 @@ describe("rankedSeasonAutomationInputSchema", () => {
 
   it("rejects a duration outside 1..365 days", () => {
     for (const durationDays of [0, -5, 366]) {
-      expect(
-        rankedSeasonAutomationInputSchema.safeParse({ ...valid, durationDays }).success,
-      ).toBe(false);
+      expect(rankedSeasonAutomationInputSchema.safeParse({ ...valid, durationDays }).success).toBe(false);
     }
   });
 
   it("rejects a soft reset factor outside 0..1", () => {
-    expect(
-      rankedSeasonAutomationInputSchema.safeParse({ ...valid, softResetFactor: 1.5 }).success,
-    ).toBe(false);
+    expect(rankedSeasonAutomationInputSchema.safeParse({ ...valid, softResetFactor: 1.5 }).success).toBe(false);
   });
 });

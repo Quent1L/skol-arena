@@ -100,8 +100,7 @@ describe("requireSuperAdmin", () => {
 
 describe("requireTournamentAccess", () => {
   const ID = "11111111-1111-4111-8111-111111111111";
-  const build = () =>
-    appWith((a) => a.get("/t/:id", requireTournamentAccess(), (c) => c.text("ok")));
+  const build = () => appWith((a) => a.get("/t/:id", requireTournamentAccess(), (c) => c.text("ok")));
 
   beforeEach(() => assertCanAccess.mockClear());
 

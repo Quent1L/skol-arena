@@ -55,10 +55,8 @@ ranked.use("/seasons/:id/*", requireTournamentAccess());
 const TAGS = ["Ranked"];
 const REWIND_TAGS = ["Season rewind"];
 
-const seasonRoute = (options: Omit<DescribeOptions, "tags">) =>
-  describe({ ...options, tags: TAGS });
-const rewindRoute = (options: Omit<DescribeOptions, "tags">) =>
-  describe({ ...options, tags: REWIND_TAGS });
+const seasonRoute = (options: Omit<DescribeOptions, "tags">) => describe({ ...options, tags: TAGS });
+const rewindRoute = (options: Omit<DescribeOptions, "tags">) => describe({ ...options, tags: REWIND_TAGS });
 
 // Tiers are addressed by level, not by id. A non-numeric segment used to slip
 // through as NaN and silently match no row.
@@ -101,17 +99,12 @@ ranked.get(
       "anonymous caller gets the same list with false.",
     success: { description: "Seasons matching the filters", schema: z.array(rankedSeasonListItemSchema) },
   }),
-  validate(
-    "query",
-    z.object({ disciplineId: z.string().optional(), status: z.string().optional() })
-  ),
+  validate("query", z.object({ disciplineId: z.string().optional(), status: z.string().optional() })),
   async (c) => {
     const { disciplineId, status } = c.req.valid("query");
 
     const betterAuthUser = c.get("user");
-    const appUser = betterAuthUser
-      ? await userRepository.getByExternalId(betterAuthUser.id)
-      : null;
+    const appUser = betterAuthUser ? await userRepository.getByExternalId(betterAuthUser.id) : null;
 
     const seasons = await rankedSeasonService.listSeasons({
       disciplineId,
@@ -119,7 +112,7 @@ ranked.get(
       ...(appUser && { viewerId: appUser.id }),
     });
     return c.json(seasons);
-  }
+  },
 );
 
 // GET /ranked/seasons/finished - List finished seasons (for tier source dropdown)
@@ -127,13 +120,13 @@ ranked.get(
   "/seasons/finished",
   seasonRoute({
     summary: "List finished ranked seasons",
-    description: "Trimmed rows, meant to populate the \"copy tiers from\" dropdown.",
+    description: 'Trimmed rows, meant to populate the "copy tiers from" dropdown.',
     success: { description: "Finished seasons", schema: z.array(finishedRankedSeasonSchema) },
   }),
   async (c) => {
     const seasons = await rankedSeasonService.getFinishedSeasons(await resolveOptionalViewer(c));
     return c.json(seasons);
-  }
+  },
 );
 
 // GET /ranked/seasons/:id - Get season details
@@ -148,7 +141,7 @@ ranked.get(
     const id = c.req.param("id")!;
     const season = await rankedSeasonService.getSeasonDetails(id);
     return c.json(season);
-  }
+  },
 );
 
 // PATCH /ranked/seasons/:id - Update season config (draft only)
@@ -192,7 +185,7 @@ ranked.post(
     const appUserId = c.get("appUserId");
     const season = await rankedSeasonService.startSeason(id, appUserId);
     return c.json(season);
-  }
+  },
 );
 
 // POST /ranked/seasons/:id/end - End a ranked season
@@ -213,7 +206,7 @@ ranked.post(
     const appUserId = c.get("appUserId");
     const season = await rankedSeasonService.endSeason(id, appUserId);
     return c.json(season);
-  }
+  },
 );
 
 // PUT /ranked/seasons/:id/automation - Configure automatic season chaining
@@ -298,7 +291,7 @@ ranked.get(
     const id = c.req.param("id")!;
     const tiers = await rankedSeasonRepository.getRankTiers(id);
     return c.json(tiers);
-  }
+  },
 );
 
 // POST /ranked/seasons/:id/tiers - Create a rank tier
@@ -366,7 +359,7 @@ ranked.delete(
     const level = parseTierLevel(c.req.param("level")!);
     const tiers = await rankedSeasonService.deleteTier(id, level, c.get("appUserId"));
     return c.json(tiers);
-  }
+  },
 );
 
 // POST /ranked/seasons/:id/tiers/recalculate - Recalculate tier MMR boundaries
@@ -385,7 +378,7 @@ ranked.post(
     const id = c.req.param("id")!;
     const tiers = await rankedSeasonService.recalculateTiers(id, c.get("appUserId"));
     return c.json(tiers);
-  }
+  },
 );
 
 // GET /ranked/seasons/:id/leaderboard - Get season leaderboard (cached)
@@ -393,7 +386,8 @@ ranked.get(
   "/seasons/:id/leaderboard",
   seasonRoute({
     summary: "Get the season leaderboard",
-    description: "Served from cache; recomputed on a miss. placementMatches ships alongside so the client can list unplaced players apart without a second round trip.",
+    description:
+      "Served from cache; recomputed on a miss. placementMatches ships alongside so the client can list unplaced players apart without a second round trip.",
     notFound: true,
     success: { description: "Ranked players plus the placement threshold", schema: rankedLeaderboardSchema },
   }),
@@ -406,7 +400,7 @@ ranked.get(
     const placementMatches = season.rankedConfig?.placementMatches ?? 0;
     const players = await rankedSeasonService.getLeaderboard(id, "official");
     return c.json({ players, placementMatches });
-  }
+  },
 );
 
 // GET /ranked/seasons/:id/leaderboard/provisional - Provisional leaderboard (cached)
@@ -427,7 +421,7 @@ ranked.get(
     const placementMatches = season.rankedConfig?.placementMatches ?? 0;
     const players = await rankedSeasonService.getLeaderboard(id, "provisional");
     return c.json({ players, placementMatches });
-  }
+  },
 );
 
 // GET /ranked/seasons/:id/leaderboard/season-stats - Peak + average MMR over the whole
@@ -447,7 +441,7 @@ ranked.get(
     const id = c.req.param("id")!;
     const players = await rankedSeasonService.getSeasonMmrLeaderboard(id);
     return c.json({ players });
-  }
+  },
 );
 
 // POST /ranked/seasons/:id/mmr-snapshot - MMR of a set of players at a past date
@@ -472,7 +466,7 @@ ranked.post(
     const { playerIds, at } = c.req.valid("json");
     const players = await mmrCalculationService.getMmrSnapshotAt(id, playerIds, new Date(at));
     return c.json({ players });
-  }
+  },
 );
 
 // GET /ranked/seasons/:id/players/:playerId - Player MMR profile
@@ -503,7 +497,7 @@ ranked.get(
       chartHistory,
       placementMatches: config?.placementMatches ?? 0,
     });
-  }
+  },
 );
 
 // GET /ranked/seasons/:id/players/:playerId/history - MMR history
@@ -520,7 +514,7 @@ ranked.get(
     z.object({
       limit: z.coerce.number().int().min(1).max(100).default(10),
       offset: z.coerce.number().int().min(0).default(0),
-    })
+    }),
   ),
   async (c) => {
     const { id, playerId } = c.req.param();
@@ -530,7 +524,10 @@ ranked.get(
     const matchIds = history.map((h) => h.matchId);
     const sidesData = await playerMmrRepository.getMatchPlayersForHistory(matchIds);
 
-    const sidesMap = new Map<string, { position: number; players: { id: string; displayName: string; shortName: string }[] }[]>();
+    const sidesMap = new Map<
+      string,
+      { position: number; players: { id: string; displayName: string; shortName: string }[] }[]
+    >();
     for (const side of sidesData) {
       const list = sidesMap.get(side.matchId) ?? [];
       list.push({
@@ -546,7 +543,7 @@ ranked.get(
 
     const enriched = history.map((h) => ({ ...h, sides: sidesMap.get(h.matchId) ?? [] }));
     return c.json(enriched);
-  }
+  },
 );
 
 // GET /ranked/players/:playerId/career - Peak and average MMR, season by season
@@ -565,7 +562,7 @@ ranked.get(
     const playerId = c.req.param("playerId")!;
     const seasons = await rankedSeasonService.getPlayerCareer(playerId, await resolveOptionalViewer(c));
     return c.json({ seasons });
-  }
+  },
 );
 
 // GET /ranked/seasons/:id/weekly-mmr - Best MMR climbers / drops of the week
@@ -613,7 +610,7 @@ ranked.get(
     const playerId = c.get("appUserId");
     const events = await mmrAnimationEventService.getPendingForPlayer(playerId, seasonId, c.get("lang"));
     return c.json({ events });
-  }
+  },
 );
 
 // POST /ranked/seasons/:id/animation-events/mark-viewed - Mark events as viewed
@@ -659,7 +656,7 @@ ranked.get(
     const playerId = c.get("appUserId");
     const badges = await rulesService.getPendingBadges(playerId, seasonId);
     return c.json({ badges });
-  }
+  },
 );
 
 // POST /ranked/seasons/:id/badge-animations/mark-viewed - Mark badge animations as viewed
@@ -701,7 +698,7 @@ ranked.get(
     const playerId = c.get("appUserId");
     const promotion = await seasonRewindService.getPromoted(playerId);
     return c.json(promotion);
-  }
+  },
 );
 
 // GET /ranked/rewinds - Every rewind the player owns, no promotion window applied
@@ -718,7 +715,7 @@ ranked.get(
     const playerId = c.get("appUserId");
     const rewinds = await seasonRewindService.listArchive(playerId);
     return c.json(rewinds);
-  }
+  },
 );
 
 // GET /ranked/seasons/:id/rewind - Global season recap (public, like the leaderboard)
@@ -734,7 +731,7 @@ ranked.get(
     const seasonId = c.req.param("id")!;
     const bundle = await seasonRewindService.getBundle(seasonId, null);
     return c.json(bundle);
-  }
+  },
 );
 
 // GET /ranked/seasons/:id/rewind/me - Global recap + the caller's own deck, in one call
@@ -752,7 +749,7 @@ ranked.get(
     const seasonId = c.req.param("id")!;
     const bundle = await seasonRewindService.getBundle(seasonId, c.get("appUserId"));
     return c.json(bundle);
-  }
+  },
 );
 
 // POST /ranked/seasons/:id/rewind/opened - First open; stops the season page auto-opening it
@@ -770,7 +767,7 @@ ranked.post(
     const seasonId = c.req.param("id")!;
     await seasonRewindService.markOpened(seasonId, c.get("appUserId"));
     return c.json({ success: true });
-  }
+  },
 );
 
 // POST /ranked/seasons/:id/rewind/viewed - Deck watched to the end; retires the promo card
@@ -788,7 +785,7 @@ ranked.post(
     const seasonId = c.req.param("id")!;
     await seasonRewindService.markViewed(seasonId, c.get("appUserId"));
     return c.json({ success: true });
-  }
+  },
 );
 
 // POST /ranked/seasons/:id/rewind/regenerate - Admin rebuild (keeps per-player state)
@@ -808,7 +805,7 @@ ranked.post(
     const seasonId = c.req.param("id")!;
     await rankedSeasonService.regenerateRewind(seasonId, c.get("appUserId"));
     return c.json({ success: true });
-  }
+  },
 );
 
 export default ranked;

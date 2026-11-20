@@ -34,7 +34,7 @@ session.get(
       session: currentSession,
       user,
     });
-  }
+  },
 );
 
 export default session;

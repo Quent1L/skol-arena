@@ -8,11 +8,7 @@ import { standingsRepository } from "../repository/standings.repository";
 import { tournamentService } from "./tournament.service";
 import { notificationService } from "./notification.service";
 import { db } from "../config/database";
-import {
-  matches,
-  matchSides,
-  tournamentEntries,
-} from "../db/schema";
+import { matches, matchSides, tournamentEntries } from "../db/schema";
 import { eq } from "drizzle-orm";
 import type { GenerateBracketInput } from "@skol-arena/shared";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
@@ -21,13 +17,7 @@ import { t } from "../utils/i18n-context";
 import { shuffled } from "../utils/random";
 
 type DbTransaction = NodePgDatabase<typeof schema> | typeof db;
-import {
-  ErrorCode,
-  NotFoundError,
-  BadRequestError,
-  ForbiddenError,
-  ConflictError,
-} from "../types/errors";
+import { ErrorCode, NotFoundError, BadRequestError, ForbiddenError, ConflictError } from "../types/errors";
 
 interface BracketSeedData {
   entryId: string;
@@ -78,13 +68,7 @@ interface LoserLink {
 }
 
 /** Ordinal names of the last rounds, closest to the final first. */
-const FINAL_ROUND_KEYS = [
-  "FINAL",
-  "SEMI_FINALS",
-  "QUARTER_FINALS",
-  "ROUND_OF_16",
-  "ROUND_OF_32",
-] as const;
+const FINAL_ROUND_KEYS = ["FINAL", "SEMI_FINALS", "QUARTER_FINALS", "ROUND_OF_16", "ROUND_OF_32"] as const;
 
 /** Renders a round label in the language of the request that generated the bracket. */
 function renderRoundName(label: RoundLabel): string {
@@ -99,11 +83,7 @@ export class BracketService {
   /**
    * Generate or regenerate a bracket for a tournament
    */
-  async generateBracket(
-    tournamentId: string,
-    input: GenerateBracketInput,
-    userId: string
-  ) {
+  async generateBracket(tournamentId: string, input: GenerateBracketInput, userId: string) {
     return await db.transaction(async (tx) => {
       // 1. Validate generation is allowed
       await this.validateBracketGeneration(tournamentId, userId, input);
@@ -112,10 +92,7 @@ export class BracketService {
       await this.clearExistingBracket(tournamentId, tx);
 
       // 3. Get or create tournament entries from participants
-      const entries = await this.getOrCreateEntriesFromParticipants(
-        tournamentId,
-        tx
-      );
+      const entries = await this.getOrCreateEntriesFromParticipants(tournamentId, tx);
 
       if (entries.length < 2) {
         throw new BadRequestError(ErrorCode.INSUFFICIENT_PARTICIPANTS, {
@@ -125,12 +102,7 @@ export class BracketService {
       }
 
       // 4. Generate seeding
-      const seeds = await this.generateSeeding(
-        tournamentId,
-        entries,
-        input,
-        tx
-      );
+      const seeds = await this.generateSeeding(tournamentId, entries, input, tx);
 
       // 5. Create bracket config
       const config = await bracketRepository.createConfig(
@@ -140,13 +112,10 @@ export class BracketService {
           seedingType: input.seedingType,
           sourceTournamentId: input.sourceTournamentId,
           totalParticipants: seeds.length,
-          roundsCount: this.calculateRoundsCount(
-            seeds.length,
-            input.bracketType
-          ),
+          roundsCount: this.calculateRoundsCount(seeds.length, input.bracketType),
           hasBronzeMatch: input.hasBronzeMatch || false,
         },
-        tx
+        tx,
       );
 
       // 6. Save seeds
@@ -157,23 +126,14 @@ export class BracketService {
           seedNumber: s.seedNumber,
           seedingScore: s.seedingScore,
         })),
-        tx
+        tx,
       );
 
       // 7. Generate bracket structure
-      const rounds = await this.generateBracketStructure(
-        config.bracketType,
-        seeds,
-        config.hasBronzeMatch
-      );
+      const rounds = await this.generateBracketStructure(config.bracketType, seeds, config.hasBronzeMatch);
 
       // 8. Create rounds and matches
-      await this.createRoundsAndMatches(
-        config.id,
-        tournamentId,
-        rounds,
-        tx
-      );
+      await this.createRoundsAndMatches(config.id, tournamentId, rounds, tx);
 
       // 9. Return complete bracket data
       return await bracketRepository.getBracketDataByTournamentId(tournamentId);
@@ -216,9 +176,7 @@ export class BracketService {
 
     // Check if there are any finalized or confirmed matches
     const matches = await matchRepository.list({ tournamentId });
-    const hasConfirmedMatches = matches.some((m) =>
-      ["confirmed", "finalized"].includes(m.status)
-    );
+    const hasConfirmedMatches = matches.some((m) => ["confirmed", "finalized"].includes(m.status));
 
     if (hasConfirmedMatches) {
       return {
@@ -242,10 +200,7 @@ export class BracketService {
    */
   async deleteBracket(tournamentId: string, userId: string) {
     // Check permissions
-    const canManage = await tournamentService.canManageTournament(
-      tournamentId,
-      userId
-    );
+    const canManage = await tournamentService.canManageTournament(tournamentId, userId);
     if (!canManage) {
       throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
     }
@@ -262,14 +217,8 @@ export class BracketService {
     }
   }
 
-  private async clearExistingBracket(
-    tournamentId: string,
-    tx: DbTransaction
-  ): Promise<void> {
-    const existingConfig = await bracketRepository.getConfigByTournamentId(
-      tournamentId,
-      tx
-    );
+  private async clearExistingBracket(tournamentId: string, tx: DbTransaction): Promise<void> {
+    const existingConfig = await bracketRepository.getConfigByTournamentId(tournamentId, tx);
     if (!existingConfig) return;
 
     await this.deleteBracketMatchNotifications(tournamentId);
@@ -280,16 +229,9 @@ export class BracketService {
   // Validation Methods
   // ============================================
 
-  private async validateBracketGeneration(
-    tournamentId: string,
-    userId: string,
-    input: GenerateBracketInput
-  ) {
+  private async validateBracketGeneration(tournamentId: string, userId: string, input: GenerateBracketInput) {
     // Check permissions
-    const canManage = await tournamentService.canManageTournament(
-      tournamentId,
-      userId
-    );
+    const canManage = await tournamentService.canManageTournament(tournamentId, userId);
     if (!canManage) {
       throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
     }
@@ -323,24 +265,13 @@ export class BracketService {
 
     // Validate championship seeding if specified
     if (input.seedingType === "championship_based") {
-      await this.validateChampionshipSeeding(
-        input.sourceTournamentId!,
-        tournament.disciplineId ?? undefined
-      );
-      await this.validateParticipantsPlayedInChampionship(
-        tournamentId,
-        input.sourceTournamentId!
-      );
+      await this.validateChampionshipSeeding(input.sourceTournamentId!, tournament.disciplineId ?? undefined);
+      await this.validateParticipantsPlayedInChampionship(tournamentId, input.sourceTournamentId!);
     }
   }
 
-  private async validateChampionshipSeeding(
-    sourceTournamentId: string,
-    targetDisciplineId?: string
-  ) {
-    const sourceTournament = await tournamentRepository.getById(
-      sourceTournamentId
-    );
+  private async validateChampionshipSeeding(sourceTournamentId: string, targetDisciplineId?: string) {
+    const sourceTournament = await tournamentRepository.getById(sourceTournamentId);
 
     if (!sourceTournament) {
       throw new NotFoundError(ErrorCode.SOURCE_TOURNAMENT_NOT_FOUND);
@@ -352,31 +283,20 @@ export class BracketService {
     }
 
     // Must have same discipline
-    if (
-      targetDisciplineId &&
-      sourceTournament.disciplineId !== targetDisciplineId
-    ) {
+    if (targetDisciplineId && sourceTournament.disciplineId !== targetDisciplineId) {
       throw new BadRequestError(ErrorCode.DISCIPLINE_MISMATCH);
     }
   }
 
-  private async validateParticipantsPlayedInChampionship(
-    tournamentId: string,
-    sourceTournamentId: string
-  ) {
+  private async validateParticipantsPlayedInChampionship(tournamentId: string, sourceTournamentId: string) {
     const participants = await participantRepository.findTournamentParticipants(tournamentId);
     if (participants.length === 0) return;
 
-    const sourceMatches = await standingsRepository.getMatchesForStandings(
-      sourceTournamentId,
-      ["finalized"]
-    );
+    const sourceMatches = await standingsRepository.getMatchesForStandings(sourceTournamentId, ["finalized"]);
 
     const playersWithMatches = new Set<string>();
     if (sourceMatches.length > 0) {
-      const sides = await standingsRepository.getMatchSides(
-        sourceMatches.map((m) => m.id)
-      );
+      const sides = await standingsRepository.getMatchSides(sourceMatches.map((m) => m.id));
       for (const side of sides) {
         for (const ep of side.entry?.players ?? []) {
           playersWithMatches.add(ep.playerId);
@@ -387,15 +307,12 @@ export class BracketService {
     const missing = participants.filter((p) => !playersWithMatches.has(p.userId));
 
     if (missing.length > 0) {
-      throw new BadRequestError(
-        ErrorCode.CHAMPIONSHIP_PARTICIPANTS_WITHOUT_MATCHES,
-        {
-          participants: missing.map((p) => ({
-            id: p.userId,
-            name: p.user.displayName,
-          })),
-        }
-      );
+      throw new BadRequestError(ErrorCode.CHAMPIONSHIP_PARTICIPANTS_WITHOUT_MATCHES, {
+        participants: missing.map((p) => ({
+          id: p.userId,
+          name: p.user.displayName,
+        })),
+      });
     }
   }
 
@@ -407,13 +324,8 @@ export class BracketService {
    * Get or create entries from tournament participants
    * This ensures that all active participants have an entry before bracket generation
    */
-  private async getOrCreateEntriesFromParticipants(
-    tournamentId: string,
-    tx: DbTransaction
-  ) {
-    const participants = await participantRepository.findTournamentParticipants(
-      tournamentId
-    );
+  private async getOrCreateEntriesFromParticipants(tournamentId: string, tx: DbTransaction) {
+    const participants = await participantRepository.findTournamentParticipants(tournamentId);
     const existingEntries = await this.findEntriesWithPlayers(tournamentId, tx);
 
     const existingEntryPlayerIds = new Set<string>();
@@ -432,7 +344,7 @@ export class BracketService {
             entryType: "PLAYER",
             playerIds: [participant.userId],
           },
-          tx
+          tx,
         );
       }
     }
@@ -441,10 +353,7 @@ export class BracketService {
     return this.findEntriesWithPlayers(tournamentId, tx);
   }
 
-  private async findEntriesWithPlayers(
-    tournamentId: string,
-    tx: DbTransaction
-  ) {
+  private async findEntriesWithPlayers(tournamentId: string, tx: DbTransaction) {
     return tx.query.tournamentEntries.findMany({
       where: eq(tournamentEntries.tournamentId, tournamentId),
       with: {
@@ -466,20 +375,17 @@ export class BracketService {
     tournamentId: string,
     entries: Awaited<ReturnType<typeof entryRepository.getByTournament>>,
     input: GenerateBracketInput,
-    _tx: DbTransaction
+    _tx: DbTransaction,
   ): Promise<BracketSeedData[]> {
     if (input.seedingType === "random") {
       return this.generateRandomSeeding(entries);
     } else {
-      return await this.generateChampionshipSeeding(
-        entries,
-        input.sourceTournamentId!
-      );
+      return await this.generateChampionshipSeeding(entries, input.sourceTournamentId!);
     }
   }
 
   private generateRandomSeeding(
-    entries: Awaited<ReturnType<typeof entryRepository.getByTournament>>
+    entries: Awaited<ReturnType<typeof entryRepository.getByTournament>>,
   ): BracketSeedData[] {
     // Shuffle entries randomly
     const shuffledEntries = shuffled(entries);
@@ -492,12 +398,10 @@ export class BracketService {
 
   private async generateChampionshipSeeding(
     entries: Awaited<ReturnType<typeof entryRepository.getByTournament>>,
-    sourceTournamentId: string
+    sourceTournamentId: string,
   ): Promise<BracketSeedData[]> {
     // Get official standings from source tournament
-    const { standings } = await standingsService.getOfficialStandings(
-      sourceTournamentId
-    );
+    const { standings } = await standingsService.getOfficialStandings(sourceTournamentId);
 
     // Create map of player/team ID to standings rank and points
     const standingsMap = new Map<string, { rank: number; points: number }>();
@@ -548,7 +452,7 @@ export class BracketService {
   private async generateBracketStructure(
     bracketType: "single_elimination" | "double_elimination",
     seeds: BracketSeedData[],
-    hasBronzeMatch: boolean
+    hasBronzeMatch: boolean,
   ): Promise<RoundData[]> {
     if (bracketType === "single_elimination") {
       return this.generateSingleEliminationBracket(seeds, hasBronzeMatch);
@@ -557,10 +461,7 @@ export class BracketService {
     }
   }
 
-  private generateSingleEliminationBracket(
-    seeds: BracketSeedData[],
-    hasBronzeMatch: boolean
-  ): RoundData[] {
+  private generateSingleEliminationBracket(seeds: BracketSeedData[], hasBronzeMatch: boolean): RoundData[] {
     const participantCount = seeds.length;
     const nextPowerOf2 = Math.pow(2, Math.ceil(Math.log2(participantCount)));
     const totalRounds = Math.ceil(Math.log2(participantCount));
@@ -582,13 +483,10 @@ export class BracketService {
     seeds: BracketSeedData[],
     participantCount: number,
     nextPowerOf2: number,
-    totalRounds: number
+    totalRounds: number,
   ): RoundData {
     const firstRoundMatches = nextPowerOf2 / 2;
-    const seedPairings = this.generateStandardBracketPairings(
-      participantCount,
-      nextPowerOf2
-    );
+    const seedPairings = this.generateStandardBracketPairings(participantCount, nextPowerOf2);
 
     const matches: MatchData[] = [];
     for (let i = 0; i < firstRoundMatches; i++) {
@@ -615,24 +513,17 @@ export class BracketService {
     };
   }
 
-  private buildSubsequentRounds(
-    firstRoundMatches: number,
-    totalRounds: number
-  ): RoundData[] {
+  private buildSubsequentRounds(firstRoundMatches: number, totalRounds: number): RoundData[] {
     const rounds: RoundData[] = [];
     let previousRoundMatches = firstRoundMatches;
 
     for (let round = 1; round < totalRounds; round++) {
       const matchesInRound = previousRoundMatches / 2;
-      const matches: MatchData[] = Array.from(
-        { length: matchesInRound },
-        (_, i) => ({
-          matchNumber: i,
-          isByeMatch: false,
-          winnerToMatchNumber:
-            round < totalRounds - 1 ? Math.floor(i / 2) : undefined,
-        })
-      );
+      const matches: MatchData[] = Array.from({ length: matchesInRound }, (_, i) => ({
+        matchNumber: i,
+        isByeMatch: false,
+        winnerToMatchNumber: round < totalRounds - 1 ? Math.floor(i / 2) : undefined,
+      }));
 
       rounds.push({
         roundNumber: round,
@@ -668,9 +559,7 @@ export class BracketService {
     });
   }
 
-  private generateDoubleEliminationBracket(
-    seeds: BracketSeedData[]
-  ): RoundData[] {
+  private generateDoubleEliminationBracket(seeds: BracketSeedData[]): RoundData[] {
     const participantCount = seeds.length;
     const nextPowerOf2 = Math.pow(2, Math.ceil(Math.log2(participantCount)));
     const totalWinnersRounds = Math.ceil(Math.log2(participantCount));
@@ -684,9 +573,7 @@ export class BracketService {
       roundNumber: index,
     }));
 
-    rounds.push(
-      ...this.buildLosersRounds(rounds.length, totalWinnersRounds, nextPowerOf2)
-    );
+    rounds.push(...this.buildLosersRounds(rounds.length, totalWinnersRounds, nextPowerOf2));
     this.appendGrandFinal(rounds, winnersRounds.length);
 
     return rounds;
@@ -701,27 +588,19 @@ export class BracketService {
         ...winnersRounds[k],
         matches: winnersRounds[k].matches.map((m) => ({
           ...m,
-          loserToMatchNumber:
-            k === 0 ? Math.floor(m.matchNumber / 2) : m.matchNumber,
+          loserToMatchNumber: k === 0 ? Math.floor(m.matchNumber / 2) : m.matchNumber,
           loserToRoundNumber,
         })),
       };
     }
   }
 
-  private buildLosersRounds(
-    startRoundNumber: number,
-    totalWinnersRounds: number,
-    nextPowerOf2: number
-  ): RoundData[] {
+  private buildLosersRounds(startRoundNumber: number, totalWinnersRounds: number, nextPowerOf2: number): RoundData[] {
     const losersRoundsCount = (totalWinnersRounds - 1) * 2;
     const rounds: RoundData[] = [];
 
     for (let i = 0; i < losersRoundsCount; i++) {
-      const matchesCount = Math.max(
-        1,
-        Math.floor(nextPowerOf2 / Math.pow(2, Math.floor(i / 2) + 2))
-      );
+      const matchesCount = Math.max(1, Math.floor(nextPowerOf2 / Math.pow(2, Math.floor(i / 2) + 2)));
 
       rounds.push({
         roundNumber: startRoundNumber + i,
@@ -739,19 +618,12 @@ export class BracketService {
     return rounds;
   }
 
-  private loserWinnerTarget(
-    roundIndex: number,
-    matchIndex: number,
-    losersRoundsCount: number
-  ): number | undefined {
+  private loserWinnerTarget(roundIndex: number, matchIndex: number, losersRoundsCount: number): number | undefined {
     if (roundIndex >= losersRoundsCount - 1) return undefined;
     return roundIndex % 2 === 0 ? matchIndex : Math.floor(matchIndex / 2);
   }
 
-  private appendGrandFinal(
-    rounds: RoundData[],
-    winnersRoundsLength: number
-  ): void {
+  private appendGrandFinal(rounds: RoundData[], winnersRoundsLength: number): void {
     const grandFinalRoundNumber = rounds.length;
 
     // Link last losers round winner → Grande Finale
@@ -789,10 +661,7 @@ export class BracketService {
    * E.g. for 8 players: (1,8), (4,5), (2,7), (3,6)
    * → Semi 0: 1 vs 4  |  Semi 1: 2 vs 3  |  Final: 1 vs 2
    */
-  private generateStandardBracketPairings(
-    _actualParticipants: number,
-    nextPowerOf2: number
-  ): [number, number][] {
+  private generateStandardBracketPairings(_actualParticipants: number, nextPowerOf2: number): [number, number][] {
     const positions = this.getBalancedSeedPositions(nextPowerOf2);
     const pairings: [number, number][] = [];
     for (let i = 0; i < positions.length; i += 2) {
@@ -834,7 +703,7 @@ export class BracketService {
     bracketConfigId: string,
     tournamentId: string,
     rounds: RoundData[],
-    tx: DbTransaction
+    tx: DbTransaction,
   ) {
     const createdRounds = await bracketRepository.createRounds(
       rounds.map((r) => ({
@@ -847,7 +716,7 @@ export class BracketService {
         bracketType: r.bracketType,
         matchesCount: r.matchesCount,
       })),
-      tx
+      tx,
     );
 
     const tournament = await tournamentRepository.getById(tournamentId);
@@ -887,24 +756,10 @@ export class BracketService {
     pendingLoserLinks: LoserLink[];
     tx: DbTransaction;
   }): Promise<void> {
-    const {
-      round,
-      createdRoundId,
-      tournamentId,
-      startDate,
-      matchIdMap,
-      pendingLinks,
-      pendingLoserLinks,
-      tx,
-    } = params;
+    const { round, createdRoundId, tournamentId, startDate, matchIdMap, pendingLinks, pendingLoserLinks, tx } = params;
 
     for (const matchData of round.matches) {
-      const matchId = await this.insertScheduledMatch(
-        tournamentId,
-        startDate,
-        round.roundNumber,
-        tx
-      );
+      const matchId = await this.insertScheduledMatch(tournamentId, startDate, round.roundNumber, tx);
       matchIdMap.set(`${round.roundNumber}:${matchData.matchNumber}`, matchId);
 
       if (matchData.entryAId) {
@@ -921,7 +776,7 @@ export class BracketService {
           matchNumber: matchData.matchNumber,
           isByeMatch: matchData.isByeMatch,
         },
-        tx
+        tx,
       );
 
       this.registerPendingLinks(matchId, round.roundNumber, matchData, {
@@ -935,7 +790,7 @@ export class BracketService {
     matchId: string,
     roundNumber: number,
     matchData: MatchData,
-    sinks: { pendingLinks: WinnerLink[]; pendingLoserLinks: LoserLink[] }
+    sinks: { pendingLinks: WinnerLink[]; pendingLoserLinks: LoserLink[] },
   ): void {
     if (matchData.winnerToMatchNumber !== undefined) {
       sinks.pendingLinks.push({
@@ -946,10 +801,7 @@ export class BracketService {
       });
     }
 
-    if (
-      matchData.loserToMatchNumber !== undefined &&
-      matchData.loserToRoundNumber !== undefined
-    ) {
+    if (matchData.loserToMatchNumber !== undefined && matchData.loserToRoundNumber !== undefined) {
       sinks.pendingLoserLinks.push({
         matchId,
         loserToMatchNumber: matchData.loserToMatchNumber,
@@ -962,7 +814,7 @@ export class BracketService {
     tournamentId: string,
     startDate: Date,
     roundNumber: number,
-    tx: DbTransaction
+    tx: DbTransaction,
   ): Promise<string> {
     const matchDate = new Date(startDate);
     matchDate.setDate(matchDate.getDate() + roundNumber * 3);
@@ -975,12 +827,7 @@ export class BracketService {
     return matchRecord.id;
   }
 
-  private async insertMatchSide(
-    matchId: string,
-    entryId: string,
-    position: number,
-    tx: DbTransaction
-  ): Promise<void> {
+  private async insertMatchSide(matchId: string, entryId: string, position: number, tx: DbTransaction): Promise<void> {
     await tx.insert(matchSides).values({
       matchId,
       entryId,
@@ -993,19 +840,13 @@ export class BracketService {
   private async linkWinnerMatches(
     pendingLinks: WinnerLink[],
     matchIdMap: Map<string, string>,
-    tx: DbTransaction
+    tx: DbTransaction,
   ): Promise<void> {
     for (const item of pendingLinks) {
       const targetRound = item.winnerToRoundNumber ?? item.roundNumber + 1;
-      const nextMatchId = matchIdMap.get(
-        `${targetRound}:${item.winnerToMatchNumber}`
-      );
+      const nextMatchId = matchIdMap.get(`${targetRound}:${item.winnerToMatchNumber}`);
       if (nextMatchId) {
-        await bracketRepository.updateMatchMetadata(
-          item.matchId,
-          { winnerToMatchId: nextMatchId },
-          tx
-        );
+        await bracketRepository.updateMatchMetadata(item.matchId, { winnerToMatchId: nextMatchId }, tx);
       }
     }
   }
@@ -1013,18 +854,12 @@ export class BracketService {
   private async linkLoserMatches(
     pendingLoserLinks: LoserLink[],
     matchIdMap: Map<string, string>,
-    tx: DbTransaction
+    tx: DbTransaction,
   ): Promise<void> {
     for (const item of pendingLoserLinks) {
-      const loserMatchId = matchIdMap.get(
-        `${item.loserToRoundNumber}:${item.loserToMatchNumber}`
-      );
+      const loserMatchId = matchIdMap.get(`${item.loserToRoundNumber}:${item.loserToMatchNumber}`);
       if (loserMatchId) {
-        await bracketRepository.updateMatchMetadata(
-          item.matchId,
-          { loserToMatchId: loserMatchId },
-          tx
-        );
+        await bracketRepository.updateMatchMetadata(item.matchId, { loserToMatchId: loserMatchId }, tx);
       }
     }
   }
@@ -1093,7 +928,7 @@ export class BracketService {
 
   private calculateRoundsCount(
     participantCount: number,
-    bracketType: "single_elimination" | "double_elimination"
+    bracketType: "single_elimination" | "double_elimination",
   ): number {
     const singleElimRounds = Math.ceil(Math.log2(participantCount));
 

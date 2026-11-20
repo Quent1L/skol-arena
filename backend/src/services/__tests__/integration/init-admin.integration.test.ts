@@ -1,28 +1,17 @@
 import { describe, it, expect, beforeEach, afterAll } from "bun:test";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-  resetTestDatabase,
-} from "../../../config/test-database";
+import { createTestDatabase, closeTestDatabase, resetTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 
 // Initialize the test database BEFORE any imports that use `db`.
 const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
-import {
-  initializeAdminIfNeeded,
-  clearBootstrapPending,
-} from "../../../utils/init-admin";
+import { initializeAdminIfNeeded, clearBootstrapPending } from "../../../utils/init-admin";
 import { appUsers, account, user } from "../../../db/schema";
 import { eq } from "drizzle-orm";
 
 async function getAdmin() {
-  const [admin] = await testDb
-    .select()
-    .from(appUsers)
-    .where(eq(appUsers.role, "super_admin"))
-    .limit(1);
+  const [admin] = await testDb.select().from(appUsers).where(eq(appUsers.role, "super_admin")).limit(1);
   // externalId is nullable since archiving, but a bootstrap admin always has one.
   // Returned as-is so the "no admin" case still yields undefined.
   return admin as typeof admin & { externalId: string };
@@ -68,9 +57,9 @@ describe("initializeAdminIfNeeded", () => {
     expect(secondHash).not.toBe(firstHash);
 
     // No duplicate rows created by the rotation
-    expect((await testDb.select().from(appUsers))).toHaveLength(1);
-    expect((await testDb.select().from(user))).toHaveLength(1);
-    expect((await testDb.select().from(account))).toHaveLength(1);
+    expect(await testDb.select().from(appUsers)).toHaveLength(1);
+    expect(await testDb.select().from(user)).toHaveLength(1);
+    expect(await testDb.select().from(account)).toHaveLength(1);
   });
 
   it("stops rotating once the flag is cleared", async () => {
@@ -103,7 +92,7 @@ describe("initializeAdminIfNeeded", () => {
 
     await initializeAdminIfNeeded();
 
-    expect((await testDb.select().from(appUsers))).toHaveLength(1);
+    expect(await testDb.select().from(appUsers)).toHaveLength(1);
     expect(await getAdmin()).toBeUndefined();
   });
 
@@ -120,7 +109,7 @@ describe("initializeAdminIfNeeded", () => {
 
     const admin = await getAdmin();
     expect(admin.externalId).toBe("orphan-admin-id");
-    expect((await testDb.select().from(user))).toHaveLength(1);
+    expect(await testDb.select().from(user)).toHaveLength(1);
     expect(await getPasswordHash("orphan-admin-id")).toBeTruthy();
   });
 });

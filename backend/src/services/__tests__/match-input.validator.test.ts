@@ -8,8 +8,7 @@ import type { CreateMatchRequestData } from "@skol-arena/shared/types/index";
 
 let statuses: Record<string, string>;
 
-const tournament = (mode: string) =>
-  ({ id: "t-1", mode, teamMode: "flex", minTeamSize: 1, maxTeamSize: 1 }) as any;
+const tournament = (mode: string) => ({ id: "t-1", mode, teamMode: "flex", minTeamSize: 1, maxTeamSize: 1 }) as any;
 
 const input = {
   tournamentId: "t-1",

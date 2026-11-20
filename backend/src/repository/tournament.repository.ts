@@ -103,8 +103,7 @@ export class TournamentRepository {
       status: data.status,
       createdBy: data.createdBy,
       ...(data.description !== undefined && { description: data.description }),
-      ...(data.allowDraw !== null &&
-        data.allowDraw !== undefined && { allowDraw: data.allowDraw }),
+      ...(data.allowDraw !== null && data.allowDraw !== undefined && { allowDraw: data.allowDraw }),
       ...(data.scoreEnabled !== undefined && {
         scoreEnabled: data.scoreEnabled,
       }),
@@ -121,27 +120,18 @@ export class TournamentRepository {
 
     try {
       return await db.transaction(async (tx) => {
-        const [tournament] = await tx
-          .insert(tournaments)
-          .values(values)
-          .returning();
+        const [tournament] = await tx.insert(tournaments).values(values).returning();
 
         if (data.scoringConfig) {
-          await tx
-            .insert(tournamentScoringConfigs)
-            .values({ tournamentId: tournament.id, ...data.scoringConfig });
+          await tx.insert(tournamentScoringConfigs).values({ tournamentId: tournament.id, ...data.scoringConfig });
         }
 
         if (data.championshipConfig) {
-          await tx
-            .insert(championshipConfigs)
-            .values({ tournamentId: tournament.id, ...data.championshipConfig });
+          await tx.insert(championshipConfigs).values({ tournamentId: tournament.id, ...data.championshipConfig });
         }
 
         if (data.voteConfig && Object.keys(data.voteConfig).length > 0) {
-          await tx
-            .insert(tournamentVoteConfigs)
-            .values({ tournamentId: tournament.id, ...data.voteConfig });
+          await tx.insert(tournamentVoteConfigs).values({ tournamentId: tournament.id, ...data.voteConfig });
         }
 
         // Return the configs alongside the row: the create response carries them.
@@ -262,17 +252,10 @@ export class TournamentRepository {
         total: count(),
       })
       .from(tournamentParticipants)
-      .where(
-        and(
-          inArray(tournamentParticipants.tournamentId, ids),
-          eq(tournamentParticipants.status, "active"),
-        ),
-      )
+      .where(and(inArray(tournamentParticipants.tournamentId, ids), eq(tournamentParticipants.status, "active")))
       .groupBy(tournamentParticipants.tournamentId);
 
-    const countByTournament = new Map(
-      counts.map((row) => [row.tournamentId, Number(row.total)]),
-    );
+    const countByTournament = new Map(counts.map((row) => [row.tournamentId, Number(row.total)]));
 
     const joined = viewerId
       ? await db
@@ -369,9 +352,7 @@ export class TournamentRepository {
     const result = await db
       .select({ count: count() })
       .from(tournaments)
-      .where(
-        and(eq(tournaments.createdBy, userId), eq(tournaments.status, status)),
-      );
+      .where(and(eq(tournaments.createdBy, userId), eq(tournaments.status, status)));
 
     return result[0]?.count ?? 0;
   }
@@ -381,10 +362,7 @@ export class TournamentRepository {
    */
   async isUserTournamentAdmin(tournamentId: string, userId: string) {
     const adminRecord = await db.query.tournamentAdmins.findFirst({
-      where: and(
-        eq(tournamentAdmins.tournamentId, tournamentId),
-        eq(tournamentAdmins.userId, userId),
-      ),
+      where: and(eq(tournamentAdmins.tournamentId, tournamentId), eq(tournamentAdmins.userId, userId)),
     });
 
     return !!adminRecord;
@@ -430,11 +408,7 @@ export class TournamentRepository {
   /**
    * Add tournament admin
    */
-  async addAdmin(
-    tournamentId: string,
-    userId: string,
-    role: "owner" | "co_admin",
-  ) {
+  async addAdmin(tournamentId: string, userId: string, role: "owner" | "co_admin") {
     await db.insert(tournamentAdmins).values({
       tournamentId,
       userId,

@@ -66,7 +66,7 @@ users.get(
         updatedAt: betterAuthUser?.updatedAt,
       },
     });
-  }
+  },
 );
 
 // PATCH /users/me - Update current user profile
@@ -95,7 +95,7 @@ users.patch(
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
     });
-  }
+  },
 );
 
 // GET /users - Get all users (admin only)
@@ -115,11 +115,7 @@ users.get(
     const appUserId = c.get("appUserId");
 
     const currentUser = await userRepository.getById(appUserId);
-    if (
-      !currentUser ||
-      (currentUser.role !== "super_admin" &&
-        currentUser.role !== "tournament_admin")
-    ) {
+    if (!currentUser || (currentUser.role !== "super_admin" && currentUser.role !== "tournament_admin")) {
       throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
     }
 
@@ -149,7 +145,7 @@ users.get(
     }));
 
     return c.json(usersResponse);
-  }
+  },
 );
 
 // GET /users/search - Search players by name (authenticated)
@@ -168,7 +164,7 @@ users.get(
     const { q, limit } = c.req.valid("query");
     const players = await userService.searchUsers(q, limit);
     return c.json(players);
-  }
+  },
 );
 
 // GET /users/compare - Compare two players (authenticated)
@@ -191,7 +187,7 @@ users.get(
     const { playerA, playerB, ...filters } = c.req.valid("query");
     const result = await playerStatsService.getComparison(playerA, playerB, filters, c.get("appUserId"));
     return c.json(result);
-  }
+  },
 );
 
 // GET /users/:id - Public player profile
@@ -207,7 +203,7 @@ users.get(
     const id = c.req.param("id");
     const player = await playerStatsService.getPlayerProfile(id);
     return c.json(player);
-  }
+  },
 );
 
 // GET /users/:id/tournaments - Tournaments list for filter dropdown
@@ -227,7 +223,7 @@ users.get(
     const id = c.req.param("id");
     const tournaments = await playerStatsService.getPlayerTournaments(id, await resolveOptionalViewer(c));
     return c.json({ tournaments });
-  }
+  },
 );
 
 // GET /users/:id/stats - Player stats (filterable)
@@ -248,7 +244,7 @@ users.get(
     const filters = c.req.valid("query");
     const result = await playerStatsService.getPlayerStats(id, filters, await resolveOptionalViewer(c));
     return c.json(result);
-  }
+  },
 );
 
 // GET /users/:id/badges - Player badges (public)
@@ -266,7 +262,7 @@ users.get(
     const id = c.req.param("id");
     const badges = await rulesService.getPlayerBadges(id, await resolveOptionalViewer(c));
     return c.json({ badges });
-  }
+  },
 );
 
 export default users;

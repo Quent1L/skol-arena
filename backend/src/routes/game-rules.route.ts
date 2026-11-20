@@ -28,7 +28,7 @@ gameRules.get(
   async (c) => {
     const rules = await gameRulesService.listGameRules();
     return c.json(rules);
-  }
+  },
 );
 
 // POST /game-rules - Create a new game rule
@@ -52,7 +52,7 @@ gameRules.post(
       createdBy: appUserId,
     });
     return c.json(rule, 201);
-  }
+  },
 );
 
 // GET /game-rules/:id - Get single game rule (public)
@@ -75,7 +75,7 @@ gameRules.get(
     const id = c.req.param("id")!;
     const rule = await gameRulesService.getGameRuleById(id);
     return c.json(rule);
-  }
+  },
 );
 
 // PATCH /game-rules/:id - Update game rule
@@ -97,7 +97,7 @@ gameRules.patch(
     const appUserId = c.get("appUserId");
     const rule = await gameRulesService.updateGameRule(id, appUserId, data);
     return c.json(rule);
-  }
+  },
 );
 
 // DELETE /game-rules/:id - Delete game rule
@@ -117,7 +117,7 @@ gameRules.delete(
     const appUserId = c.get("appUserId");
     await gameRulesService.deleteGameRule(id, appUserId);
     return c.json({ success: true });
-  }
+  },
 );
 
 export default gameRules;

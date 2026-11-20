@@ -14,9 +14,7 @@ const CACHE_COOKIE = "better-auth.session_data=cached; Path=/; Max-Age=300; Http
 let sessionResult: any = null;
 let authHeaders = new Headers();
 
-const mockGetSession = mock((_o: any) =>
-  Promise.resolve({ headers: authHeaders, response: sessionResult }),
-);
+const mockGetSession = mock((_o: any) => Promise.resolve({ headers: authHeaders, response: sessionResult }));
 mock.module("../../config/auth", () => ({ auth: { api: { getSession: mockGetSession } } }));
 
 mock.module("../user.service", () => ({

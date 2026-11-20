@@ -53,7 +53,7 @@ matches.post(
     const match = await matchService.createMatch(data, appUserId);
 
     return c.json(match, 201);
-  }
+  },
 );
 
 // GET /matches - Paginated lean match list (with filters)
@@ -73,7 +73,7 @@ matches.get(
     const filters = c.req.valid("query");
     const result = await matchService.listMatchCards(filters, await resolveOptionalViewer(c));
     return c.json(result);
-  }
+  },
 );
 
 // GET /matches/:id - Get single match
@@ -94,7 +94,7 @@ matches.get(
     const match = await matchService.getMatchById(id);
     await tournamentService.assertCanAccess(match.tournamentId, await resolveOptionalViewer(c));
     return c.json(match);
-  }
+  },
 );
 
 // PATCH /matches/:id - Update match
@@ -134,11 +134,11 @@ matches.patch(
         winnerPosition: data.winnerPosition,
         playedAt: data.playedAt,
       },
-      appUserId
+      appUserId,
     );
 
     return c.json(match);
-  }
+  },
 );
 
 // DELETE /matches/:id - Delete match
@@ -159,7 +159,7 @@ matches.delete(
 
     const result = await matchService.deleteMatch(id, appUserId);
     return c.json(result);
-  }
+  },
 );
 
 // POST /matches/:id/report - Report match result
@@ -192,11 +192,11 @@ matches.post(
         outcomeTypeId: data.outcomeTypeId,
         outcomeReasonId: data.outcomeReasonId,
       },
-      appUserId
+      appUserId,
     );
 
     return c.json(match);
-  }
+  },
 );
 
 // POST /matches/:id/confirm - Confirm match result
@@ -221,7 +221,7 @@ matches.post(
     const match = await matchService.confirmMatch(id, data, appUserId);
 
     return c.json(match);
-  }
+  },
 );
 
 // POST /matches/:id/contest - Contest match result
@@ -246,7 +246,7 @@ matches.post(
     const match = await matchService.contestMatch(id, data, appUserId);
 
     return c.json(match);
-  }
+  },
 );
 
 // POST /matches/:id/respond - Unified confirm/dispute response
@@ -272,7 +272,7 @@ matches.post(
     const match = await matchService.respondToMatch(id, data, appUserId);
 
     return c.json(match);
-  }
+  },
 );
 
 // GET /matches/:id/messages - Discussion thread (participants and organizers)
@@ -294,7 +294,7 @@ matches.get(
 
     const messages = await matchMessageService.list(id, appUserId);
     return c.json(messages);
-  }
+  },
 );
 
 // POST /matches/:id/messages - Post a message on the thread
@@ -317,7 +317,7 @@ matches.post(
 
     const message = await matchMessageService.post(id, appUserId, body);
     return c.json(message, 201);
-  }
+  },
 );
 
 // POST /matches/:id/cancel - Cancel match (admin or participant)
@@ -339,7 +339,7 @@ matches.post(
 
     const match = await matchService.cancelMatch(id, appUserId);
     return c.json(match);
-  }
+  },
 );
 
 // POST /matches/:id/finalize - Finalize match (admin only)
@@ -363,10 +363,7 @@ matches.post(
 
     // Check if user can manage matches
     const match = await matchService.getMatchById(id);
-    const canManage = await matchService.canManageMatches(
-      match.tournamentId,
-      appUserId
-    );
+    const canManage = await matchService.canManageMatches(match.tournamentId, appUserId);
 
     if (!canManage) {
       throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
@@ -375,14 +372,10 @@ matches.post(
     // The reason is the server's to state, not the caller's: an organizer settling a
     // result is an override, and naming it "consensus" or "trust_score" would credit
     // the reporter's trust score and open the self-cancel window.
-    const finalizedMatch = await matchService.finalizeMatch(
-      id,
-      { finalizationReason: "admin_override" },
-      appUserId
-    );
+    const finalizedMatch = await matchService.finalizeMatch(id, { finalizationReason: "admin_override" }, appUserId);
 
     return c.json(finalizedMatch);
-  }
+  },
 );
 
 // POST /matches/validate - Validate match possibility
@@ -419,7 +412,7 @@ matches.post(
     });
 
     return c.json(validation);
-  }
+  },
 );
 
 // POST /matches/auto-finalize - Auto-finalize expired matches (admin only)
@@ -439,14 +432,14 @@ matches.post(
     success: { description: "What the run settled", schema: autoFinalizeResponseSchema },
   }),
   async (c) => {
-      const result = await matchService.autoFinalizeExpiredMatches();
+    const result = await matchService.autoFinalizeExpiredMatches();
 
     return c.json({
       success: true,
       message: "Auto-finalization completed",
       ...result,
     });
-  }
+  },
 );
 
 export default matches;

@@ -1,14 +1,7 @@
 import { outcomeReasonRepository } from "../repository/outcome-reason.repository";
 import { outcomeTypeRepository } from "../repository/outcome-type.repository";
-import {
-  type CreateOutcomeReasonInput,
-  type UpdateOutcomeReasonInput,
-} from "@skol-arena/shared/types/index";
-import {
-  ConflictError,
-  ErrorCode,
-  NotFoundError,
-} from "../types/errors";
+import { type CreateOutcomeReasonInput, type UpdateOutcomeReasonInput } from "@skol-arena/shared/types/index";
+import { ConflictError, ErrorCode, NotFoundError } from "../types/errors";
 
 export class OutcomeReasonService {
   async createOutcomeReason(input: CreateOutcomeReasonInput) {
@@ -66,5 +59,3 @@ export class OutcomeReasonService {
 }
 
 export const outcomeReasonService = new OutcomeReasonService();
-
-

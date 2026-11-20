@@ -52,10 +52,7 @@ describe("Season rewind generation (integration)", () => {
     return appUser!.id;
   }
 
-  async function createSeason(
-    status: "ongoing" | "finished" = "finished",
-    options: { allowDraw?: boolean } = {},
-  ) {
+  async function createSeason(status: "ongoing" | "finished" = "finished", options: { allowDraw?: boolean } = {}) {
     const [season] = await testDb
       .insert(tournaments)
       .values({
@@ -115,12 +112,8 @@ describe("Season rewind generation (integration)", () => {
         .insert(tournamentEntries)
         .values({ tournamentId: seasonId, entryType: "PLAYER" })
         .returning();
-      await testDb
-        .insert(tournamentEntryPlayers)
-        .values({ entryId: entry!.id, playerId });
-      await testDb
-        .insert(matchSides)
-        .values({ matchId: match!.id, entryId: entry!.id, position });
+      await testDb.insert(tournamentEntryPlayers).values({ entryId: entry!.id, playerId });
+      await testDb.insert(matchSides).values({ matchId: match!.id, entryId: entry!.id, position });
       await testDb.insert(mmrHistory).values({
         seasonId,
         playerId,
@@ -161,12 +154,8 @@ describe("Season rewind generation (integration)", () => {
         .insert(tournamentEntries)
         .values({ tournamentId: seasonId, entryType: "TEAM" })
         .returning();
-      await testDb
-        .insert(tournamentEntryPlayers)
-        .values(players.map((playerId) => ({ entryId: entry!.id, playerId })));
-      await testDb
-        .insert(matchSides)
-        .values({ matchId: match!.id, entryId: entry!.id, position });
+      await testDb.insert(tournamentEntryPlayers).values(players.map((playerId) => ({ entryId: entry!.id, playerId })));
+      await testDb.insert(matchSides).values({ matchId: match!.id, entryId: entry!.id, position });
 
       for (const playerId of players) {
         await testDb.insert(mmrHistory).values({
@@ -215,10 +204,7 @@ describe("Season rewind generation (integration)", () => {
     expect(rewind).not.toBeNull();
     expect(rewind!.payload.totals).toMatchObject({ playerCount: 2, matchCount: 2 });
 
-    const decks = await testDb
-      .select()
-      .from(playerSeasonRewinds)
-      .where(eq(playerSeasonRewinds.rewindId, rewind!.id));
+    const decks = await testDb.select().from(playerSeasonRewinds).where(eq(playerSeasonRewinds.rewindId, rewind!.id));
     expect(decks).toHaveLength(2);
   });
 
@@ -299,16 +285,14 @@ describe("Season rewind generation (integration)", () => {
       [alice, carol],
       [carol, alice],
     ]) {
-      const partner = (await seasonRewindService.getBundle(seasonId, playerId!)).player!.feats
-        .bestPartner;
+      const partner = (await seasonRewindService.getBundle(seasonId, playerId!)).player!.feats.bestPartner;
       expect(partner!.playerId).toBe(partnerId!);
       expect(partner).toMatchObject({ count: 3, wins: 3, losses: 0 });
     }
 
     // The losing duo is losing for both of them, not 3-0 for one of the two.
     for (const playerId of [bob, dave]) {
-      const partner = (await seasonRewindService.getBundle(seasonId, playerId)).player!.feats
-        .bestPartner;
+      const partner = (await seasonRewindService.getBundle(seasonId, playerId)).player!.feats.bestPartner;
       expect(partner).toMatchObject({ count: 3, wins: 0, losses: 3 });
     }
   });
@@ -324,10 +308,7 @@ describe("Season rewind generation (integration)", () => {
 
     it("resolves the next season at read time, not at generation time", async () => {
       const disciplineId = await createDiscipline();
-      await testDb
-        .update(tournaments)
-        .set({ disciplineId })
-        .where(eq(tournaments.id, seasonId));
+      await testDb.update(tournaments).set({ disciplineId }).where(eq(tournaments.id, seasonId));
 
       // Snapshot taken while no follow-up season exists yet — the usual order of
       // events, since a new season is opened after the previous one closes.
@@ -361,14 +342,8 @@ describe("Season rewind generation (integration)", () => {
 
     it("never points a season at itself", async () => {
       const disciplineId = await createDiscipline();
-      await testDb
-        .update(tournaments)
-        .set({ disciplineId, status: "ongoing" })
-        .where(eq(tournaments.id, seasonId));
-      await testDb
-        .update(tournaments)
-        .set({ status: "finished" })
-        .where(eq(tournaments.id, seasonId));
+      await testDb.update(tournaments).set({ disciplineId, status: "ongoing" }).where(eq(tournaments.id, seasonId));
+      await testDb.update(tournaments).set({ status: "finished" }).where(eq(tournaments.id, seasonId));
 
       await seasonRewindService.generateForSeason(seasonId);
       const bundle = await seasonRewindService.getBundle(seasonId, alice);
@@ -481,10 +456,7 @@ describe("Season rewind generation (integration)", () => {
   describe("frozen formats", () => {
     /** Pretends the stored rewind was produced by a different build. */
     async function storeAsVersion(version: number) {
-      await testDb
-        .update(seasonRewinds)
-        .set({ version })
-        .where(eq(seasonRewinds.seasonId, seasonId));
+      await testDb.update(seasonRewinds).set({ version }).where(eq(seasonRewinds.seasonId, seasonId));
     }
 
     beforeEach(async () => {
@@ -531,10 +503,7 @@ describe("Season rewind generation (integration)", () => {
     });
 
     async function rename(playerId: string, displayName: string, shortName: string) {
-      await testDb
-        .update(appUsers)
-        .set({ displayName, shortName })
-        .where(eq(appUsers.id, playerId));
+      await testDb.update(appUsers).set({ displayName, shortName }).where(eq(appUsers.id, playerId));
     }
 
     it("rewrites an anonymised player's name in every payload of the rewind", async () => {

@@ -110,23 +110,15 @@ export function createMockMatchResult(params: {
  * Build a synthetic teamA/teamB match object from entries and sides
  * This mimics what the match.repository.getById() does
  */
-export function buildSyntheticMatchFromSides(
-  baseMatch: any,
-  sides: any[],
-  result?: any
-): any {
+export function buildSyntheticMatchFromSides(baseMatch: any, sides: any[], result?: any): any {
   const sideA = sides[0];
   const sideB = sides[1];
 
   return {
     ...baseMatch,
     // Synthetic teamA/teamB from entries
-    teamA: sideA?.entry
-      ? buildTeamFromEntry(sideA.entry)
-      : { id: "unknown", name: null, participants: [] },
-    teamB: sideB?.entry
-      ? buildTeamFromEntry(sideB.entry)
-      : { id: "unknown", name: null, participants: [] },
+    teamA: sideA?.entry ? buildTeamFromEntry(sideA.entry) : { id: "unknown", name: null, participants: [] },
+    teamB: sideB?.entry ? buildTeamFromEntry(sideB.entry) : { id: "unknown", name: null, participants: [] },
     // Synthetic scores
     scoreA: sideA?.score ?? 0,
     scoreB: sideB?.score ?? 0,
@@ -167,10 +159,7 @@ function buildTeamFromEntry(entry: any): any {
   }
 }
 
-function determineWinnerSide(
-  scoreA: number | undefined,
-  scoreB: number | undefined
-): "A" | "B" | null {
+function determineWinnerSide(scoreA: number | undefined, scoreB: number | undefined): "A" | "B" | null {
   if (scoreA === undefined || scoreB === undefined) return null;
   if (scoreA > scoreB) return "A";
   if (scoreB > scoreA) return "B";

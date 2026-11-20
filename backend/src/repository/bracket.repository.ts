@@ -1,12 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { db } from "../config/database";
-import {
-  bracketConfigs,
-  bracketRounds,
-  bracketSeeds,
-  bracketMatchMetadata,
-  matches,
-} from "../db/schema";
+import { bracketConfigs, bracketRounds, bracketSeeds, bracketMatchMetadata, matches } from "../db/schema";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type * as schema from "../db/schema";
 
@@ -30,13 +24,10 @@ export class BracketRepository {
       roundsCount: number;
       hasBronzeMatch: boolean;
     },
-    tx?: DbTransaction
+    tx?: DbTransaction,
   ) {
     const dbInstance = tx || db;
-    const [config] = await dbInstance
-      .insert(bracketConfigs)
-      .values(data)
-      .returning();
+    const [config] = await dbInstance.insert(bracketConfigs).values(data).returning();
     return config;
   }
 
@@ -85,7 +76,7 @@ export class BracketRepository {
       bracketType: "winners" | "losers" | "bronze";
       matchesCount: number;
     }>,
-    tx?: DbTransaction
+    tx?: DbTransaction,
   ) {
     const dbInstance = tx || db;
     return await dbInstance.insert(bracketRounds).values(rounds).returning();
@@ -126,7 +117,7 @@ export class BracketRepository {
       seedNumber: number;
       seedingScore?: number;
     }>,
-    tx?: DbTransaction
+    tx?: DbTransaction,
   ) {
     const dbInstance = tx || db;
     return await dbInstance.insert(bracketSeeds).values(seeds).returning();
@@ -158,17 +149,10 @@ export class BracketRepository {
   /**
    * Get seed by entry ID
    */
-  async getSeedByEntryId(
-    configId: string,
-    entryId: string,
-    tx?: DbTransaction
-  ) {
+  async getSeedByEntryId(configId: string, entryId: string, tx?: DbTransaction) {
     const dbInstance = tx || db;
     return await dbInstance.query.bracketSeeds.findFirst({
-      where: and(
-        eq(bracketSeeds.bracketConfigId, configId),
-        eq(bracketSeeds.entryId, entryId)
-      ),
+      where: and(eq(bracketSeeds.bracketConfigId, configId), eq(bracketSeeds.entryId, entryId)),
     });
   }
 
@@ -188,13 +172,10 @@ export class BracketRepository {
       loserToMatchId?: string;
       isByeMatch: boolean;
     },
-    tx?: DbTransaction
+    tx?: DbTransaction,
   ) {
     const dbInstance = tx || db;
-    const [metadata] = await dbInstance
-      .insert(bracketMatchMetadata)
-      .values(data)
-      .returning();
+    const [metadata] = await dbInstance.insert(bracketMatchMetadata).values(data).returning();
     return metadata;
   }
 
@@ -231,7 +212,7 @@ export class BracketRepository {
       winnerToMatchId?: string;
       loserToMatchId?: string;
     },
-    tx?: DbTransaction
+    tx?: DbTransaction,
   ) {
     const dbInstance = tx || db;
     const [updated] = await dbInstance

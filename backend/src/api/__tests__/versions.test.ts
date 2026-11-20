@@ -1,10 +1,6 @@
 import { describe, it, expect } from "bun:test";
 
-import {
-  API_VERSIONS,
-  LATEST_API_VERSION,
-  normalizeVersion,
-} from "../versions";
+import { API_VERSIONS, LATEST_API_VERSION, normalizeVersion } from "../versions";
 
 describe("normalizeVersion", () => {
   it("accepts the spellings a client is likely to send", () => {

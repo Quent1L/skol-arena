@@ -48,10 +48,7 @@ export class MatchSidesRepository {
    */
   async getByMatchAndEntry(matchId: string, entryId: string) {
     return await db.query.matchSides.findFirst({
-      where: and(
-        eq(matchSides.matchId, matchId),
-        eq(matchSides.entryId, entryId)
-      ),
+      where: and(eq(matchSides.matchId, matchId), eq(matchSides.entryId, entryId)),
       with: {
         entry: {
           with: {
@@ -96,9 +93,7 @@ export class MatchSidesRepository {
     const [updated] = await db
       .update(matchSides)
       .set({ score })
-      .where(
-        and(eq(matchSides.matchId, matchId), eq(matchSides.entryId, entryId))
-      )
+      .where(and(eq(matchSides.matchId, matchId), eq(matchSides.entryId, entryId)))
       .returning();
 
     return updated;
@@ -108,28 +103,18 @@ export class MatchSidesRepository {
    * Update scores for multiple sides
    */
   async updateScores(matchId: string, updates: UpdateScoreData[]) {
-    const results = await Promise.all(
-      updates.map((update) =>
-        this.updateScore(matchId, update.entryId, update.score)
-      )
-    );
+    const results = await Promise.all(updates.map((update) => this.updateScore(matchId, update.entryId, update.score)));
     return results;
   }
 
   /**
    * Update points awarded for a specific side
    */
-  async updatePointsAwarded(
-    matchId: string,
-    entryId: string,
-    pointsAwarded: number
-  ) {
+  async updatePointsAwarded(matchId: string, entryId: string, pointsAwarded: number) {
     const [updated] = await db
       .update(matchSides)
       .set({ pointsAwarded })
-      .where(
-        and(eq(matchSides.matchId, matchId), eq(matchSides.entryId, entryId))
-      )
+      .where(and(eq(matchSides.matchId, matchId), eq(matchSides.entryId, entryId)))
       .returning();
 
     return updated;
@@ -153,10 +138,7 @@ export class MatchSidesRepository {
     const winnerPosition = match.winnerSide === "A" ? 1 : 2;
 
     const side = await db.query.matchSides.findFirst({
-      where: and(
-        eq(matchSides.matchId, matchId),
-        eq(matchSides.position, winnerPosition),
-      ),
+      where: and(eq(matchSides.matchId, matchId), eq(matchSides.position, winnerPosition)),
       with: {
         entry: {
           with: {
@@ -179,10 +161,7 @@ export class MatchSidesRepository {
    */
   async getByPosition(matchId: string, position: number) {
     return await db.query.matchSides.findFirst({
-      where: and(
-        eq(matchSides.matchId, matchId),
-        eq(matchSides.position, position)
-      ),
+      where: and(eq(matchSides.matchId, matchId), eq(matchSides.position, position)),
       with: {
         entry: {
           with: {
@@ -228,10 +207,7 @@ export class MatchSidesRepository {
    */
   async isEntryInMatch(matchId: string, entryId: string) {
     const side = await db.query.matchSides.findFirst({
-      where: and(
-        eq(matchSides.matchId, matchId),
-        eq(matchSides.entryId, entryId)
-      ),
+      where: and(eq(matchSides.matchId, matchId), eq(matchSides.entryId, entryId)),
     });
     return !!side;
   }

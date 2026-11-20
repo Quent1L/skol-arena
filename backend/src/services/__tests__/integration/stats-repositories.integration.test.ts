@@ -32,8 +32,24 @@ describe("statistics repositories (integration)", () => {
     tournamentId = await seed.createTournament(admin, { teamMode: "flex" });
     entryAnn = await seed.createEntry(tournamentId, [ann]);
     entryBob = await seed.createEntry(tournamentId, [bob]);
-    m1 = await seed.createMatch({ tournamentId, entryA: entryAnn, entryB: entryBob, scoreA: 3, scoreB: 1, winnerSide: "A", playedAt: new Date("2026-04-01T10:00:00Z") });
-    m2 = await seed.createMatch({ tournamentId, entryA: entryBob, entryB: entryAnn, scoreA: 2, scoreB: 2, winnerSide: null, playedAt: new Date("2026-04-03T10:00:00Z") });
+    m1 = await seed.createMatch({
+      tournamentId,
+      entryA: entryAnn,
+      entryB: entryBob,
+      scoreA: 3,
+      scoreB: 1,
+      winnerSide: "A",
+      playedAt: new Date("2026-04-01T10:00:00Z"),
+    });
+    m2 = await seed.createMatch({
+      tournamentId,
+      entryA: entryBob,
+      entryB: entryAnn,
+      scoreA: 2,
+      scoreB: 2,
+      winnerSide: null,
+      playedAt: new Date("2026-04-03T10:00:00Z"),
+    });
   });
 
   describe("standings", () => {
@@ -60,7 +76,9 @@ describe("statistics repositories (integration)", () => {
         { matchId: m1, playerId: bob, pointsAwarded: 0, countsForRanking: true },
       ]);
       const pointRows = async () =>
-        (await standingsRepository.getPlayerPointsForStandings(tournamentId, ["finalized"])).flatMap((m) => m.playerPoints);
+        (await standingsRepository.getPlayerPointsForStandings(tournamentId, ["finalized"])).flatMap(
+          (m) => m.playerPoints,
+        );
       expect(await pointRows()).toHaveLength(2);
       await standingsRepository.deletePlayerPointsForTournament(tournamentId, ["finalized"]);
       expect(await pointRows()).toHaveLength(0);
@@ -121,7 +139,9 @@ describe("statistics repositories (integration)", () => {
   describe("tournament stats", () => {
     it("reads mode, outcome distribution, finalized matches and momentum", async () => {
       expect((await tournamentStatsRepository.getTournamentMode(tournamentId))?.teamMode).toBe("flex");
-      expect(await tournamentStatsRepository.getOutcomeDistribution(tournamentId)).toEqual([{ outcomeTypeId: null, count: 2 }]);
+      expect(await tournamentStatsRepository.getOutcomeDistribution(tournamentId)).toEqual([
+        { outcomeTypeId: null, count: 2 },
+      ]);
       expect(await tournamentStatsRepository.getMatchesWithSidesAndPlayers(tournamentId)).toHaveLength(2);
       const momentum = await tournamentStatsRepository.getMomentum(tournamentId);
       expect(momentum.map((d) => d.date)).toEqual(["2026-04-01", "2026-04-03"]);
@@ -139,7 +159,14 @@ describe("statistics repositories (integration)", () => {
 
   describe("match results", () => {
     it("reads, reports and finalizes a result", async () => {
-      const tmp = await seed.createMatch({ tournamentId, entryA: entryAnn, entryB: entryBob, status: "scheduled", winnerSide: null, finalized: false });
+      const tmp = await seed.createMatch({
+        tournamentId,
+        entryA: entryAnn,
+        entryB: entryBob,
+        status: "scheduled",
+        winnerSide: null,
+        finalized: false,
+      });
       expect(await matchResultRepository.getByMatchId(MISSING)).toBeUndefined();
       expect(await matchResultRepository.isFinalized(tmp)).toBe(false);
 
@@ -157,7 +184,14 @@ describe("statistics repositories (integration)", () => {
     });
 
     it("creates a result inside a transaction", async () => {
-      const tmp = await seed.createMatch({ tournamentId, entryA: entryAnn, entryB: entryBob, status: "scheduled", winnerSide: null, finalized: false });
+      const tmp = await seed.createMatch({
+        tournamentId,
+        entryA: entryAnn,
+        entryB: entryBob,
+        status: "scheduled",
+        winnerSide: null,
+        finalized: false,
+      });
       await matchResultRepository.delete(tmp);
       await testDb.transaction(async (tx) => {
         await matchResultRepository.create(tmp, { reportedBy: bob, reportedAt: new Date() }, tx as never);

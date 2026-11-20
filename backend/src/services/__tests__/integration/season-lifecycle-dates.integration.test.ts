@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-} from "../../../config/test-database";
+import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 
@@ -10,13 +7,7 @@ import * as schema from "../../../db/schema";
 const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
 import { rankedSeasonService } from "../../ranked-season.service";
-import {
-  appUsers,
-  disciplines,
-  rankedSeasonConfigs,
-  tournaments,
-  user as betterAuthUser,
-} from "../../../db/schema";
+import { appUsers, disciplines, rankedSeasonConfigs, tournaments, user as betterAuthUser } from "../../../db/schema";
 import { eq } from "drizzle-orm";
 
 /**
@@ -30,14 +21,9 @@ describe("Ranked season lifecycle dates", () => {
   let disciplineId: string;
 
   const today = () => new Date().toISOString().slice(0, 10);
-  const shift = (days: number) =>
-    new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const shift = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  async function createSeason(opts: {
-    status: "draft" | "ongoing";
-    startDate: string;
-    endDate: string;
-  }) {
+  async function createSeason(opts: { status: "draft" | "ongoing"; startDate: string; endDate: string }) {
     const [season] = await testDb
       .insert(tournaments)
       .values({

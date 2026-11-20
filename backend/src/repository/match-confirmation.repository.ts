@@ -24,10 +24,7 @@ export class MatchConfirmationRepository {
    * Create a new match confirmation
    */
   async create(data: CreateMatchConfirmationData) {
-    const [confirmation] = await db
-      .insert(matchConfirmations)
-      .values(data)
-      .returning();
+    const [confirmation] = await db.insert(matchConfirmations).values(data).returning();
     return confirmation;
   }
 
@@ -73,7 +70,7 @@ export class MatchConfirmationRepository {
           eq(matchConfirmations.matchId, matchId),
           eq(matchConfirmations.playerId, playerId),
           eq(matchConfirmations.isPostFinalization, isPostFinalization),
-        )
+        ),
       )
       .returning();
     return confirmation;
@@ -87,12 +84,17 @@ export class MatchConfirmationRepository {
     const existing = await this.getByMatchAndPlayer(data.matchId, data.playerId, isPost);
 
     if (existing) {
-      return await this.update(data.matchId, data.playerId, {
-        isConfirmed: data.isConfirmed,
-        isContested: data.isContested,
-        contestationReason: data.contestationReason,
-        sidePosition: data.sidePosition,
-      }, isPost);
+      return await this.update(
+        data.matchId,
+        data.playerId,
+        {
+          isConfirmed: data.isConfirmed,
+          isContested: data.isContested,
+          contestationReason: data.contestationReason,
+          sidePosition: data.sidePosition,
+        },
+        isPost,
+      );
     }
 
     return await this.create(data);
@@ -104,9 +106,7 @@ export class MatchConfirmationRepository {
    */
   async resetConfirmationsExcept(matchId: string, excludePlayerId: string) {
     const confirmations = await this.getByMatchId(matchId);
-    const toReset = confirmations.filter(
-      (c) => c.playerId !== excludePlayerId && !c.isPostFinalization,
-    );
+    const toReset = confirmations.filter((c) => c.playerId !== excludePlayerId && !c.isPostFinalization);
 
     for (const c of toReset) {
       await db
@@ -121,7 +121,7 @@ export class MatchConfirmationRepository {
             eq(matchConfirmations.matchId, matchId),
             eq(matchConfirmations.playerId, c.playerId),
             eq(matchConfirmations.isPostFinalization, false),
-          )
+          ),
         );
     }
   }
@@ -154,12 +154,7 @@ export class MatchConfirmationRepository {
   async deletePostFinalizationByMatchId(matchId: string) {
     await db
       .delete(matchConfirmations)
-      .where(
-        and(
-          eq(matchConfirmations.matchId, matchId),
-          eq(matchConfirmations.isPostFinalization, true),
-        ),
-      );
+      .where(and(eq(matchConfirmations.matchId, matchId), eq(matchConfirmations.isPostFinalization, true)));
   }
 
   /**
@@ -182,8 +177,8 @@ export class MatchConfirmationRepository {
         and(
           eq(matchConfirmations.matchId, matchId),
           eq(matchConfirmations.playerId, playerId),
-          eq(matchConfirmations.isPostFinalization, isPostFinalization)
-        )
+          eq(matchConfirmations.isPostFinalization, isPostFinalization),
+        ),
       );
   }
 
@@ -191,9 +186,7 @@ export class MatchConfirmationRepository {
    * Delete all confirmations for a match
    */
   async deleteByMatchId(matchId: string) {
-    await db
-      .delete(matchConfirmations)
-      .where(eq(matchConfirmations.matchId, matchId));
+    await db.delete(matchConfirmations).where(eq(matchConfirmations.matchId, matchId));
   }
 
   /**
@@ -201,11 +194,11 @@ export class MatchConfirmationRepository {
    */
   async countConfirmationsByMatch(matchId: string) {
     const confirmations = await this.getByMatchId(matchId);
-    
+
     return {
       total: confirmations.length,
-      confirmed: confirmations.filter(c => c.isConfirmed).length,
-      contested: confirmations.filter(c => c.isContested).length,
+      confirmed: confirmations.filter((c) => c.isConfirmed).length,
+      contested: confirmations.filter((c) => c.isContested).length,
     };
   }
 
@@ -230,9 +223,8 @@ export class MatchConfirmationRepository {
    */
   async hasAnyContestation(matchId: string): Promise<boolean> {
     const confirmations = await this.getByMatchId(matchId);
-    return confirmations.some(c => c.isContested);
+    return confirmations.some((c) => c.isContested);
   }
 }
 
 export const matchConfirmationRepository = new MatchConfirmationRepository();
-

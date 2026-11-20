@@ -14,11 +14,7 @@ export class MmrSeedRepository {
    * result — replacing beats merging and keeps the table free of players who
    * dropped out of the source season's eligible set.
    */
-  async replaceForSeason(
-    seasonId: string,
-    sourceSeasonId: string,
-    rows: MmrSeedRow[],
-  ): Promise<void> {
+  async replaceForSeason(seasonId: string, sourceSeasonId: string, rows: MmrSeedRow[]): Promise<void> {
     await db.transaction(async (tx) => {
       await tx.delete(seasonMmrSeeds).where(eq(seasonMmrSeeds.seasonId, seasonId));
       if (rows.length === 0) return;
@@ -48,10 +44,7 @@ export class MmrSeedRepository {
 
   async getSeedMmr(seasonId: string, playerId: string): Promise<number | null> {
     const row = await db.query.seasonMmrSeeds.findFirst({
-      where: and(
-        eq(seasonMmrSeeds.seasonId, seasonId),
-        eq(seasonMmrSeeds.playerId, playerId),
-      ),
+      where: and(eq(seasonMmrSeeds.seasonId, seasonId), eq(seasonMmrSeeds.playerId, playerId)),
       columns: { seedMmr: true },
     });
     return row?.seedMmr ?? null;

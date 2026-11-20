@@ -35,8 +35,12 @@ const echoRow = (data: any) => ({ id: `evt-${data.matchId}`, createdAt: new Date
 const mockAnimRepo = {
   upsert: mock((data: any) => Promise.resolve(echoRow(data))),
   bulkUpsert: mock((rows: any[]) => Promise.resolve(rows.map(echoRow))),
-  getOfficialEventDeltasByPlayer: mock(() => Promise.resolve(new Map<string, { id: string; mmrDelta: number; seenDelta: number }>())),
-  getOfficialEventDeltasForPlayers: mock(() => Promise.resolve(new Map<string, Map<string, { id: string; mmrDelta: number; seenDelta: number }>>())),
+  getOfficialEventDeltasByPlayer: mock(() =>
+    Promise.resolve(new Map<string, { id: string; mmrDelta: number; seenDelta: number }>()),
+  ),
+  getOfficialEventDeltasForPlayers: mock(() =>
+    Promise.resolve(new Map<string, Map<string, { id: string; mmrDelta: number; seenDelta: number }>>()),
+  ),
   getPendingForPlayer: mock(() => Promise.resolve([] as any[])),
   getMatchContext: mock((_playerId: string, _matchIds: string[]) =>
     Promise.resolve((matchId: string) => ({
@@ -107,8 +111,15 @@ function historyRow(matchId: string, mmrDelta: number) {
 }
 
 beforeEach(() => {
-  [...Object.values(mockAnimRepo), ...Object.values(mockPlayerMmrRepo), ...Object.values(mockRankedRepo), mockWs.send].forEach((m) => clearMock(m as any));
-  mockRankedRepo.getConfigByTournamentId.mockImplementation(() => Promise.resolve({ baseMmr: 1000, kFactor: 32, placementMatches: 3 } as any));
+  [
+    ...Object.values(mockAnimRepo),
+    ...Object.values(mockPlayerMmrRepo),
+    ...Object.values(mockRankedRepo),
+    mockWs.send,
+  ].forEach((m) => clearMock(m as any));
+  mockRankedRepo.getConfigByTournamentId.mockImplementation(() =>
+    Promise.resolve({ baseMmr: 1000, kFactor: 32, placementMatches: 3 } as any),
+  );
   mockRankedRepo.getRankTiers.mockImplementation(() => Promise.resolve([]));
   mockAnimRepo.upsert.mockImplementation((data: any) => Promise.resolve(echoRow(data)));
   mockAnimRepo.bulkUpsert.mockImplementation((rows: any[]) => Promise.resolve(rows.map(echoRow)));
@@ -133,12 +144,17 @@ describe("persistRecalcEvents", () => {
     );
     // m1 stored+seen delta differs (15 -> 18), m2 unchanged (-5).
     mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["p1", new Map([
-          ["m1", { id: "evt-m1", mmrDelta: 15, seenDelta: 15 }],
-          ["m2", { id: "evt-m2", mmrDelta: -5, seenDelta: -5 }],
-        ])],
-      ])),
+      Promise.resolve(
+        new Map([
+          [
+            "p1",
+            new Map([
+              ["m1", { id: "evt-m1", mmrDelta: 15, seenDelta: 15 }],
+              ["m2", { id: "evt-m2", mmrDelta: -5, seenDelta: -5 }],
+            ]),
+          ],
+        ]),
+      ),
     );
 
     const affected = await mmrAnimationEventService.persistRecalcEvents("season-1", ["p1"]);
@@ -191,9 +207,7 @@ describe("persistRecalcEvents", () => {
     mockPlayerMmrRepo.getMmrHistoryOrderedForPlayers.mockImplementation(() =>
       Promise.resolve(new Map([["p1", [historyRow("m1", 18)]]])),
     );
-    mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() =>
-      Promise.resolve(new Map()),
-    );
+    mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() => Promise.resolve(new Map()));
 
     const affected = await mmrAnimationEventService.persistRecalcEvents("season-1", ["p1"]);
 
@@ -203,19 +217,26 @@ describe("persistRecalcEvents", () => {
 
   it("multi-player cascade: a SINGLE bulkUpsert, zero ws.send per event", async () => {
     mockPlayerMmrRepo.getMmrHistoryOrderedForPlayers.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["p1", [historyRow("m1", 18)]],
-        ["p2", [historyRow("m1", -3), historyRow("m2", 9)]],
-      ])),
+      Promise.resolve(
+        new Map([
+          ["p1", [historyRow("m1", 18)]],
+          ["p2", [historyRow("m1", -3), historyRow("m2", 9)]],
+        ]),
+      ),
     );
     mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["p1", new Map([["m1", { id: "e1", mmrDelta: 10, seenDelta: 10 }]])],   // changed
-        ["p2", new Map([
-          ["m1", { id: "e2", mmrDelta: -3, seenDelta: -3 }],                    // unchanged
-          ["m2", { id: "e3", mmrDelta: 5, seenDelta: 5 }],                      // changed (5 -> 9)
-        ])],
-      ])),
+      Promise.resolve(
+        new Map([
+          ["p1", new Map([["m1", { id: "e1", mmrDelta: 10, seenDelta: 10 }]])], // changed
+          [
+            "p2",
+            new Map([
+              ["m1", { id: "e2", mmrDelta: -3, seenDelta: -3 }], // unchanged
+              ["m2", { id: "e3", mmrDelta: 5, seenDelta: 5 }], // changed (5 -> 9)
+            ]),
+          ],
+        ]),
+      ),
     );
 
     const affected = await mmrAnimationEventService.persistRecalcEvents("season-1", ["p1", "p2"]);
@@ -263,9 +284,7 @@ describe("persistCancellationEvents", () => {
 
   it("retires the pending event of a direct player who never saw the match, instead of leaving it in the recap", async () => {
     mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() => Promise.resolve(new Map()));
-    const changes = new Map<string, any>([
-      ["p1", { mmrBefore: 1000, mmrAfter: 990, reason: "match_cancelled" }],
-    ]);
+    const changes = new Map<string, any>([["p1", { mmrBefore: 1000, mmrAfter: 990, reason: "match_cancelled" }]]);
 
     const affected = await mmrAnimationEventService.persistCancellationEvents("m-cancelled", "season-1", changes);
 
@@ -276,10 +295,12 @@ describe("persistCancellationEvents", () => {
 
   it("mixed: a seen player gets the removal row, an unseen one is retired", async () => {
     mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["p1", new Map([["m-cancelled", { id: "evt-1", mmrDelta: 12, seenDelta: 12 }]])],
-        ["p3", new Map([["m-cancelled", { id: "evt-3", mmrDelta: -15, seenDelta: 0 }]])],
-      ])),
+      Promise.resolve(
+        new Map([
+          ["p1", new Map([["m-cancelled", { id: "evt-1", mmrDelta: 12, seenDelta: 12 }]])],
+          ["p3", new Map([["m-cancelled", { id: "evt-3", mmrDelta: -15, seenDelta: 0 }]])],
+        ]),
+      ),
     );
     const changes = new Map<string, any>([
       ["p1", { mmrBefore: 1012, mmrAfter: 1000, reason: "match_cancelled" }],
@@ -308,11 +329,13 @@ describe("theory: flood on the next match when events are stale", () => {
 
   it("BUG: stale events on m1..m3 → finalizing m4 floods 3 'recalculated' + 1 'match_finalized'", async () => {
     mockAnimRepo.getOfficialEventDeltasByPlayer.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["m1", { id: "evt-m1", mmrDelta: 15, seenDelta: 15 }],
-        ["m2", { id: "evt-m2", mmrDelta: -5, seenDelta: -5 }],
-        ["m3", { id: "evt-m3", mmrDelta: 10, seenDelta: 10 }],
-      ])),
+      Promise.resolve(
+        new Map([
+          ["m1", { id: "evt-m1", mmrDelta: 15, seenDelta: 15 }],
+          ["m2", { id: "evt-m2", mmrDelta: -5, seenDelta: -5 }],
+          ["m3", { id: "evt-m3", mmrDelta: 10, seenDelta: 10 }],
+        ]),
+      ),
     );
 
     await mmrAnimationEventService.createOfficialEventsAndBroadcast("m4", "season-1");
@@ -327,11 +350,13 @@ describe("theory: flood on the next match when events are stale", () => {
 
   it("FIX: synchronized events → finalizing m4 only emits m4", async () => {
     mockAnimRepo.getOfficialEventDeltasByPlayer.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
-        ["m2", { id: "evt-m2", mmrDelta: -7, seenDelta: -7 }],
-        ["m3", { id: "evt-m3", mmrDelta: 12, seenDelta: 12 }],
-      ])),
+      Promise.resolve(
+        new Map([
+          ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
+          ["m2", { id: "evt-m2", mmrDelta: -7, seenDelta: -7 }],
+          ["m3", { id: "evt-m3", mmrDelta: 12, seenDelta: 12 }],
+        ]),
+      ),
     );
 
     await mmrAnimationEventService.createOfficialEventsAndBroadcast("m4", "season-1");
@@ -342,11 +367,13 @@ describe("theory: flood on the next match when events are stale", () => {
 
   it("the live payload carries the match's players, like the pending fetch", async () => {
     mockAnimRepo.getOfficialEventDeltasByPlayer.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
-        ["m2", { id: "evt-m2", mmrDelta: -7, seenDelta: -7 }],
-        ["m3", { id: "evt-m3", mmrDelta: 12, seenDelta: 12 }],
-      ])),
+      Promise.resolve(
+        new Map([
+          ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
+          ["m2", { id: "evt-m2", mmrDelta: -7, seenDelta: -7 }],
+          ["m3", { id: "evt-m3", mmrDelta: 12, seenDelta: 12 }],
+        ]),
+      ),
     );
 
     await mmrAnimationEventService.createOfficialEventsAndBroadcast("m4", "season-1");
@@ -371,11 +398,13 @@ describe("theory: flood on the next match when events are stale", () => {
 
   it("partial desync: only m2 changed → finalization emits m2 (recalculated) + m4", async () => {
     mockAnimRepo.getOfficialEventDeltasByPlayer.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
-        ["m2", { id: "evt-m2", mmrDelta: -5, seenDelta: -5 }],
-        ["m3", { id: "evt-m3", mmrDelta: 12, seenDelta: 12 }],
-      ])),
+      Promise.resolve(
+        new Map([
+          ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
+          ["m2", { id: "evt-m2", mmrDelta: -5, seenDelta: -5 }],
+          ["m3", { id: "evt-m3", mmrDelta: 12, seenDelta: 12 }],
+        ]),
+      ),
     );
 
     await mmrAnimationEventService.createOfficialEventsAndBroadcast("m4", "season-1");
@@ -412,10 +441,12 @@ describe("createOfficialEventsAndBroadcast: rules-engine message", () => {
 
   it("attaches the message when the match is the only animation", async () => {
     mockAnimRepo.getOfficialEventDeltasByPlayer.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
-        ["m2", { id: "evt-m2", mmrDelta: -7, seenDelta: -7 }],
-      ])),
+      Promise.resolve(
+        new Map([
+          ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
+          ["m2", { id: "evt-m2", mmrDelta: -7, seenDelta: -7 }],
+        ]),
+      ),
     );
 
     await mmrAnimationEventService.createOfficialEventsAndBroadcast("m4", "season-1", outputs() as never);
@@ -430,10 +461,12 @@ describe("createOfficialEventsAndBroadcast: rules-engine message", () => {
     // m2's stored delta is stale, so finalizing m4 also emits a "recalculated"
     // event. The rule message must still land on m4.
     mockAnimRepo.getOfficialEventDeltasByPlayer.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
-        ["m2", { id: "evt-m2", mmrDelta: -5, seenDelta: -5 }],
-      ])),
+      Promise.resolve(
+        new Map([
+          ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
+          ["m2", { id: "evt-m2", mmrDelta: -5, seenDelta: -5 }],
+        ]),
+      ),
     );
 
     await mmrAnimationEventService.createOfficialEventsAndBroadcast("m4", "season-1", outputs() as never);
@@ -470,10 +503,12 @@ describe("createOfficialEventsAndBroadcast: displayDelta", () => {
   it("current (new) match = full delta; recalculated = delta - seenDelta", async () => {
     // m1 was seen at +15, its real delta is now +18 (desync) → diff +3.
     mockAnimRepo.getOfficialEventDeltasByPlayer.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["m1", { id: "evt-m1", mmrDelta: 15, seenDelta: 15 }],
-        ["m2", { id: "evt-m2", mmrDelta: -7, seenDelta: -7 }],
-      ])),
+      Promise.resolve(
+        new Map([
+          ["m1", { id: "evt-m1", mmrDelta: 15, seenDelta: 15 }],
+          ["m2", { id: "evt-m2", mmrDelta: -7, seenDelta: -7 }],
+        ]),
+      ),
     );
 
     await mmrAnimationEventService.createOfficialEventsAndBroadcast("m4", "season-1");
@@ -487,10 +522,12 @@ describe("createOfficialEventsAndBroadcast: displayDelta", () => {
 
   it("displayDelta is broadcast in the WS payload", async () => {
     mockAnimRepo.getOfficialEventDeltasByPlayer.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
-        ["m2", { id: "evt-m2", mmrDelta: -7, seenDelta: -7 }],
-      ])),
+      Promise.resolve(
+        new Map([
+          ["m1", { id: "evt-m1", mmrDelta: 18, seenDelta: 18 }],
+          ["m2", { id: "evt-m2", mmrDelta: -7, seenDelta: -7 }],
+        ]),
+      ),
     );
 
     await mmrAnimationEventService.createOfficialEventsAndBroadcast("m4", "season-1");
@@ -586,13 +623,20 @@ describe("persistCorrectionEvents", () => {
 
   it("drops the rules message of every direct player, seen or not: it describes the old result", async () => {
     mockPlayerMmrRepo.getMmrHistoryOrderedForPlayers.mockImplementation(() =>
-      Promise.resolve(new Map([["p1", [historyRow("m1", -12)]], ["p2", [historyRow("m1", 12)]]])),
+      Promise.resolve(
+        new Map([
+          ["p1", [historyRow("m1", -12)]],
+          ["p2", [historyRow("m1", 12)]],
+        ]),
+      ),
     );
     mockAnimRepo.getOfficialEventDeltasForPlayers.mockImplementation(() =>
-      Promise.resolve(new Map([
-        ["p1", new Map([["m1", { id: "e1", mmrDelta: 15, seenDelta: 15, viewed: true }]])],
-        ["p2", new Map([["m1", { id: "e2", mmrDelta: -15, seenDelta: 0, viewed: false }]])],
-      ])),
+      Promise.resolve(
+        new Map([
+          ["p1", new Map([["m1", { id: "e1", mmrDelta: 15, seenDelta: 15, viewed: true }]])],
+          ["p2", new Map([["m1", { id: "e2", mmrDelta: -15, seenDelta: 0, viewed: false }]])],
+        ]),
+      ),
     );
 
     await mmrAnimationEventService.persistCorrectionEvents("m1", "season-1", ["p1", "p2"]);
@@ -629,18 +673,13 @@ describe("markViewed", () => {
     await mmrAnimationEventService.markViewed(["evt-1", "evt-2", "evt-foreign"], "player-1", "recap");
 
     expect(mockAnimRepo.markViewed.mock.calls[0]).toEqual([["evt-1", "evt-2", "evt-foreign"], "player-1"]);
-    expect(mockNotificationService.markMatchCreatedRead.mock.calls[0]).toEqual([
-      "player-1",
-      ["match-1", "match-2"],
-    ]);
+    expect(mockNotificationService.markMatchCreatedRead.mock.calls[0]).toEqual(["player-1", ["match-1", "match-2"]]);
     // Only the events the viewer owns reach the rules-engine stats.
     expect(mockRuleFiringRepo.markSeen.mock.calls[0]).toEqual([["evt-1", "evt-2"], "recap"]);
   });
 
   it("still marks notifications read when the client sends no surface", async () => {
-    mockAnimRepo.markViewed.mockImplementation(() =>
-      Promise.resolve([{ id: "evt-1", matchId: "match-1" }]),
-    );
+    mockAnimRepo.markViewed.mockImplementation(() => Promise.resolve([{ id: "evt-1", matchId: "match-1" }]));
 
     await mmrAnimationEventService.markViewed(["evt-1"], "player-1");
 

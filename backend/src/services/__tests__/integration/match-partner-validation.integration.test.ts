@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-} from "../../../config/test-database";
+import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 import { newId } from "../../../utils/uuid";
@@ -27,10 +24,7 @@ import {
 } from "../../../db/schema";
 import { eq } from "drizzle-orm";
 import { ConflictError, ErrorCode } from "../../../types/errors";
-import {
-  insertTournamentConfigs,
-  setChampionshipCaps,
-} from "../helpers/tournament-config-test-helpers";
+import { insertTournamentConfigs, setChampionshipCaps } from "../helpers/tournament-config-test-helpers";
 
 describe("Match Partner Validation", () => {
   let tournamentId: string;
@@ -141,9 +135,7 @@ describe("Match Partner Validation", () => {
 
     // Create tournament with flex mode
     const today = new Date().toISOString().split("T")[0];
-    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
     await testDb.insert(tournaments).values({
       id: tournamentId,
@@ -171,7 +163,6 @@ describe("Match Partner Validation", () => {
     ]);
   });
 
-
   it("Step 1: should count matches correctly after creating first match", async () => {
     console.log("[DEBUG] Test 1 starting...");
     console.log("[DEBUG] About to call matchService.createMatch...");
@@ -179,25 +170,21 @@ describe("Match Partner Validation", () => {
     await matchService.createMatch(
       {
         tournamentId,
-        sides: [{ position: 1, playerIds: [player1Id, player2Id] }, { position: 2, playerIds: [player3Id, player4Id] }],
+        sides: [
+          { position: 1, playerIds: [player1Id, player2Id] },
+          { position: 2, playerIds: [player3Id, player4Id] },
+        ],
         status: "scheduled",
       },
       player1Id,
     );
 
     // Check that entry was created for Player1 + Player2
-    const entry12 = await entryRepository.findExistingEntry(
-      tournamentId,
-      undefined,
-      [player1Id, player2Id],
-    );
+    const entry12 = await entryRepository.findExistingEntry(tournamentId, undefined, [player1Id, player2Id]);
     expect(entry12).toBeTruthy();
 
     // Count matches where Player1 and Player2 played together as a complete team
-    const count = await matchRepository.countMatchesForTeam(
-      tournamentId,
-      [player1Id, player2Id],
-    );
+    const count = await matchRepository.countMatchesForTeam(tournamentId, [player1Id, player2Id]);
 
     expect(Number(count)).toBe(1);
   });
@@ -207,17 +194,17 @@ describe("Match Partner Validation", () => {
     await matchService.createMatch(
       {
         tournamentId,
-        sides: [{ position: 1, playerIds: [player1Id, player2Id] }, { position: 2, playerIds: [player3Id, player4Id] }],
+        sides: [
+          { position: 1, playerIds: [player1Id, player2Id] },
+          { position: 2, playerIds: [player3Id, player4Id] },
+        ],
         status: "scheduled",
       },
       player1Id,
     );
 
     // Count matches where Player1 and Player2 played together as a complete team (should be 2 now)
-    const count = await matchRepository.countMatchesForTeam(
-      tournamentId,
-      [player1Id, player2Id],
-    );
+    const count = await matchRepository.countMatchesForTeam(tournamentId, [player1Id, player2Id]);
 
     expect(Number(count)).toBe(2);
   });
@@ -230,7 +217,10 @@ describe("Match Partner Validation", () => {
       await matchService.createMatch(
         {
           tournamentId,
-          sides: [{ position: 1, playerIds: [player1Id, player2Id] }, { position: 2, playerIds: [player3Id, player4Id] }],
+          sides: [
+            { position: 1, playerIds: [player1Id, player2Id] },
+            { position: 2, playerIds: [player3Id, player4Id] },
+          ],
           status: "scheduled",
         },
         player1Id,
@@ -238,9 +228,7 @@ describe("Match Partner Validation", () => {
       throw new Error("Expected ConflictError");
     } catch (error) {
       expect(error).toBeInstanceOf(ConflictError);
-      expect((error as ConflictError).code).toBe(
-        ErrorCode.MAX_PARTNER_MATCHES_EXCEEDED,
-      );
+      expect((error as ConflictError).code).toBe(ErrorCode.MAX_PARTNER_MATCHES_EXCEEDED);
     }
   });
 
@@ -248,7 +236,10 @@ describe("Match Partner Validation", () => {
     // Validate match creation (should fail)
     const validation = await matchService.validateMatch({
       tournamentId,
-      sides: [{ position: 1, playerIds: [player1Id, player2Id] }, { position: 2, playerIds: [player3Id, player4Id] }],
+      sides: [
+        { position: 1, playerIds: [player1Id, player2Id] },
+        { position: 2, playerIds: [player3Id, player4Id] },
+      ],
       status: "scheduled",
     });
 
@@ -270,13 +261,19 @@ describe("Match Partner Validation", () => {
     // Validate match multiple times
     await matchService.validateMatch({
       tournamentId,
-      sides: [{ position: 1, playerIds: [player1Id, player3Id] }, { position: 2, playerIds: [player2Id, player4Id] }],
+      sides: [
+        { position: 1, playerIds: [player1Id, player3Id] },
+        { position: 2, playerIds: [player2Id, player4Id] },
+      ],
       status: "scheduled",
     });
 
     await matchService.validateMatch({
       tournamentId,
-      sides: [{ position: 1, playerIds: [player1Id, player3Id] }, { position: 2, playerIds: [player2Id, player4Id] }],
+      sides: [
+        { position: 1, playerIds: [player1Id, player3Id] },
+        { position: 2, playerIds: [player2Id, player4Id] },
+      ],
       status: "scheduled",
     });
 
@@ -298,7 +295,10 @@ describe("Match Partner Validation", () => {
     const match = await matchService.createMatch(
       {
         tournamentId,
-        sides: [{ position: 1, playerIds: [player1Id, player3Id] }, { position: 2, playerIds: [player2Id, player4Id] }],
+        sides: [
+          { position: 1, playerIds: [player1Id, player3Id] },
+          { position: 2, playerIds: [player2Id, player4Id] },
+        ],
         status: "scheduled",
       },
       player1Id,
@@ -308,18 +308,11 @@ describe("Match Partner Validation", () => {
     expect(match?.id).toBeTruthy();
 
     // Verify entry was created (or found existing)
-    const entry13 = await entryRepository.findExistingEntry(
-      tournamentId,
-      undefined,
-      [player1Id, player3Id],
-    );
+    const entry13 = await entryRepository.findExistingEntry(tournamentId, undefined, [player1Id, player3Id]);
     expect(entry13).toBeTruthy();
 
     // Count matches where Player1 and Player3 played together as a complete team
-    const count = await matchRepository.countMatchesForTeam(
-      tournamentId,
-      [player1Id, player3Id],
-    );
+    const count = await matchRepository.countMatchesForTeam(tournamentId, [player1Id, player3Id]);
 
     expect(Number(count)).toBe(1);
   });
@@ -373,7 +366,10 @@ describe("Match Partner Validation", () => {
     const result = await matchService.createMatch(
       {
         tournamentId,
-        sides: [{ position: 1, playerIds: [player1Id, player4Id] }, { position: 2, playerIds: [player2Id, player3Id] }],
+        sides: [
+          { position: 1, playerIds: [player1Id, player4Id] },
+          { position: 2, playerIds: [player2Id, player3Id] },
+        ],
         status: "scheduled",
       },
       player1Id,
@@ -402,7 +398,10 @@ describe("Match Partner Validation", () => {
       await matchService.createMatch(
         {
           tournamentId,
-          sides: [{ position: 1, playerIds: [player1Id, player2Id] }, { position: 2, playerIds: [player3Id, player4Id] }],
+          sides: [
+            { position: 1, playerIds: [player1Id, player2Id] },
+            { position: 2, playerIds: [player3Id, player4Id] },
+          ],
           status: "scheduled",
         },
         player1Id,
@@ -410,9 +409,7 @@ describe("Match Partner Validation", () => {
       throw new Error("Expected ConflictError");
     } catch (error) {
       expect(error).toBeInstanceOf(ConflictError);
-      expect((error as ConflictError).code).toBe(
-        ErrorCode.MAX_OPPONENT_MATCHES_EXCEEDED,
-      );
+      expect((error as ConflictError).code).toBe(ErrorCode.MAX_OPPONENT_MATCHES_EXCEEDED);
     }
   });
 });
@@ -435,24 +432,30 @@ describe("Static Team Rule Validation", () => {
     // Auth users
     const authIds: string[] = [];
     for (let i = 1; i <= 4; i++) {
-      const [u] = await testDb.insert(betterAuthUser).values({
-        id: `st-auth-${i}-${timestamp}`,
-        name: `Static P${i}`,
-        email: `static-p${i}-${timestamp}@test.com`,
-        emailVerified: true,
-      }).returning();
+      const [u] = await testDb
+        .insert(betterAuthUser)
+        .values({
+          id: `st-auth-${i}-${timestamp}`,
+          name: `Static P${i}`,
+          email: `static-p${i}-${timestamp}@test.com`,
+          emailVerified: true,
+        })
+        .returning();
       authIds.push(u.id);
     }
 
     // App users
     const appIds: string[] = [];
     for (let i = 0; i < 4; i++) {
-      const [u] = await testDb.insert(appUsers).values({
-        externalId: authIds[i],
-        displayName: `Static Player ${i + 1}`,
-        shortName: `SP${i + 1}`,
-        role: "player",
-      }).returning();
+      const [u] = await testDb
+        .insert(appUsers)
+        .values({
+          externalId: authIds[i],
+          displayName: `Static Player ${i + 1}`,
+          shortName: `SP${i + 1}`,
+          role: "player",
+        })
+        .returning();
       appIds.push(u.id);
     }
     [p1Id, p2Id, p3Id, p4Id] = appIds;
@@ -486,18 +489,24 @@ describe("Static Team Rule Validation", () => {
     await testDb.insert(tournamentAdmins).values({ tournamentId: staticTournamentId, userId: p1Id });
 
     // Teams
-    const [tA] = await testDb.insert(teams).values({
-      tournamentId: staticTournamentId,
-      name: "Team Alpha",
-      createdBy: p1Id,
-    }).returning();
+    const [tA] = await testDb
+      .insert(teams)
+      .values({
+        tournamentId: staticTournamentId,
+        name: "Team Alpha",
+        createdBy: p1Id,
+      })
+      .returning();
     teamAId = tA.id;
 
-    const [tB] = await testDb.insert(teams).values({
-      tournamentId: staticTournamentId,
-      name: "Team Beta",
-      createdBy: p3Id,
-    }).returning();
+    const [tB] = await testDb
+      .insert(teams)
+      .values({
+        tournamentId: staticTournamentId,
+        name: "Team Beta",
+        createdBy: p3Id,
+      })
+      .returning();
     teamBId = tB.id;
 
     // Team members
@@ -513,7 +522,10 @@ describe("Static Team Rule Validation", () => {
     const result = await matchService.createMatch(
       {
         tournamentId: staticTournamentId,
-        sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamBId }],
+        sides: [
+          { position: 1, teamId: teamAId },
+          { position: 2, teamId: teamBId },
+        ],
         status: "scheduled",
       },
       p1Id,
@@ -526,7 +538,10 @@ describe("Static Team Rule Validation", () => {
     const result = await matchService.createMatch(
       {
         tournamentId: staticTournamentId,
-        sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamBId }],
+        sides: [
+          { position: 1, teamId: teamAId },
+          { position: 2, teamId: teamBId },
+        ],
         status: "scheduled",
       },
       p1Id,
@@ -538,7 +553,10 @@ describe("Static Team Rule Validation", () => {
     const result = await matchService.createMatch(
       {
         tournamentId: staticTournamentId,
-        sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamBId }],
+        sides: [
+          { position: 1, teamId: teamAId },
+          { position: 2, teamId: teamBId },
+        ],
         status: "scheduled",
       },
       p1Id,
@@ -558,7 +576,10 @@ describe("Static Team Rule Validation", () => {
       await matchService.createMatch(
         {
           tournamentId: staticTournamentId,
-          sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamBId }],
+          sides: [
+            { position: 1, teamId: teamAId },
+            { position: 2, teamId: teamBId },
+          ],
           status: "scheduled",
         },
         p1Id,
@@ -582,7 +603,10 @@ describe("Static Team Rule Validation", () => {
       await matchService.createMatch(
         {
           tournamentId: staticTournamentId,
-          sides: [{ position: 1, teamId: teamAId }, { position: 2, teamId: teamBId }],
+          sides: [
+            { position: 1, teamId: teamAId },
+            { position: 2, teamId: teamBId },
+          ],
           status: "scheduled",
         },
         p1Id,
@@ -606,34 +630,46 @@ describe("Flex 1v1 Opponent Validation via allPlayerIds", () => {
     const today = new Date().toISOString().split("T")[0];
     const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-    const [authA] = await testDb.insert(betterAuthUser).values({
-      id: `solo-auth-a-${timestamp}`,
-      name: "Solo A",
-      email: `solo-a-${timestamp}@test.com`,
-      emailVerified: true,
-    }).returning();
+    const [authA] = await testDb
+      .insert(betterAuthUser)
+      .values({
+        id: `solo-auth-a-${timestamp}`,
+        name: "Solo A",
+        email: `solo-a-${timestamp}@test.com`,
+        emailVerified: true,
+      })
+      .returning();
 
-    const [authB] = await testDb.insert(betterAuthUser).values({
-      id: `solo-auth-b-${timestamp}`,
-      name: "Solo B",
-      email: `solo-b-${timestamp}@test.com`,
-      emailVerified: true,
-    }).returning();
+    const [authB] = await testDb
+      .insert(betterAuthUser)
+      .values({
+        id: `solo-auth-b-${timestamp}`,
+        name: "Solo B",
+        email: `solo-b-${timestamp}@test.com`,
+        emailVerified: true,
+      })
+      .returning();
 
-    const [userA] = await testDb.insert(appUsers).values({
-      externalId: authA.id,
-      displayName: "Solo A",
-      shortName: "SLOA",
-      role: "player",
-    }).returning();
+    const [userA] = await testDb
+      .insert(appUsers)
+      .values({
+        externalId: authA.id,
+        displayName: "Solo A",
+        shortName: "SLOA",
+        role: "player",
+      })
+      .returning();
     soloAId = userA.id;
 
-    const [userB] = await testDb.insert(appUsers).values({
-      externalId: authB.id,
-      displayName: "Solo B",
-      shortName: "SLOB",
-      role: "player",
-    }).returning();
+    const [userB] = await testDb
+      .insert(appUsers)
+      .values({
+        externalId: authB.id,
+        displayName: "Solo B",
+        shortName: "SLOB",
+        role: "player",
+      })
+      .returning();
     soloBId = userB.id;
 
     await testDb.insert(tournaments).values({
@@ -674,7 +710,10 @@ describe("Flex 1v1 Opponent Validation via allPlayerIds", () => {
       const result = await matchService.createMatch(
         {
           tournamentId: flex1v1TournamentId,
-          sides: [{ position: 1, playerIds: [soloAId] }, { position: 2, playerIds: [soloBId] }],
+          sides: [
+            { position: 1, playerIds: [soloAId] },
+            { position: 2, playerIds: [soloBId] },
+          ],
           status: "scheduled",
         },
         soloAId,
@@ -682,11 +721,7 @@ describe("Flex 1v1 Opponent Validation via allPlayerIds", () => {
       expect(result).toBeTruthy();
     }
 
-    const count = await matchRepository.countMatchesTeamsVsTeam(
-      flex1v1TournamentId,
-      [soloAId],
-      [soloBId],
-    );
+    const count = await matchRepository.countMatchesTeamsVsTeam(flex1v1TournamentId, [soloAId], [soloBId]);
     expect(Number(count)).toBe(2);
   });
 
@@ -710,7 +745,10 @@ describe("Flex 1v1 Opponent Validation via allPlayerIds", () => {
       await matchService.createMatch(
         {
           tournamentId: flex1v1TournamentId,
-          sides: [{ position: 1, playerIds: [soloAId] }, { position: 2, playerIds: [soloBId] }],
+          sides: [
+            { position: 1, playerIds: [soloAId] },
+            { position: 2, playerIds: [soloBId] },
+          ],
           status: "scheduled",
         },
         soloAId,

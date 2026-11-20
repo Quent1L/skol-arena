@@ -34,7 +34,7 @@ adminInvitations.post(
       ...data,
     });
     return c.json(code, 201);
-  }
+  },
 );
 
 adminInvitations.get(
@@ -51,7 +51,7 @@ adminInvitations.get(
   async (c) => {
     const codes = await invitationService.getAllCodes();
     return c.json(codes);
-  }
+  },
 );
 
 adminInvitations.patch(
@@ -70,7 +70,7 @@ adminInvitations.patch(
     const codeId = c.req.param("id")!;
     const updated = await invitationService.deactivateCode(codeId);
     return c.json(updated);
-  }
+  },
 );
 
 export default adminInvitations;

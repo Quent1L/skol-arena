@@ -3,8 +3,7 @@ import type { RankedSeasonAutomationInput } from "@skol-arena/shared/types/index
 import { db } from "../config/database";
 import { rankedSeasonAutomations, tournaments } from "../db/schema";
 
-export type RankedSeasonAutomationRow =
-  typeof rankedSeasonAutomations.$inferSelect;
+export type RankedSeasonAutomationRow = typeof rankedSeasonAutomations.$inferSelect;
 
 /** An automation joined to the season it drives — what the rollover job works from. */
 export interface DueAutomation {
@@ -13,9 +12,7 @@ export interface DueAutomation {
 }
 
 export class RankedSeasonAutomationRepository {
-  async getByTournamentId(
-    tournamentId: string,
-  ): Promise<RankedSeasonAutomationRow | null> {
+  async getByTournamentId(tournamentId: string): Promise<RankedSeasonAutomationRow | null> {
     const row = await db.query.rankedSeasonAutomations.findFirst({
       where: eq(rankedSeasonAutomations.tournamentId, tournamentId),
     });
@@ -27,10 +24,7 @@ export class RankedSeasonAutomationRepository {
    * (`nextSeasonNumber`, `nextRolloverAt`, `nextSeasonId`, …) are deliberately absent: they
    * belong to the server, and an admin editing a duration must not renumber the chain.
    */
-  async upsert(
-    tournamentId: string,
-    data: RankedSeasonAutomationInput,
-  ): Promise<RankedSeasonAutomationRow> {
+  async upsert(tournamentId: string, data: RankedSeasonAutomationInput): Promise<RankedSeasonAutomationRow> {
     const [row] = await db
       .insert(rankedSeasonAutomations)
       .values({ tournamentId, ...data })
@@ -79,9 +73,7 @@ export class RankedSeasonAutomationRepository {
   }
 
   async delete(tournamentId: string): Promise<void> {
-    await db
-      .delete(rankedSeasonAutomations)
-      .where(eq(rankedSeasonAutomations.tournamentId, tournamentId));
+    await db.delete(rankedSeasonAutomations).where(eq(rankedSeasonAutomations.tournamentId, tournamentId));
   }
 
   /**
@@ -104,14 +96,8 @@ export class RankedSeasonAutomationRepository {
           eq(rankedSeasonAutomations.enabled, true),
           isNull(rankedSeasonAutomations.nextSeasonId),
           or(
-            and(
-              eq(tournaments.status, "ongoing"),
-              lte(rankedSeasonAutomations.nextRolloverAt, now),
-            ),
-            and(
-              eq(tournaments.status, "finished"),
-              eq(rankedSeasonAutomations.mode, "chain"),
-            ),
+            and(eq(tournaments.status, "ongoing"), lte(rankedSeasonAutomations.nextRolloverAt, now)),
+            and(eq(tournaments.status, "finished"), eq(rankedSeasonAutomations.mode, "chain")),
           ),
         ),
       );
@@ -133,12 +119,7 @@ export class RankedSeasonAutomationRepository {
     const updated = await db
       .update(rankedSeasonAutomations)
       .set({ nextSeasonId, lastRolloverAt: sql`now()`, lastError: null })
-      .where(
-        and(
-          eq(rankedSeasonAutomations.tournamentId, tournamentId),
-          isNull(rankedSeasonAutomations.nextSeasonId),
-        ),
-      )
+      .where(and(eq(rankedSeasonAutomations.tournamentId, tournamentId), isNull(rankedSeasonAutomations.nextSeasonId)))
       .returning({ id: rankedSeasonAutomations.id });
     return updated.length > 0;
   }
@@ -159,5 +140,4 @@ export class RankedSeasonAutomationRepository {
   }
 }
 
-export const rankedSeasonAutomationRepository =
-  new RankedSeasonAutomationRepository();
+export const rankedSeasonAutomationRepository = new RankedSeasonAutomationRepository();

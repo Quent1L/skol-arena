@@ -39,7 +39,7 @@ outcomeReasons.post(
     const data = c.req.valid("json");
     const outcomeReason = await outcomeReasonService.createOutcomeReason(data);
     return c.json(outcomeReason, 201);
-  }
+  },
 );
 
 // GET /outcome-reasons - List all outcome reasons (with optional outcomeTypeId filter)
@@ -55,7 +55,7 @@ outcomeReasons.get(
     const { outcomeTypeId } = c.req.valid("query");
     const outcomeReasonsList = await outcomeReasonService.listOutcomeReasons(outcomeTypeId);
     return c.json(outcomeReasonsList);
-  }
+  },
 );
 
 // GET /outcome-reasons/:id - Get single outcome reason
@@ -71,7 +71,7 @@ outcomeReasons.get(
     const id = c.req.param("id")!;
     const outcomeReason = await outcomeReasonService.getOutcomeReasonById(id);
     return c.json(outcomeReason);
-  }
+  },
 );
 
 // PATCH /outcome-reasons/:id - Update outcome reason
@@ -93,7 +93,7 @@ outcomeReasons.patch(
     const data = c.req.valid("json");
     const outcomeReason = await outcomeReasonService.updateOutcomeReason(id, data);
     return c.json(outcomeReason);
-  }
+  },
 );
 
 // DELETE /outcome-reasons/:id - Delete outcome reason
@@ -104,8 +104,7 @@ outcomeReasons.delete(
   describe({
     tags: TAGS,
     summary: "Delete an outcome reason",
-    description:
-      "Only while no match was recorded with it. Otherwise answers 409 with the match count.",
+    description: "Only while no match was recorded with it. Otherwise answers 409 with the match count.",
     auth: true,
     role: true,
     notFound: true,
@@ -116,7 +115,7 @@ outcomeReasons.delete(
     const id = c.req.param("id")!;
     const result = await outcomeReasonService.deleteOutcomeReason(id);
     return c.json(result);
-  }
+  },
 );
 
 export default outcomeReasons;

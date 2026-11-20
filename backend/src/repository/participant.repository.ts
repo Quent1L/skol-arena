@@ -23,15 +23,12 @@ export class ParticipantRepository {
   /**
    * Check if user is already registered in tournament
    */
-  async findParticipationByUserAndTournament(
-    userId: string,
-    tournamentId: string
-  ) {
+  async findParticipationByUserAndTournament(userId: string, tournamentId: string) {
     return await db.query.tournamentParticipants.findFirst({
       where: and(
         eq(tournamentParticipants.tournamentId, tournamentId),
         eq(tournamentParticipants.userId, userId),
-        eq(tournamentParticipants.status, "active")
+        eq(tournamentParticipants.status, "active"),
       ),
     });
   }
@@ -42,10 +39,7 @@ export class ParticipantRepository {
    */
   async findParticipationAnyStatus(userId: string, tournamentId: string) {
     return await db.query.tournamentParticipants.findFirst({
-      where: and(
-        eq(tournamentParticipants.tournamentId, tournamentId),
-        eq(tournamentParticipants.userId, userId)
-      ),
+      where: and(eq(tournamentParticipants.tournamentId, tournamentId), eq(tournamentParticipants.userId, userId)),
     });
   }
 
@@ -57,12 +51,7 @@ export class ParticipantRepository {
     const rows = await db
       .select({ userId: tournamentParticipants.userId })
       .from(tournamentParticipants)
-      .where(
-        and(
-          eq(tournamentParticipants.tournamentId, tournamentId),
-          ne(tournamentParticipants.status, "active")
-        )
-      );
+      .where(and(eq(tournamentParticipants.tournamentId, tournamentId), ne(tournamentParticipants.status, "active")));
     return new Set(rows.map((row) => row.userId));
   }
 
@@ -71,12 +60,7 @@ export class ParticipantRepository {
     const rows = await db
       .select({ userId: tournamentParticipants.userId })
       .from(tournamentParticipants)
-      .where(
-        and(
-          eq(tournamentParticipants.tournamentId, tournamentId),
-          eq(tournamentParticipants.status, "active")
-        )
-      );
+      .where(and(eq(tournamentParticipants.tournamentId, tournamentId), eq(tournamentParticipants.status, "active")));
     return rows.map((row) => row.userId);
   }
 
@@ -84,19 +68,13 @@ export class ParticipantRepository {
    * Registration status of each listed player who has one. A player missing from the map
    * never registered.
    */
-  async findStatuses(
-    tournamentId: string,
-    userIds: string[]
-  ): Promise<Map<string, ParticipantStatus>> {
+  async findStatuses(tournamentId: string, userIds: string[]): Promise<Map<string, ParticipantStatus>> {
     if (userIds.length === 0) return new Map();
     const rows = await db
       .select({ userId: tournamentParticipants.userId, status: tournamentParticipants.status })
       .from(tournamentParticipants)
       .where(
-        and(
-          eq(tournamentParticipants.tournamentId, tournamentId),
-          inArray(tournamentParticipants.userId, userIds)
-        )
+        and(eq(tournamentParticipants.tournamentId, tournamentId), inArray(tournamentParticipants.userId, userIds)),
       );
     return new Map(rows.map((row) => [row.userId, row.status]));
   }
@@ -152,17 +130,12 @@ export class ParticipantRepository {
    */
   async findTournamentParticipants(tournamentId: string) {
     const participants = await db.query.tournamentParticipants.findMany({
-      where: and(
-        eq(tournamentParticipants.tournamentId, tournamentId),
-        eq(tournamentParticipants.status, "active")
-      ),
+      where: and(eq(tournamentParticipants.tournamentId, tournamentId), eq(tournamentParticipants.status, "active")),
       with: {
         user: true,
       },
     });
-    return participants.sort((a, b) =>
-      a.user.displayName.localeCompare(b.user.displayName)
-    );
+    return participants.sort((a, b) => a.user.displayName.localeCompare(b.user.displayName));
   }
 
   /**
@@ -172,12 +145,7 @@ export class ParticipantRepository {
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(tournamentParticipants)
-      .where(
-        and(
-          eq(tournamentParticipants.tournamentId, tournamentId),
-          eq(tournamentParticipants.status, "active")
-        )
-      );
+      .where(and(eq(tournamentParticipants.tournamentId, tournamentId), eq(tournamentParticipants.status, "active")));
     // Convert to number (PostgreSQL count returns bigint as string)
     return Number(result[0]?.count ?? 0);
   }

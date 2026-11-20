@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-} from "../../../config/test-database";
+import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 
@@ -47,8 +44,7 @@ describe("Ranked season rollover", () => {
     return discipline.id;
   }
 
-  const shift = (days: number) =>
-    new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const shift = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   async function createPlayer(label: string): Promise<string> {
     const unique = `${label}-${Date.now()}-${Math.random()}`;
@@ -156,12 +152,7 @@ describe("Ranked season rollover", () => {
     const rows = await testDb
       .select({ userId: tournamentParticipants.userId })
       .from(tournamentParticipants)
-      .where(
-        and(
-          eq(tournamentParticipants.tournamentId, seasonId),
-          eq(tournamentParticipants.status, "active"),
-        ),
-      );
+      .where(and(eq(tournamentParticipants.tournamentId, seasonId), eq(tournamentParticipants.status, "active")));
     return rows.map((row) => row.userId).sort();
   }
 
@@ -205,10 +196,7 @@ describe("Ranked season rollover", () => {
     expect(outcome).toBeDefined();
     const nextId = outcome!.nextSeasonId;
 
-    const [closed] = await testDb
-      .select()
-      .from(tournaments)
-      .where(eq(tournaments.id, season.id));
+    const [closed] = await testDb.select().from(tournaments).where(eq(tournaments.id, season.id));
     expect(closed.status).toBe("finished");
 
     const [next] = await testDb.select().from(tournaments).where(eq(tournaments.id, nextId));
@@ -227,10 +215,7 @@ describe("Ranked season rollover", () => {
     expect(tiers.map((tier) => tier.name).sort()).toEqual(["Legend", "Rookie"]);
 
     // MMR carried over as seeds — and only for players past the placement threshold.
-    const seeds = await testDb
-      .select()
-      .from(seasonMmrSeeds)
-      .where(eq(seasonMmrSeeds.seasonId, nextId));
+    const seeds = await testDb.select().from(seasonMmrSeeds).where(eq(seasonMmrSeeds.seasonId, nextId));
     expect(seeds).toHaveLength(2);
 
     // Seeds must not put anyone in the leaderboard before they have played.
@@ -273,19 +258,13 @@ describe("Ranked season rollover", () => {
   it("resumes a chain interrupted after the season was closed", async () => {
     const { season } = await seedOngoingSeason();
     // Exactly the state a crash between "end" and "create" leaves behind.
-    await testDb
-      .update(tournaments)
-      .set({ status: "finished" })
-      .where(eq(tournaments.id, season.id));
+    await testDb.update(tournaments).set({ status: "finished" }).where(eq(tournaments.id, season.id));
 
     const report = await rankedSeasonRolloverService.rolloverDue();
 
     const outcome = report.rolledOver.find((row) => row.seasonId === season.id);
     expect(outcome).toBeDefined();
-    const [next] = await testDb
-      .select()
-      .from(tournaments)
-      .where(eq(tournaments.id, outcome!.nextSeasonId));
+    const [next] = await testDb.select().from(tournaments).where(eq(tournaments.id, outcome!.nextSeasonId));
     expect(next.status).toBe("ongoing");
   });
 
@@ -297,9 +276,7 @@ describe("Ranked season rollover", () => {
 
     // Carol played once; Alice and Bob played 8 and 5.
     expect(outcome!.carriedParticipants).toBe(2);
-    expect(await activeParticipantIds(outcome!.nextSeasonId)).toEqual(
-      [playerIds[0], playerIds[1]].sort(),
-    );
+    expect(await activeParticipantIds(outcome!.nextSeasonId)).toEqual([playerIds[0], playerIds[1]].sort());
   });
 
   it("leaves the successor empty when the carry-over is switched off", async () => {
@@ -328,20 +305,14 @@ describe("Ranked season rollover", () => {
 
     const report = await rankedSeasonRolloverService.rolloverDue();
     const outcome = report.rolledOver.find((row) => row.seasonId === season.id);
-    const [next] = await testDb
-      .select()
-      .from(tournaments)
-      .where(eq(tournaments.id, outcome!.nextSeasonId));
+    const [next] = await testDb.select().from(tournaments).where(eq(tournaments.id, outcome!.nextSeasonId));
 
     expect(next.name).toBe(`Saison ${label} 2 (2)`);
   });
 
   describe("{n} numbering", () => {
     /** A season of the same scope, as if an admin had run it by hand before the chain existed. */
-    async function seedManualSeason(
-      disciplineId: string,
-      status: "draft" | "ongoing" | "finished",
-    ) {
+    async function seedManualSeason(disciplineId: string, status: "draft" | "ongoing" | "finished") {
       await testDb.insert(tournaments).values({
         name: `Manual ${Date.now()}-${Math.random()}`,
         mode: "ranked",
@@ -365,10 +336,7 @@ describe("Ranked season rollover", () => {
 
       const report = await rankedSeasonRolloverService.rolloverDue();
       const outcome = report.rolledOver.find((row) => row.seasonId === season.id);
-      const [next] = await testDb
-        .select()
-        .from(tournaments)
-        .where(eq(tournaments.id, outcome!.nextSeasonId));
+      const [next] = await testDb.select().from(tournaments).where(eq(tournaments.id, outcome!.nextSeasonId));
 
       expect(next.name).toBe(`Saison ${label} 4`);
     });
@@ -379,10 +347,7 @@ describe("Ranked season rollover", () => {
 
       const report = await rankedSeasonRolloverService.rolloverDue();
       const outcome = report.rolledOver.find((row) => row.seasonId === season.id);
-      const [next] = await testDb
-        .select()
-        .from(tournaments)
-        .where(eq(tournaments.id, outcome!.nextSeasonId));
+      const [next] = await testDb.select().from(tournaments).where(eq(tournaments.id, outcome!.nextSeasonId));
 
       expect(next.name).toBe(`Saison ${label} 2`);
     });
@@ -395,10 +360,7 @@ describe("Ranked season rollover", () => {
 
       const report = await rankedSeasonRolloverService.rolloverDue();
       const outcome = report.rolledOver.find((row) => row.seasonId === season.id);
-      const [next] = await testDb
-        .select()
-        .from(tournaments)
-        .where(eq(tournaments.id, outcome!.nextSeasonId));
+      const [next] = await testDb.select().from(tournaments).where(eq(tournaments.id, outcome!.nextSeasonId));
 
       expect(next.name).toBe(`Saison ${label} 2`);
     });
@@ -421,10 +383,7 @@ describe("Ranked season rollover", () => {
 
   describe("close-only automation", () => {
     async function seasonsOfDiscipline(disciplineId: string) {
-      return await testDb
-        .select()
-        .from(tournaments)
-        .where(eq(tournaments.disciplineId, disciplineId));
+      return await testDb.select().from(tournaments).where(eq(tournaments.disciplineId, disciplineId));
     }
 
     async function automationOf(seasonId: string) {
@@ -501,9 +460,7 @@ describe("Ranked season rollover", () => {
       );
 
       const automation = await automationOf(season.id);
-      expect(automation.nextRolloverAt?.toISOString()).toBe(
-        new Date(`${shift(11)}T00:00:00.000Z`).toISOString(),
-      );
+      expect(automation.nextRolloverAt?.toISOString()).toBe(new Date(`${shift(11)}T00:00:00.000Z`).toISOString());
     });
 
     it("moves the scheduled close when the end date is edited", async () => {
@@ -512,9 +469,7 @@ describe("Ranked season rollover", () => {
       await rankedSeasonService.updateSeason(season.id, { endDate: shift(20) }, adminId);
 
       const automation = await automationOf(season.id);
-      expect(automation.nextRolloverAt?.toISOString()).toBe(
-        new Date(`${shift(21)}T00:00:00.000Z`).toISOString(),
-      );
+      expect(automation.nextRolloverAt?.toISOString()).toBe(new Date(`${shift(21)}T00:00:00.000Z`).toISOString());
     });
 
     it("refuses an early rollover, which has no successor to open", async () => {

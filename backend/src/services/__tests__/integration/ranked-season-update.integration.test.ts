@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-} from "../../../config/test-database";
+import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 
@@ -33,9 +30,7 @@ describe("Ranked season updates", () => {
 
   const dates = () => {
     const today = new Date().toISOString().split("T")[0];
-    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
     return { startDate: today, endDate: nextWeek };
   };
 
@@ -68,9 +63,7 @@ describe("Ranked season updates", () => {
   }
 
   async function enterResult(seasonId: string) {
-    await testDb
-      .insert(matches)
-      .values({ tournamentId: seasonId, status: "finalized" });
+    await testDb.insert(matches).values({ tournamentId: seasonId, status: "finalized" });
   }
 
   async function updateFails(id: string, input: Record<string, unknown>) {
@@ -119,11 +112,7 @@ describe("Ranked season updates", () => {
     const season = await createSeason("ongoing");
     await enterResult(season.id);
 
-    await rankedSeasonService.updateSeason(
-      season.id,
-      { description: "Corrigé en cours de route" } as never,
-      adminId,
-    );
+    await rankedSeasonService.updateSeason(season.id, { description: "Corrigé en cours de route" } as never, adminId);
 
     const [stored] = await testDb
       .select({ description: tournaments.description })
@@ -213,7 +202,10 @@ describe("Ranked season updates", () => {
     const season = await createSeason("ongoing");
     await enterResult(season.id);
     await testDb.update(tournaments).set({ description: "À effacer" }).where(eq(tournaments.id, season.id));
-    const [org] = await testDb.insert(organizations).values({ name: `Org ${Date.now()}`, createdBy: adminId }).returning();
+    const [org] = await testDb
+      .insert(organizations)
+      .values({ name: `Org ${Date.now()}`, createdBy: adminId })
+      .returning();
 
     await rankedSeasonService.updateSeason(
       season.id,

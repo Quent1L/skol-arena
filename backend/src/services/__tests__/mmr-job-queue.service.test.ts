@@ -43,15 +43,27 @@ describe("mmr job queue", () => {
     await queue.enqueueMmrCascade("m2", "t1", new Date("2026-03-01T10:00:00Z"));
     await queue.enqueueMmrCorrection("m3", "t1");
 
-    expect(addJob.mock.calls.map((c) => c[0])).toEqual(["recalculate_season_mmr", "cancel_match_mmr", "correct_match_mmr"]);
-    expect(addJob.mock.calls[1]![1]).toEqual({ matchId: "m2", tournamentId: "t1", cancelledMatchPlayedAt: "2026-03-01T10:00:00.000Z" });
+    expect(addJob.mock.calls.map((c) => c[0])).toEqual([
+      "recalculate_season_mmr",
+      "cancel_match_mmr",
+      "correct_match_mmr",
+    ]);
+    expect(addJob.mock.calls[1]![1]).toEqual({
+      matchId: "m2",
+      tournamentId: "t1",
+      cancelledMatchPlayedAt: "2026-03-01T10:00:00.000Z",
+    });
     expect(addJob.mock.calls.map((c) => c[2].jobKey)).toEqual(["recalculate_season:t1", "cancel:m2", "correct:m3"]);
     expect(broadcastToTournament).toHaveBeenCalledTimes(3);
   });
 
   it("queues the rewind behind the season's recalculations without broadcasting", async () => {
     await queue.enqueueSeasonRewindGeneration("s1");
-    expect(addJob).toHaveBeenCalledWith("generate_season_rewind", { seasonId: "s1" }, { jobKey: "rewind:s1", queueName: "mmr:s1" });
+    expect(addJob).toHaveBeenCalledWith(
+      "generate_season_rewind",
+      { seasonId: "s1" },
+      { jobKey: "rewind:s1", queueName: "mmr:s1" },
+    );
     expect(broadcastToTournament).not.toHaveBeenCalled();
   });
 

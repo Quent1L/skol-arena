@@ -68,9 +68,7 @@ describe("resolveClientIp", () => {
     it("counts two hops from the right", () => {
       process.env.TRUSTED_PROXY_HOPS = "2";
 
-      expect(resolveClientIp("9.9.9.9, 203.0.113.7, 198.51.100.2", null)).toBe(
-        "203.0.113.7",
-      );
+      expect(resolveClientIp("9.9.9.9, 203.0.113.7, 198.51.100.2", null)).toBe("203.0.113.7");
     });
 
     it("falls back when the header is shorter than the declared hops", () => {

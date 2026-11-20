@@ -119,10 +119,7 @@ export function clientIpFor(c: Context): string | null {
  * `ipAddressHeaders` in config/auth.ts names it, and it is overwritten here, so an
  * incoming one cannot survive.
  */
-export function withResolvedClientIp(
-  request: Request,
-  socketAddress: string | null | undefined,
-): Request {
+export function withResolvedClientIp(request: Request, socketAddress: string | null | undefined): Request {
   const headers = new Headers(request.headers);
   const clientIp = resolveClientIp(headers.get("x-forwarded-for"), socketAddress);
 

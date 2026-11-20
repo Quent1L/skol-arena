@@ -139,10 +139,7 @@ function guardsFor(rows: RouterRow[], method: string, path: string): Set<string>
     // the mount root itself as well as to everything under it — so `/admin/users`
     // is covered by `/admin/users/*`, not just `/admin/users/:id`.
     const prefix = row.path.endsWith("/*") ? row.path.slice(0, -2) : null;
-    const matches =
-      prefix !== null
-        ? path === prefix || path.startsWith(`${prefix}/`)
-        : row.path === path;
+    const matches = prefix !== null ? path === prefix || path.startsWith(`${prefix}/`) : row.path === path;
 
     if (matches && row.handler?.name) names.add(row.handler.name);
   }
@@ -150,9 +147,7 @@ function guardsFor(rows: RouterRow[], method: string, path: string): Set<string>
   return names;
 }
 
-async function documentedOperations(): Promise<
-  Array<{ method: string; path: string; declares403: boolean }>
-> {
+async function documentedOperations(): Promise<Array<{ method: string; path: string; declares403: boolean }>> {
   const spec = (await generateVersionSpec("v1")) as Spec;
 
   return Object.entries(spec.paths).flatMap(([path, item]) =>
@@ -199,9 +194,7 @@ describe("route guards", () => {
 
   it("keeps the allowlist honest", async () => {
     const operations = await documentedOperations();
-    const documented = new Set(
-      operations.filter((op) => op.declares403).map((op) => `${op.method} ${op.path}`),
-    );
+    const documented = new Set(operations.filter((op) => op.declares403).map((op) => `${op.method} ${op.path}`));
 
     // An entry that no longer matches a 403-declaring route is stale: the route was
     // renamed, removed, or lost its `role: true`. Left alone it would silently

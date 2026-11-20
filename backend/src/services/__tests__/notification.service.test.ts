@@ -28,8 +28,7 @@ beforeEach(() => {
   (notificationRepository as any).delete = async (id: string, userId: string) => {
     deleted.push([id, userId]);
   };
-  (notificationActionService as any).resolvePendingActions = async () =>
-    new Set(pendingIds);
+  (notificationActionService as any).resolvePendingActions = async () => new Set(pendingIds);
 });
 
 afterEach(() => {
@@ -212,10 +211,7 @@ describe("NotificationService bulk operations", () => {
     ];
     pendingIds = ["n-1"];
     let keptIds: string[] = [];
-    (notificationRepository as any).deleteAllForUser = async (
-      _userId: string,
-      keep: string[],
-    ) => {
+    (notificationRepository as any).deleteAllForUser = async (_userId: string, keep: string[]) => {
       keptIds = keep;
       return 57;
     };

@@ -58,7 +58,12 @@ describe("migrateStoredRules (integration)", () => {
   it("rewrites a v1 rule in place and stamps the current version", async () => {
     const id = await addV1Rule(
       "Head-to-head",
-      { all: [{ fact: "winnerId", operator: "in", value: ["p1"] }, { fact: "loserId", operator: "in", value: ["p2"] }] },
+      {
+        all: [
+          { fact: "winnerId", operator: "in", value: ["p1"] },
+          { fact: "loserId", operator: "in", value: ["p2"] },
+        ],
+      },
       ["{{winnerId}} beat {{loserId}}"],
     );
 

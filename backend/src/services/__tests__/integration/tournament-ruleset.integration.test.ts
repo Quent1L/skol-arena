@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-} from "../../../config/test-database";
+import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 
@@ -13,14 +10,7 @@ import { tournamentRulesetService } from "../../tournament-ruleset.service";
 import { rulesetPropagationService } from "../../ruleset-propagation.service";
 import { disciplineService } from "../../discipline.service";
 import { outcomeTypeService } from "../../outcome-type.service";
-import {
-  appUsers,
-  disciplines,
-  matches,
-  outcomeTypes,
-  tournaments,
-  user as betterAuthUser,
-} from "../../../db/schema";
+import { appUsers, disciplines, matches, outcomeTypes, tournaments, user as betterAuthUser } from "../../../db/schema";
 import { eq } from "drizzle-orm";
 
 /**
@@ -33,25 +23,17 @@ describe("Tournament ruleset snapshot", () => {
 
   const dates = () => {
     const today = new Date().toISOString().split("T")[0];
-    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
     return { startDate: today, endDate: nextWeek };
   };
 
   async function createDiscipline(name: string, mode: "INDIVIDUAL" | "COLLABORATIVE" = "COLLABORATIVE") {
-    const [discipline] = await testDb
-      .insert(disciplines)
-      .values({ name, teamInteractionMode: mode })
-      .returning();
+    const [discipline] = await testDb.insert(disciplines).values({ name, teamInteractionMode: mode }).returning();
     return discipline;
   }
 
   async function createOutcomeType(disciplineId: string, name: string, points = 3) {
-    const [outcomeType] = await testDb
-      .insert(outcomeTypes)
-      .values({ disciplineId, name, points })
-      .returning();
+    const [outcomeType] = await testDb.insert(outcomeTypes).values({ disciplineId, name, points }).returning();
     return outcomeType;
   }
 
@@ -131,10 +113,7 @@ describe("Tournament ruleset snapshot", () => {
 
       await tournamentRulesetService.seed(tournament.id, discipline.id);
       await tournamentRulesetService.freeze(tournament.id);
-      await testDb
-        .update(tournaments)
-        .set({ status: "ongoing" })
-        .where(eq(tournaments.id, tournament.id));
+      await testDb.update(tournaments).set({ status: "ongoing" }).where(eq(tournaments.id, tournament.id));
 
       // Exactly the scenario that used to corrupt a running competition.
       await outcomeTypeService.updateOutcomeType(normal.id, { points: 99 });
@@ -225,10 +204,7 @@ describe("Tournament ruleset snapshot", () => {
       await tournamentRulesetService.seed(good.id, discipline.id);
       await tournamentRulesetService.seed(finished.id, discipline.id);
 
-      const results = await rulesetPropagationService.propagate(discipline.id, [
-        finished.id,
-        good.id,
-      ]);
+      const results = await rulesetPropagationService.propagate(discipline.id, [finished.id, good.id]);
 
       expect(results.find((r) => r.tournamentId === finished.id)?.status).toBe("failed");
       expect(results.find((r) => r.tournamentId === good.id)?.status).toBe("recalculated");

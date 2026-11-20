@@ -2,10 +2,7 @@ import { describe, it, expect, mock } from "bun:test";
 
 mock.module("../../config/database", () => ({ db: {} }));
 
-import {
-  REWIND_MIN_MATCHES_SNIPER,
-  type RewindPlayerRef,
-} from "@skol-arena/shared/types/index";
+import { REWIND_MIN_MATCHES_SNIPER, type RewindPlayerRef } from "@skol-arena/shared/types/index";
 import {
   awardsWonBy,
   computeCombatAwards,
@@ -58,10 +55,7 @@ function agg(playerId: string, overrides: Partial<PlayerAggregate> = {}): Player
 
 function directoryOf(...playerIds: string[]): Map<string, RewindPlayerRef> {
   return new Map(
-    playerIds.map((id) => [
-      id,
-      { playerId: id, displayName: id.toUpperCase(), shortName: id.slice(0, 3) },
-    ]),
+    playerIds.map((id) => [id, { playerId: id, displayName: id.toUpperCase(), shortName: id.slice(0, 3) }]),
   );
 }
 
@@ -73,11 +67,10 @@ describe("performance awards", () => {
   const directory = directoryOf("a", "b", "c");
 
   it("crowns the top of the final ranking as king, whatever their other stats", () => {
-    const awards = computePerformanceAwards(
-      [agg("a", { finalMmr: 1200 }), agg("b", { finalMmr: 1500 })],
-      directory,
-      ["b", "a"],
-    );
+    const awards = computePerformanceAwards([agg("a", { finalMmr: 1200 }), agg("b", { finalMmr: 1500 })], directory, [
+      "b",
+      "a",
+    ]);
 
     expect(awards.king!.player.playerId).toBe("b");
     expect(awards.king!.value).toBe(1500);
@@ -86,11 +79,11 @@ describe("performance awards", () => {
   it("skips a ladder leader who never played rather than showing no king", () => {
     // player_mmr also holds auto-registered players who never played: in a small
     // season they can top a ladder where every active player finished lower.
-    const awards = computePerformanceAwards(
-      [agg("a", { finalMmr: 900 }), agg("b", { finalMmr: 800 })],
-      directory,
-      ["c", "a", "b"],
-    );
+    const awards = computePerformanceAwards([agg("a", { finalMmr: 900 }), agg("b", { finalMmr: 800 })], directory, [
+      "c",
+      "a",
+      "b",
+    ]);
 
     expect(awards.king!.player.playerId).toBe("a");
   });
@@ -114,21 +107,14 @@ describe("performance awards", () => {
   });
 
   it("ignores a peak nobody actually climbed to", () => {
-    const awards = computePerformanceAwards(
-      [agg("a", { peakMmr: 9999, peakMatchId: null })],
-      directory,
-      ["a"],
-    );
+    const awards = computePerformanceAwards([agg("a", { peakMmr: 9999, peakMatchId: null })], directory, ["a"]);
 
     expect(awards.peakMmr).toBeNull();
   });
 
   it("ranks progression on the net gain, not the final MMR", () => {
     const awards = computePerformanceAwards(
-      [
-        agg("a", { initialMmr: 1000, finalMmr: 1400 }),
-        agg("b", { initialMmr: 1300, finalMmr: 1500 }),
-      ],
+      [agg("a", { initialMmr: 1000, finalMmr: 1400 }), agg("b", { initialMmr: 1300, finalMmr: 1500 })],
       directory,
       ["b", "a"],
     );
@@ -160,10 +146,7 @@ describe("performance awards", () => {
 
   it("prefers the better win rate over the bigger sample once both qualify", () => {
     const awards = computePerformanceAwards(
-      [
-        agg("a", { matchesPlayed: 100, wins: 60 }),
-        agg("b", { matchesPlayed: REWIND_MIN_MATCHES_SNIPER, wins: 18 }),
-      ],
+      [agg("a", { matchesPlayed: 100, wins: 60 }), agg("b", { matchesPlayed: REWIND_MIN_MATCHES_SNIPER, wins: 18 })],
       directory,
       ["a", "b"],
     );
@@ -198,10 +181,7 @@ describe("combat awards", () => {
     });
 
     const awards = computeCombatAwards(
-      [
-        agg("a", { biggestUpsetGap: feat(120, 90) }),
-        agg("b", { biggestUpsetGap: feat(342, 20) }),
-      ],
+      [agg("a", { biggestUpsetGap: feat(120, 90) }), agg("b", { biggestUpsetGap: feat(342, 20) })],
       directory,
       [],
     );
@@ -214,11 +194,7 @@ describe("combat awards", () => {
   });
 
   it("ranks the leader hunter on wins against the standing #1", () => {
-    const awards = computeCombatAwards(
-      [agg("a", { winsVsRank1: 4 }), agg("b", { winsVsRank1: 1 })],
-      directory,
-      [],
-    );
+    const awards = computeCombatAwards([agg("a", { winsVsRank1: 4 }), agg("b", { winsVsRank1: 1 })], directory, []);
 
     expect(awards.leaderHunter!.player.playerId).toBe("a");
   });
@@ -234,10 +210,7 @@ describe("computeRivalry", () => {
   const directory = directoryOf("a", "b", "c", "d");
 
   it("picks the most played duel", () => {
-    const rivalry = computeRivalry(
-      [tally("a", "b", { matches: 8 }), tally("c", "d", { matches: 20 })],
-      directory,
-    );
+    const rivalry = computeRivalry([tally("a", "b", { matches: 8 }), tally("c", "d", { matches: 20 })], directory);
 
     expect(rivalry!.players.map((p) => p.playerId)).toEqual(["c", "d"]);
     expect(rivalry!.matchesPlayed).toBe(20);
@@ -248,10 +221,7 @@ describe("computeRivalry", () => {
   });
 
   it("reports the record from the first player's point of view", () => {
-    const rivalry = computeRivalry(
-      [tally("a", "b", { matches: 10, aWins: 7, aLosses: 2, draws: 1 })],
-      directory,
-    );
+    const rivalry = computeRivalry([tally("a", "b", { matches: 10, aWins: 7, aLosses: 2, draws: 1 })], directory);
 
     expect(rivalry).toMatchObject({ wins: 7, losses: 2, draws: 1 });
   });
@@ -313,11 +283,9 @@ describe("cooperation awards", () => {
   });
 
   it("exposes both cooperation awards together", () => {
-    const awards = computeCooperationAwards(
-      [agg("a"), agg("b")],
-      directory,
-      [tally("a", "b", { aWins: 8, aLosses: 2 })],
-    );
+    const awards = computeCooperationAwards([agg("a"), agg("b")], directory, [
+      tally("a", "b", { aWins: 8, aLosses: 2 }),
+    ]);
 
     expect(awards.duo!.players.map((p) => p.playerId)).toEqual(["a", "b"]);
     expect(awards.bestPartner).not.toBeNull();
@@ -329,10 +297,7 @@ describe("endurance awards", () => {
 
   it("ranks top residency in matches", () => {
     const awards = computeEnduranceAwards(
-      [
-        agg("a", { matchesInTop1: 12, matchesInTop5: 40 }),
-        agg("b", { matchesInTop1: 30, matchesInTop5: 35 }),
-      ],
+      [agg("a", { matchesInTop1: 12, matchesInTop5: 40 }), agg("b", { matchesInTop1: 30, matchesInTop5: 35 })],
       directory,
     );
 
@@ -342,10 +307,7 @@ describe("endurance awards", () => {
 
   it("ranks the marathon on matches played and the streak on consecutive wins", () => {
     const awards = computeEnduranceAwards(
-      [
-        agg("a", { matchesPlayed: 247, bestWinStreak: 4 }),
-        agg("b", { matchesPlayed: 90, bestWinStreak: 11 }),
-      ],
+      [agg("a", { matchesPlayed: 247, bestWinStreak: 4 }), agg("b", { matchesPlayed: 90, bestWinStreak: 11 })],
       directory,
     );
 
@@ -359,10 +321,7 @@ describe("tie-breaks", () => {
 
   it("prefers the player with more matches on an equal value", () => {
     const awards = computeEnduranceAwards(
-      [
-        agg("a", { bestWinStreak: 5, matchesPlayed: 20 }),
-        agg("b", { bestWinStreak: 5, matchesPlayed: 60 }),
-      ],
+      [agg("a", { bestWinStreak: 5, matchesPlayed: 20 }), agg("b", { bestWinStreak: 5, matchesPlayed: 60 })],
       directory,
     );
 
@@ -390,10 +349,7 @@ describe("tie-breaks", () => {
     expect(byFinal.longestStreak!.player.playerId).toBe("b");
 
     const byPeak = computeEnduranceAwards(
-      [
-        agg("a", { ...base, finalMmr: 1200, peakMmr: 1600 }),
-        agg("b", { ...base, finalMmr: 1200, peakMmr: 1250 }),
-      ],
+      [agg("a", { ...base, finalMmr: 1200, peakMmr: 1600 }), agg("b", { ...base, finalMmr: 1200, peakMmr: 1250 })],
       directory,
     );
     expect(byPeak.longestStreak!.player.playerId).toBe("a");
@@ -407,9 +363,7 @@ describe("tie-breaks", () => {
 
     expect(computeEnduranceAwards(aggregates, directory).longestStreak!.player.playerId).toBe("a");
     // Same input in the opposite order must still crown the same player.
-    expect(
-      computeEnduranceAwards([...aggregates].reverse(), directory).longestStreak!.player.playerId,
-    ).toBe("a");
+    expect(computeEnduranceAwards([...aggregates].reverse(), directory).longestStreak!.player.playerId).toBe("a");
   });
 
   it("ignores display names, so renaming a player never moves an award", () => {
@@ -421,12 +375,8 @@ describe("tie-breaks", () => {
       ]);
 
     // "a" wins on the id. Handing "b" a name that sorts first must not move it.
-    expect(
-      computeEnduranceAwards(aggregates, rename("Zoe", "Alice")).longestStreak!.player.playerId,
-    ).toBe("a");
-    expect(
-      computeEnduranceAwards(aggregates, rename("Alice", "Zoe")).longestStreak!.player.playerId,
-    ).toBe("a");
+    expect(computeEnduranceAwards(aggregates, rename("Zoe", "Alice")).longestStreak!.player.playerId).toBe("a");
+    expect(computeEnduranceAwards(aggregates, rename("Alice", "Zoe")).longestStreak!.player.playerId).toBe("a");
   });
 
   it("orders tied rivalries on both ids, not on the first alone", () => {
@@ -502,24 +452,17 @@ describe("computePercentiles", () => {
   });
 
   it("keeps one-match players out of the rate percentiles", () => {
-    const regulars = Array.from({ length: 4 }, (_, i) =>
-      agg(`r${i}`, { matchesPlayed: 40, wins: 20 + i }),
-    );
+    const regulars = Array.from({ length: 4 }, (_, i) => agg(`r${i}`, { matchesPlayed: 40, wins: 20 + i }));
     const target = regulars[3]!;
 
     // A perfect 1-0 record would otherwise sit above every season regular.
     const withRookie = [...regulars, agg("rookie", { matchesPlayed: 1, wins: 1 })];
-    expect(computePercentiles(withRookie, target).winRate).toEqual(
-      computePercentiles(regulars, target).winRate,
-    );
+    expect(computePercentiles(withRookie, target).winRate).toEqual(computePercentiles(regulars, target).winRate);
   });
 
   it("compares against the whole field when almost nobody clears the threshold", () => {
     // A short season: dropping everyone would leave the target ranked alone.
-    const aggregates = [
-      agg("a", { matchesPlayed: 6, wins: 5 }),
-      agg("b", { matchesPlayed: 4, wins: 1 }),
-    ];
+    const aggregates = [agg("a", { matchesPlayed: 6, wins: 5 }), agg("b", { matchesPlayed: 4, wins: 1 })];
 
     expect(computePercentiles(aggregates, aggregates[0]!).winRate).toEqual({
       topPercent: 50,
@@ -534,9 +477,7 @@ describe("computePercentiles", () => {
   });
 
   it("ranks a player below the threshold inside the pool it compares them to", () => {
-    const regulars = Array.from({ length: 3 }, (_, i) =>
-      agg(`r${i}`, { matchesPlayed: 40, wins: 30 }),
-    );
+    const regulars = Array.from({ length: 3 }, (_, i) => agg(`r${i}`, { matchesPlayed: 40, wins: 30 }));
     const rookie = agg("rookie", { matchesPlayed: 2, wins: 0 });
 
     // The rookie is not eligible but must still be counted in their own ranking.
@@ -560,11 +501,9 @@ describe("awardsWonBy", () => {
       ),
       combat: computeCombatAwards([agg("a", { giantKillerWins: 5 })], directory, []),
       endurance: computeEnduranceAwards([agg("a", { matchesPlayed: 40 })], directory),
-      cooperation: computeCooperationAwards(
-        [agg("a"), agg("b")],
-        directory,
-        [tally("a", "b", { aWins: 9, aLosses: 1 })],
-      ),
+      cooperation: computeCooperationAwards([agg("a"), agg("b")], directory, [
+        tally("a", "b", { aWins: 9, aLosses: 1 }),
+      ]),
     };
   }
 

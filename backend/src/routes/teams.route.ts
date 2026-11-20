@@ -22,9 +22,7 @@ teams.get(
   describe({
     tags: TAGS,
     summary: "List a tournament's teams",
-    description:
-      "Public for an open competition; one scoped to an organization is only listed " +
-      "for its members.",
+    description: "Public for an open competition; one scoped to an organization is only listed " + "for its members.",
     role: true,
     notFound: true,
     success: { description: "Teams in the tournament", schema: clientTeamListSchema },
@@ -34,7 +32,7 @@ teams.get(
     await tournamentService.assertCanAccess(tournamentId, await resolveOptionalViewer(c));
     const result = await teamService.listTeams(tournamentId);
     return c.json(result);
-  }
+  },
 );
 
 // POST /tournaments/:id/teams - Create a team (auth required)
@@ -68,8 +66,7 @@ teams.post(
   describe({
     tags: TAGS,
     summary: "Join a team",
-    description:
-      "Joins as the signed-in user unless userId is given, which only an admin may do.",
+    description: "Joins as the signed-in user unless userId is given, which only an admin may do.",
     auth: true,
     role: true,
     notFound: true,
@@ -97,8 +94,7 @@ teams.delete(
     tags: TAGS,
     summary: "Leave a team",
     description:
-      "Removes the signed-in user unless the userId query parameter is given, " +
-      "which only an admin may do.",
+      "Removes the signed-in user unless the userId query parameter is given, " + "which only an admin may do.",
     auth: true,
     role: true,
     notFound: true,

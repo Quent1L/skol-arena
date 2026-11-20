@@ -21,12 +21,8 @@ import {
 /** Statuses a match must have to weigh on the provisional table. */
 export const PROVISIONAL_MATCH_STATUSES = ENTERED_MATCH_STATUSES;
 
-type FlexMatchRow = Awaited<
-  ReturnType<typeof standingsRepository.getPlayerPointsForStandings>
->[number];
-type StaticMatchRow = Awaited<
-  ReturnType<typeof standingsRepository.getMatchesWithSides>
->[number];
+type FlexMatchRow = Awaited<ReturnType<typeof standingsRepository.getPlayerPointsForStandings>>[number];
+type StaticMatchRow = Awaited<ReturnType<typeof standingsRepository.getMatchesWithSides>>[number];
 
 type WinnerSide = "A" | "B" | null;
 
@@ -75,10 +71,7 @@ export class StandingsService {
    * Flex rows are players; static rows are teams, which have no registration of their own
    * and are left in place.
    */
-  private async withInactivePlayersLast(
-    tournamentId: string,
-    result: StandingsResult,
-  ): Promise<StandingsResult> {
+  private async withInactivePlayersLast(tournamentId: string, result: StandingsResult): Promise<StandingsResult> {
     const inactiveIds = await participantRepository.findInactivePlayerIds(tournamentId);
     return { standings: partitionInactive(result.standings, inactiveIds, (row) => row.id) };
   }
@@ -87,10 +80,7 @@ export class StandingsService {
     await standingsRepository.deleteComputedData(tournamentId);
   }
 
-  private async calculateStandings(
-    tournamentId: string,
-    includeStatuses: MatchStatus[]
-  ): Promise<StandingsResult> {
+  private async calculateStandings(tournamentId: string, includeStatuses: MatchStatus[]): Promise<StandingsResult> {
     const tournament = await standingsRepository.getTournamentWithScoring(tournamentId);
     if (!tournament) throw new NotFoundError(ErrorCode.TOURNAMENT_NOT_FOUND);
 
@@ -105,7 +95,7 @@ export class StandingsService {
       includeStatuses,
       resolveScoringConfig(tournament.scoringConfig),
       allowDraw,
-      scoreEnabled
+      scoreEnabled,
     );
   }
 
@@ -115,13 +105,10 @@ export class StandingsService {
     tournamentId: string,
     includeStatuses: MatchStatus[],
     scoreEnabled: boolean,
-    allowDraw: boolean
+    allowDraw: boolean,
   ): Promise<StandingsResult> {
     const standingsMap = await this.initializeFlexStandings(tournamentId);
-    const matchRows = await standingsRepository.getPlayerPointsForStandings(
-      tournamentId,
-      includeStatuses
-    );
+    const matchRows = await standingsRepository.getPlayerPointsForStandings(tournamentId, includeStatuses);
 
     // Pass 1: base stats (only countsForRanking matches)
     for (const match of matchRows) {
@@ -140,7 +127,7 @@ export class StandingsService {
   private accumulateFlexBaseStats(
     match: FlexMatchRow,
     standingsMap: Map<string, StandingsEntry>,
-    scoreEnabled: boolean
+    scoreEnabled: boolean,
   ): void {
     const { positionScore, playerPosition } = this.buildFlexPositionMaps(match.sides);
 
@@ -180,7 +167,7 @@ export class StandingsService {
       pos: number | undefined;
       positionScore: Map<number, number | null>;
       scoreEnabled: boolean;
-    }
+    },
   ): void {
     entry.matchesPlayed += 1;
     entry.points += pointsAwarded;
@@ -204,7 +191,7 @@ export class StandingsService {
   private computeFlexTiebreakers(
     standingsMap: Map<string, StandingsEntry>,
     matchRows: FlexMatchRow[],
-    ruleset: TournamentRulesetPayload
+    ruleset: TournamentRulesetPayload,
   ): void {
     this.initRatioFields(standingsMap);
 
@@ -220,7 +207,7 @@ export class StandingsService {
     match: FlexMatchRow,
     standingsMap: Map<string, StandingsEntry>,
     breakdownMap: Map<string, Map<string, VictoryQualityDetail>>,
-    ruleset: TournamentRulesetPayload
+    ruleset: TournamentRulesetPayload,
   ): void {
     const { winnerSide } = match;
     const outcome = this.outcomeInfo(ruleset, match.outcomeTypeId);
@@ -228,10 +215,26 @@ export class StandingsService {
     const isDraw = winnerSide === null;
 
     for (const pid of sideAPlayerIds) {
-      this.processFlexPlayer(pid, { isWin: winnerSide === "A", isDraw, opponentIds: sideBPlayerIds, match, standingsMap, breakdownMap, outcome });
+      this.processFlexPlayer(pid, {
+        isWin: winnerSide === "A",
+        isDraw,
+        opponentIds: sideBPlayerIds,
+        match,
+        standingsMap,
+        breakdownMap,
+        outcome,
+      });
     }
     for (const pid of sideBPlayerIds) {
-      this.processFlexPlayer(pid, { isWin: winnerSide === "B", isDraw, opponentIds: sideAPlayerIds, match, standingsMap, breakdownMap, outcome });
+      this.processFlexPlayer(pid, {
+        isWin: winnerSide === "B",
+        isDraw,
+        opponentIds: sideAPlayerIds,
+        match,
+        standingsMap,
+        breakdownMap,
+        outcome,
+      });
     }
   }
 
@@ -245,7 +248,7 @@ export class StandingsService {
       standingsMap: Map<string, StandingsEntry>;
       breakdownMap: Map<string, Map<string, VictoryQualityDetail>>;
       outcome: OutcomeInfo;
-    }
+    },
   ): void {
     const entry = ctx.standingsMap.get(playerId);
     if (!entry) return;
@@ -262,7 +265,7 @@ export class StandingsService {
   private applyFlexBuchholz(
     entry: StandingsEntry,
     opponentIds: string[],
-    standingsMap: Map<string, StandingsEntry>
+    standingsMap: Map<string, StandingsEntry>,
   ): void {
     let oppTotal = 0;
     let counted = 0;
@@ -297,23 +300,18 @@ export class StandingsService {
     includeStatuses: MatchStatus[],
     scoring: TournamentScoringConfig,
     allowDraw: boolean,
-    scoreEnabled: boolean
+    scoreEnabled: boolean,
   ): Promise<StandingsResult> {
     const standingsMap = await this.initializeStaticStandings(tournamentId);
 
-    const matchRows = await standingsRepository.getMatchesWithSides(
-      tournamentId,
-      includeStatuses
-    );
+    const matchRows = await standingsRepository.getMatchesWithSides(tournamentId, includeStatuses);
 
     for (const match of matchRows) {
       const sides = match.sides;
       if (sides.length !== 2) continue;
 
       const [sideA, sideB] = sides;
-      const winnerSide = (match.winnerSide === "A" || match.winnerSide === "B")
-        ? match.winnerSide
-        : null;
+      const winnerSide = match.winnerSide === "A" || match.winnerSide === "B" ? match.winnerSide : null;
 
       const entryAId = sideA.entry?.teamId;
       const entryBId = sideB.entry?.teamId;
@@ -324,11 +322,7 @@ export class StandingsService {
       if (!entryA || !entryB) continue;
 
       this.updateStandingsForSide(entryA, sideA, sideB, scoring, winnerSide, scoreEnabled);
-      this.updateStandingsForSide(
-        entryB, sideB, sideA, scoring,
-        this.oppositeSide(winnerSide),
-        scoreEnabled
-      );
+      this.updateStandingsForSide(entryB, sideB, sideA, scoring, this.oppositeSide(winnerSide), scoreEnabled);
     }
 
     // Pass 2: static tiebreakers, priced with the ruleset this competition ran on
@@ -343,7 +337,7 @@ export class StandingsService {
   private computeStaticTiebreakers(
     standingsMap: Map<string, StandingsEntry>,
     matchRows: StaticMatchRow[],
-    ruleset: TournamentRulesetPayload
+    ruleset: TournamentRulesetPayload,
   ): void {
     this.initRatioFields(standingsMap);
 
@@ -359,7 +353,7 @@ export class StandingsService {
     match: StaticMatchRow,
     standingsMap: Map<string, StandingsEntry>,
     breakdownMap: Map<string, Map<string, VictoryQualityDetail>>,
-    ruleset: TournamentRulesetPayload
+    ruleset: TournamentRulesetPayload,
   ): void {
     if (match.sides.length !== 2) return;
     const [sideA, sideB] = match.sides;
@@ -374,8 +368,24 @@ export class StandingsService {
     const isDraw = match.winnerSide === null;
     const outcome = this.outcomeInfo(ruleset, match.outcomeTypeId);
 
-    this.processStaticTeam({ teamId: teamAId, entry: entryA, oppEntry: entryB, isWin: match.winnerSide === "A", isDraw, breakdownMap, outcome });
-    this.processStaticTeam({ teamId: teamBId, entry: entryB, oppEntry: entryA, isWin: match.winnerSide === "B", isDraw, breakdownMap, outcome });
+    this.processStaticTeam({
+      teamId: teamAId,
+      entry: entryA,
+      oppEntry: entryB,
+      isWin: match.winnerSide === "A",
+      isDraw,
+      breakdownMap,
+      outcome,
+    });
+    this.processStaticTeam({
+      teamId: teamBId,
+      entry: entryB,
+      oppEntry: entryA,
+      isWin: match.winnerSide === "B",
+      isDraw,
+      breakdownMap,
+      outcome,
+    });
   }
 
   private processStaticTeam(args: {
@@ -404,7 +414,7 @@ export class StandingsService {
 
   private finalizeBreakdowns(
     standingsMap: Map<string, StandingsEntry>,
-    breakdownMap: Map<string, Map<string, VictoryQualityDetail>>
+    breakdownMap: Map<string, Map<string, VictoryQualityDetail>>,
   ): void {
     for (const [id, breakdown] of breakdownMap) {
       const entry = standingsMap.get(id);
@@ -420,10 +430,7 @@ export class StandingsService {
    * a live read meant renaming an outcome or changing its points rewrote the
    * tiebreaker history of competitions that were already finished.
    */
-  private outcomeInfo(
-    ruleset: TournamentRulesetPayload,
-    outcomeTypeId: string | null
-  ): OutcomeInfo {
+  private outcomeInfo(ruleset: TournamentRulesetPayload, outcomeTypeId: string | null): OutcomeInfo {
     const outcome = resolveRulesetOutcome(ruleset, outcomeTypeId);
     return {
       key: outcomeTypeId ?? "default",
@@ -438,12 +445,18 @@ export class StandingsService {
     entry: StandingsEntry,
     outcome: OutcomeInfo,
     isWin: boolean,
-    isLoss: boolean
+    isLoss: boolean,
   ): void {
     if (!breakdownMap.has(id)) breakdownMap.set(id, new Map());
     const breakdown = breakdownMap.get(id)!;
     if (!breakdown.has(outcome.key)) {
-      breakdown.set(outcome.key, { outcomeTypeName: outcome.name, points: outcome.points, wins: 0, losses: 0, contribution: 0 });
+      breakdown.set(outcome.key, {
+        outcomeTypeName: outcome.name,
+        points: outcome.points,
+        wins: 0,
+        losses: 0,
+        contribution: 0,
+      });
     }
     const detail = breakdown.get(outcome.key)!;
     if (isWin) {
@@ -456,12 +469,7 @@ export class StandingsService {
     detail.contribution = (detail.wins - detail.losses) * detail.points;
   }
 
-  private applyHeadToHead(
-    entry: StandingsEntry,
-    opponentIds: string[],
-    isWin: boolean,
-    isDraw: boolean
-  ): void {
+  private applyHeadToHead(entry: StandingsEntry, opponentIds: string[], isWin: boolean, isDraw: boolean): void {
     for (const oppId of opponentIds) {
       if (!entry.headToHead[oppId]) {
         entry.headToHead[oppId] = { wins: 0, draws: 0, losses: 0 };
@@ -475,9 +483,7 @@ export class StandingsService {
 
   // ── Helpers ──────────────────────────────────────────────────────────
 
-  private async initializeFlexStandings(
-    tournamentId: string
-  ): Promise<Map<string, StandingsEntry>> {
+  private async initializeFlexStandings(tournamentId: string): Promise<Map<string, StandingsEntry>> {
     const standingsMap = new Map<string, StandingsEntry>();
     const entries = await standingsRepository.getTournamentEntries(tournamentId);
     const playersMap = new Map<string, { id: string; name: string; shortName: string }>();
@@ -501,9 +507,7 @@ export class StandingsService {
     return standingsMap;
   }
 
-  private async initializeStaticStandings(
-    tournamentId: string
-  ): Promise<Map<string, StandingsEntry>> {
+  private async initializeStaticStandings(tournamentId: string): Promise<Map<string, StandingsEntry>> {
     const standingsMap = new Map<string, StandingsEntry>();
     const teams = await standingsRepository.getTournamentTeams(tournamentId);
 
@@ -516,10 +520,22 @@ export class StandingsService {
 
   private emptyEntry(id: string, name: string, shortName: string): StandingsEntry {
     return {
-      id, name, shortName,
-      points: 0, wins: 0, draws: 0, losses: 0,
-      scored: 0, conceded: 0, scoreDiff: 0, matchesPlayed: 0,
-      winLossRatio: 0, buchholzScore: 0, victoryQuality: 0, victoryQualityBreakdown: [], winRate: 0,
+      id,
+      name,
+      shortName,
+      points: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      scored: 0,
+      conceded: 0,
+      scoreDiff: 0,
+      matchesPlayed: 0,
+      winLossRatio: 0,
+      buchholzScore: 0,
+      victoryQuality: 0,
+      victoryQualityBreakdown: [],
+      winRate: 0,
       headToHead: {},
     };
   }
@@ -530,7 +546,7 @@ export class StandingsService {
     opponentSide: { score: number | null; pointsAwarded: number | null },
     scoring: TournamentScoringConfig,
     winnerSide: WinnerSide,
-    scoreEnabled: boolean
+    scoreEnabled: boolean,
   ) {
     if (scoreEnabled) {
       entry.scored += side.score ?? 0;
@@ -652,19 +668,14 @@ export class StandingsService {
 
   // ── Recalculate ──────────────────────────────────────────────────────
 
-  async recalculatePoints(
-    tournamentId: string,
-    userId: string
-  ): Promise<{ updatedMatches: number }> {
+  async recalculatePoints(tournamentId: string, userId: string): Promise<{ updatedMatches: number }> {
     const canManage = await tournamentService.canManageTournament(tournamentId, userId);
     if (!canManage) throw new ForbiddenError(ErrorCode.FORBIDDEN);
 
     return this.recalculatePointsInternal(tournamentId);
   }
 
-  async recalculatePointsInternal(
-    tournamentId: string
-  ): Promise<{ updatedMatches: number }> {
+  async recalculatePointsInternal(tournamentId: string): Promise<{ updatedMatches: number }> {
     // Invalidate cache so next request recomputes fresh
     await standingsRepository.deleteComputedData(tournamentId);
 
@@ -713,11 +724,7 @@ export class StandingsService {
     return null;
   }
 
-  private sidePoints(
-    scoring: TournamentScoringConfig,
-    isDraw: boolean,
-    isWin: boolean
-  ): number {
+  private sidePoints(scoring: TournamentScoringConfig, isDraw: boolean, isWin: boolean): number {
     if (isDraw) return scoring.pointPerDraw;
     if (isWin) return scoring.pointPerVictory;
     return scoring.pointPerLoss;
@@ -728,7 +735,7 @@ export class StandingsService {
     matchList: RebuildMatch[],
     sidesMap: Map<string, RebuildSide[]>,
     scoring: TournamentScoringConfig,
-    caps: { maxMatchesPerPlayer?: number }
+    caps: { maxMatchesPerPlayer?: number },
   ) {
     const statuses: MatchStatus[] = PROVISIONAL_MATCH_STATUSES;
     await standingsRepository.deletePlayerPointsForTournament(tournamentId, statuses);
@@ -736,9 +743,7 @@ export class StandingsService {
     // No championship config means no cap: every match counts for the ranking.
     const maxMatches = caps.maxMatchesPerPlayer ?? Infinity;
     const playerMatchCount = new Map<string, number>();
-    const sorted = [...matchList].sort(
-      (a, b) => new Date(a.playedAt).getTime() - new Date(b.playedAt).getTime()
-    );
+    const sorted = [...matchList].sort((a, b) => new Date(a.playedAt).getTime() - new Date(b.playedAt).getTime());
 
     const rows: PlayerPointRow[] = [];
     for (const match of sorted) {
@@ -754,7 +759,7 @@ export class StandingsService {
     match: RebuildMatch,
     sides: RebuildSide[],
     scoring: TournamentScoringConfig,
-    acc: { playerMatchCount: Map<string, number>; maxMatches: number; rows: PlayerPointRow[] }
+    acc: { playerMatchCount: Map<string, number>; maxMatches: number; rows: PlayerPointRow[] },
   ): void {
     const isDraw = match.winnerSide === null;
     const isAWinner = match.winnerSide === "A";

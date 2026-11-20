@@ -11,11 +11,7 @@ import { CreateNotification, RegisterDevice, PaginatedNotifications, pushEndpoin
 
 // Configure web-push
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(
-    "mailto:noreply@skol-arena.com",
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY,
-  );
+  webpush.setVapidDetails("mailto:noreply@skol-arena.com", process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
 }
 
 type PushDevice = Awaited<ReturnType<typeof pushDeviceRepository.getActiveForUser>>[number];
@@ -32,9 +28,7 @@ function buildNotificationContent(
   };
 }
 
-function parseSubscriptionKeys(
-  device: PushDevice,
-): { p256dh: string; auth: string } | undefined {
+function parseSubscriptionKeys(device: PushDevice): { p256dh: string; auth: string } | undefined {
   if (!device.subscriptionData) {
     logger.warn(`[Push] No subscription data for device ${device.id}`);
     return undefined;
@@ -50,11 +44,7 @@ function parseSubscriptionKeys(
 }
 
 function isExpiredSubscriptionError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    "statusCode" in error &&
-    (error as { statusCode?: number }).statusCode === 410
-  );
+  return error instanceof Error && "statusCode" in error && (error as { statusCode?: number }).statusCode === 410;
 }
 
 function authSecretOf(subscriptionData: unknown): string | undefined {
@@ -96,9 +86,7 @@ async function sendPushToDevice(device: PushDevice, pushPayload: unknown): Promi
     return;
   }
 
-  logger.debug(
-    `[Push] Processing device ${device.id}, endpoint: ${device.subscriptionEndpoint.substring(0, 50)}...`,
-  );
+  logger.debug(`[Push] Processing device ${device.id}, endpoint: ${device.subscriptionEndpoint.substring(0, 50)}...`);
   try {
     const keys = parseSubscriptionKeys(device);
     if (!keys) {
@@ -107,10 +95,7 @@ async function sendPushToDevice(device: PushDevice, pushPayload: unknown): Promi
     }
 
     logger.debug(`[Push] Sending push notification to device ${device.id}`);
-    await webpush.sendNotification(
-      { endpoint: device.subscriptionEndpoint, keys },
-      JSON.stringify(pushPayload),
-    );
+    await webpush.sendNotification({ endpoint: device.subscriptionEndpoint, keys }, JSON.stringify(pushPayload));
     logger.debug(`[Push] Successfully sent push notification to device ${device.id}`);
   } catch (error) {
     logger.error({ err: error }, `[Push] Error sending push notification to device ${device.id}:`);
@@ -127,9 +112,7 @@ interface FeedCursor {
 }
 
 function encodeCursor(cursor: FeedCursor): string {
-  return Buffer.from(`${cursor.createdAt.toISOString()}|${cursor.id}`).toString(
-    "base64url",
-  );
+  return Buffer.from(`${cursor.createdAt.toISOString()}|${cursor.id}`).toString("base64url");
 }
 
 function decodeCursor(raw: string): FeedCursor {
@@ -161,20 +144,14 @@ async function deliver(notification: StoredNotification, data: CreateNotificatio
   // The device is offline, so this is the one channel the server must render itself:
   // use the locale and timezone captured when that device registered.
   for (const device of devices) {
-    const rendered = buildNotificationContent(
-      data,
-      device.locale ?? "fr",
-      device.timezone ?? undefined,
-    );
+    const rendered = buildNotificationContent(data, device.locale ?? "fr", device.timezone ?? undefined);
     await sendPushToDevice(device, { ...notification, ...rendered });
   }
 }
 
 export const notificationService = {
   async send(data: CreateNotification) {
-    logger.debug(
-      `[Notification] Creating notification for user ${data.userId}, type: ${data.type}`,
-    );
+    logger.debug(`[Notification] Creating notification for user ${data.userId}, type: ${data.type}`);
     const notification = await notificationRepository.create(data);
     await deliver(notification, data);
     return notification;
@@ -209,11 +186,7 @@ export const notificationService = {
    * The "you were added to a match" notification has nothing left to tell.
    */
   async markMatchCreatedRead(userId: string, matchIds: string[]) {
-    const ids = await notificationRepository.markReadByMatches(
-      userId,
-      [...new Set(matchIds)],
-      ["MATCH_CREATED"],
-    );
+    const ids = await notificationRepository.markReadByMatches(userId, [...new Set(matchIds)], ["MATCH_CREATED"]);
     notificationService.emitRead(userId, ids);
     return ids;
   },
@@ -296,23 +269,14 @@ export const notificationService = {
   },
 
   async markActionCompleted(notificationId: string, userId: string) {
-    return await notificationRepository.markActionCompleted(
-      notificationId,
-      userId,
-    );
+    return await notificationRepository.markActionCompleted(notificationId, userId);
   },
 
   async registerPushDevice(userId: string, data: RegisterDevice) {
-    logger.debug(
-      { userId },
-      "[NotificationService] Registering push device for user:",
-    );
+    logger.debug({ userId }, "[NotificationService] Registering push device for user:");
     await assertCanClaimDevice(userId, data);
     const result = await pushDeviceRepository.register(userId, data);
-    logger.debug(
-      { result },
-      "[NotificationService] Push device registered, result:",
-    );
+    logger.debug({ result }, "[NotificationService] Push device registered, result:");
     return result;
   },
 
@@ -340,9 +304,7 @@ export const notificationService = {
     if (notification.requiresAction) {
       const status = await notificationRepository.getStatus(notificationId, userId);
       if (!status?.actionCompleted) {
-        const pending = await notificationActionService.resolvePendingActions([
-          notification,
-        ]);
+        const pending = await notificationActionService.resolvePendingActions([notification]);
         if (pending.has(notification.id)) {
           throw new BadRequestError(ErrorCode.NOTIFICATION_ACTION_PENDING);
         }
@@ -352,34 +314,16 @@ export const notificationService = {
     return await notificationRepository.delete(notificationId, userId);
   },
 
-  async getUserIdsWithUnreadOfTypeForMatch(
-    matchId: string,
-    type: CreateNotification["type"],
-  ) {
-    return await notificationRepository.getUserIdsWithUnreadOfTypeForMatch(
-      matchId,
-      type,
-    );
+  async getUserIdsWithUnreadOfTypeForMatch(matchId: string, type: CreateNotification["type"]) {
+    return await notificationRepository.getUserIdsWithUnreadOfTypeForMatch(matchId, type);
   },
 
-  async hasUnreadOfTypeForMatch(
-    userId: string,
-    matchId: string,
-    type: CreateNotification["type"],
-  ) {
-    return await notificationRepository.hasUnreadOfTypeForMatch(
-      userId,
-      matchId,
-      type,
-    );
+  async hasUnreadOfTypeForMatch(userId: string, matchId: string, type: CreateNotification["type"]) {
+    return await notificationRepository.hasUnreadOfTypeForMatch(userId, matchId, type);
   },
 
   async deleteActionsByMatchIdForUser(matchId: string, userId: string) {
-    const deleted =
-      await notificationRepository.deleteActionsByMatchIdForUser(
-        matchId,
-        userId,
-      );
+    const deleted = await notificationRepository.deleteActionsByMatchIdForUser(matchId, userId);
     for (const notif of deleted) {
       webSocketService.send(notif.userId, {
         event: "notification_deleted",
@@ -389,14 +333,8 @@ export const notificationService = {
     return deleted;
   },
 
-  async deleteActionsByMatchIdAndType(
-    matchId: string,
-    type: CreateNotification["type"],
-  ) {
-    const deleted = await notificationRepository.deleteActionsByMatchIdAndType(
-      matchId,
-      type,
-    );
+  async deleteActionsByMatchIdAndType(matchId: string, type: CreateNotification["type"]) {
+    const deleted = await notificationRepository.deleteActionsByMatchIdAndType(matchId, type);
     for (const notif of deleted) {
       webSocketService.send(notif.userId, {
         event: "notification_deleted",
@@ -419,8 +357,7 @@ export const notificationService = {
   },
 
   async deleteActionsByMatchId(matchId: string) {
-    const deleted =
-      await notificationRepository.deleteActionsByMatchId(matchId);
+    const deleted = await notificationRepository.deleteActionsByMatchId(matchId);
     // Notify each affected user via WebSocket so their UI removes the notification in real-time
     for (const notif of deleted) {
       webSocketService.send(notif.userId, {

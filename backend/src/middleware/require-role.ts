@@ -7,10 +7,7 @@ import { ForbiddenError, ErrorCode } from "../types/errors";
  * Restricts a route to super admins. Must run after `requireAuth`,
  * which resolves the `appUserId` variable.
  */
-export const requireSuperAdmin: MiddlewareHandler<{ Variables: AppVariables }> = async (
-  c,
-  next,
-) => {
+export const requireSuperAdmin: MiddlewareHandler<{ Variables: AppVariables }> = async (c, next) => {
   const appUserId = c.get("appUserId");
   const currentUser = await userRepository.getById(appUserId);
 

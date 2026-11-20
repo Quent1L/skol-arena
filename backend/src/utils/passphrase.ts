@@ -1,5 +1,7 @@
 import { randomInt } from "node:crypto";
 
+// Kept compact, ten words per line.
+// prettier-ignore
 const WORDS = [
   "ace", "air", "arc", "arm", "art", "ash", "axe", "bay", "bed", "bow",
   "box", "bud", "bug", "bus", "cap", "cat", "cog", "cow", "cup", "dam",

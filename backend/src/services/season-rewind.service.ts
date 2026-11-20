@@ -41,12 +41,7 @@ import {
   computePerformanceAwards,
 } from "./season-rewind.awards";
 import { retagIdentities } from "./season-rewind.identity";
-import {
-  replaySeason,
-  type FeatDraft,
-  type PairTally,
-  type PlayerAggregate,
-} from "./season-rewind.replay";
+import { replaySeason, type FeatDraft, type PairTally, type PlayerAggregate } from "./season-rewind.replay";
 
 type Directory = Map<string, RewindPlayerRef>;
 type BadgeRow = Awaited<ReturnType<typeof rulesRepository.listBadgesBySeason>>[number];
@@ -102,10 +97,7 @@ function groupBadges(badges: BadgeRow[]): Map<string, BadgeRow[]> {
  * beside it. A season regular can play a thousand ranked matches; storing and
  * shipping a thousand points to draw 160 pixels is pure weight.
  */
-export function downsampleJourney(
-  points: MmrChartPoint[],
-  max: number = REWIND_MAX_CHART_POINTS,
-): MmrChartPoint[] {
+export function downsampleJourney(points: MmrChartPoint[], max: number = REWIND_MAX_CHART_POINTS): MmrChartPoint[] {
   if (points.length <= max || max < 2) return points;
 
   const step = (points.length - 1) / (max - 1);
@@ -149,9 +141,7 @@ export class SeasonRewindService {
 
     const replay = replaySeason(history, sides);
     const context = this.buildContext(season, players);
-    const aggregates = [...replay.aggregates.values()].filter((agg) =>
-      context.directory.has(agg.playerId),
-    );
+    const aggregates = [...replay.aggregates.values()].filter((agg) => context.directory.has(agg.playerId));
 
     const seasonPayload = this.buildSeasonPayload(context, aggregates, replay);
     const votes = await computeVoteRewind(seasonId, context.directory);
@@ -174,14 +164,11 @@ export class SeasonRewindService {
       (playerId) => ({
         playerId,
         promotedUntil,
-        payload: this.buildPlayerPayload(
-          aggregateById.get(playerId)!,
-          aggregates,
-          relations,
-          context,
-          seasonPayload,
-          { badges: badgesByPlayer.get(playerId) ?? [], nextSeason, votes: votes?.forPlayer(playerId) },
-        ),
+        payload: this.buildPlayerPayload(aggregateById.get(playerId)!, aggregates, relations, context, seasonPayload, {
+          badges: badgesByPlayer.get(playerId) ?? [],
+          nextSeason,
+          votes: votes?.forPlayer(playerId),
+        }),
       }),
     );
     if (replay.unresolvedOutcomes > 0) {
@@ -233,12 +220,7 @@ export class SeasonRewindService {
       );
       for (let i = 0; i < playerIds.length; i += REWIND_UPSERT_CHUNK_SIZE) {
         const chunk = playerIds.slice(i, i + REWIND_UPSERT_CHUNK_SIZE).map(buildRow);
-        await seasonRewindRepository.upsertPlayerRewindsBatch(
-          rewindId,
-          chunk,
-          REWIND_VERSION,
-          tx,
-        );
+        await seasonRewindRepository.upsertPlayerRewindsBatch(rewindId, chunk, REWIND_VERSION, tx);
       }
       await seasonRewindRepository.deleteStalePlayerRewinds(rewindId, playerIds, tx);
     });
@@ -350,8 +332,7 @@ export class SeasonRewindService {
         wins: agg.wins,
         losses: agg.losses,
         draws: agg.draws,
-        winRate:
-          agg.matchesPlayed > 0 ? Math.round((agg.wins / agg.matchesPlayed) * 100) : 0,
+        winRate: agg.matchesPlayed > 0 ? Math.round((agg.wins / agg.matchesPlayed) * 100) : 0,
       },
       journey: {
         initialMmr: agg.initialMmr,
@@ -414,22 +395,10 @@ export class SeasonRewindService {
     index: RelationIndex,
     directory: Directory,
   ): Pick<PlayerRewindPayload["feats"], "bestPartner" | "mostFacedOpponent" | "nemesis"> {
-    const partners = toRelationStats(
-      playerId,
-      index.partners.get(playerId) ?? [],
-      directory,
-      "shared",
-    );
-    const opponents = toRelationStats(
-      playerId,
-      index.opponents.get(playerId) ?? [],
-      directory,
-      "opposed",
-    );
+    const partners = toRelationStats(playerId, index.partners.get(playerId) ?? [], directory, "shared");
+    const opponents = toRelationStats(playerId, index.opponents.get(playerId) ?? [], directory, "opposed");
 
-    const mostFaced = [...opponents].sort(
-      (a, b) => b.count - a.count || (a.playerId < b.playerId ? -1 : 1),
-    );
+    const mostFaced = [...opponents].sort((a, b) => b.count - a.count || (a.playerId < b.playerId ? -1 : 1));
 
     return {
       bestPartner: rankRelationsByWeightedRate(partners, (p) => p.wins / p.count)[0] ?? null,
@@ -475,11 +444,7 @@ export class SeasonRewindService {
       const changedPlayers = players.filter((row) => retagIdentities(row.payload, identities));
 
       if (!seasonChanged && changedPlayers.length === 0) continue;
-      await seasonRewindRepository.rewritePayloads(
-        rewindId,
-        seasonChanged ? season : null,
-        changedPlayers,
-      );
+      await seasonRewindRepository.rewritePayloads(rewindId, seasonChanged ? season : null, changedPlayers);
       patched++;
     }
 
@@ -497,9 +462,7 @@ export class SeasonRewindService {
     const rewind = await seasonRewindRepository.getSeasonRewind(seasonId);
     if (!rewind) throw new NotFoundError(ErrorCode.REWIND_NOT_FOUND);
 
-    const player = playerId
-      ? await seasonRewindRepository.getPlayerRewind(seasonId, playerId)
-      : null;
+    const player = playerId ? await seasonRewindRepository.getPlayerRewind(seasonId, playerId) : null;
     if (!player) return { season: rewind.payload, player: null };
 
     // The one field that legitimately changes after the snapshot is taken: a new

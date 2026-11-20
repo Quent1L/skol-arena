@@ -31,18 +31,13 @@ export class TournamentStatsRepository {
         count: sql<number>`COUNT(*)`.mapWith(Number),
       })
       .from(matches)
-      .where(
-        and(eq(matches.tournamentId, tournamentId), eq(matches.status, "finalized"))
-      )
+      .where(and(eq(matches.tournamentId, tournamentId), eq(matches.status, "finalized")))
       .groupBy(matches.outcomeTypeId);
   }
 
   async getMatchesWithSidesAndPlayers(tournamentId: string) {
     return db.query.matches.findMany({
-      where: and(
-        eq(matches.tournamentId, tournamentId),
-        eq(matches.status, "finalized")
-      ),
+      where: and(eq(matches.tournamentId, tournamentId), eq(matches.status, "finalized")),
       columns: {
         id: true,
         winnerSide: true,
@@ -80,19 +75,14 @@ export class TournamentStatsRepository {
         matchCount: sql<number>`COUNT(*)`.mapWith(Number),
       })
       .from(matches)
-      .where(
-        and(eq(matches.tournamentId, tournamentId), eq(matches.status, "finalized"))
-      )
+      .where(and(eq(matches.tournamentId, tournamentId), eq(matches.status, "finalized")))
       .groupBy(sql`DATE(${matches.playedAt})`)
       .orderBy(sql`DATE(${matches.playedAt})`);
   }
 
   async getComputedStats(tournamentId: string): Promise<TournamentStats | null> {
     const row = await db.query.computedData.findFirst({
-      where: and(
-        eq(computedData.tournamentId, tournamentId),
-        eq(computedData.key, STATS_CACHE_KEY),
-      ),
+      where: and(eq(computedData.tournamentId, tournamentId), eq(computedData.key, STATS_CACHE_KEY)),
     });
     if (!row) return null;
     return row.data as TournamentStats;
@@ -111,9 +101,7 @@ export class TournamentStatsRepository {
   async deleteComputedStats(tournamentId: string): Promise<void> {
     await db
       .delete(computedData)
-      .where(
-        and(eq(computedData.tournamentId, tournamentId), eq(computedData.key, STATS_CACHE_KEY)),
-      );
+      .where(and(eq(computedData.tournamentId, tournamentId), eq(computedData.key, STATS_CACHE_KEY)));
   }
 }
 

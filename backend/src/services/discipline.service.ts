@@ -1,13 +1,6 @@
 import { disciplineRepository } from "../repository/discipline.repository";
-import {
-  type CreateDisciplineInput,
-  type UpdateDisciplineInput,
-} from "@skol-arena/shared/types/index";
-import {
-  ConflictError,
-  ErrorCode,
-  NotFoundError,
-} from "../types/errors";
+import { type CreateDisciplineInput, type UpdateDisciplineInput } from "@skol-arena/shared/types/index";
+import { ConflictError, ErrorCode, NotFoundError } from "../types/errors";
 
 export class DisciplineService {
   async createDiscipline(input: CreateDisciplineInput) {

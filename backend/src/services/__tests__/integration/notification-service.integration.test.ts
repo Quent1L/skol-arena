@@ -64,7 +64,12 @@ describe("notificationService (integration)", () => {
 
   describe("send", () => {
     it("stores the notification, pushes it over the socket and to every device", async () => {
-      await notificationService.registerPushDevice(ann, { deviceType: "WEB", subscriptionEndpoint: KNOWN_ENDPOINT("ok"), subscriptionData: { keys: { p256dh: "p", auth: "a" } }, locale: "en" } as never);
+      await notificationService.registerPushDevice(ann, {
+        deviceType: "WEB",
+        subscriptionEndpoint: KNOWN_ENDPOINT("ok"),
+        subscriptionData: { keys: { p256dh: "p", auth: "a" } },
+        locale: "en",
+      } as never);
 
       const sent = await notificationService.send(base(ann));
 
@@ -76,7 +81,11 @@ describe("notificationService (integration)", () => {
     });
 
     it("drops a device with an endpoint outside the known push services", async () => {
-      const [device] = await pushDeviceRepository.register(bob, { deviceType: "WEB", subscriptionEndpoint: "https://evil.example/push", subscriptionData: { keys: { auth: "a" } } } as never);
+      const [device] = await pushDeviceRepository.register(bob, {
+        deviceType: "WEB",
+        subscriptionEndpoint: "https://evil.example/push",
+        subscriptionData: { keys: { auth: "a" } },
+      } as never);
       await notificationService.send(base(bob));
       expect(sendNotification).not.toHaveBeenCalled();
       expect((await notificationService.getPushDevices(bob)).map((d) => d.id)).not.toContain(device!.id);
@@ -84,10 +93,19 @@ describe("notificationService (integration)", () => {
 
     it("skips a device without keys and removes one whose subscription expired", async () => {
       const user = await seed.createUser("Pushy");
-      await pushDeviceRepository.register(user, { deviceType: "WEB", subscriptionEndpoint: KNOWN_ENDPOINT("nokeys"), subscriptionData: null } as never);
-      const [expired] = await pushDeviceRepository.register(user, { deviceType: "WEB", subscriptionEndpoint: KNOWN_ENDPOINT("gone"), subscriptionData: { keys: { p256dh: "p", auth: "a" } } } as never);
+      await pushDeviceRepository.register(user, {
+        deviceType: "WEB",
+        subscriptionEndpoint: KNOWN_ENDPOINT("nokeys"),
+        subscriptionData: null,
+      } as never);
+      const [expired] = await pushDeviceRepository.register(user, {
+        deviceType: "WEB",
+        subscriptionEndpoint: KNOWN_ENDPOINT("gone"),
+        subscriptionData: { keys: { p256dh: "p", auth: "a" } },
+      } as never);
       sendImpl = async (sub) => {
-        if ((sub as { endpoint: string }).endpoint.endsWith("gone")) throw Object.assign(new Error("gone"), { statusCode: 410 });
+        if ((sub as { endpoint: string }).endpoint.endsWith("gone"))
+          throw Object.assign(new Error("gone"), { statusCode: 410 });
         return {};
       };
 
@@ -99,7 +117,11 @@ describe("notificationService (integration)", () => {
 
     it("keeps a device on a transient push error", async () => {
       const user = await seed.createUser("Flaky");
-      const [device] = await pushDeviceRepository.register(user, { deviceType: "WEB", subscriptionEndpoint: KNOWN_ENDPOINT("flaky"), subscriptionData: { keys: { p256dh: "p", auth: "a" } } } as never);
+      const [device] = await pushDeviceRepository.register(user, {
+        deviceType: "WEB",
+        subscriptionEndpoint: KNOWN_ENDPOINT("flaky"),
+        subscriptionData: { keys: { p256dh: "p", auth: "a" } },
+      } as never);
       sendImpl = async () => {
         throw new Error("timeout");
       };
@@ -113,7 +135,12 @@ describe("notificationService (integration)", () => {
       const owner = await seed.createUser("DeviceOwner");
       const thief = await seed.createUser("Thief");
       const endpoint = KNOWN_ENDPOINT("claim");
-      const data = (auth: string) => ({ deviceType: "WEB", subscriptionEndpoint: endpoint, subscriptionData: { keys: { p256dh: "p", auth } } }) as never;
+      const data = (auth: string) =>
+        ({
+          deviceType: "WEB",
+          subscriptionEndpoint: endpoint,
+          subscriptionData: { keys: { p256dh: "p", auth } },
+        }) as never;
       await notificationService.registerPushDevice(owner, data("secret"));
       await notificationService.registerPushDevice(owner, data("secret"));
 
@@ -124,7 +151,11 @@ describe("notificationService (integration)", () => {
 
     it("removes a device", async () => {
       const user = await seed.createUser("Remover");
-      const [device] = await notificationService.registerPushDevice(user, { deviceType: "WEB", subscriptionEndpoint: KNOWN_ENDPOINT("rm"), subscriptionData: { keys: { p256dh: "p", auth: "a" } } } as never);
+      const [device] = await notificationService.registerPushDevice(user, {
+        deviceType: "WEB",
+        subscriptionEndpoint: KNOWN_ENDPOINT("rm"),
+        subscriptionData: { keys: { p256dh: "p", auth: "a" } },
+      } as never);
       expect(await notificationService.removePushDevice(user, device!.id)).toHaveLength(1);
     });
   });
@@ -145,7 +176,9 @@ describe("notificationService (integration)", () => {
     });
 
     it("rejects a malformed cursor", async () => {
-      await expect(notificationService.getForUser(ann, "fr", { cursor: "not-a-cursor" })).rejects.toBeInstanceOf(BadRequestError);
+      await expect(notificationService.getForUser(ann, "fr", { cursor: "not-a-cursor" })).rejects.toBeInstanceOf(
+        BadRequestError,
+      );
     });
 
     it("flags actions that are no longer pending as resolved", async () => {
@@ -205,7 +238,9 @@ describe("notificationService (integration)", () => {
     it("delegates the unread lookups", async () => {
       const user = await seed.createUser("Lookup");
       await notificationService.send(base(user, { type: "MATCH_MESSAGE" }));
-      expect((await notificationService.getUserIdsWithUnreadOfTypeForMatch(matchId, "MATCH_MESSAGE" as never)).has(user)).toBe(true);
+      expect(
+        (await notificationService.getUserIdsWithUnreadOfTypeForMatch(matchId, "MATCH_MESSAGE" as never)).has(user),
+      ).toBe(true);
       expect(await notificationService.hasUnreadOfTypeForMatch(user, matchId, "MATCH_MESSAGE" as never)).toBe(true);
     });
 
@@ -218,7 +253,9 @@ describe("notificationService (integration)", () => {
       expect(wsSend).toHaveBeenCalledWith(x, { event: "notification_deleted", data: { id: forUser[0]!.id } });
 
       await notificationService.send(base(x, { requiresAction: true, type: "MATCH_POST_DISPUTE" }));
-      expect((await notificationService.deleteActionsByMatchIdAndType(matchId, "MATCH_POST_DISPUTE" as never)).length).toBeGreaterThanOrEqual(1);
+      expect(
+        (await notificationService.deleteActionsByMatchIdAndType(matchId, "MATCH_POST_DISPUTE" as never)).length,
+      ).toBeGreaterThanOrEqual(1);
 
       await notificationService.send(base(x, { requiresAction: true }));
       expect((await notificationService.deleteActionsByMatchId(matchId)).length).toBeGreaterThanOrEqual(1);

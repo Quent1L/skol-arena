@@ -8,17 +8,8 @@ import { auth } from "./config/auth";
 import { buildVersionApp } from "./api/build";
 import { assertEveryVersionMounted } from "./api/registry";
 import { mountApiDocs } from "./api/openapi";
-import {
-  INTERNAL_PREFIX,
-  PUBLIC_PREFIX,
-  UNSUPPORTED_VERSION_PATH,
-  withApiVersion,
-} from "./api/dispatch";
-import {
-  API_VERSIONS,
-  API_VERSION_REQUEST_HEADER,
-  API_VERSION_RESPONSE_HEADER,
-} from "./api/versions";
+import { INTERNAL_PREFIX, PUBLIC_PREFIX, UNSUPPORTED_VERSION_PATH, withApiVersion } from "./api/dispatch";
+import { API_VERSIONS, API_VERSION_REQUEST_HEADER, API_VERSION_RESPONSE_HEADER } from "./api/versions";
 import { BadRequestError, ErrorCode } from "./types/errors";
 import { addUserContext } from "./middleware/auth";
 import { errorHandler } from "./middleware/error";
@@ -36,10 +27,7 @@ import { runMigrations } from "./utils/migrate";
 import { detectAccentFolding } from "./utils/accent-folding";
 import { initializeAdminIfNeeded } from "./utils/init-admin";
 import { initializeDemoDataIfRequested } from "./utils/init-demo-data";
-import {
-  clearStaleRecalcMarkers,
-  recalculateOutdatedRankedSeasons,
-} from "./utils/init-mmr-engine";
+import { clearStaleRecalcMarkers, recalculateOutdatedRankedSeasons } from "./utils/init-mmr-engine";
 import { logger } from "./utils/logger";
 import { run, type Runner } from "graphile-worker";
 import { taskList } from "./workers/mmr-recalculation.worker";
@@ -156,7 +144,7 @@ app.use(
     // tell the user how long to wait, and a header the browser hides is a header the
     // page does not have.
     exposeHeaders: [API_VERSION_RESPONSE_HEADER, "Retry-After"],
-  })
+  }),
 );
 
 // Avatar images: registered ahead of the session and i18n middleware on purpose, see
@@ -207,21 +195,18 @@ app.get(
   upgradeWebSocket(async (c) => {
     const user = c.get("user");
     const session = c.get("session");
-    
+
     logger.debug(`[WS] Upgrade request - BetterAuth User: ${user?.id} Session: ${session?.id}`);
-    
+
     if (!user) {
-      logger.error('[WS] No user in context, rejecting connection');
+      logger.error("[WS] No user in context, rejecting connection");
       throw new HTTPException(401, { message: "Unauthorized" });
     }
-    
-    const appUserId = await userService.getOrCreateAppUser(
-      user.id,
-      user.name || user.email
-    );
-    
+
+    const appUserId = await userService.getOrCreateAppUser(user.id, user.name || user.email);
+
     logger.debug(`[WS] BetterAuth user ${user.id} mapped to App user ${appUserId}`);
-    
+
     // hono/bun wraps the socket in a new WSContext on every event: the one from onOpen
     // is kept so close and unsubscribe find the object the service registered.
     let socket: WSContext;
@@ -256,9 +241,7 @@ app.get(
         try {
           await tournamentService.assertCanAccess(msg.tournamentId, appUserId);
         } catch {
-          logger.debug(
-            `[WS] App user ${appUserId} refused subscription to ${msg.tournamentId}`,
-          );
+          logger.debug(`[WS] App user ${appUserId} refused subscription to ${msg.tournamentId}`);
           return;
         }
         webSocketService.subscribeToTournament(msg.tournamentId, socket);
@@ -269,17 +252,16 @@ app.get(
       },
       onError(event, _ws) {
         logger.error(`[WS] Error for app user ${appUserId}: %o`, event);
-      }
+      },
     };
-  })
+  }),
 );
 
 // An unmatched API path must fail as an API path. Without this it falls through to
 // the SPA catch-all below and answers 200 text/html, which reads to a client as a
 // working endpoint returning nonsense. Registered after /api/ws so the upgrade
 // route still wins.
-const apiNotFound = (c: Context) =>
-  c.json({ error: { code: ErrorCode.NOT_FOUND, message: "Not found" } }, 404);
+const apiNotFound = (c: Context) => c.json({ error: { code: ErrorCode.NOT_FOUND, message: "Not found" } }, 404);
 
 app.all(`${INTERNAL_PREFIX}/*`, apiNotFound);
 app.all(`${PUBLIC_PREFIX}/*`, apiNotFound);
@@ -302,14 +284,9 @@ if (frontendBuildPath) {
       onFound: (_path, c) => {
         // index.html, sw.js, manifest.webmanifest and version.json must revalidate on every
         // load, otherwise a client can stay pinned to a deployment it has already replaced.
-        c.header(
-          "Cache-Control",
-          isHashedAssetPath(c.req.path)
-            ? "public, max-age=31536000, immutable"
-            : "no-cache"
-        );
-      }
-    })
+        c.header("Cache-Control", isHashedAssetPath(c.req.path) ? "public, max-age=31536000, immutable" : "no-cache");
+      },
+    }),
   );
 
   // Reaching this point for a hashed asset means the file is genuinely gone (usually a client
@@ -347,12 +324,9 @@ if (typeof process !== "undefined") {
     logger.fatal(err, "UNCAUGHT EXCEPTION");
   });
 
-  process.on(
-    "unhandledRejection",
-    (reason: unknown, _promise: Promise<unknown>) => {
-      logger.fatal({ reason }, "UNHANDLED PROMISE REJECTION");
-    }
-  );
+  process.on("unhandledRejection", (reason: unknown, _promise: Promise<unknown>) => {
+    logger.fatal({ reason }, "UNHANDLED PROMISE REJECTION");
+  });
 
   process.on("SIGTERM", async () => {
     logger.info("SIGTERM received, shutting down gracefully");

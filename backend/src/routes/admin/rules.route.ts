@@ -53,7 +53,7 @@ adminRules.get(
   (c) => {
     const { triggerEvent } = c.req.valid("query");
     return c.json(rulesService.getCatalog(triggerEvent ?? "match_submitted"));
-  }
+  },
 );
 
 adminRules.post(
@@ -68,7 +68,7 @@ adminRules.post(
     const { conditions, action, context } = c.req.valid("json");
     const result = await rulesService.test(conditions, action, context);
     return c.json(result);
-  }
+  },
 );
 
 adminRules.get(
@@ -87,7 +87,7 @@ adminRules.get(
       isActive: filters.isActive,
     });
     return c.json(rules);
-  }
+  },
 );
 
 adminRules.post(
@@ -102,7 +102,7 @@ adminRules.post(
     const appUserId = c.get("appUserId");
     const rule = await rulesService.create(data, appUserId);
     return c.json(rule, 201);
-  }
+  },
 );
 
 adminRules.get(
@@ -115,7 +115,7 @@ adminRules.get(
   async (c) => {
     const state = await rulesService.getReconciliationState();
     return c.json(state);
-  }
+  },
 );
 
 adminRules.post(
@@ -128,7 +128,7 @@ adminRules.post(
   async (c) => {
     await rulesService.triggerReconciliation();
     return c.json({ queued: true }, 202);
-  }
+  },
 );
 
 // Declared before "/:id" so the literal segment is not swallowed by the parameter.
@@ -144,7 +144,7 @@ adminRules.get(
   async (c) => {
     const rules = await rulesService.listFiringStats();
     return c.json({ rules });
-  }
+  },
 );
 
 const windowQuerySchema = z.object({ days: z.coerce.number().int().min(1).max(365).default(30) });
@@ -162,7 +162,7 @@ adminRules.get(
   async (c) => {
     const { days } = c.req.valid("query");
     return c.json(await rulesService.getFiringOverview(days));
-  }
+  },
 );
 
 adminRules.get(
@@ -177,7 +177,7 @@ adminRules.get(
   validate("query", ruleFiringFeedQuerySchema),
   async (c) => {
     return c.json(await rulesService.getFiringFeed(c.req.valid("query")));
-  }
+  },
 );
 
 adminRules.get(
@@ -193,7 +193,7 @@ adminRules.get(
     const { days } = c.req.valid("query");
     const detail = await rulesService.getFiringDetail(c.req.param("id")!, days);
     return c.json(detail);
-  }
+  },
 );
 
 adminRules.get(
@@ -209,7 +209,7 @@ adminRules.get(
   async (c) => {
     const count = await rulesService.getBadgeCount(c.req.param("id")!);
     return c.json({ count });
-  }
+  },
 );
 
 adminRules.get(
@@ -222,7 +222,7 @@ adminRules.get(
   async (c) => {
     const rule = await rulesService.getById(c.req.param("id")!);
     return c.json(rule);
-  }
+  },
 );
 
 adminRules.patch(
@@ -236,7 +236,7 @@ adminRules.patch(
   async (c) => {
     const rule = await rulesService.update(c.req.param("id")!, c.req.valid("json"));
     return c.json(rule);
-  }
+  },
 );
 
 adminRules.delete(
@@ -249,7 +249,7 @@ adminRules.delete(
   async (c) => {
     await rulesService.delete(c.req.param("id")!);
     return c.body(null, 204);
-  }
+  },
 );
 
 export default adminRules;

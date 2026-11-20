@@ -124,10 +124,7 @@ describe("computeOutcomeTypeFunStats", () => {
   });
 
   it("counts draws in matches played without inflating wins", () => {
-    const matches = [
-      ...series("normal", "a", "b", 3),
-      match("normal", null, ["a"], ["b"]),
-    ];
+    const matches = [...series("normal", "a", "b", 3), match("normal", null, ["a"], ["b"])];
 
     const normal = stat(funStats(matches), "normal");
     const a = normal.topWinnersByVolume.leaders[0]!;
@@ -290,10 +287,7 @@ describe("computeOutcomeTypeFunStats — ex aequo", () => {
   });
 
   it("keeps the podium spot for the only player who pulled it off", () => {
-    const volume = stat(
-      funStats([match("fanny", "A", ["a"], ["z"])]),
-      "fanny",
-    ).topWinnersByVolume;
+    const volume = stat(funStats([match("fanny", "A", ["a"], ["z"])]), "fanny").topWinnersByVolume;
 
     // One winner is not a tie: being alone up there is an achievement, not an ex aequo.
     expect(volume.isFlat).toBe(false);
@@ -304,10 +298,7 @@ describe("computeOutcomeTypeFunStats — ex aequo", () => {
   it("only presents as tied the players cut off from their own rank", () => {
     // Seven players on two wins each, then "h" on one: only the seven are tied.
     const winners = ["a", "b", "c", "d", "e", "f", "g"];
-    const matches = [
-      ...winners.flatMap((w) => series("fanny", w, "z", 2)),
-      match("fanny", "A", ["h"], ["z"]),
-    ];
+    const matches = [...winners.flatMap((w) => series("fanny", w, "z", 2)), match("fanny", "A", ["h"], ["z"])];
 
     const volume = stat(funStats(matches), "fanny").topWinnersByVolume;
 

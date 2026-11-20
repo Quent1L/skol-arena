@@ -112,7 +112,10 @@ describe("PATCH /users/me", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(userService.updateProfile).toHaveBeenCalledWith("u1", expect.objectContaining({ displayName: "Newname", shortName: "NWN" }));
+    expect(userService.updateProfile).toHaveBeenCalledWith(
+      "u1",
+      expect.objectContaining({ displayName: "Newname", shortName: "NWN" }),
+    );
     expect(((await res.json()) as any).avatarVersion).toBe(3);
   });
 

@@ -7,13 +7,7 @@ import * as schema from "../../../db/schema";
 const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
 import { playerMmrRepository } from "../../../repository/player-mmr.repository";
-import {
-  tournaments,
-  appUsers,
-  user as betterAuthUser,
-  matches,
-  mmrHistory,
-} from "../../../db/schema";
+import { tournaments, appUsers, user as betterAuthUser, matches, mmrHistory } from "../../../db/schema";
 
 describe("Player career MMR aggregates (integration)", () => {
   let adminId: string;
@@ -75,12 +69,7 @@ describe("Player career MMR aggregates (integration)", () => {
   }
 
   /** Replays a run of MMR values for one player, starting from `startMmr`. */
-  async function seedRun(
-    playerId: string,
-    startMmr: number,
-    afters: number[],
-    targetSeasonId = seasonId,
-  ) {
+  async function seedRun(playerId: string, startMmr: number, afters: number[], targetSeasonId = seasonId) {
     let before = startMmr;
     for (const after of afters) {
       await testDb.insert(mmrHistory).values({
@@ -189,9 +178,7 @@ describe("Player career MMR aggregates (integration)", () => {
     await seedRun(playerId, 1000, [1020, 1005, 1120, 1090, 1075]);
 
     const career = await careerFor(playerId);
-    const season = (await playerMmrRepository.getSeasonMmrStats(seasonId, 0)).find(
-      (row) => row.playerId === playerId,
-    );
+    const season = (await playerMmrRepository.getSeasonMmrStats(seasonId, 0)).find((row) => row.playerId === playerId);
 
     expect(career?.peakMmr).toBe(season!.peakMmr);
     expect(career?.avgMmr).toBe(season!.avgMmr);

@@ -7,9 +7,7 @@ import { BadRequestError, ErrorCode } from "../types/errors";
 function formatPath(issue: StandardSchemaV1.Issue): string {
   return (issue.path ?? [])
     .map((segment) =>
-      typeof segment === "object" && segment !== null && "key" in segment
-        ? String(segment.key)
-        : String(segment)
+      typeof segment === "object" && segment !== null && "key" in segment ? String(segment.key) : String(segment),
     )
     .join(".");
 }

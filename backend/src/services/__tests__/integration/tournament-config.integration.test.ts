@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-} from "../../../config/test-database";
+import { createTestDatabase, closeTestDatabase } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 
@@ -33,9 +30,7 @@ describe("Tournament config satellites", () => {
 
   const dates = () => {
     const today = new Date().toISOString().split("T")[0];
-    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
     return { startDate: today, endDate: nextWeek };
   };
 
@@ -98,9 +93,7 @@ describe("Tournament config satellites", () => {
     expect(scoring.pointPerDraw).toBe(SCORING_DEFAULTS.pointPerDraw);
     expect(scoring.pointPerLoss).toBe(SCORING_DEFAULTS.pointPerLoss);
     expect(championship.maxTimesWithSamePartner).toBe(4);
-    expect(championship.maxMatchesPerPlayer).toBe(
-      CHAMPIONSHIP_DEFAULTS.maxMatchesPerPlayer,
-    );
+    expect(championship.maxMatchesPerPlayer).toBe(CHAMPIONSHIP_DEFAULTS.maxMatchesPerPlayer);
   });
 
   it("creates only the scoring row for a bracket", async () => {
@@ -157,9 +150,7 @@ describe("Tournament config satellites", () => {
     const { scoring, championship } = await readConfigs(created.id);
     expect(scoring.pointPerDraw).toBe(0);
     // Untouched fields of a partial update keep their value.
-    expect(championship.maxTimesWithSamePartner).toBe(
-      CHAMPIONSHIP_DEFAULTS.maxTimesWithSamePartner,
-    );
+    expect(championship.maxTimesWithSamePartner).toBe(CHAMPIONSHIP_DEFAULTS.maxTimesWithSamePartner);
   });
 
   it("cascades both rows when the tournament is deleted", async () => {

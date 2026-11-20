@@ -13,9 +13,7 @@ let accentFolding = false;
 
 export async function detectAccentFolding(): Promise<boolean> {
   try {
-    const result = await db.execute(
-      sql`SELECT to_regprocedure('unaccent(text)') IS NOT NULL AS available`,
-    );
+    const result = await db.execute(sql`SELECT to_regprocedure('unaccent(text)') IS NOT NULL AS available`);
     accentFolding = Boolean((result.rows[0] as { available: boolean } | undefined)?.available);
   } catch {
     accentFolding = false;

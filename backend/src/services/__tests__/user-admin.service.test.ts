@@ -117,26 +117,22 @@ describe("UserService admin guards", () => {
   it("404s on an unknown target", async () => {
     mockUserRepo.getById.mockImplementation(() => Promise.resolve(null as any));
 
-    await expect(
-      service.adminUpdateUser(ACTOR_ID, TARGET_ID, { displayName: "Nope" }),
-    ).rejects.toMatchObject({ code: ErrorCode.USER_NOT_FOUND });
+    await expect(service.adminUpdateUser(ACTOR_ID, TARGET_ID, { displayName: "Nope" })).rejects.toMatchObject({
+      code: ErrorCode.USER_NOT_FOUND,
+    });
   });
 
   it("refuses to demote the last super admin", async () => {
-    mockUserRepo.getById.mockImplementation(() =>
-      Promise.resolve(makeAppUser({ role: "super_admin" }) as any),
-    );
+    mockUserRepo.getById.mockImplementation(() => Promise.resolve(makeAppUser({ role: "super_admin" }) as any));
     mockUserRepo.countByRole.mockImplementation(() => Promise.resolve(1));
 
-    await expect(
-      service.adminUpdateUser(ACTOR_ID, TARGET_ID, { role: "player" }),
-    ).rejects.toMatchObject({ code: ErrorCode.LAST_SUPER_ADMIN });
+    await expect(service.adminUpdateUser(ACTOR_ID, TARGET_ID, { role: "player" })).rejects.toMatchObject({
+      code: ErrorCode.LAST_SUPER_ADMIN,
+    });
   });
 
   it("demotes a super admin when another one remains", async () => {
-    mockUserRepo.getById.mockImplementation(() =>
-      Promise.resolve(makeAppUser({ role: "super_admin" }) as any),
-    );
+    mockUserRepo.getById.mockImplementation(() => Promise.resolve(makeAppUser({ role: "super_admin" }) as any));
     mockUserRepo.countByRole.mockImplementation(() => Promise.resolve(3));
 
     await service.adminUpdateUser(ACTOR_ID, TARGET_ID, { role: "player" });
@@ -151,9 +147,9 @@ describe("UserService admin guards", () => {
   it("rejects an email already used by someone else", async () => {
     mockUserRepo.isEmailTaken.mockImplementation(() => Promise.resolve(true));
 
-    await expect(
-      service.adminUpdateUser(ACTOR_ID, TARGET_ID, { email: "taken@example.com" }),
-    ).rejects.toMatchObject({ code: ErrorCode.EMAIL_ALREADY_EXISTS });
+    await expect(service.adminUpdateUser(ACTOR_ID, TARGET_ID, { email: "taken@example.com" })).rejects.toMatchObject({
+      code: ErrorCode.EMAIL_ALREADY_EXISTS,
+    });
     expect(mockUserRepo.updateExternalUserEmail).not.toHaveBeenCalled();
   });
 });
@@ -215,9 +211,9 @@ describe("UserService rename cache invalidation", () => {
   it("404s when renaming an unknown profile", async () => {
     mockUserRepo.getById.mockImplementation(() => Promise.resolve(null as any));
 
-    await expect(
-      service.updateProfile(TARGET_ID, { displayName: "Ghost", shortName: "GHO" }),
-    ).rejects.toMatchObject({ code: ErrorCode.USER_NOT_FOUND });
+    await expect(service.updateProfile(TARGET_ID, { displayName: "Ghost", shortName: "GHO" })).rejects.toMatchObject({
+      code: ErrorCode.USER_NOT_FOUND,
+    });
     expect(mockUserRepo.updateAppUser).not.toHaveBeenCalled();
   });
 
@@ -255,9 +251,7 @@ describe("UserService deactivation", () => {
   });
 
   it("refuses to deactivate the last super admin", async () => {
-    mockUserRepo.getById.mockImplementation(() =>
-      Promise.resolve(makeAppUser({ role: "super_admin" }) as any),
-    );
+    mockUserRepo.getById.mockImplementation(() => Promise.resolve(makeAppUser({ role: "super_admin" }) as any));
     mockUserRepo.countByRole.mockImplementation(() => Promise.resolve(1));
 
     await expect(service.deactivateUser(ACTOR_ID, TARGET_ID)).rejects.toMatchObject({
@@ -294,9 +288,7 @@ describe("UserService permanent deletion", () => {
   });
 
   it("reports the blocking resources instead of deleting", async () => {
-    mockUserRepo.getDeletionBlockers.mockImplementation(() =>
-      Promise.resolve([{ resource: "tournaments", count: 3 }]),
-    );
+    mockUserRepo.getDeletionBlockers.mockImplementation(() => Promise.resolve([{ resource: "tournaments", count: 3 }]));
 
     await expect(service.deleteUserPermanently(ACTOR_ID, TARGET_ID)).rejects.toMatchObject({
       code: ErrorCode.USER_HAS_OWNED_CONTENT,
@@ -310,9 +302,7 @@ describe("UserService archiving", () => {
   it("refuses to purge a player who only ever played matches", async () => {
     // The regression that lost real data: only `created_by` tables were checked,
     // so a plain player passed the guard and the cascade wiped their history.
-    mockUserRepo.getDeletionBlockers.mockImplementation(() =>
-      Promise.resolve([{ resource: "matches", count: 1 }]),
-    );
+    mockUserRepo.getDeletionBlockers.mockImplementation(() => Promise.resolve([{ resource: "matches", count: 1 }]));
 
     await expect(service.deleteUserPermanently(ACTOR_ID, TARGET_ID)).rejects.toMatchObject({
       code: ErrorCode.USER_HAS_OWNED_CONTENT,
@@ -325,20 +315,12 @@ describe("UserService archiving", () => {
 
     await service.archiveUser(ACTOR_ID, TARGET_ID);
 
-    expect(mockUserRepo.archiveUser).toHaveBeenCalledWith(
-      TARGET_ID,
-      "ext-target-1",
-      ACTOR_ID,
-      "Archive 5",
-      "ARCH5",
-    );
+    expect(mockUserRepo.archiveUser).toHaveBeenCalledWith(TARGET_ID, "ext-target-1", ACTOR_ID, "Archive 5", "ARCH5");
     expect(mockAvatarService.purge).toHaveBeenCalledWith(TARGET_ID);
   });
 
   it("archives regardless of the data attached to the user", async () => {
-    mockUserRepo.getDeletionBlockers.mockImplementation(() =>
-      Promise.resolve([{ resource: "matches", count: 12 }]),
-    );
+    mockUserRepo.getDeletionBlockers.mockImplementation(() => Promise.resolve([{ resource: "matches", count: 12 }]));
 
     await service.archiveUser(ACTOR_ID, TARGET_ID);
 
@@ -346,9 +328,7 @@ describe("UserService archiving", () => {
   });
 
   it("refuses to archive twice", async () => {
-    mockUserRepo.getById.mockImplementation(() =>
-      Promise.resolve(makeAppUser({ archivedAt: new Date() }) as any),
-    );
+    mockUserRepo.getById.mockImplementation(() => Promise.resolve(makeAppUser({ archivedAt: new Date() }) as any));
 
     await expect(service.archiveUser(ACTOR_ID, TARGET_ID)).rejects.toMatchObject({
       code: ErrorCode.USER_ALREADY_ARCHIVED,
@@ -357,9 +337,7 @@ describe("UserService archiving", () => {
   });
 
   it("refuses to archive the last super admin", async () => {
-    mockUserRepo.getById.mockImplementation(() =>
-      Promise.resolve(makeAppUser({ role: "super_admin" }) as any),
-    );
+    mockUserRepo.getById.mockImplementation(() => Promise.resolve(makeAppUser({ role: "super_admin" }) as any));
     mockUserRepo.countByRole.mockImplementation(() => Promise.resolve(1));
 
     await expect(service.archiveUser(ACTOR_ID, TARGET_ID)).rejects.toMatchObject({
@@ -389,9 +367,9 @@ describe("UserService archiving", () => {
       Promise.resolve(makeAppUser({ externalId: null, archivedAt: new Date() }) as any),
     );
 
-    await expect(
-      service.adminUpdateUser(ACTOR_ID, TARGET_ID, { email: "new@example.com" }),
-    ).rejects.toMatchObject({ code: ErrorCode.USER_IS_ARCHIVED });
+    await expect(service.adminUpdateUser(ACTOR_ID, TARGET_ID, { email: "new@example.com" })).rejects.toMatchObject({
+      code: ErrorCode.USER_IS_ARCHIVED,
+    });
   });
 });
 
@@ -432,41 +410,39 @@ describe("UserService restoring an archived player", () => {
 
   it("refuses when the new account already has its own data", async () => {
     route({ [ARCHIVED_ID]: archived(), [SOURCE_ID]: source() });
-    mockUserRepo.getDeletionBlockers.mockImplementation(() =>
-      Promise.resolve([{ resource: "matches", count: 3 }]),
-    );
+    mockUserRepo.getDeletionBlockers.mockImplementation(() => Promise.resolve([{ resource: "matches", count: 3 }]));
 
-    await expect(
-      service.restoreArchivedUser(ACTOR_ID, ARCHIVED_ID, { sourceUserId: SOURCE_ID }),
-    ).rejects.toMatchObject({
-      code: ErrorCode.USER_HAS_OWNED_CONTENT,
-      details: { blockers: [{ resource: "matches", count: 3 }] },
-    });
+    await expect(service.restoreArchivedUser(ACTOR_ID, ARCHIVED_ID, { sourceUserId: SOURCE_ID })).rejects.toMatchObject(
+      {
+        code: ErrorCode.USER_HAS_OWNED_CONTENT,
+        details: { blockers: [{ resource: "matches", count: 3 }] },
+      },
+    );
     expect(mockUserRepo.restoreArchivedUser).not.toHaveBeenCalled();
   });
 
   it("refuses when the target is not archived", async () => {
     route({ [ARCHIVED_ID]: archived({ archivedAt: null }), [SOURCE_ID]: source() });
 
-    await expect(
-      service.restoreArchivedUser(ACTOR_ID, ARCHIVED_ID, { sourceUserId: SOURCE_ID }),
-    ).rejects.toMatchObject({ code: ErrorCode.USER_NOT_ARCHIVED });
+    await expect(service.restoreArchivedUser(ACTOR_ID, ARCHIVED_ID, { sourceUserId: SOURCE_ID })).rejects.toMatchObject(
+      { code: ErrorCode.USER_NOT_ARCHIVED },
+    );
   });
 
   it("refuses when the source is itself archived", async () => {
     route({ [ARCHIVED_ID]: archived(), [SOURCE_ID]: source({ archivedAt: new Date() }) });
 
-    await expect(
-      service.restoreArchivedUser(ACTOR_ID, ARCHIVED_ID, { sourceUserId: SOURCE_ID }),
-    ).rejects.toMatchObject({ code: ErrorCode.USER_ALREADY_ARCHIVED });
+    await expect(service.restoreArchivedUser(ACTOR_ID, ARCHIVED_ID, { sourceUserId: SOURCE_ID })).rejects.toMatchObject(
+      { code: ErrorCode.USER_ALREADY_ARCHIVED },
+    );
   });
 
   it("refuses when the admin picks their own account as the source", async () => {
     route({ [ARCHIVED_ID]: archived(), [ACTOR_ID]: source({ id: ACTOR_ID }) });
 
-    await expect(
-      service.restoreArchivedUser(ACTOR_ID, ARCHIVED_ID, { sourceUserId: ACTOR_ID }),
-    ).rejects.toMatchObject({ code: ErrorCode.CANNOT_MODIFY_SELF });
+    await expect(service.restoreArchivedUser(ACTOR_ID, ARCHIVED_ID, { sourceUserId: ACTOR_ID })).rejects.toMatchObject({
+      code: ErrorCode.CANNOT_MODIFY_SELF,
+    });
   });
 });
 
@@ -475,9 +451,7 @@ describe("UserService password reset", () => {
     await service.sendPasswordReset(TARGET_ID);
 
     expect(mockRequestPasswordReset).toHaveBeenCalledTimes(1);
-    const [{ body }] = mockRequestPasswordReset.mock.calls[0] as [
-      { body: { email: string; redirectTo: string } },
-    ];
+    const [{ body }] = mockRequestPasswordReset.mock.calls[0] as [{ body: { email: string; redirectTo: string } }];
     expect(body.email).toBe("target@example.com");
     // Must be absolute: a relative path resolves against the backend origin,
     // which serves no /reset-password route outside production.
@@ -489,9 +463,7 @@ describe("UserService password reset", () => {
     process.env.FRONTEND_URL = "https://skol.example.com";
     try {
       await service.sendPasswordReset(TARGET_ID);
-      const [{ body }] = mockRequestPasswordReset.mock.calls[0] as [
-        { body: { redirectTo: string } },
-      ];
+      const [{ body }] = mockRequestPasswordReset.mock.calls[0] as [{ body: { redirectTo: string } }];
       expect(body.redirectTo).toBe("https://skol.example.com/reset-password");
     } finally {
       if (previous === undefined) delete process.env.FRONTEND_URL;
@@ -500,9 +472,7 @@ describe("UserService password reset", () => {
   });
 
   it("reports a delivery failure instead of pretending the mail left", async () => {
-    mockRequestPasswordReset.mockImplementation(() =>
-      Promise.reject(new Error("connect ECONNREFUSED 127.0.0.1:2525")),
-    );
+    mockRequestPasswordReset.mockImplementation(() => Promise.reject(new Error("connect ECONNREFUSED 127.0.0.1:2525")));
 
     await expect(service.sendPasswordReset(TARGET_ID)).rejects.toMatchObject({
       code: ErrorCode.EMAIL_SEND_FAILED,
@@ -524,9 +494,7 @@ describe("UserService password reset", () => {
   });
 
   it("404s when the target has no email", async () => {
-    mockUserRepo.getUserAdminDetail.mockImplementation(() =>
-      Promise.resolve(makeDetail({ email: null }) as any),
-    );
+    mockUserRepo.getUserAdminDetail.mockImplementation(() => Promise.resolve(makeDetail({ email: null }) as any));
 
     await expect(service.sendPasswordReset(TARGET_ID)).rejects.toMatchObject({
       code: ErrorCode.USER_NOT_FOUND,

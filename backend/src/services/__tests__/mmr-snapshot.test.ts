@@ -38,9 +38,7 @@ mock.module("../../repository/mmr-seed.repository", () => ({
 
 mock.module("../../repository/player-mmr.repository", () => ({
   playerMmrRepository: {
-    getCheckpointState: mock((_season: string, playerId: string) =>
-      Promise.resolve(CHECKPOINTS[playerId] ?? null),
-    ),
+    getCheckpointState: mock((_season: string, playerId: string) => Promise.resolve(CHECKPOINTS[playerId] ?? null)),
   },
 }));
 
@@ -76,11 +74,7 @@ describe("getMmrSnapshotAt", () => {
   });
 
   it("collapses duplicate ids into a single entry", async () => {
-    const rows = await mmrCalculationService.getMmrSnapshotAt(
-      SEASON,
-      ["veteran", "veteran", "rookie"],
-      AT,
-    );
+    const rows = await mmrCalculationService.getMmrSnapshotAt(SEASON, ["veteran", "veteran", "rookie"], AT);
     expect(rows).toHaveLength(2);
   });
 
@@ -90,17 +84,15 @@ describe("getMmrSnapshotAt", () => {
 
   it("refuses a request over the per-call ceiling", async () => {
     const tooMany = Array.from({ length: 33 }, (_, i) => `player-${i}`);
-    await expect(
-      mmrCalculationService.getMmrSnapshotAt(SEASON, tooMany, AT),
-    ).rejects.toBeInstanceOf(BadRequestError);
+    await expect(mmrCalculationService.getMmrSnapshotAt(SEASON, tooMany, AT)).rejects.toBeInstanceOf(BadRequestError);
   });
 
   it("rejects a tournament that is not a ranked season", async () => {
     configResult = undefined;
     try {
-      await expect(
-        mmrCalculationService.getMmrSnapshotAt(SEASON, ["veteran"], AT),
-      ).rejects.toBeInstanceOf(NotFoundError);
+      await expect(mmrCalculationService.getMmrSnapshotAt(SEASON, ["veteran"], AT)).rejects.toBeInstanceOf(
+        NotFoundError,
+      );
     } finally {
       configResult = CONFIG;
     }

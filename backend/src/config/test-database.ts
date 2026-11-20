@@ -19,9 +19,7 @@ let pgliteInstance: PGlite | null = null;
  * Runs all migrations to set up the schema.
  * Also sets the database module to use this instance.
  */
-export async function createTestDatabase(): Promise<
-  PgliteDatabase<typeof schema>
-> {
+export async function createTestDatabase(): Promise<PgliteDatabase<typeof schema>> {
   // Create a new PGlite in-memory database. Contrib extensions are not bundled
   // by default: migration 0085 creates `unaccent`, so it must be loadable here.
   pgliteInstance = new PGlite({ extensions: { unaccent } });
@@ -55,8 +53,7 @@ async function execMigrationStatement(statement: string, file: string): Promise<
   } catch (error: unknown) {
     // Ignore errors for IF NOT EXISTS or duplicate constraints
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const isSchemaNoise =
-      errorMessage.includes("already exists") || errorMessage.includes("duplicate key");
+    const isSchemaNoise = errorMessage.includes("already exists") || errorMessage.includes("duplicate key");
     // Only log significant errors, not schema issues
     if (!isSchemaNoise && process.env.DEBUG_MIGRATIONS) {
       console.warn(`Migration warning in ${file}: ${errorMessage.substring(0, 100)}`);
@@ -99,13 +96,10 @@ async function fixSchemaMismatches(): Promise<void> {
     try {
       await pgliteInstance.exec(statement);
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (!errorMessage.includes("already exists")) {
         if (process.env.DEBUG_MIGRATIONS) {
-          console.warn(
-            `Schema patch warning: ${errorMessage.substring(0, 100)}`,
-          );
+          console.warn(`Schema patch warning: ${errorMessage.substring(0, 100)}`);
         }
       }
     }
@@ -116,9 +110,7 @@ async function fixSchemaMismatches(): Promise<void> {
  * Gets the current test database instance.
  * Creates one if it doesn't exist.
  */
-export async function getTestDatabase(): Promise<
-  PgliteDatabase<typeof schema>
-> {
+export async function getTestDatabase(): Promise<PgliteDatabase<typeof schema>> {
   if (!testDbInstance) {
     return createTestDatabase();
   }

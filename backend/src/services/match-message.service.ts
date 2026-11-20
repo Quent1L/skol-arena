@@ -1,8 +1,5 @@
 import type { ClientMatchMessage } from "@skol-arena/shared/types/index";
-import {
-  MATCH_MESSAGE_MAX_LENGTH,
-  POST_FINALIZATION_DISPUTE_DAYS,
-} from "@skol-arena/shared/types/index";
+import { MATCH_MESSAGE_MAX_LENGTH, POST_FINALIZATION_DISPUTE_DAYS } from "@skol-arena/shared/types/index";
 import { matchMessageRepository } from "../repository/match-message.repository";
 import { matchRepository } from "../repository/match.repository";
 import { userRepository } from "../repository/user.repository";
@@ -78,11 +75,7 @@ export class MatchMessageService {
    * `params` its interpolation values, so the message renders in the reader's language.
    * Never throws: a failure here must not roll back the action it describes.
    */
-  async postSystem(
-    matchId: string,
-    key: string,
-    params: Record<string, string | number | null>,
-  ): Promise<void> {
+  async postSystem(matchId: string, key: string, params: Record<string, string | number | null>): Promise<void> {
     try {
       const created = await matchMessageRepository.create({
         matchId,
@@ -111,10 +104,7 @@ export class MatchMessageService {
     const isParticipant = await matchRepository.isUserInMatch(matchId, userId);
     if (isParticipant) return match;
 
-    const canManage = await matchPermissionValidator.canManageMatches(
-      match.tournamentId,
-      userId,
-    );
+    const canManage = await matchPermissionValidator.canManageMatches(match.tournamentId, userId);
     if (!canManage) {
       throw new ForbiddenError(ErrorCode.NOT_A_PARTICIPANT);
     }
@@ -126,16 +116,13 @@ export class MatchMessageService {
    * The thread closes with the dispute window: a player can always explain, answer or
    * withdraw a contestation they are still allowed to file.
    */
-  private assertThreadOpen(
-    match: NonNullable<Awaited<ReturnType<typeof matchRepository.getById>>>,
-  ): void {
+  private assertThreadOpen(match: NonNullable<Awaited<ReturnType<typeof matchRepository.getById>>>): void {
     if (match.status !== "finalized") return;
 
     const finalizedAt = match.result?.finalizedAt;
     if (!finalizedAt) return;
 
-    const daysSince =
-      (Date.now() - new Date(finalizedAt).getTime()) / (1000 * 60 * 60 * 24);
+    const daysSince = (Date.now() - new Date(finalizedAt).getTime()) / (1000 * 60 * 60 * 24);
     if (daysSince > POST_FINALIZATION_DISPUTE_DAYS) {
       throw new BadRequestError(ErrorCode.MATCH_THREAD_CLOSED);
     }
@@ -145,10 +132,7 @@ export class MatchMessageService {
     const match = await matchRepository.getById(matchId);
     if (!match) return;
 
-    const audience = await matchRealtimeService.resolveAudience(
-      matchId,
-      match.tournamentId,
-    );
+    const audience = await matchRealtimeService.resolveAudience(matchId, match.tournamentId);
 
     for (const userId of audience) {
       webSocketService.send(userId, { event: "match_message", data: message });
@@ -165,12 +149,9 @@ export class MatchMessageService {
       matchId: row.matchId,
       kind: row.kind,
       body: row.body,
-      translationParams:
-        (row.translationParams as Record<string, string | number | null> | null) ?? null,
+      translationParams: (row.translationParams as Record<string, string | number | null> | null) ?? null,
       createdAt: row.createdAt as unknown as Date,
-      author: row.author
-        ? { id: row.author.id, displayName: row.author.displayName }
-        : null,
+      author: row.author ? { id: row.author.id, displayName: row.author.displayName } : null,
     };
   }
 }

@@ -354,9 +354,7 @@ describe("Cross-season MMR carry-over (integration)", () => {
       }
     }
 
-    async function startWithCopiedTiers(
-      config: Partial<typeof rankedSeasonConfigs.$inferInsert> = {},
-    ) {
+    async function startWithCopiedTiers(config: Partial<typeof rankedSeasonConfigs.$inferInsert> = {}) {
       newSeasonId = await createSeason("New season", "draft", {
         usePreviousMmr: true,
         softResetFactor: 0.5,
@@ -466,13 +464,7 @@ describe("Cross-season MMR carry-over (integration)", () => {
       await seedSourcePlayer("Top", 1600);
       const tiers = await startWithCopiedTiers();
       expect(tiers).toHaveLength(5);
-      expect(tiers.map((t) => t.name)).toEqual([
-        "Rookie",
-        "Challenger",
-        "Confirmé",
-        "Expert",
-        "Légende",
-      ]);
+      expect(tiers.map((t) => t.name)).toEqual(["Rookie", "Challenger", "Confirmé", "Expert", "Légende"]);
     });
   });
 

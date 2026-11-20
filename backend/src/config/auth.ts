@@ -61,30 +61,32 @@ const isKeycloakEnabled = !!(
 );
 
 if (!isEmailPasswordEnabled && !isKeycloakEnabled) {
-  logger.fatal({
-    emailPassword: isEmailPasswordEnabled,
-    keycloak: isKeycloakEnabled,
-  }, "CRITICAL CONFIGURATION ERROR: no authentication method is enabled");
+  logger.fatal(
+    {
+      emailPassword: isEmailPasswordEnabled,
+      keycloak: isKeycloakEnabled,
+    },
+    "CRITICAL CONFIGURATION ERROR: no authentication method is enabled",
+  );
 
   throw new Error(
     "AUTHENTICATION_CONFIG_ERROR: At least one authentication method must be enabled. " +
-    "Set SHOW_EMAIL_PASSWORD_FORM=true or configure Keycloak (KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_ISSUER)"
+      "Set SHOW_EMAIL_PASSWORD_FORM=true or configure Keycloak (KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_ISSUER)",
   );
 }
 
-logger.info({
-  emailPassword: isEmailPasswordEnabled,
-  keycloak: isKeycloakEnabled,
-}, "Authentication configuration");
+logger.info(
+  {
+    emailPassword: isEmailPasswordEnabled,
+    keycloak: isKeycloakEnabled,
+  },
+  "Authentication configuration",
+);
 
 const plugins: any[] = [];
 
 // Shared function to process invitation codes during sign-up
-async function processInvitationCode(
-  user: any,
-  request: any,
-  source: string
-): Promise<void> {
+async function processInvitationCode(user: any, request: any, source: string): Promise<void> {
   if (!user) {
     logger.error(`[${source}] No user in context`);
     return;
@@ -96,9 +98,7 @@ async function processInvitationCode(
   const invitationCode = extractInvitationCode(cookieHeader);
 
   if (!invitationCode) {
-    logger.warn(
-      `[${source}] No invitation code for user ${user.id} - appUser creation will be blocked`
-    );
+    logger.warn(`[${source}] No invitation code for user ${user.id} - appUser creation will be blocked`);
     return;
   }
 
@@ -107,12 +107,7 @@ async function processInvitationCode(
     // the caller chose is worse than no address at all in an audit trail.
     const ipAddress = request?.headers?.get(CLIENT_IP_HEADER) || "unknown";
 
-    await invitationService.consumeCode(
-      invitationCode,
-      user.id,
-      user.email,
-      ipAddress
-    );
+    await invitationService.consumeCode(invitationCode, user.id, user.email, ipAddress);
 
     logger.info(`[${source}] Code consumed successfully for user ${user.id}`);
   } catch (error: any) {
@@ -123,74 +118,69 @@ async function processInvitationCode(
 }
 
 // Plugin to stop the startup password rotation once the bootstrap admin connects
-plugins.push({
-  id: "bootstrap-admin-activator",
-  hooks: {
-    after: [
-      {
-        matcher: (context: any) =>
-          context.path === "/sign-in/email" ||
-          context.path === "/change-password" ||
-          context.path?.includes("/oauth2/callback/keycloak") ||
-          context.path?.includes("/sign-in-oauth2"),
-        handler: async (context: any) => {
-          try {
-            const signedIn =
-              context.context?.newSession?.user ??
-              context.context?.session?.user ??
-              context.context?.returned?.user;
-            if (signedIn?.id) {
-              await clearBootstrapPending(signedIn.id);
-            }
-          } catch (error: any) {
-            // Never let this break the login flow
-            logger.error({ err: error }, "[Bootstrap Admin Hook] Failed to clear pending flag");
-          }
-          return {};
-        },
-      },
-    ],
-  },
-},
-
-// Plugin to consume invitation codes during sign-up
-{
-  id: "invitation-code-consumer",
-  hooks: {
-    after: [
-      {
-        // Hook for email/password sign-up
-        matcher: (context: any) => context.path === "/sign-up/email",
-        handler: async (context: any) => {
-          const user =
-            context.context?.newSession?.user ?? context.context?.returned?.user;
-          await processInvitationCode(user, context.request, "Email Registration Hook");
-          return {};
-        },
-      },
-      {
-        // Hook for OAuth sign-up (Keycloak)
-        matcher: (context: any) => {
-          return (
+plugins.push(
+  {
+    id: "bootstrap-admin-activator",
+    hooks: {
+      after: [
+        {
+          matcher: (context: any) =>
+            context.path === "/sign-in/email" ||
+            context.path === "/change-password" ||
             context.path?.includes("/oauth2/callback/keycloak") ||
-            context.path?.includes("/sign-in-oauth2")
-          );
-        },
-        handler: async (context: any) => {
-          // Check whether this is a new user
-          const user =
-            context.context?.newSession?.user ?? context.context?.returned?.user;
-          if (!user || !context.isNewUser) {
+            context.path?.includes("/sign-in-oauth2"),
+          handler: async (context: any) => {
+            try {
+              const signedIn =
+                context.context?.newSession?.user ?? context.context?.session?.user ?? context.context?.returned?.user;
+              if (signedIn?.id) {
+                await clearBootstrapPending(signedIn.id);
+              }
+            } catch (error: any) {
+              // Never let this break the login flow
+              logger.error({ err: error }, "[Bootstrap Admin Hook] Failed to clear pending flag");
+            }
             return {};
-          }
-
-          await processInvitationCode(user, context.request, "Keycloak Hook");
-          return {};
+          },
         },
-      },
-    ],
+      ],
+    },
   },
-});
+
+  // Plugin to consume invitation codes during sign-up
+  {
+    id: "invitation-code-consumer",
+    hooks: {
+      after: [
+        {
+          // Hook for email/password sign-up
+          matcher: (context: any) => context.path === "/sign-up/email",
+          handler: async (context: any) => {
+            const user = context.context?.newSession?.user ?? context.context?.returned?.user;
+            await processInvitationCode(user, context.request, "Email Registration Hook");
+            return {};
+          },
+        },
+        {
+          // Hook for OAuth sign-up (Keycloak)
+          matcher: (context: any) => {
+            return context.path?.includes("/oauth2/callback/keycloak") || context.path?.includes("/sign-in-oauth2");
+          },
+          handler: async (context: any) => {
+            // Check whether this is a new user
+            const user = context.context?.newSession?.user ?? context.context?.returned?.user;
+            if (!user || !context.isNewUser) {
+              return {};
+            }
+
+            await processInvitationCode(user, context.request, "Keycloak Hook");
+            return {};
+          },
+        },
+      ],
+    },
+  },
+);
 
 if (isKeycloakEnabled) {
   plugins.push(
@@ -206,7 +196,7 @@ if (isKeycloakEnabled) {
           // The hook will delete the user if no valid invitation code is present
         }),
       ],
-    })
+    }),
   );
 }
 
@@ -260,9 +250,7 @@ const authConfig: any = {
   // page served from the victim's own localhost passes the origin check against the
   // real deployment.
   trustedOrigins: [
-    ...(process.env.NODE_ENV === "production"
-      ? []
-      : ["http://localhost:5173", "http://localhost:3000"]),
+    ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:5173", "http://localhost:3000"]),
     ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
     ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
   ],
@@ -325,10 +313,7 @@ authConfig.emailAndPassword = {
       // admin caller waiting for it. On the public flow nobody is listening: stay silent,
       // reporting the delivery status would reveal whether the account exists.
       if (!reportEmailDeliveryFailure(error)) {
-        logger.error(
-          { err: error },
-          "Password reset email delivery failed (public flow)"
-        );
+        logger.error({ err: error }, "Password reset email delivery failed (public flow)");
       }
     }
   },

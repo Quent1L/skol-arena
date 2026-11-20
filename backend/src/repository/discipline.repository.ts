@@ -8,22 +8,19 @@ export interface CreateDisciplineData {
   name: string;
   icon?: string | null;
   scoreInstructions?: string | null;
-  teamInteractionMode?: 'INDIVIDUAL' | 'SHARED_RESOURCE' | 'COLLABORATIVE' | null;
+  teamInteractionMode?: "INDIVIDUAL" | "SHARED_RESOURCE" | "COLLABORATIVE" | null;
 }
 
 export interface UpdateDisciplineData {
   name?: string;
   icon?: string | null;
   scoreInstructions?: string | null;
-  teamInteractionMode?: 'INDIVIDUAL' | 'SHARED_RESOURCE' | 'COLLABORATIVE' | null;
+  teamInteractionMode?: "INDIVIDUAL" | "SHARED_RESOURCE" | "COLLABORATIVE" | null;
 }
 
 export class DisciplineRepository {
   async create(data: CreateDisciplineData) {
-    const [discipline] = await db
-      .insert(disciplines)
-      .values(data)
-      .returning();
+    const [discipline] = await db.insert(disciplines).values(data).returning();
     return discipline;
   }
 
@@ -42,11 +39,7 @@ export class DisciplineRepository {
   }
 
   async update(id: string, data: UpdateDisciplineData) {
-    const [updated] = await db
-      .update(disciplines)
-      .set(data)
-      .where(eq(disciplines.id, id))
-      .returning();
+    const [updated] = await db.update(disciplines).set(data).where(eq(disciplines.id, id)).returning();
     return updated;
   }
 
@@ -70,13 +63,10 @@ export class DisciplineRepository {
       .from(tournaments)
       .where(eq(tournaments.disciplineId, id));
 
-    const [ruleRow] = await db
-      .select({ total: count() })
-      .from(rules)
-      .where(eq(rules.disciplineId, id));
+    const [ruleRow] = await db.select({ total: count() }).from(rules).where(eq(rules.disciplineId, id));
 
     const matchTotal = outcomeTypeIds.length
-      ? (
+      ? ((
           await db
             .select({ total: count() })
             .from(matches)
@@ -86,7 +76,7 @@ export class DisciplineRepository {
                 outcomeTypeIds.map((row) => row.id),
               ),
             )
-        )[0]?.total ?? 0
+        )[0]?.total ?? 0)
       : 0;
 
     const blockers: DeletionBlocker[] = [];

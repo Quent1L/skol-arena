@@ -1,14 +1,7 @@
 import { outcomeTypeRepository } from "../repository/outcome-type.repository";
 import { disciplineRepository } from "../repository/discipline.repository";
-import {
-  type CreateOutcomeTypeInput,
-  type UpdateOutcomeTypeInput,
-} from "@skol-arena/shared/types/index";
-import {
-  ConflictError,
-  ErrorCode,
-  NotFoundError,
-} from "../types/errors";
+import { type CreateOutcomeTypeInput, type UpdateOutcomeTypeInput } from "@skol-arena/shared/types/index";
+import { ConflictError, ErrorCode, NotFoundError } from "../types/errors";
 
 export class OutcomeTypeService {
   async createOutcomeType(input: CreateOutcomeTypeInput) {
@@ -57,7 +50,7 @@ export class OutcomeTypeService {
       scoreCountsForMmr: input.scoreCountsForMmr,
       mmrMultiplier: input.mmrMultiplier,
       points: input.points,
-    })
+    });
   }
 
   /**
@@ -108,5 +101,3 @@ export class OutcomeTypeService {
 }
 
 export const outcomeTypeService = new OutcomeTypeService();
-
-

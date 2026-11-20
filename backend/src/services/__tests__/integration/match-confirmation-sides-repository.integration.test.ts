@@ -25,7 +25,11 @@ describe("match confirmations and sides (integration)", () => {
 
   beforeAll(async () => {
     const admin = await seed.createUser("Admin");
-    [ann, bob, cat] = (await Promise.all(["Ann", "Bob", "Cat"].map((n) => seed.createUser(n)))) as [string, string, string];
+    [ann, bob, cat] = (await Promise.all(["Ann", "Bob", "Cat"].map((n) => seed.createUser(n)))) as [
+      string,
+      string,
+      string,
+    ];
     tournamentId = await seed.createTournament(admin);
     entryA = await seed.createEntry(tournamentId, [ann, cat]);
     entryB = await seed.createEntry(tournamentId, [bob]);
@@ -45,11 +49,25 @@ describe("match confirmations and sides (integration)", () => {
     });
 
     it("upserts: creates the first time, updates afterwards", async () => {
-      const created = await confirmations.upsert({ matchId, playerId: ann, isConfirmed: false, isContested: true, contestationReason: "wrong score", sidePosition: 1 });
+      const created = await confirmations.upsert({
+        matchId,
+        playerId: ann,
+        isConfirmed: false,
+        isContested: true,
+        contestationReason: "wrong score",
+        sidePosition: 1,
+      });
       expect(created?.isContested).toBe(true);
-      const updated = await confirmations.upsert({ matchId, playerId: ann, isConfirmed: true, isContested: false, contestationReason: null, sidePosition: 1 });
+      const updated = await confirmations.upsert({
+        matchId,
+        playerId: ann,
+        isConfirmed: true,
+        isContested: false,
+        contestationReason: null,
+        sidePosition: 1,
+      });
       expect(updated).toMatchObject({ id: created!.id, isConfirmed: true, isContested: false });
-      expect((await confirmations.getByMatchId(matchId))).toHaveLength(2);
+      expect(await confirmations.getByMatchId(matchId)).toHaveLength(2);
     });
 
     it("updates a record in place", async () => {
@@ -65,7 +83,13 @@ describe("match confirmations and sides (integration)", () => {
     });
 
     it("resets everyone but one player, leaving post-finalization disputes alone", async () => {
-      await confirmations.create({ matchId, playerId: cat, isConfirmed: false, isContested: true, isPostFinalization: true });
+      await confirmations.create({
+        matchId,
+        playerId: cat,
+        isConfirmed: false,
+        isContested: true,
+        isPostFinalization: true,
+      });
       await confirmations.resetConfirmationsExcept(matchId, ann);
 
       const bobNow = await confirmations.getByMatchAndPlayer(matchId, bob);
@@ -134,7 +158,10 @@ describe("match confirmations and sides (integration)", () => {
       await sides.deleteByMatchId(tmp);
       expect(await sides.getByMatchId(tmp)).toEqual([]);
       await expect(sides.createSides(tmp, [])).rejects.toThrow("At least one side");
-      const created = await sides.createSides(tmp, [{ entryId: entryA, position: 1, score: 1 }, { entryId: entryB, position: 2, score: 0, pointsAwarded: 2 }]);
+      const created = await sides.createSides(tmp, [
+        { entryId: entryA, position: 1, score: 1 },
+        { entryId: entryB, position: 2, score: 0, pointsAwarded: 2 },
+      ]);
       expect(created.map((c) => c.pointsAwarded)).toEqual([0, 2]);
     });
   });

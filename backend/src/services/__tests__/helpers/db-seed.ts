@@ -49,10 +49,7 @@ export function makeSeeder(db: TestDb) {
     return app!.id;
   }
 
-  async function createTournament(
-    createdBy: string,
-    extra: Partial<typeof tournaments.$inferInsert> = {},
-  ) {
+  async function createTournament(createdBy: string, extra: Partial<typeof tournaments.$inferInsert> = {}) {
     const [row] = await db
       .insert(tournaments)
       .values({
@@ -76,7 +73,6 @@ export function makeSeeder(db: TestDb) {
     await db.insert(tournamentEntryPlayers).values(playerIds.map((playerId) => ({ entryId: entry!.id, playerId })));
     return entry!.id;
   }
-
 
   async function createMatch(seed: MatchSeed) {
     const [match] = await db

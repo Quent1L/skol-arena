@@ -22,10 +22,7 @@ export interface RewindIdentity {
  * Swaps in the current names, in place, anywhere in `value`. Returns whether
  * anything actually changed, so an unaffected payload is never written back.
  */
-export function retagIdentities(
-  value: unknown,
-  identities: Map<string, RewindIdentity>,
-): boolean {
+export function retagIdentities(value: unknown, identities: Map<string, RewindIdentity>): boolean {
   if (Array.isArray(value)) {
     let changed = false;
     for (const item of value) {
@@ -48,10 +45,7 @@ export function retagIdentities(
  * Names are only written where one already sits: a badge row also has a
  * `playerId`, and it has no business growing a display name.
  */
-function applyIdentity(
-  record: Record<string, unknown>,
-  identities: Map<string, RewindIdentity>,
-): boolean {
+function applyIdentity(record: Record<string, unknown>, identities: Map<string, RewindIdentity>): boolean {
   const playerId = record.playerId;
   if (typeof playerId !== "string") return false;
   const identity = identities.get(playerId);

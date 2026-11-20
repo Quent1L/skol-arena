@@ -100,9 +100,9 @@ describe("Fair-play & MVP votes (integration)", () => {
     );
     tournamentId = await createTournament(admin);
     await testDb.insert(tournamentAdmins).values({ tournamentId, userId: admin, role: "owner" });
-    await testDb.insert(tournamentParticipants).values(
-      [alice, bob, carol, dave, member].map((userId) => ({ tournamentId, userId, status: "active" as const })),
-    );
+    await testDb
+      .insert(tournamentParticipants)
+      .values([alice, bob, carol, dave, member].map((userId) => ({ tournamentId, userId, status: "active" as const })));
   });
 
   beforeEach(async () => {

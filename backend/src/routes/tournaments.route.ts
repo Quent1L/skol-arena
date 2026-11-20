@@ -63,9 +63,7 @@ async function assertTournamentAccess(
   betterAuthUserId: string | null | undefined,
   tournamentId: string,
 ): Promise<void> {
-  const appUser = betterAuthUserId
-    ? await userRepository.getByExternalId(betterAuthUserId)
-    : null;
+  const appUser = betterAuthUserId ? await userRepository.getByExternalId(betterAuthUserId) : null;
 
   await tournamentService.assertCanAccess(tournamentId, appUser?.id ?? null);
 }
@@ -91,7 +89,7 @@ tournaments.post(
     });
 
     return c.json(tournament, 201);
-  }
+  },
 );
 
 // GET /tournaments - List all tournaments (with filters)
@@ -120,7 +118,7 @@ tournaments.get(
 
     const tournamentsList = await tournamentService.listTournaments(filters, appUser);
     return c.json(tournamentsList);
-  }
+  },
 );
 
 // GET /tournaments/:id - Get single tournament
@@ -139,7 +137,7 @@ tournaments.get(
     await assertTournamentAccess(c.get("user")?.id, id);
     const tournament = await tournamentService.getTournamentById(id);
     return c.json(tournament);
-  }
+  },
 );
 
 // GET /tournaments/:id/badge-progress - the caller's progress towards the counted badges
@@ -166,7 +164,7 @@ tournaments.get(
       viewerId,
     );
     return c.json({ progress });
-  }
+  },
 );
 
 // GET /tournaments/:id/available-badges - badges earnable in this tournament
@@ -196,7 +194,7 @@ tournaments.get(
       ? await rulesService.listAvailableBadgesWithHolders({ id, disciplineId }, viewerId)
       : await rulesService.listAvailableBadges(disciplineId);
     return c.json({ badges });
-  }
+  },
 );
 
 // PATCH /tournaments/:id - Update tournament
@@ -218,14 +216,10 @@ tournaments.patch(
     const appUserId = c.get("appUserId");
     const data = c.req.valid("json");
 
-    const tournament = await tournamentService.updateTournament(
-      id,
-      appUserId,
-      data
-    );
+    const tournament = await tournamentService.updateTournament(id, appUserId, data);
 
     return c.json(tournament);
-  }
+  },
 );
 
 // PATCH /tournaments/:id/status - Change tournament status
@@ -248,14 +242,10 @@ tournaments.patch(
     const appUserId = c.get("appUserId");
     const { status } = c.req.valid("json");
 
-    const tournament = await tournamentService.changeTournamentStatus(
-      id,
-      appUserId,
-      status
-    );
+    const tournament = await tournamentService.changeTournamentStatus(id, appUserId, status);
 
     return c.json(tournament);
-  }
+  },
 );
 
 // DELETE /tournaments/:id - Delete tournament
@@ -277,7 +267,7 @@ tournaments.delete(
 
     const result = await tournamentService.deleteTournament(id, appUserId);
     return c.json(result);
-  }
+  },
 );
 
 // POST /tournaments/:id/participants - Join tournament
@@ -287,8 +277,7 @@ tournaments.post(
   describe({
     tags: TAGS,
     summary: "Join a tournament",
-    description:
-      "A competition scoped to an organization only accepts entries from its members.",
+    description: "A competition scoped to an organization only accepts entries from its members.",
     auth: true,
     role: true,
     notFound: true,
@@ -310,7 +299,7 @@ tournaments.post(
     });
 
     return c.json(participation, 201);
-  }
+  },
 );
 
 // POST /tournaments/:id/participants/add - Admin adds a participant
@@ -338,14 +327,10 @@ tournaments.post(
     const appUserId = c.get("appUserId");
     const { userId: targetUserId } = c.req.valid("json");
 
-    const participation = await tournamentService.adminAddParticipant(
-      appUserId,
-      tournamentId,
-      targetUserId
-    );
+    const participation = await tournamentService.adminAddParticipant(appUserId, tournamentId, targetUserId);
 
     return c.json(participation, 201);
-  }
+  },
 );
 
 // DELETE /tournaments/:id/participants/:userId - Admin removes a participant
@@ -367,14 +352,10 @@ tournaments.delete(
     const targetUserId = c.req.param("userId")!;
     const appUserId = c.get("appUserId");
 
-    const result = await tournamentService.adminRemoveParticipant(
-      appUserId,
-      tournamentId,
-      targetUserId
-    );
+    const result = await tournamentService.adminRemoveParticipant(appUserId, tournamentId, targetUserId);
 
     return c.json(result);
-  }
+  },
 );
 
 // DELETE /tournaments/:id/participants - Leave tournament
@@ -394,13 +375,10 @@ tournaments.delete(
     const tournamentId = c.req.param("id")!;
     const appUserId = c.get("appUserId");
 
-    const result = await tournamentService.leaveTournament(
-      appUserId,
-      tournamentId
-    );
+    const result = await tournamentService.leaveTournament(appUserId, tournamentId);
 
     return c.json(result);
-  }
+  },
 );
 
 // GET /tournaments/:id/participants - Get tournament participants
@@ -423,7 +401,7 @@ tournaments.get(
     await assertTournamentAccess(c.get("user")?.id, tournamentId);
     const participants = await tournamentService.getTournamentParticipants(tournamentId);
     return c.json(participants);
-  }
+  },
 );
 
 // GET /tournaments/:id/standings/official
@@ -444,7 +422,7 @@ tournaments.get(
     await assertTournamentAccess(c.get("user")?.id, tournamentId);
     const standings = await standingsService.getOfficialStandings(tournamentId);
     return c.json(standings);
-  }
+  },
 );
 
 // GET /tournaments/:id/standings/provisional
@@ -465,7 +443,7 @@ tournaments.get(
     await assertTournamentAccess(c.get("user")?.id, tournamentId);
     const standings = await standingsService.getProvisionalStandings(tournamentId);
     return c.json(standings);
-  }
+  },
 );
 
 // GET /tournaments/:id/stats
@@ -484,7 +462,7 @@ tournaments.get(
     await assertTournamentAccess(c.get("user")?.id, tournamentId);
     const stats = await tournamentStatsService.getStats(tournamentId);
     return c.json(stats);
-  }
+  },
 );
 
 // DELETE /tournaments/:id/cache
@@ -506,7 +484,7 @@ tournaments.delete(
     await standingsService.clearCache(tournamentId, appUserId);
     await playerStatsService.invalidateCacheForTournament(tournamentId);
     return c.json({ success: true });
-  }
+  },
 );
 
 // POST /tournaments/:id/recalculate-points
@@ -534,7 +512,7 @@ tournaments.post(
       await enqueueMmrSeasonRecalculation(tournamentId);
     }
     return c.json(result);
-  }
+  },
 );
 
 // GET /tournaments/:id/editability
@@ -559,7 +537,7 @@ tournaments.get(
     await assertTournamentAccess(c.get("user")?.id, tournamentId);
     const editability = await tournamentService.getEditability(tournamentId);
     return c.json(editability);
-  }
+  },
 );
 
 // GET /tournaments/:id/ruleset
@@ -590,7 +568,7 @@ tournaments.get(
       appliedAt: row?.appliedAt ?? new Date(),
       recalcPendingAt: row?.recalcPendingAt ?? null,
     });
-  }
+  },
 );
 
 // ============================================
@@ -617,14 +595,10 @@ tournaments.post(
     const appUserId = c.get("appUserId");
     const data = c.req.valid("json");
 
-    const bracket = await bracketService.generateBracket(
-      tournamentId,
-      data,
-      appUserId
-    );
+    const bracket = await bracketService.generateBracket(tournamentId, data, appUserId);
 
     return c.json(bracket, 201);
-  }
+  },
 );
 
 // GET /tournaments/:id/bracket
@@ -648,7 +622,7 @@ tournaments.get(
     }
 
     return c.json(bracket);
-  }
+  },
 );
 
 // GET /tournaments/:id/bracket/can-generate
@@ -671,7 +645,7 @@ tournaments.get(
     await assertTournamentAccess(c.get("user")?.id, tournamentId);
     const result = await bracketService.canGenerateBracket(tournamentId);
     return c.json(result);
-  }
+  },
 );
 
 // DELETE /tournaments/:id/bracket
@@ -695,7 +669,7 @@ tournaments.delete(
     await bracketService.deleteBracket(tournamentId, appUserId);
 
     return c.json({ success: true, message: "Bracket deleted successfully" });
-  }
+  },
 );
 
 export default tournaments;

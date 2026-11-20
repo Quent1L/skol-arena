@@ -24,10 +24,7 @@ export interface UpdateOutcomeTypeData {
 
 export class OutcomeTypeRepository {
   async create(data: CreateOutcomeTypeData) {
-    const [outcomeType] = await db
-      .insert(outcomeTypes)
-      .values(data)
-      .returning();
+    const [outcomeType] = await db.insert(outcomeTypes).values(data).returning();
     return outcomeType;
   }
 
@@ -68,20 +65,11 @@ export class OutcomeTypeRepository {
     await db
       .update(outcomeTypes)
       .set({ isDefault: false })
-      .where(
-        and(
-          eq(outcomeTypes.disciplineId, disciplineId),
-          isNull(outcomeTypes.archivedAt),
-        ),
-      );
+      .where(and(eq(outcomeTypes.disciplineId, disciplineId), isNull(outcomeTypes.archivedAt)));
   }
 
   async update(id: string, data: UpdateOutcomeTypeData) {
-    const [updated] = await db
-      .update(outcomeTypes)
-      .set(data)
-      .where(eq(outcomeTypes.id, id))
-      .returning();
+    const [updated] = await db.update(outcomeTypes).set(data).where(eq(outcomeTypes.id, id)).returning();
     return updated;
   }
 
@@ -96,13 +84,10 @@ export class OutcomeTypeRepository {
       .from(outcomeReasons)
       .where(eq(outcomeReasons.outcomeTypeId, id));
 
-    const [byType] = await db
-      .select({ total: count() })
-      .from(matches)
-      .where(eq(matches.outcomeTypeId, id));
+    const [byType] = await db.select({ total: count() }).from(matches).where(eq(matches.outcomeTypeId, id));
 
     const byReason = reasonIds.length
-      ? (
+      ? ((
           await db
             .select({ total: count() })
             .from(matches)
@@ -112,7 +97,7 @@ export class OutcomeTypeRepository {
                 reasonIds.map((row) => row.id),
               ),
             )
-        )[0]?.total ?? 0
+        )[0]?.total ?? 0)
       : 0;
 
     const total = (byType?.total ?? 0) + byReason;

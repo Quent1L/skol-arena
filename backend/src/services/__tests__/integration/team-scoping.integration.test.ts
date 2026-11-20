@@ -87,18 +87,18 @@ describe("Team scoping (integration)", () => {
   });
 
   it("refuses to delete a team through another tournament", async () => {
-    await expect(
-      teamService.deleteTeam(foreignTeamId, ownTournamentId, adminId, true),
-    ).rejects.toBeInstanceOf(NotFoundError);
+    await expect(teamService.deleteTeam(foreignTeamId, ownTournamentId, adminId, true)).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
 
     const still = await testDb.query.teams.findFirst({ where: eq(teams.id, foreignTeamId) });
     expect(still).toBeTruthy();
   });
 
   it("refuses to remove a member through another tournament", async () => {
-    await expect(
-      teamService.leaveTeam(foreignTeamId, ownTournamentId, playerId, adminId, true),
-    ).rejects.toBeInstanceOf(NotFoundError);
+    await expect(teamService.leaveTeam(foreignTeamId, ownTournamentId, playerId, adminId, true)).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
 
     const membership = await testDb.query.teamMembers.findFirst({
       where: and(eq(teamMembers.teamId, foreignTeamId), eq(teamMembers.userId, playerId)),
@@ -122,15 +122,15 @@ describe("Team scoping (integration)", () => {
 
   it("only lets registered players create a team", async () => {
     const outsiderId = await createUser("Outsider");
-    await expect(
-      teamService.createTeam(ownTournamentId, "Outsiders", outsiderId, false),
-    ).rejects.toBeInstanceOf(BadRequestError);
+    await expect(teamService.createTeam(ownTournamentId, "Outsiders", outsiderId, false)).rejects.toBeInstanceOf(
+      BadRequestError,
+    );
   });
 
   it("refuses a second team to a player who already has one", async () => {
-    await expect(
-      teamService.createTeam(foreignTournamentId, "Second", playerId, false),
-    ).rejects.toBeInstanceOf(ConflictError);
+    await expect(teamService.createTeam(foreignTournamentId, "Second", playerId, false)).rejects.toBeInstanceOf(
+      ConflictError,
+    );
 
     const second = await testDb.query.teams.findFirst({
       where: and(eq(teams.tournamentId, foreignTournamentId), eq(teams.name, "Second")),

@@ -17,22 +17,12 @@ function row(playerId: string, mmrGained: number, matchesPlayed = 1): WeeklyMmrL
 
 describe("splitWeeklyMmrLeaders", () => {
   it("keeps the 3 biggest gains, descending", () => {
-    const { gainers } = splitWeeklyMmrLeaders([
-      row("a", 12),
-      row("b", 48),
-      row("c", 3),
-      row("d", 30),
-    ]);
+    const { gainers } = splitWeeklyMmrLeaders([row("a", 12), row("b", 48), row("c", 3), row("d", 30)]);
     expect(gainers.map((g) => g.playerId)).toEqual(["b", "d", "a"]);
   });
 
   it("keeps the 3 heaviest drops, most negative first", () => {
-    const { losers } = splitWeeklyMmrLeaders([
-      row("a", -12),
-      row("b", -48),
-      row("c", -3),
-      row("d", -30),
-    ]);
+    const { losers } = splitWeeklyMmrLeaders([row("a", -12), row("b", -48), row("c", -3), row("d", -30)]);
     expect(losers.map((l) => l.playerId)).toEqual(["b", "d", "a"]);
   });
 
@@ -57,20 +47,14 @@ describe("splitWeeklyMmrLeaders", () => {
 describe("startOfWeekUtc", () => {
   it("rewinds mid-week to the preceding Monday at midnight", () => {
     // Thursday 2026-07-30T14:22Z
-    expect(startOfWeekUtc(new Date("2026-07-30T14:22:00Z")).toISOString()).toBe(
-      "2026-07-27T00:00:00.000Z",
-    );
+    expect(startOfWeekUtc(new Date("2026-07-30T14:22:00Z")).toISOString()).toBe("2026-07-27T00:00:00.000Z");
   });
 
   it("keeps a Monday on its own day", () => {
-    expect(startOfWeekUtc(new Date("2026-07-27T09:00:00Z")).toISOString()).toBe(
-      "2026-07-27T00:00:00.000Z",
-    );
+    expect(startOfWeekUtc(new Date("2026-07-27T09:00:00Z")).toISOString()).toBe("2026-07-27T00:00:00.000Z");
   });
 
   it("treats Sunday as the end of the week, not the start", () => {
-    expect(startOfWeekUtc(new Date("2026-08-02T23:59:00Z")).toISOString()).toBe(
-      "2026-07-27T00:00:00.000Z",
-    );
+    expect(startOfWeekUtc(new Date("2026-08-02T23:59:00Z")).toISOString()).toBe("2026-07-27T00:00:00.000Z");
   });
 });

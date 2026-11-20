@@ -65,10 +65,7 @@ export class UserService {
   /**
    * Get or create app_user from BetterAuth external ID
    */
-  async getOrCreateAppUser(
-    betterAuthUserId: string,
-    displayName: string
-  ): Promise<string> {
+  async getOrCreateAppUser(betterAuthUserId: string, displayName: string): Promise<string> {
     let appUser = await userRepository.getByExternalId(betterAuthUserId);
 
     // If the appUser already exists, return it
@@ -83,10 +80,7 @@ export class UserService {
     const hasValidInvitation = await invitationRepository.hasUserUsedCode(betterAuthUserId);
 
     if (!hasValidInvitation) {
-      throw new UnauthorizedError(
-        ErrorCode.INVITATION_CODE_REQUIRED,
-        { betterAuthUserId }
-      );
+      throw new UnauthorizedError(ErrorCode.INVITATION_CODE_REQUIRED, { betterAuthUserId });
     }
 
     // Valid invitation code, create the appUser
@@ -134,10 +128,7 @@ export class UserService {
     pruneActivityCache(now);
 
     try {
-      await userRepository.touchLastSeen(
-        betterAuthUserId,
-        new Date(now - ACTIVITY_THROTTLE_MS)
-      );
+      await userRepository.touchLastSeen(betterAuthUserId, new Date(now - ACTIVITY_THROTTLE_MS));
     } catch (error) {
       if (recentActivity.get(betterAuthUserId) === now) {
         recentActivity.delete(betterAuthUserId);
@@ -194,7 +185,7 @@ export class UserService {
    */
   private isRenamed(
     current: { displayName: string; shortName: string },
-    input: { displayName?: string; shortName?: string }
+    input: { displayName?: string; shortName?: string },
   ): boolean {
     return (
       (input.displayName !== undefined && input.displayName !== current.displayName) ||
@@ -305,9 +296,7 @@ export class UserService {
     // emailAndPassword is attached to the config after the typed literal, so the
     // endpoint exists at runtime but is missing from the inferred api type.
     const api = auth.api as unknown as {
-      requestPasswordReset: (opts: {
-        body: { email: string; redirectTo: string };
-      }) => Promise<unknown>;
+      requestPasswordReset: (opts: { body: { email: string; redirectTo: string } }) => Promise<unknown>;
     };
 
     try {
@@ -317,7 +306,7 @@ export class UserService {
             email: detail.email as string,
             redirectTo: `${resolveFrontendUrl()}/reset-password`,
           },
-        })
+        }),
       );
     } catch (error) {
       // Covers SMTP failures reported by the sendResetPassword hook as well as any

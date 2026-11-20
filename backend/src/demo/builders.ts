@@ -172,9 +172,7 @@ export async function createCompetition(
 ): Promise<string> {
   await db.insert(tournaments).values(row);
   if (participantIds.length > 0) {
-    await db
-      .insert(tournamentParticipants)
-      .values(participantIds.map((userId) => ({ tournamentId: row.id, userId })));
+    await db.insert(tournamentParticipants).values(participantIds.map((userId) => ({ tournamentId: row.id, userId })));
   }
   await db
     .insert(tournamentAdmins)
@@ -255,8 +253,7 @@ async function insertMatchRow(input: MatchInput, matchId: string, reportedBy: st
     outcomeReasonId: input.outcomeReasonId ?? null,
     createdBy: reportedBy,
     createdAt: input.playedAt,
-    confirmationDeadline:
-      status === "finalized" ? null : new Date(input.playedAt.getTime() + timer * 3_600_000),
+    confirmationDeadline: status === "finalized" ? null : new Date(input.playedAt.getTime() + timer * 3_600_000),
   });
 }
 
@@ -270,9 +267,7 @@ async function insertSides(input: MatchInput, matchId: string) {
       side.teamId ? undefined : side.playerIds,
     );
     if (!entry) throw new Error("Entry lookup returned nothing");
-    await db
-      .insert(matchSides)
-      .values({ matchId, entryId: entry.id, position: index + 1, score: side.score });
+    await db.insert(matchSides).values({ matchId, entryId: entry.id, position: index + 1, score: side.score });
   }
 }
 
@@ -410,7 +405,9 @@ type VoteConfigRow = Omit<typeof tournamentVoteConfigs.$inferInsert, "id" | "tou
 
 /** Turns fair-play and MVP votes on, with the defaults otherwise. */
 export async function enableVotes(tournamentId: string, config?: VoteConfigRow) {
-  await db.insert(tournamentVoteConfigs).values({ tournamentId, ...(config ?? { fairPlayEnabled: true, mvpEnabled: true }) });
+  await db
+    .insert(tournamentVoteConfigs)
+    .values({ tournamentId, ...(config ?? { fairPlayEnabled: true, mvpEnabled: true }) });
 }
 
 export type VoteSeedOptions = {
@@ -440,7 +437,11 @@ async function finalizedLineups(tournamentId: string): Promise<Lineup[]> {
     .where(and(eq(matches.tournamentId, tournamentId), eq(matches.status, "finalized")));
   const byMatch = new Map<string, Lineup>();
   for (const row of rows) {
-    const lineup = byMatch.get(row.matchId) ?? { ...row, winnerSide: row.winnerSide as Lineup["winnerSide"], sides: [[], []] };
+    const lineup = byMatch.get(row.matchId) ?? {
+      ...row,
+      winnerSide: row.winnerSide as Lineup["winnerSide"],
+      sides: [[], []],
+    };
     lineup.sides[row.position === 1 ? 0 : 1].push(row.playerId);
     byMatch.set(row.matchId, lineup);
   }
@@ -491,7 +492,8 @@ function castMatchBallots(
     for (const voterId of side) {
       if (opts.random.next() < 0.25) continue; // not everyone bothers
       const base = { matchId: lineup.matchId, voterId, createdAt, updatedAt: createdAt };
-      for (const targetId of lineup.sides[1 - index]!) fairPlay.push({ ...base, targetId, ...fairPlayVote(opts, targetId) });
+      for (const targetId of lineup.sides[1 - index]!)
+        fairPlay.push({ ...base, targetId, ...fairPlayVote(opts, targetId) });
       const mvpTarget = teamMatch ? mvpPick(opts, lineup, voterId) : null;
       if (mvpTarget) mvp.push({ ...base, targetId: mvpTarget, voterRole: "player" });
     }

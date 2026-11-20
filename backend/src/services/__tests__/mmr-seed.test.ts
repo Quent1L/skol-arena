@@ -1,9 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import {
-  medianMmr,
-  computeSoftResetMmr,
-  computePercentileLadder,
-} from "../ranked-season.service";
+import { medianMmr, computeSoftResetMmr, computePercentileLadder } from "../ranked-season.service";
 
 describe("medianMmr", () => {
   it("returns the middle value of an odd-sized set", () => {

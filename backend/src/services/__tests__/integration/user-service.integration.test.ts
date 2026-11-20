@@ -14,7 +14,8 @@ const { userService } = await import("../../user.service");
 const { userRepository } = await import("../../../repository/user.repository");
 const { organizationService } = await import("../../organization.service");
 const { makeSeeder } = await import("../helpers/db-seed");
-const { ConflictError, ForbiddenError, InternalServerError, NotFoundError, UnauthorizedError } = await import("../../../types/errors");
+const { ConflictError, ForbiddenError, InternalServerError, NotFoundError, UnauthorizedError } =
+  await import("../../../types/errors");
 const { invitationRepository } = await import("../../../repository/invitation.repository");
 const { organizationRepository } = await import("../../../repository/organization.repository");
 const { user: authUser } = await import("../../../db/schema");
@@ -36,14 +37,23 @@ describe("userService admin operations (integration)", () => {
   it("updates a profile, and refuses an unknown one", async () => {
     const renamed = await userService.updateProfile(player, { displayName: "Renamed Player", shortName: "REN" });
     expect(renamed?.displayName).toBe("Renamed Player");
-    expect((await userService.updateProfile(player, { displayName: "Renamed Player", shortName: "REN" }))?.displayName).toBe("Renamed Player");
-    await expect(userService.updateProfile(MISSING, { displayName: "x", shortName: "X" })).rejects.toBeInstanceOf(NotFoundError);
+    expect(
+      (await userService.updateProfile(player, { displayName: "Renamed Player", shortName: "REN" }))?.displayName,
+    ).toBe("Renamed Player");
+    await expect(userService.updateProfile(MISSING, { displayName: "x", shortName: "X" })).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
   });
 
   it("searches, lists, and aggregates for the admin screens", async () => {
     expect((await userService.searchUsers("Renamed")).map((u) => u.id)).toContain(player);
     expect((await userService.getAllUsers()).length).toBeGreaterThanOrEqual(3);
-    const list = await userService.listUsersAdmin({ limit: 50, offset: 0, sortBy: "displayName", sortDir: "asc" } as never);
+    const list = await userService.listUsersAdmin({
+      limit: 50,
+      offset: 0,
+      sortBy: "displayName",
+      sortDir: "asc",
+    } as never);
     expect(list.total).toBeGreaterThanOrEqual(3);
     expect((await userService.getAdminStats()).byRole.super_admin).toBeGreaterThanOrEqual(2);
     expect((await userService.getUserAdminDetail(player)).id).toBe(player);
@@ -52,7 +62,11 @@ describe("userService admin operations (integration)", () => {
 
   describe("adminUpdateUser", () => {
     it("changes name, short name and role", async () => {
-      const detail = await userService.adminUpdateUser(root, player, { displayName: "Promoted", shortName: "PRO", role: "tournament_admin" });
+      const detail = await userService.adminUpdateUser(root, player, {
+        displayName: "Promoted",
+        shortName: "PRO",
+        role: "tournament_admin",
+      });
       expect(detail).toMatchObject({ displayName: "Promoted", shortName: "PRO", role: "tournament_admin" });
     });
 
@@ -64,10 +78,16 @@ describe("userService admin operations (integration)", () => {
     });
 
     it("refuses to touch oneself, an unknown user, or to demote the last super admin", async () => {
-      await expect(userService.adminUpdateUser(root, root, { displayName: "x" })).rejects.toBeInstanceOf(ForbiddenError);
-      await expect(userService.adminUpdateUser(root, MISSING, { displayName: "x" })).rejects.toBeInstanceOf(NotFoundError);
+      await expect(userService.adminUpdateUser(root, root, { displayName: "x" })).rejects.toBeInstanceOf(
+        ForbiddenError,
+      );
+      await expect(userService.adminUpdateUser(root, MISSING, { displayName: "x" })).rejects.toBeInstanceOf(
+        NotFoundError,
+      );
       await userService.adminUpdateUser(root, backup, { role: "player" });
-      await expect(userService.adminUpdateUser(player, root, { role: "player" })).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(userService.adminUpdateUser(player, root, { role: "player" })).rejects.toBeInstanceOf(
+        ForbiddenError,
+      );
       await userService.adminUpdateUser(root, backup, { role: "super_admin" });
     });
   });
@@ -126,7 +146,10 @@ describe("userService admin operations (integration)", () => {
 
     it("archives an account, anonymising it, and refuses to archive twice", async () => {
       const leaver = await seed.createUser("Leaver");
-      const archived = await userService.archiveUser(root, leaver, { displayName: "Former player", shortName: "FORMER" });
+      const archived = await userService.archiveUser(root, leaver, {
+        displayName: "Former player",
+        shortName: "FORMER",
+      });
       expect(archived).toMatchObject({ displayName: "Former player", shortName: "FORMER" });
       expect(archived.archivedAt).not.toBeNull();
       await expect(userService.archiveUser(root, leaver)).rejects.toBeInstanceOf(ConflictError);
@@ -149,15 +172,23 @@ describe("userService admin operations (integration)", () => {
     it("refuses invalid restores", async () => {
       const live = await seed.createUser("Live");
       const other = await seed.createUser("Other");
-      await expect(userService.restoreArchivedUser(root, MISSING, { sourceUserId: other })).rejects.toBeInstanceOf(NotFoundError);
-      await expect(userService.restoreArchivedUser(root, live, { sourceUserId: other })).rejects.toBeInstanceOf(ConflictError);
+      await expect(userService.restoreArchivedUser(root, MISSING, { sourceUserId: other })).rejects.toBeInstanceOf(
+        NotFoundError,
+      );
+      await expect(userService.restoreArchivedUser(root, live, { sourceUserId: other })).rejects.toBeInstanceOf(
+        ConflictError,
+      );
 
       const gone = await seed.createUser("Gone");
       await userService.archiveUser(root, gone);
       const busy = await seed.createUser("Busy");
       await seed.createTournament(busy);
-      await expect(userService.restoreArchivedUser(root, gone, { sourceUserId: busy })).rejects.toBeInstanceOf(ConflictError);
-      await expect(userService.restoreArchivedUser(root, gone, { sourceUserId: gone })).rejects.toBeInstanceOf(ConflictError);
+      await expect(userService.restoreArchivedUser(root, gone, { sourceUserId: busy })).rejects.toBeInstanceOf(
+        ConflictError,
+      );
+      await expect(userService.restoreArchivedUser(root, gone, { sourceUserId: gone })).rejects.toBeInstanceOf(
+        ConflictError,
+      );
     });
   });
 
@@ -222,7 +253,12 @@ describe("userService.getOrCreateAppUser (integration)", () => {
   it("creates the profile once an invitation was redeemed and joins its organisation", async () => {
     const admin = await seed.createUser("Inviter");
     const org = await organizationService.createOrganization(`Welcome-${Date.now()}`, admin);
-    const code = await invitationRepository.create({ code: `welcome-${Date.now()}`, createdBy: admin, maxUses: 1, organizationId: org.id });
+    const code = await invitationRepository.create({
+      code: `welcome-${Date.now()}`,
+      createdBy: admin,
+      maxUses: 1,
+      organizationId: org.id,
+    });
     const external = await authIdentity("Newcomer");
     await invitationRepository.recordUsage({ codeId: code!.id, userId: external, email: "n@x.io", ipAddress: null });
 

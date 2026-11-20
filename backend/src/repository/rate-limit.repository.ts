@@ -19,11 +19,7 @@ export const rateLimitRepository = {
    * ON CONFLICT branch decides, from the row as it is being locked, whether the
    * window has rolled over (reset to 1) or is still running (increment).
    */
-  async consume(
-    key: string,
-    windowSeconds: number,
-    max: number
-  ): Promise<{ allowed: boolean; retryAfter: number }> {
+  async consume(key: string, windowSeconds: number, max: number): Promise<{ allowed: boolean; retryAfter: number }> {
     const now = Date.now();
     const windowStart = now - windowSeconds * 1000;
 

@@ -2,18 +2,11 @@ import { describe, it, expect, mock } from "bun:test";
 
 mock.module("../../config/database", () => ({ db: {} }));
 
-import {
-  buildPlayerCareer,
-  type CareerSeasonRef,
-  type CareerPlayerMmrRef,
-} from "../ranked-season.service";
+import { buildPlayerCareer, type CareerSeasonRef, type CareerPlayerMmrRef } from "../ranked-season.service";
 import type { ClientRankTier } from "@skol-arena/shared/types/index";
 import type { PlayerCareerMmrStatsRow } from "../../repository/player-mmr.repository";
 
-function stat(
-  seasonId: string,
-  over: Partial<PlayerCareerMmrStatsRow> = {},
-): PlayerCareerMmrStatsRow {
+function stat(seasonId: string, over: Partial<PlayerCareerMmrStatsRow> = {}): PlayerCareerMmrStatsRow {
   return { seasonId, peakMmr: 1200, avgMmr: 1100, entryMmr: 1000, matchesPlayed: 10, ...over };
 }
 
@@ -140,13 +133,7 @@ describe("buildPlayerCareer", () => {
   });
 
   it("drops an aggregate whose season no longer exists", () => {
-    const career = buildPlayerCareer(
-      [stat("s1"), stat("gone")],
-      [season("s1")],
-      [],
-      [record("s1")],
-      noPlacements,
-    );
+    const career = buildPlayerCareer([stat("s1"), stat("gone")], [season("s1")], [], [record("s1")], noPlacements);
 
     expect(career.map((s) => s.seasonId)).toEqual(["s1"]);
   });

@@ -127,11 +127,7 @@ function assertDisciplineWindowAllowed(conditions: RuleConditions, scope: string
 }
 
 function compareHolders(a: BadgeHolder, b: BadgeHolder): number {
-  return (
-    Number(b.earnedHere) - Number(a.earnedHere) ||
-    b.count - a.count ||
-    a.displayName.localeCompare(b.displayName)
-  );
+  return Number(b.earnedHere) - Number(a.earnedHere) || b.count - a.count || a.displayName.localeCompare(b.displayName);
 }
 
 export class RulesService {
@@ -377,9 +373,7 @@ export class RulesService {
       rulesRepository.listBadgesByPlayer(playerId),
       visibleOrganizationIdsFor(viewerId),
     ]);
-    const rows = allRows.filter((row) =>
-      isOrganizationVisible(row.season?.organizationId, visibleOrganizationIds),
-    );
+    const rows = allRows.filter((row) => isOrganizationVisible(row.season?.organizationId, visibleOrganizationIds));
     return rows.map((row) => {
       const action = row.rule.action as RuleAction;
       const badge =

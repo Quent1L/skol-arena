@@ -40,10 +40,7 @@ export function buildVersionApp(version: ApiVersion): AppHonoOptional {
  * Named so a walk of the route table can tell it apart from the other middlewares.
  */
 function requireAuthUnlessPublic(root: string) {
-  return async function requireAuthUnlessPublic(
-    c: Context<{ Variables: AppVariablesOptional }>,
-    next: Next
-  ) {
+  return async function requireAuthUnlessPublic(c: Context<{ Variables: AppVariablesOptional }>, next: Next) {
     const path = c.req.path.slice(root.length) || "/";
     if (isPublicRoute(c.req.method, path)) return next();
     return requireAuth(c, next);

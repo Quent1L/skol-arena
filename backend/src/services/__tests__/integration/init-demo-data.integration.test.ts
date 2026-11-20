@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeEach, afterAll, afterEach, spyOn } from "bun:test";
-import {
-  createTestDatabase,
-  closeTestDatabase,
-  getPgliteInstance,
-} from "../../../config/test-database";
+import { createTestDatabase, closeTestDatabase, getPgliteInstance } from "../../../config/test-database";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 import * as schema from "../../../db/schema";
 
@@ -36,9 +32,8 @@ const ORIGINAL = process.env.INIT_DEMO_DATA;
  * them from the pool). Running transactions inline keeps the real code path.
  */
 type Transaction = typeof testDb.transaction;
-spyOn(testDb, "transaction").mockImplementation(
-  ((run: (tx: typeof testDb) => Promise<unknown>) => run(testDb)) as unknown as Transaction,
-);
+spyOn(testDb, "transaction").mockImplementation(((run: (tx: typeof testDb) => Promise<unknown>) =>
+  run(testDb)) as unknown as Transaction);
 
 /**
  * resetTestDatabase() keeps disciplines, rankings and the rest of what this seed
@@ -154,8 +149,8 @@ describe("initializeDemoDataIfRequested", () => {
 
     // Fair-play everywhere it is on, MVP in the team league.
     expect(await testDb.select().from(tournamentVoteConfigs)).toHaveLength(3);
-    const [{ n: fairPlay }] = await testDb.select({ n: count() }).from(fairPlayVotes) as [{ n: number }];
-    const [{ n: mvp }] = await testDb.select({ n: count() }).from(mvpVotes) as [{ n: number }];
+    const [{ n: fairPlay }] = (await testDb.select({ n: count() }).from(fairPlayVotes)) as [{ n: number }];
+    const [{ n: mvp }] = (await testDb.select({ n: count() }).from(mvpVotes)) as [{ n: number }];
     expect(fairPlay).toBeGreaterThan(0);
     expect(mvp).toBeGreaterThan(0);
   }, 120_000);

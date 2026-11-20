@@ -85,10 +85,7 @@ export const announcementRepository = {
    * Without a tournament: the app-wide ones. With one: that tournament's, and only
    * while the user is one of its active players.
    */
-  async findPendingPopups(
-    userId: string,
-    tournamentId?: string,
-  ): Promise<AnnouncementRow[]> {
+  async findPendingPopups(userId: string, tournamentId?: string): Promise<AnnouncementRow[]> {
     const scope = tournamentId
       ? and(
           eq(announcements.audience, "tournament"),
@@ -107,10 +104,7 @@ export const announcementRepository = {
       .from(announcements)
       .leftJoin(
         announcementViews,
-        and(
-          eq(announcementViews.announcementId, announcements.id),
-          eq(announcementViews.userId, userId),
-        ),
+        and(eq(announcementViews.announcementId, announcements.id), eq(announcementViews.userId, userId)),
       )
       .where(
         and(
@@ -126,9 +120,6 @@ export const announcementRepository = {
   },
 
   async markSeen(announcementId: string, userId: string): Promise<void> {
-    await db
-      .insert(announcementViews)
-      .values({ announcementId, userId })
-      .onConflictDoNothing();
+    await db.insert(announcementViews).values({ announcementId, userId }).onConflictDoNothing();
   },
 };

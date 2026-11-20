@@ -32,11 +32,7 @@ export class GameRulesRepository {
   }
 
   async update(id: string, data: UpdateGameRuleData) {
-    const [updated] = await db
-      .update(gameRules)
-      .set(data)
-      .where(eq(gameRules.id, id))
-      .returning();
+    const [updated] = await db.update(gameRules).set(data).where(eq(gameRules.id, id)).returning();
     return updated;
   }
 
