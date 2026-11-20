@@ -21,7 +21,7 @@
         {{ t('voteStats.rankingTitle') }}
       </div>
       <StatLeaderRow
-        v-for="row in stats.fairPlayRanking"
+        v-for="row in visibleRows(stats.fairPlayRanking, 'fairPlay')"
         :key="row.player.id"
         :players="[row.player]"
         :rank="row.rank"
@@ -31,6 +31,21 @@
         bar-class="bg-primary"
         :tournament-id="tournamentId"
       />
+      <button
+        v-if="stats.fairPlayRanking.length > COLLAPSED_COUNT"
+        type="button"
+        class="mt-3 w-full py-2 text-sm font-medium text-gray-400 hover:text-white"
+        :aria-expanded="expanded.fairPlay"
+        data-test="toggle-fairPlay"
+        @click="expanded.fairPlay = !expanded.fairPlay"
+      >
+        <i :class="expanded.fairPlay ? 'fa fa-chevron-up' : 'fa fa-chevron-down'" class="mr-2" />
+        {{
+          expanded.fairPlay
+            ? t('common.showLess')
+            : t('common.showMore', { count: stats.fairPlayRanking.length - COLLAPSED_COUNT })
+        }}
+      </button>
       <p class="mt-3 text-xs text-muted">
         {{
           t('voteStats.totals', {
@@ -61,7 +76,7 @@
         {{ t('voteStats.rankingTitle') }}
       </div>
       <StatLeaderRow
-        v-for="row in stats.mvpRanking"
+        v-for="row in visibleRows(stats.mvpRanking, 'mvp')"
         :key="row.player.id"
         :players="[row.player]"
         :rank="row.rank"
@@ -71,12 +86,27 @@
         bar-class="bg-amber-400"
         :tournament-id="tournamentId"
       />
+      <button
+        v-if="stats.mvpRanking.length > COLLAPSED_COUNT"
+        type="button"
+        class="mt-3 w-full py-2 text-sm font-medium text-gray-400 hover:text-white"
+        :aria-expanded="expanded.mvp"
+        data-test="toggle-mvp"
+        @click="expanded.mvp = !expanded.mvp"
+      >
+        <i :class="expanded.mvp ? 'fa fa-chevron-up' : 'fa fa-chevron-down'" class="mr-2" />
+        {{
+          expanded.mvp
+            ? t('common.showLess')
+            : t('common.showMore', { count: stats.mvpRanking.length - COLLAPSED_COUNT })
+        }}
+      </button>
     </div>
   </template>
 </template>
 
 <script setup lang="ts">
-import { computed, provide, ref } from 'vue'
+import { computed, provide, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TournamentVoteStats } from '@skol-arena/shared/types/index'
 import StatLeaderRow from '@/components/stats/StatLeaderRow.vue'
@@ -99,6 +129,13 @@ const props = defineProps<{
 const { t } = useI18n()
 
 const showWeekly = computed(() => !props.hideWeekly)
+
+/** The server ranks the top 10; the card opens on the top 5, like the other stat cards. */
+const COLLAPSED_COUNT = 5
+const expanded = reactive({ fairPlay: false, mvp: false })
+function visibleRows<T>(rows: T[], kind: keyof typeof expanded): T[] {
+  return expanded[kind] ? rows : rows.slice(0, COLLAPSED_COUNT)
+}
 
 const subheadingClass =
   'mb-2 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400'
