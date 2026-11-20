@@ -4,12 +4,7 @@ import { z } from "zod";
 // Enums de base
 // ============================================
 
-export const userRoleEnum = [
-  "player",
-  "tournament_admin",
-  "super_admin",
-  "kiosk",
-] as const;
+export const userRoleEnum = ["player", "tournament_admin", "super_admin", "kiosk"] as const;
 export type UserRole = (typeof userRoleEnum)[number];
 
 export const tournamentModeEnum = ["championship", "bracket", "ranked"] as const;
@@ -18,12 +13,7 @@ export type TournamentMode = (typeof tournamentModeEnum)[number];
 export const teamModeEnum = ["static", "flex"] as const;
 export type TeamMode = (typeof teamModeEnum)[number];
 
-export const tournamentStatusEnum = [
-  "draft",
-  "open",
-  "ongoing",
-  "finished",
-] as const;
+export const tournamentStatusEnum = ["draft", "open", "ongoing", "finished"] as const;
 export type TournamentStatus = (typeof tournamentStatusEnum)[number];
 
 /**
@@ -66,12 +56,7 @@ export type MatchStatus = (typeof matchStatusEnum)[number];
  */
 export const ENTERED_MATCH_STATUSES: MatchStatus[] = ["reported", "disputed", "finalized"];
 
-export const matchFinalizationReasonEnum = [
-  "consensus",
-  "auto_validation",
-  "admin_override",
-  "trust_score",
-] as const;
+export const matchFinalizationReasonEnum = ["consensus", "auto_validation", "admin_override", "trust_score"] as const;
 export type MatchFinalizationReason = (typeof matchFinalizationReasonEnum)[number];
 
 export const validationModeEnum = ["auto", "strict", "admin", "none"] as const;

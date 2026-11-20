@@ -48,7 +48,11 @@ export const voteConfigSchema = z
     mvpTieRule: mvpTieRuleSchema,
     mvpSameTargetLimit: mvpSameTargetLimitSchema,
     rewindVoterAwards: z.boolean(),
-    promptMaxMatchAgeMinutes: z.number().int().min(1).max(24 * 60),
+    promptMaxMatchAgeMinutes: z
+      .number()
+      .int()
+      .min(1)
+      .max(24 * 60),
   })
   .meta({ id: "VoteConfig" });
 
@@ -58,9 +62,7 @@ export const voteConfigInputSchema = voteConfigSchema.partial();
 export type VoteConfigInput = z.infer<typeof voteConfigInputSchema>;
 
 export function resolveVoteConfig(config?: Partial<VoteConfig> | null): VoteConfig {
-  const defined = Object.fromEntries(
-    Object.entries(config ?? {}).filter(([, v]) => v !== undefined && v !== null),
-  );
+  const defined = Object.fromEntries(Object.entries(config ?? {}).filter(([, v]) => v !== undefined && v !== null));
   return { ...VOTE_DEFAULTS, ...defined };
 }
 
@@ -68,13 +70,7 @@ export function resolveVoteConfig(config?: Partial<VoteConfig> | null): VoteConf
 // Inputs
 // ============================================
 
-export const FAIR_PLAY_TAGS = [
-  "abusive_dispute",
-  "bad_faith",
-  "attitude",
-  "lateness",
-  "other",
-] as const;
+export const FAIR_PLAY_TAGS = ["abusive_dispute", "bad_faith", "attitude", "lateness", "other"] as const;
 
 export const fairPlayTagSchema = z.enum(FAIR_PLAY_TAGS);
 export type FairPlayTag = z.infer<typeof fairPlayTagSchema>;
@@ -158,9 +154,7 @@ export const votePromptSchema = z
     tournamentId: z.string(),
     /** Past this, the prompt is stale and must not show: the match is too old to recall. */
     expiresAt: z.date(),
-    sides: z.array(
-      z.object({ position: z.number().int(), players: z.array(votePromptPlayerSchema) }),
-    ),
+    sides: z.array(z.object({ position: z.number().int(), players: z.array(votePromptPlayerSchema) })),
     /** Other players the user may pick as MVP; empty when MVP is off or not eligible. */
     mvpCandidateIds: z.array(z.string()),
     /** Opponents the user may give a 👍; empty when fair-play is off. */
@@ -202,10 +196,7 @@ export interface MvpBallot {
  * and at least one of their votes comes from a match player — spectators alone
  * cannot impose an MVP. A tie gives co-MVPs or nobody, depending on the rule.
  */
-export function designateMvp(
-  ballots: MvpBallot[],
-  config: Pick<VoteConfig, "mvpMinVotes" | "mvpTieRule">,
-): string[] {
+export function designateMvp(ballots: MvpBallot[], config: Pick<VoteConfig, "mvpMinVotes" | "mvpTieRule">): string[] {
   const tally = new Map<string, { votes: number; fromPlayer: boolean }>();
   for (const b of ballots) {
     const t = tally.get(b.targetId) ?? { votes: 0, fromPlayer: false };
@@ -215,7 +206,10 @@ export function designateMvp(
   }
   const valid = [...tally].filter(([, t]) => t.fromPlayer && t.votes >= config.mvpMinVotes);
   const top = Math.max(0, ...valid.map(([, t]) => t.votes));
-  const leaders = valid.filter(([, t]) => t.votes === top).map(([id]) => id).sort((a, b) => (a < b ? -1 : Number(a > b))); // code-unit order: locale-independent
+  const leaders = valid
+    .filter(([, t]) => t.votes === top)
+    .map(([id]) => id)
+    .sort((a, b) => (a < b ? -1 : Number(a > b))); // code-unit order: locale-independent
   if (leaders.length > 1 && config.mvpTieRule === "none") return [];
   return leaders;
 }
@@ -251,9 +245,7 @@ export const tournamentVoteStatsSchema = z
     fairPlayRanking: z.array(
       z.object({ player: voteStatPlayerSchema, rate: z.number(), votes: z.number().int(), rank: z.number().int() }),
     ),
-    mvpRanking: z.array(
-      z.object({ player: voteStatPlayerSchema, titles: z.number().int(), rank: z.number().int() }),
-    ),
+    mvpRanking: z.array(z.object({ player: voteStatPlayerSchema, titles: z.number().int(), rank: z.number().int() })),
     totals: z.object({ votes: z.number().int(), positiveRate: z.number().nullable() }),
   })
   .meta({ id: "TournamentVoteStats" });
@@ -288,9 +280,7 @@ export const adminVoteStatsSchema = z
         tags: z.array(tagCountSchema),
       }),
     ),
-    voters: z.array(
-      z.object({ player: voteStatPlayerSchema, cast: z.number().int(), downRate: z.number() }),
-    ),
+    voters: z.array(z.object({ player: voteStatPlayerSchema, cast: z.number().int(), downRate: z.number() })),
     revealLog: z.array(
       z.object({ admin: voteStatPlayerSchema.nullable(), target: voteStatPlayerSchema, createdAt: z.date() }),
     ),

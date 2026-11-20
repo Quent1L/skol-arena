@@ -57,10 +57,6 @@ export const participantListItemSchema = z.object({
 // Inferred types
 export type Participant = z.infer<typeof participantSchema>;
 export type JoinTournamentRequest = z.infer<typeof joinTournamentSchema>;
-export type JoinTournamentResponse = z.infer<
-  typeof joinTournamentResponseSchema
->;
+export type JoinTournamentResponse = z.infer<typeof joinTournamentResponseSchema>;
 export type ParticipantListItem = z.infer<typeof participantListItemSchema>;
-export type AdminAddParticipantRequest = z.infer<
-  typeof adminAddParticipantSchema
->;
+export type AdminAddParticipantRequest = z.infer<typeof adminAddParticipantSchema>;

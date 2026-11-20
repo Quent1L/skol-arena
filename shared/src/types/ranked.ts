@@ -74,7 +74,7 @@ export const playerMmrSchema = z
 
 export type PlayerMmr = z.infer<typeof playerMmrSchema>;
 
-export type MmrHistoryOutcome = 'win' | 'loss' | 'draw';
+export type MmrHistoryOutcome = "win" | "loss" | "draw";
 
 export const mmrChartPointSchema = z
   .object({
@@ -186,12 +186,8 @@ export type OpponentQualityStats = z.infer<typeof opponentQualityStatsSchema>;
 
 export const clientPlayerMmrSchema = playerMmrSchema
   .extend({
-    player: z
-      .object({ id: z.string(), displayName: z.string(), shortName: z.string() })
-      .optional(),
-    recentResults: z
-      .array(z.object({ outcome: z.enum(["win", "loss", "draw"]) }))
-      .optional(),
+    player: z.object({ id: z.string(), displayName: z.string(), shortName: z.string() }).optional(),
+    recentResults: z.array(z.object({ outcome: z.enum(["win", "loss", "draw"]) })).optional(),
     opponentQuality: opponentQualityStatsSchema.optional(),
     /** The player left the season: MMR kept, listed after the active players, no rank. */
     inactive: z.boolean().optional(),
@@ -228,9 +224,7 @@ export const playerCareerSeasonSchema = z
     // convention as `calculatedAt` on the tiers shipped in this very payload.
     startDate: z.date(),
     endDate: z.date(),
-    discipline: z
-      .object({ id: z.string(), name: z.string(), icon: z.string().nullable() })
-      .nullable(),
+    discipline: z.object({ id: z.string(), name: z.string(), icon: z.string().nullable() }).nullable(),
     /** Highest MMR held during the season, floored at the MMR the player entered on. */
     peakMmr: z.number().int(),
     /** Mean MMR over the season, entry MMR included as the first value. */
@@ -251,9 +245,7 @@ export const playerCareerSeasonSchema = z
 
 export type PlayerCareerSeason = z.infer<typeof playerCareerSeasonSchema>;
 
-export const playerCareerSchema = z
-  .object({ seasons: z.array(playerCareerSeasonSchema) })
-  .meta({ id: "PlayerCareer" });
+export const playerCareerSchema = z.object({ seasons: z.array(playerCareerSeasonSchema) }).meta({ id: "PlayerCareer" });
 
 export type PlayerCareer = z.infer<typeof playerCareerSchema>;
 
@@ -278,9 +270,7 @@ export type HistoryMatchSide = z.infer<typeof historyMatchSideSchema>;
 
 export const clientMmrHistoryEntrySchema = mmrHistoryEntrySchema
   .extend({
-    match: z
-      .object({ id: z.string(), playedAt: z.date(), status: z.string() })
-      .optional(),
+    match: z.object({ id: z.string(), playedAt: z.date(), status: z.string() }).optional(),
     teamSizeA: z.number().int().nullish(),
     teamSizeB: z.number().int().nullish(),
     sides: z.array(historyMatchSideSchema).optional(),
@@ -382,16 +372,12 @@ const rankedSeasonAutomationFields = {
 /** Request body of `PUT /ranked/seasons/:id/automation`. */
 export const rankedSeasonAutomationInputSchema = z.object(rankedSeasonAutomationFields);
 
-export type RankedSeasonAutomationInput = z.infer<
-  typeof rankedSeasonAutomationInputSchema
->;
+export type RankedSeasonAutomationInput = z.infer<typeof rankedSeasonAutomationInputSchema>;
 
 /** Same fields, for the vee-validate form. Identical here — no date field to revive. */
 export const rankedSeasonAutomationFormSchema = z.object(rankedSeasonAutomationFields);
 
-export type RankedSeasonAutomationFormData = z.infer<
-  typeof rankedSeasonAutomationFormSchema
->;
+export type RankedSeasonAutomationFormData = z.infer<typeof rankedSeasonAutomationFormSchema>;
 
 export const AUTOMATION_DEFAULTS: RankedSeasonAutomationInput = {
   enabled: true,
@@ -416,9 +402,7 @@ export const rankedSeasonListItemSchema = z
     startDate: z.iso.datetime(),
     endDate: z.iso.datetime(),
     disciplineId: z.string().nullable(),
-    discipline: z
-      .object({ id: z.string(), name: z.string(), icon: z.string().nullable() })
-      .nullable(),
+    discipline: z.object({ id: z.string(), name: z.string(), icon: z.string().nullable() }).nullable(),
     participantCount: z.number().int(),
     /** Whether the requesting user has a player_mmr row in the season. */
     isParticipant: z.boolean(),
@@ -433,9 +417,7 @@ export const finishedRankedSeasonSchema = z
     name: z.string(),
     startDate: z.iso.datetime(),
     endDate: z.iso.datetime(),
-    discipline: z
-      .object({ id: z.string(), name: z.string(), icon: z.string().nullable() })
-      .nullable(),
+    discipline: z.object({ id: z.string(), name: z.string(), icon: z.string().nullable() }).nullable(),
   })
   .meta({ id: "FinishedRankedSeason" });
 
@@ -452,9 +434,7 @@ export const rankedSeasonDetailSchema = z
     disciplineId: z.string().nullable(),
     rankedConfig: rankedSeasonConfigSchema.nullable(),
     rankTiers: z.array(clientRankTierSchema),
-    discipline: z
-      .object({ id: z.string(), name: z.string(), icon: z.string().nullable() })
-      .nullable(),
+    discipline: z.object({ id: z.string(), name: z.string(), icon: z.string().nullable() }).nullable(),
     rules: z.object({ id: z.string() }).nullable(),
     automation: rankedSeasonAutomationSchema.nullish(),
   })
@@ -488,21 +468,19 @@ const rankedSeasonExtraFields = {
   sourceMmrSeasonId: z.uuid().nullable().optional(),
 };
 
-export const baseRankedSeasonFormSchema =
-  baseSeasonFormSchema.extend(rankedSeasonExtraFields);
+export const baseRankedSeasonFormSchema = baseSeasonFormSchema.extend(rankedSeasonExtraFields);
 
-export const baseRankedSeasonUpdateFormSchema =
-  baseSeasonUpdateFormSchema.extend({
-    baseMmr: z.number().int().min(100).max(5000).optional(),
-    kFactor: z.number().int().min(8).max(128).optional(),
-    placementMatches: z.number().int().min(0).max(20).optional(),
-    usePreviousMmr: z.boolean().optional(),
-    softResetFactor: z.number().min(0).max(1).optional(),
-    allowAsymmetricMatches: z.boolean().optional(),
-    sourceTierSeasonId: z.uuid().nullable().optional(),
-    tierScalingMode: z.enum(["keep", "percentile"]).optional(),
-    sourceMmrSeasonId: z.uuid().nullable().optional(),
-  });
+export const baseRankedSeasonUpdateFormSchema = baseSeasonUpdateFormSchema.extend({
+  baseMmr: z.number().int().min(100).max(5000).optional(),
+  kFactor: z.number().int().min(8).max(128).optional(),
+  placementMatches: z.number().int().min(0).max(20).optional(),
+  usePreviousMmr: z.boolean().optional(),
+  softResetFactor: z.number().min(0).max(1).optional(),
+  allowAsymmetricMatches: z.boolean().optional(),
+  sourceTierSeasonId: z.uuid().nullable().optional(),
+  tierScalingMode: z.enum(["keep", "percentile"]).optional(),
+  sourceMmrSeasonId: z.uuid().nullable().optional(),
+});
 
 export const createRankedSeasonFormSchema = baseRankedSeasonFormSchema
   .refine(dateRangePredicate, dateRangeError)
@@ -514,15 +492,9 @@ export const updateRankedSeasonFormSchema = baseRankedSeasonUpdateFormSchema
   .refine(teamSizePredicate, teamSizeError)
   .refine(scoreRangePredicate, scoreRangeError);
 
-export type BaseRankedSeasonFormData = z.infer<
-  typeof baseRankedSeasonFormSchema
->;
-export type CreateRankedSeasonFormData = z.infer<
-  typeof createRankedSeasonFormSchema
->;
-export type UpdateRankedSeasonFormData = z.infer<
-  typeof updateRankedSeasonFormSchema
->;
+export type BaseRankedSeasonFormData = z.infer<typeof baseRankedSeasonFormSchema>;
+export type CreateRankedSeasonFormData = z.infer<typeof createRankedSeasonFormSchema>;
+export type UpdateRankedSeasonFormData = z.infer<typeof updateRankedSeasonFormSchema>;
 
 // ============================================
 // Schemas for the API (backend, string dates)
@@ -534,30 +506,17 @@ export const createRankedSeasonSchema = z
       .string(vmsg("validation.nameRequired"))
       .min(3, vmsg("validation.nameMin3"))
       .max(100, vmsg("validation.nameMax100")),
-    description: z
-      .string()
-      .max(500, vmsg("validation.descriptionMax500"))
-      .optional(),
+    description: z.string().max(500, vmsg("validation.descriptionMax500")).optional(),
     disciplineId: z.uuid({
-        error: (issue) =>
-          translateValidation(
-            issue.input === undefined
-              ? "validation.disciplineRequired"
-              : "validation.invalidDisciplineId",
-          ),
-      }),
-    startDate: z.iso.datetime()
-      .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
-    endDate: z.iso.datetime()
-      .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
-    minTeamSize: z
-      .number(vmsg("validation.minTeamSizeRequired"))
-      .int()
-      .min(1, vmsg("validation.teamSizeMin1")),
-    maxTeamSize: z
-      .number(vmsg("validation.maxTeamSizeRequired"))
-      .int()
-      .min(1, vmsg("validation.teamSizeMin1")),
+      error: (issue) =>
+        translateValidation(
+          issue.input === undefined ? "validation.disciplineRequired" : "validation.invalidDisciplineId",
+        ),
+    }),
+    startDate: z.iso.datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
+    endDate: z.iso.datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
+    minTeamSize: z.number(vmsg("validation.minTeamSizeRequired")).int().min(1, vmsg("validation.teamSizeMin1")),
+    maxTeamSize: z.number(vmsg("validation.maxTeamSizeRequired")).int().min(1, vmsg("validation.teamSizeMin1")),
     rulesId: z.uuid().nullable().optional(),
     organizationId: z.uuid().nullable().optional(),
     allowDraw: z.boolean().default(true).optional(),
@@ -575,43 +534,40 @@ export const createRankedSeasonSchema = z
   .refine(teamSizePredicate, teamSizeError)
   .refine(scoreRangePredicate, scoreRangeError);
 
-export const updateRankedSeasonSchema = z.object({
-  name: z
-    .string()
-    .min(3, vmsg("validation.nameMin3"))
-    .max(100, vmsg("validation.nameMax100"))
-    .optional(),
-  description: z
-    .string()
-    .max(500, vmsg("validation.descriptionMax500"))
-    .optional(),
-  startDate: z.iso.datetime()
-    .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
-    .optional(),
-  endDate: z.iso.datetime()
-    .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
-    .optional(),
-  minTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
-  maxTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
-  rulesId: z.uuid().nullable().optional(),
-  organizationId: z.uuid().nullable().optional(),
-  allowDraw: z.boolean().optional(),
-  scoreEnabled: z.boolean().optional(),
-  minScore: z.number().int().min(0).nullable().optional(),
-  maxScore: z.number().int().min(0).nullable().optional(),
-  baseMmr: z.number().int().min(100).max(5000).optional(),
-  kFactor: z.number().int().min(8).max(128).optional(),
-  placementMatches: z.number().int().min(1).max(20).optional(),
-  usePreviousMmr: z.boolean().optional(),
-  softResetFactor: z.number().min(0).max(1).optional(),
-  allowAsymmetricMatches: z.boolean().optional(),
-  sourceTierSeasonId: z.uuid().nullable().optional(),
-  tierScalingMode: z.enum(["keep", "percentile"]).optional(),
-  sourceMmrSeasonId: z.uuid().nullable().optional(),
-  validationMode: validationModeSchema.optional(),
-  validationTimerHours: z.number().int().min(1).max(168).nullable().optional(),
-  voteConfig: voteConfigInputSchema.optional(),
-}).refine(teamSizePredicate, teamSizeError);
+export const updateRankedSeasonSchema = z
+  .object({
+    name: z.string().min(3, vmsg("validation.nameMin3")).max(100, vmsg("validation.nameMax100")).optional(),
+    description: z.string().max(500, vmsg("validation.descriptionMax500")).optional(),
+    startDate: z.iso
+      .datetime()
+      .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
+      .optional(),
+    endDate: z.iso
+      .datetime()
+      .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
+      .optional(),
+    minTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
+    maxTeamSize: z.number().int().min(1, vmsg("validation.teamSizeMin1")).optional(),
+    rulesId: z.uuid().nullable().optional(),
+    organizationId: z.uuid().nullable().optional(),
+    allowDraw: z.boolean().optional(),
+    scoreEnabled: z.boolean().optional(),
+    minScore: z.number().int().min(0).nullable().optional(),
+    maxScore: z.number().int().min(0).nullable().optional(),
+    baseMmr: z.number().int().min(100).max(5000).optional(),
+    kFactor: z.number().int().min(8).max(128).optional(),
+    placementMatches: z.number().int().min(1).max(20).optional(),
+    usePreviousMmr: z.boolean().optional(),
+    softResetFactor: z.number().min(0).max(1).optional(),
+    allowAsymmetricMatches: z.boolean().optional(),
+    sourceTierSeasonId: z.uuid().nullable().optional(),
+    tierScalingMode: z.enum(["keep", "percentile"]).optional(),
+    sourceMmrSeasonId: z.uuid().nullable().optional(),
+    validationMode: validationModeSchema.optional(),
+    validationTimerHours: z.number().int().min(1).max(168).nullable().optional(),
+    voteConfig: voteConfigInputSchema.optional(),
+  })
+  .refine(teamSizePredicate, teamSizeError);
 
 // ============================================
 // Types inferred from schemas
@@ -646,11 +602,7 @@ export type UpdateRankTierInput = z.infer<typeof updateRankTierSchema>;
 
 export type MmrAnimationEventType = "provisional" | "official";
 export type MmrAnimationEventReason =
-  | "match_finalized"
-  | "match_cancelled"
-  | "match_corrected"
-  | "cascade"
-  | "recalculated";
+  "match_finalized" | "match_cancelled" | "match_corrected" | "cascade" | "recalculated";
 
 const animationPlayerRefSchema = z.object({
   id: z.string(),
@@ -704,12 +656,12 @@ export interface MmrAnimationWsPayload extends MmrAnimationEventResponse {
 }
 
 export type LeaderboardRecalculatingEvent = {
-  event: 'leaderboard_recalculating';
+  event: "leaderboard_recalculating";
   data: { seasonId: string };
 };
 
 export type LeaderboardUpdatedEvent = {
-  event: 'leaderboard_updated';
+  event: "leaderboard_updated";
   data: { seasonId: string };
 };
 
@@ -722,7 +674,7 @@ export interface MmrRecapReadyPayload {
 }
 
 export type MmrRecapReadyEvent = {
-  event: 'mmr_recap_ready';
+  event: "mmr_recap_ready";
   data: MmrRecapReadyPayload;
 };
 

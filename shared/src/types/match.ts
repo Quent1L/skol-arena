@@ -70,7 +70,7 @@ const legacyTeamSchema = z.object({
         user: z.object({ id: z.string(), displayName: z.string() }).optional(),
         effectivePointsAwarded: z.number().nullish(),
         exceededMatchLimit: z.boolean().optional(),
-      })
+      }),
     )
     .optional(),
 });
@@ -123,7 +123,7 @@ export const matchModelSchema = matchSchema
           playerId: z.string(),
           teamSide: matchTeamSideSchema,
           player: z.object({ id: z.string(), displayName: z.string() }).optional(),
-        })
+        }),
       )
       .optional(),
     confirmations: z.array(matchConfirmationSchema).optional(),
@@ -332,9 +332,7 @@ export function hasOpposingPostDispute(
 ): boolean {
   const authorSide = (sides ?? []).find((s) => s.players.some((p) => p.id === reportedBy));
   const ownSide = new Set([reportedBy, ...(authorSide?.players.map((p) => p.id) ?? [])]);
-  return (confirmations ?? []).some(
-    (c) => c.isPostFinalization && c.isContested && !ownSide.has(c.playerId),
-  );
+  return (confirmations ?? []).some((c) => c.isPostFinalization && c.isContested && !ownSide.has(c.playerId));
 }
 
 export interface FinalizedAmendContext {
@@ -390,9 +388,7 @@ export function getFinalizedAmendRights(
   if (match.reportedBy !== actor.userId) return denied("not_author");
 
   const hoursSince = (now.getTime() - new Date(match.finalizedAt).getTime()) / (1000 * 60 * 60);
-  const windowHours = match.hasOpenPostDispute
-    ? POST_FINALIZATION_DISPUTE_DAYS * 24
-    : SELF_AMEND_WINDOW_HOURS;
+  const windowHours = match.hasOpenPostDispute ? POST_FINALIZATION_DISPUTE_DAYS * 24 : SELF_AMEND_WINDOW_HOURS;
   if (hoursSince > windowHours) return denied("window_expired");
   return { canCorrect: true, canCancel: true, isArbitration: false, denial: null };
 }
@@ -400,11 +396,7 @@ export function getFinalizedAmendRights(
 export const MATCH_MESSAGE_MAX_LENGTH = 1000;
 
 export const postMatchMessageSchema = z.object({
-  body: z
-    .string()
-    .trim()
-    .min(1, vmsg("validation.messageNotEmpty"))
-    .max(MATCH_MESSAGE_MAX_LENGTH),
+  body: z.string().trim().min(1, vmsg("validation.messageNotEmpty")).max(MATCH_MESSAGE_MAX_LENGTH),
 });
 
 export type PostMatchMessageRequestData = z.infer<typeof postMatchMessageSchema>;
@@ -420,9 +412,7 @@ export const clientMatchMessageSchema = z
     matchId: z.string(),
     kind: z.enum(["user", "system"]),
     body: z.string(),
-    translationParams: z
-      .record(z.string(), z.union([z.string(), z.number(), z.null()]))
-      .nullable(),
+    translationParams: z.record(z.string(), z.union([z.string(), z.number(), z.null()])).nullable(),
     createdAt: z.date(),
     author: z.object({ id: z.string(), displayName: z.string() }).nullable(),
   })
@@ -483,9 +473,7 @@ export const autoFinalizeResponseSchema = z
 
 export type CreateMatchRequestData = z.infer<typeof createMatchSchema>;
 export type UpdateMatchRequestData = z.infer<typeof updateMatchSchema>;
-export type ReportMatchResultRequestData = z.infer<
-  typeof reportMatchResultSchema
->;
+export type ReportMatchResultRequestData = z.infer<typeof reportMatchResultSchema>;
 export type ConfirmMatchRequestData = z.infer<typeof confirmMatchSchema>;
 export type ContestMatchRequestData = z.infer<typeof contestMatchSchema>;
 export type FinalizeMatchRequestData = z.infer<typeof finalizeMatchSchema>;
@@ -510,12 +498,7 @@ export type PlayerMatchHistoryQuery = z.infer<typeof playerMatchHistoryQuerySche
  */
 export interface ClientMatch extends Omit<
   Match,
-  | "createdAt"
-  | "updatedAt"
-  | "playedAt"
-  | "reportedAt"
-  | "confirmationDeadline"
-  | "finalizedAt"
+  "createdAt" | "updatedAt" | "playedAt" | "reportedAt" | "confirmationDeadline" | "finalizedAt"
 > {
   createdAt: Date;
   updatedAt: Date;
@@ -570,10 +553,7 @@ export interface ClientMatchModel extends Omit<
  * Type for MatchConfirmation on the frontend side - string dates are automatically
  * converted to Date objects by the xior interceptor
  */
-export interface ClientMatchConfirmation extends Omit<
-  MatchConfirmation,
-  "createdAt" | "updatedAt"
-> {
+export interface ClientMatchConfirmation extends Omit<MatchConfirmation, "createdAt" | "updatedAt"> {
   createdAt: Date;
   updatedAt: Date;
 }
@@ -582,10 +562,7 @@ export interface ClientMatchConfirmation extends Omit<
  * Type for CreateMatchRequestData on the frontend side
  * Dates can be Date objects (will be serialized to strings by JSON.stringify)
  */
-export interface ClientCreateMatchRequest extends Omit<
-  CreateMatchRequestData,
-  "playedAt"
-> {
+export interface ClientCreateMatchRequest extends Omit<CreateMatchRequestData, "playedAt"> {
   playedAt?: Date | string;
   sides?: MatchSideInput[];
 }
@@ -594,10 +571,7 @@ export interface ClientCreateMatchRequest extends Omit<
  * Type for UpdateMatchRequestData on the frontend side
  * Dates can be Date objects (will be serialized to strings by JSON.stringify)
  */
-export interface ClientUpdateMatchRequest extends Omit<
-  UpdateMatchRequestData,
-  "playedAt"
-> {
+export interface ClientUpdateMatchRequest extends Omit<UpdateMatchRequestData, "playedAt"> {
   playedAt?: Date | string;
 }
 
@@ -605,10 +579,7 @@ export interface ClientUpdateMatchRequest extends Omit<
  * Type for ValidateMatchRequestData on the frontend side
  * Dates can be Date objects (will be serialized to strings by JSON.stringify)
  */
-export interface ClientValidateMatchRequest extends Omit<
-  ValidateMatchRequestData,
-  "playedAt"
-> {
+export interface ClientValidateMatchRequest extends Omit<ValidateMatchRequestData, "playedAt"> {
   playedAt?: Date | string;
   sides?: MatchSideInput[];
 }
@@ -654,7 +625,7 @@ export const matchCardSideSchema = z
         shortName: z.string(),
         /** MVP of the match, from the votes cast so far. */
         isMvp: z.boolean().optional(),
-      })
+      }),
     ),
   })
   .meta({ id: "MatchCardSide" });

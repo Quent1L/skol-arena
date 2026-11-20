@@ -313,7 +313,7 @@ export const ruleSchema: z.ZodType<Rule> = z.lazy(() =>
       createdAt: z.iso.datetime(),
       updatedAt: z.iso.datetime(),
     })
-    .meta({ id: "Rule" })
+    .meta({ id: "Rule" }),
 );
 
 export const ruleListSchema = z.array(ruleSchema);
@@ -609,7 +609,7 @@ export const factCatalogSchema = z
         sample: z.union([z.number(), z.boolean(), z.string(), z.array(z.string())]),
         ref: z.enum(["player", "time", "discipline", "site", "weekday", "outcomeType", "outcomeReason"]).optional(),
         operators: z.array(z.string()),
-      })
+      }),
     ),
   })
   .meta({ id: "FactCatalog" });
@@ -807,8 +807,10 @@ export type RuleFiringFeedQuery = z.infer<typeof ruleFiringFeedQuerySchema>;
 
 type ClientRuleFiringTotals = Omit<RuleFiringTotals, "lastFiredAt"> & { lastFiredAt: Date | null };
 
-export interface ClientRuleFiringOverview
-  extends Omit<RuleFiringOverview, "totals" | "windowTotals" | "rules" | "timeline"> {
+export interface ClientRuleFiringOverview extends Omit<
+  RuleFiringOverview,
+  "totals" | "windowTotals" | "rules" | "timeline"
+> {
   /** `day` is revived into a local-midnight Date by the frontend interceptor. */
   timeline: (Omit<RuleFiringGlobalDayStat, "day"> & { day: Date })[];
   totals: ClientRuleFiringTotals;

@@ -73,11 +73,7 @@ export const createOutcomeTypeSchema = z.object({
 
 export const updateOutcomeTypeSchema = z.object({
   disciplineId: z.uuid(vmsg("validation.invalidDisciplineId")).optional(),
-  name: z
-    .string()
-    .min(1, vmsg("validation.nameNotEmpty"))
-    .max(100, vmsg("validation.nameMax100"))
-    .optional(),
+  name: z.string().min(1, vmsg("validation.nameNotEmpty")).max(100, vmsg("validation.nameMax100")).optional(),
   isDefault: z.boolean().optional(),
   scoreCountsForMmr: z.boolean().optional(),
   points: z.number().int().min(0).optional(),
@@ -88,11 +84,5 @@ export const updateOutcomeTypeSchema = z.object({
 // Types inferred from schemas
 // ============================================
 
-export type CreateOutcomeTypeRequestData = z.infer<
-  typeof createOutcomeTypeSchema
->;
-export type UpdateOutcomeTypeRequestData = z.infer<
-  typeof updateOutcomeTypeSchema
->;
-
-
+export type CreateOutcomeTypeRequestData = z.infer<typeof createOutcomeTypeSchema>;
+export type UpdateOutcomeTypeRequestData = z.infer<typeof updateOutcomeTypeSchema>;

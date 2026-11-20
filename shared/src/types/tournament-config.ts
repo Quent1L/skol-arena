@@ -42,8 +42,7 @@ export const CHAMPIONSHIP_LIMITS = {
 
 const points = () => z.number().int().min(0);
 
-const cap = (limits: { min: number; max: number }) =>
-  z.number().int().min(limits.min).max(limits.max);
+const cap = (limits: { min: number; max: number }) => z.number().int().min(limits.min).max(limits.max);
 
 /** Points awarded per result. Serves as both the response and the input shape. */
 export const tournamentScoringConfigSchema = z
@@ -54,9 +53,7 @@ export const tournamentScoringConfigSchema = z
   })
   .meta({ id: "TournamentScoringConfig" });
 
-export type TournamentScoringConfig = z.infer<
-  typeof tournamentScoringConfigSchema
->;
+export type TournamentScoringConfig = z.infer<typeof tournamentScoringConfigSchema>;
 
 /** Pairing caps enforced when a championship match is created. */
 export const championshipConfigSchema = z
@@ -74,27 +71,20 @@ export type ChampionshipConfig = z.infer<typeof championshipConfigSchema>;
  * Defaults are applied by the service, not here — a `.default()` inside an
  * `.optional()` object never fires when the object itself is omitted.
  */
-export const tournamentScoringConfigInputSchema =
-  tournamentScoringConfigSchema.partial();
+export const tournamentScoringConfigInputSchema = tournamentScoringConfigSchema.partial();
 
 export const championshipConfigInputSchema = championshipConfigSchema.partial();
 
-export type TournamentScoringConfigInput = z.infer<
-  typeof tournamentScoringConfigInputSchema
->;
+export type TournamentScoringConfigInput = z.infer<typeof tournamentScoringConfigInputSchema>;
 
-export type ChampionshipConfigInput = z.infer<
-  typeof championshipConfigInputSchema
->;
+export type ChampionshipConfigInput = z.infer<typeof championshipConfigInputSchema>;
 
 // ============================================
 // Resolution helpers
 // ============================================
 
 /** Scoring config of a tournament, falling back to the defaults when absent. */
-export function resolveScoringConfig(
-  config?: Partial<TournamentScoringConfig> | null,
-): TournamentScoringConfig {
+export function resolveScoringConfig(config?: Partial<TournamentScoringConfig> | null): TournamentScoringConfig {
   return {
     pointPerVictory: config?.pointPerVictory ?? SCORING_DEFAULTS.pointPerVictory,
     pointPerDraw: config?.pointPerDraw ?? SCORING_DEFAULTS.pointPerDraw,
@@ -103,17 +93,10 @@ export function resolveScoringConfig(
 }
 
 /** Championship caps of a tournament, falling back to the defaults when absent. */
-export function resolveChampionshipConfig(
-  config?: Partial<ChampionshipConfig> | null,
-): ChampionshipConfig {
+export function resolveChampionshipConfig(config?: Partial<ChampionshipConfig> | null): ChampionshipConfig {
   return {
-    maxMatchesPerPlayer:
-      config?.maxMatchesPerPlayer ?? CHAMPIONSHIP_DEFAULTS.maxMatchesPerPlayer,
-    maxTimesWithSamePartner:
-      config?.maxTimesWithSamePartner ??
-      CHAMPIONSHIP_DEFAULTS.maxTimesWithSamePartner,
-    maxTimesWithSameOpponent:
-      config?.maxTimesWithSameOpponent ??
-      CHAMPIONSHIP_DEFAULTS.maxTimesWithSameOpponent,
+    maxMatchesPerPlayer: config?.maxMatchesPerPlayer ?? CHAMPIONSHIP_DEFAULTS.maxMatchesPerPlayer,
+    maxTimesWithSamePartner: config?.maxTimesWithSamePartner ?? CHAMPIONSHIP_DEFAULTS.maxTimesWithSamePartner,
+    maxTimesWithSameOpponent: config?.maxTimesWithSameOpponent ?? CHAMPIONSHIP_DEFAULTS.maxTimesWithSameOpponent,
   };
 }

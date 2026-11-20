@@ -68,8 +68,6 @@ export const invitationConsumptionSchema = z
 
 export type InvitationConsumption = z.infer<typeof invitationConsumptionSchema>;
 
-export const organizationJoinSchema = z
-  .object({ organizationName: z.string() })
-  .meta({ id: "OrganizationJoin" });
+export const organizationJoinSchema = z.object({ organizationName: z.string() }).meta({ id: "OrganizationJoin" });
 
 export type OrganizationJoin = z.infer<typeof organizationJoinSchema>;

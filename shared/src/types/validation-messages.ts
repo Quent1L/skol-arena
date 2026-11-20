@@ -9,10 +9,7 @@
 // every other backend error.
 
 export type ValidationParams = Record<string, string | number>;
-export type ValidationTranslator = (
-  key: string,
-  params?: ValidationParams,
-) => string;
+export type ValidationTranslator = (key: string, params?: ValidationParams) => string;
 
 const identity: ValidationTranslator = (key) => key;
 
@@ -24,10 +21,7 @@ export function setValidationTranslator(fn: ValidationTranslator | null): void {
 }
 
 /** Resolves a validation key with the current translator. */
-export function translateValidation(
-  key: string,
-  params?: ValidationParams,
-): string {
+export function translateValidation(key: string, params?: ValidationParams): string {
   return translator(key, params);
 }
 
@@ -36,9 +30,6 @@ export function translateValidation(
  * Usable wherever Zod takes an error param: `.min(3, vmsg(k))`,
  * `z.string(vmsg(k))`, `.refine(fn, { ...vmsg(k), path })`.
  */
-export function vmsg(
-  key: string,
-  params?: ValidationParams,
-): { error: () => string } {
+export function vmsg(key: string, params?: ValidationParams): { error: () => string } {
   return { error: () => translator(key, params) };
 }

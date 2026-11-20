@@ -147,9 +147,7 @@ export const propagationResultListSchema = z.array(propagationResultSchema);
 const EMPTY_RULESET: TournamentRulesetPayload = { discipline: null, outcomeTypes: [] };
 
 /** Ruleset of a competition, falling back to an empty one when absent. */
-export function resolveRuleset(
-  payload?: TournamentRulesetPayload | null,
-): TournamentRulesetPayload {
+export function resolveRuleset(payload?: TournamentRulesetPayload | null): TournamentRulesetPayload {
   return payload ?? EMPTY_RULESET;
 }
 
@@ -172,17 +170,13 @@ export function resolveRulesetOutcome(
   payload: TournamentRulesetPayload | null | undefined,
   outcomeTypeId: string | null | undefined,
 ): RulesetOutcomeType {
-  const found = outcomeTypeId
-    ? payload?.outcomeTypes.find((outcome) => outcome.id === outcomeTypeId)
-    : undefined;
+  const found = outcomeTypeId ? payload?.outcomeTypes.find((outcome) => outcome.id === outcomeTypeId) : undefined;
 
   return found ?? { id: outcomeTypeId ?? "default", reasons: [], ...RULESET_OUTCOME_DEFAULTS };
 }
 
 /** Index for repeated lookups inside a replay loop, where a linear scan per match would show. */
-export function indexRulesetOutcomes(
-  payload?: TournamentRulesetPayload | null,
-): Map<string, RulesetOutcomeType> {
+export function indexRulesetOutcomes(payload?: TournamentRulesetPayload | null): Map<string, RulesetOutcomeType> {
   return new Map((payload?.outcomeTypes ?? []).map((outcome) => [outcome.id, outcome]));
 }
 
@@ -220,8 +214,6 @@ function compareKeys(l: string, r: string): number {
 }
 
 /** Outcome types offered at match entry: archived ones resolve but are not selectable. */
-export function selectableRulesetOutcomes(
-  payload?: TournamentRulesetPayload | null,
-): RulesetOutcomeType[] {
+export function selectableRulesetOutcomes(payload?: TournamentRulesetPayload | null): RulesetOutcomeType[] {
   return (payload?.outcomeTypes ?? []).filter((outcome) => !outcome.archivedAt);
 }

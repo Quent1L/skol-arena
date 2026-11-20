@@ -16,6 +16,4 @@ const PUSH_SERVICE_HOSTS = [
 ];
 export const PUSH_SERVICE_HOSTNAME = new RegExp(`^(${PUSH_SERVICE_HOSTS.join("|")})$`, "i");
 
-export const pushEndpointSchema = z
-  .url({ protocol: /^https$/, hostname: PUSH_SERVICE_HOSTNAME })
-  .max(2048);
+export const pushEndpointSchema = z.url({ protocol: /^https$/, hostname: PUSH_SERVICE_HOSTNAME }).max(2048);

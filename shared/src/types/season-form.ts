@@ -18,23 +18,15 @@ export const baseSeasonFormSchema = z.object({
     .max(100, vmsg("validation.nameMax100")),
   description: z.string().optional(),
   disciplineId: z.uuid({
-      error: (issue) =>
-        translateValidation(
-          issue.input === undefined
-            ? "validation.disciplineRequired"
-            : "validation.invalidDisciplineId",
-        ),
-    }),
+    error: (issue) =>
+      translateValidation(
+        issue.input === undefined ? "validation.disciplineRequired" : "validation.invalidDisciplineId",
+      ),
+  }),
   startDate: z.date(vmsg("validation.startDateRequired")),
   endDate: z.date(vmsg("validation.endDateRequired")),
-  minTeamSize: z
-    .number(vmsg("validation.minTeamSizeRequired"))
-    .int()
-    .min(1, vmsg("validation.teamSizeMin1")),
-  maxTeamSize: z
-    .number(vmsg("validation.maxTeamSizeRequired"))
-    .int()
-    .min(1, vmsg("validation.teamSizeMin1")),
+  minTeamSize: z.number(vmsg("validation.minTeamSizeRequired")).int().min(1, vmsg("validation.teamSizeMin1")),
+  maxTeamSize: z.number(vmsg("validation.maxTeamSizeRequired")).int().min(1, vmsg("validation.teamSizeMin1")),
   rulesId: z.uuid().nullable().optional(),
   organizationId: z.uuid().nullable().optional(),
   scoreEnabled: z.boolean().optional(),
@@ -49,9 +41,7 @@ export const baseSeasonFormSchema = z.object({
 export const baseSeasonUpdateFormSchema = baseSeasonFormSchema.partial();
 
 export type BaseSeasonFormData = z.infer<typeof baseSeasonFormSchema>;
-export type BaseSeasonUpdateFormData = z.infer<
-  typeof baseSeasonUpdateFormSchema
->;
+export type BaseSeasonUpdateFormData = z.infer<typeof baseSeasonUpdateFormSchema>;
 
 // ============================================
 // Shared predicates for cross-field validation
@@ -60,15 +50,10 @@ export type BaseSeasonUpdateFormData = z.infer<
 // We expose the predicates rather than schema wrappers to avoid
 // ZodEffects typing complications.
 
-export const dateRangePredicate = (data: {
-  startDate?: Date | string;
-  endDate?: Date | string;
-}): boolean => {
+export const dateRangePredicate = (data: { startDate?: Date | string; endDate?: Date | string }): boolean => {
   if (!data.startDate || !data.endDate) return true;
-  const start =
-    data.startDate instanceof Date ? data.startDate : new Date(data.startDate);
-  const end =
-    data.endDate instanceof Date ? data.endDate : new Date(data.endDate);
+  const start = data.startDate instanceof Date ? data.startDate : new Date(data.startDate);
+  const end = data.endDate instanceof Date ? data.endDate : new Date(data.endDate);
   return start < end;
 };
 
@@ -77,10 +62,7 @@ export const dateRangeError = {
   path: ["endDate"],
 };
 
-export const teamSizePredicate = (data: {
-  minTeamSize?: number;
-  maxTeamSize?: number;
-}): boolean => {
+export const teamSizePredicate = (data: { minTeamSize?: number; maxTeamSize?: number }): boolean => {
   if (!data.minTeamSize || !data.maxTeamSize) return true;
   return data.maxTeamSize >= data.minTeamSize;
 };
@@ -96,8 +78,7 @@ export const scoreRangePredicate = (data: {
   maxScore?: number | null;
 }): boolean => {
   if (data.scoreEnabled === false) return true;
-  if (data.minScore != null && data.maxScore != null)
-    return data.minScore <= data.maxScore;
+  if (data.minScore != null && data.maxScore != null) return data.minScore <= data.maxScore;
   return true;
 };
 

@@ -30,9 +30,7 @@ export const organizationWithMemberCountSchema = organizationSchema
   .extend({ memberCount: z.number().int() })
   .meta({ id: "OrganizationWithMemberCount" });
 
-export type OrganizationWithMemberCount = z.infer<
-  typeof organizationWithMemberCountSchema
->;
+export type OrganizationWithMemberCount = z.infer<typeof organizationWithMemberCountSchema>;
 
 export const organizationMemberWithUserSchema = organizationMemberSchema
   .extend({
@@ -45,6 +43,4 @@ export const organizationMemberWithUserSchema = organizationMemberSchema
   })
   .meta({ id: "OrganizationMemberWithUser" });
 
-export type OrganizationMemberWithUser = z.infer<
-  typeof organizationMemberWithUserSchema
->;
+export type OrganizationMemberWithUser = z.infer<typeof organizationMemberWithUserSchema>;

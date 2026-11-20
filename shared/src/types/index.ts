@@ -105,8 +105,8 @@ export type WithClientDates<T> = {
       ? Date
       : T[K]
     : T[K] extends object
-    ? WithClientDates<T[K]>
-    : T[K];
+      ? WithClientDates<T[K]>
+      : T[K];
 };
 
 /**
@@ -114,9 +114,5 @@ export type WithClientDates<T> = {
  * Dates are accepted as Date objects, but will be serialized to strings by JSON.stringify.
  */
 export type ClientPayload<T> = {
-  [K in keyof T]: T[K] extends string
-    ? K extends `${string}At` | `${string}Date`
-      ? Date | string
-      : T[K]
-    : T[K];
+  [K in keyof T]: T[K] extends string ? (K extends `${string}At` | `${string}Date` ? Date | string : T[K]) : T[K];
 };

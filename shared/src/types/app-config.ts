@@ -16,9 +16,7 @@ export const keycloakConfigSchema = z
 
 export type KeycloakConfig = z.infer<typeof keycloakConfigSchema>;
 
-export const emailPasswordConfigSchema = z
-  .object({ enabled: z.boolean() })
-  .meta({ id: "EmailPasswordConfig" });
+export const emailPasswordConfigSchema = z.object({ enabled: z.boolean() }).meta({ id: "EmailPasswordConfig" });
 
 export type EmailPasswordConfig = z.infer<typeof emailPasswordConfigSchema>;
 
@@ -43,9 +41,7 @@ export const rankedConfigSchema = z
 
 export type RankedConfig = z.infer<typeof rankedConfigSchema>;
 
-export const demoConfigSchema = z
-  .object({ email: z.string(), password: z.string() })
-  .meta({ id: "DemoConfig" });
+export const demoConfigSchema = z.object({ email: z.string(), password: z.string() }).meta({ id: "DemoConfig" });
 
 export type DemoConfig = z.infer<typeof demoConfigSchema>;
 

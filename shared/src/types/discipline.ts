@@ -5,9 +5,9 @@ import { vmsg } from "./validation-messages";
 // Types and interfaces for disciplines
 // ============================================
 
-export type TeamInteractionMode = 'INDIVIDUAL' | 'SHARED_RESOURCE' | 'COLLABORATIVE';
+export type TeamInteractionMode = "INDIVIDUAL" | "SHARED_RESOURCE" | "COLLABORATIVE";
 
-export const TEAM_INTERACTION_MODES = ['INDIVIDUAL', 'SHARED_RESOURCE', 'COLLABORATIVE'] as const;
+export const TEAM_INTERACTION_MODES = ["INDIVIDUAL", "SHARED_RESOURCE", "COLLABORATIVE"] as const;
 
 // `.meta({ id })` names the schema in the generated OpenAPI document, so an entity
 // reused across endpoints is described once under components.schemas instead of
@@ -80,11 +80,7 @@ export const createDisciplineSchema = z.object({
 });
 
 export const updateDisciplineSchema = z.object({
-  name: z
-    .string()
-    .min(1, vmsg("validation.nameNotEmpty"))
-    .max(100, vmsg("validation.nameMax100"))
-    .optional(),
+  name: z.string().min(1, vmsg("validation.nameNotEmpty")).max(100, vmsg("validation.nameMax100")).optional(),
   icon: z.string().nullish(),
   scoreInstructions: z.string().max(500).nullish(),
   teamInteractionMode: z.enum(TEAM_INTERACTION_MODES).nullish(),
@@ -94,11 +90,5 @@ export const updateDisciplineSchema = z.object({
 // Types inferred from schemas
 // ============================================
 
-export type CreateDisciplineRequestData = z.infer<
-  typeof createDisciplineSchema
->;
-export type UpdateDisciplineRequestData = z.infer<
-  typeof updateDisciplineSchema
->;
-
-
+export type CreateDisciplineRequestData = z.infer<typeof createDisciplineSchema>;
+export type UpdateDisciplineRequestData = z.infer<typeof updateDisciplineSchema>;

@@ -45,7 +45,7 @@ export const tournamentEntryModelSchema = tournamentEntrySchema
       z.object({
         playerId: z.string(),
         player: playerRefSchema,
-      })
+      }),
     ),
   })
   .meta({ id: "TournamentEntryModel" });
@@ -89,9 +89,7 @@ export const matchResultSchema = z
     reportProof: z.string().optional(),
     finalizedBy: z.string().optional(),
     finalizedAt: z.iso.datetime().optional(),
-    finalizationReason: z
-      .enum(["consensus", "auto_validation", "admin_override"])
-      .optional(),
+    finalizationReason: z.enum(["consensus", "auto_validation", "admin_override"]).optional(),
   })
   .meta({ id: "MatchResult" });
 
@@ -119,21 +117,21 @@ export type MatchResultModel = z.infer<typeof matchResultModelSchema>;
 /**
  * Client-side Tournament Entry (dates as Date objects)
  */
-export interface ClientTournamentEntry extends Omit<TournamentEntry, 'createdAt'> {
+export interface ClientTournamentEntry extends Omit<TournamentEntry, "createdAt"> {
   createdAt: Date;
 }
 
 /**
  * Client-side Tournament Entry Model (dates as Date objects)
  */
-export interface ClientTournamentEntryModel extends Omit<TournamentEntryModel, 'createdAt'> {
+export interface ClientTournamentEntryModel extends Omit<TournamentEntryModel, "createdAt"> {
   createdAt: Date;
 }
 
 /**
  * Client-side Match Result (dates as Date objects)
  */
-export interface ClientMatchResult extends Omit<MatchResult, 'reportedAt' | 'finalizedAt'> {
+export interface ClientMatchResult extends Omit<MatchResult, "reportedAt" | "finalizedAt"> {
   reportedAt?: Date;
   finalizedAt?: Date;
 }
@@ -141,7 +139,7 @@ export interface ClientMatchResult extends Omit<MatchResult, 'reportedAt' | 'fin
 /**
  * Client-side Match Result Model (dates as Date objects)
  */
-export interface ClientMatchResultModel extends Omit<MatchResultModel, 'reportedAt' | 'finalizedAt'> {
+export interface ClientMatchResultModel extends Omit<MatchResultModel, "reportedAt" | "finalizedAt"> {
   reportedAt?: Date;
   finalizedAt?: Date;
 }

@@ -119,10 +119,7 @@ export function policyFieldFor(field: string): string {
 // Resolution
 // ============================================
 
-export function resolveFieldEditability(
-  field: string,
-  ctx: EditabilityContext,
-): FieldEditability {
+export function resolveFieldEditability(field: string, ctx: EditabilityContext): FieldEditability {
   // A draft has no results and no participants to surprise.
   if (ctx.status === "draft") return "always";
 
@@ -171,10 +168,7 @@ export function resolveEditableFields(ctx: EditabilityContext): ResolvedEditabil
 }
 
 /** True when the update touches something whose change has to be recomputed. */
-export function updateTriggersRecalculation(
-  fields: string[],
-  ctx: EditabilityContext,
-): boolean {
+export function updateTriggersRecalculation(fields: string[], ctx: EditabilityContext): boolean {
   return fields.some((field) => resolveFieldEditability(field, ctx) === "recalculates");
 }
 

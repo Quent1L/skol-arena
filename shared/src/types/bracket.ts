@@ -117,7 +117,7 @@ export const generateBracketSchema = z
     {
       message: "sourceTournamentId is required for championship-based seeding",
       path: ["sourceTournamentId"],
-    }
+    },
   );
 
 export const bracketConfigSchema = z.object({
@@ -216,7 +216,7 @@ export type CanGenerateBracketResponseData = z.infer<typeof canGenerateBracketRe
 /**
  * Type for BracketConfig on the frontend side - dates converted to Date by xior
  */
-export interface ClientBracketConfig extends Omit<BracketConfig, 'createdAt' | 'updatedAt'> {
+export interface ClientBracketConfig extends Omit<BracketConfig, "createdAt" | "updatedAt"> {
   createdAt: Date;
   updatedAt: Date;
 }
@@ -224,21 +224,21 @@ export interface ClientBracketConfig extends Omit<BracketConfig, 'createdAt' | '
 /**
  * Type for BracketRound on the frontend side
  */
-export interface ClientBracketRound extends Omit<BracketRound, 'createdAt'> {
+export interface ClientBracketRound extends Omit<BracketRound, "createdAt"> {
   createdAt: Date;
 }
 
 /**
  * Type for BracketSeed on the frontend side
  */
-export interface ClientBracketSeed extends Omit<BracketSeed, 'createdAt'> {
+export interface ClientBracketSeed extends Omit<BracketSeed, "createdAt"> {
   createdAt: Date;
 }
 
 /**
  * Type for BracketMatchMetadata on the frontend side
  */
-export interface ClientBracketMatchMetadata extends Omit<BracketMatchMetadata, 'createdAt'> {
+export interface ClientBracketMatchMetadata extends Omit<BracketMatchMetadata, "createdAt"> {
   createdAt: Date;
 }
 

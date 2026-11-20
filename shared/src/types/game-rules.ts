@@ -41,11 +41,7 @@ export const createGameRuleSchema = z.object({
 });
 
 export const updateGameRuleSchema = z.object({
-  title: z
-    .string()
-    .min(2, vmsg("validation.titleMin2"))
-    .max(200, vmsg("validation.titleMax200"))
-    .optional(),
+  title: z.string().min(2, vmsg("validation.titleMin2")).max(200, vmsg("validation.titleMax200")).optional(),
   content: z.string().min(1, vmsg("validation.contentRequired")).optional(),
 });
 

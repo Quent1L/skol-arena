@@ -472,9 +472,7 @@ export type RewindPercentiles = z.infer<typeof rewindPercentilesSchema>;
 
 export const rewindConclusionSchema = z
   .object({
-    nextSeason: z
-      .object({ id: z.string(), name: z.string(), startDate: z.date() })
-      .nullable(),
+    nextSeason: z.object({ id: z.string(), name: z.string(), startDate: z.date() }).nullable(),
   })
   .meta({ id: "RewindConclusion" });
 

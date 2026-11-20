@@ -49,22 +49,12 @@ export const createOutcomeReasonSchema = z.object({
 
 export const updateOutcomeReasonSchema = z.object({
   outcomeTypeId: z.uuid(vmsg("validation.invalidOutcomeTypeId")).optional(),
-  name: z
-    .string()
-    .min(1, vmsg("validation.nameNotEmpty"))
-    .max(100, vmsg("validation.nameMax100"))
-    .optional(),
+  name: z.string().min(1, vmsg("validation.nameNotEmpty")).max(100, vmsg("validation.nameMax100")).optional(),
 });
 
 // ============================================
 // Types inferred from schemas
 // ============================================
 
-export type CreateOutcomeReasonRequestData = z.infer<
-  typeof createOutcomeReasonSchema
->;
-export type UpdateOutcomeReasonRequestData = z.infer<
-  typeof updateOutcomeReasonSchema
->;
-
-
+export type CreateOutcomeReasonRequestData = z.infer<typeof createOutcomeReasonSchema>;
+export type UpdateOutcomeReasonRequestData = z.infer<typeof updateOutcomeReasonSchema>;

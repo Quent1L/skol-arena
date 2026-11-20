@@ -156,12 +156,8 @@ const optionalPoints = () => z.number().int().min(0).optional();
 
 const flatChampionshipFormFields = {
   maxMatchesPerPlayer: optionalCap(CHAMPIONSHIP_LIMITS.maxMatchesPerPlayer),
-  maxTimesWithSamePartner: optionalCap(
-    CHAMPIONSHIP_LIMITS.maxTimesWithSamePartner,
-  ),
-  maxTimesWithSameOpponent: optionalCap(
-    CHAMPIONSHIP_LIMITS.maxTimesWithSameOpponent,
-  ),
+  maxTimesWithSamePartner: optionalCap(CHAMPIONSHIP_LIMITS.maxTimesWithSamePartner),
+  maxTimesWithSameOpponent: optionalCap(CHAMPIONSHIP_LIMITS.maxTimesWithSameOpponent),
   pointPerVictory: optionalPoints(),
   pointPerDraw: optionalPoints(),
   pointPerLoss: optionalPoints(),
@@ -179,16 +175,14 @@ export const baseTournamentFormSchema = baseSeasonFormSchema.extend({
 });
 
 // Schema for updates without cross-field validations
-export const baseTournamentUpdateFormSchema = baseSeasonUpdateFormSchema.extend(
-  {
-    mode: tournamentModeSchema.optional(),
-    teamMode: teamModeSchema.optional(),
-    ...flatChampionshipFormFields,
-    status: tournamentStatusSchema.optional(),
-    validationMode: validationModeSchema.optional(),
-    validationTimerHours: z.number().int().min(1).max(168).nullable().optional(),
-  },
-);
+export const baseTournamentUpdateFormSchema = baseSeasonUpdateFormSchema.extend({
+  mode: tournamentModeSchema.optional(),
+  teamMode: teamModeSchema.optional(),
+  ...flatChampionshipFormFields,
+  status: tournamentStatusSchema.optional(),
+  validationMode: validationModeSchema.optional(),
+  validationTimerHours: z.number().int().min(1).max(168).nullable().optional(),
+});
 
 // Schema for tournament creation (used by the frontend with Date objects)
 export const createTournamentFormSchema = baseTournamentFormSchema
@@ -205,23 +199,15 @@ const baseTournamentDataSchema = z.object({
   description: z.string().optional(),
   mode: tournamentModeSchema,
   teamMode: teamModeSchema,
-  minTeamSize: z
-    .number(vmsg("validation.minTeamSizeRequired"))
-    .int()
-    .min(1, vmsg("validation.teamSizeMin1")),
-  maxTeamSize: z
-    .number(vmsg("validation.maxTeamSizeRequired"))
-    .int()
-    .min(1, vmsg("validation.teamSizeMin1")),
+  minTeamSize: z.number(vmsg("validation.minTeamSizeRequired")).int().min(1, vmsg("validation.teamSizeMin1")),
+  maxTeamSize: z.number(vmsg("validation.maxTeamSizeRequired")).int().min(1, vmsg("validation.teamSizeMin1")),
   scoringConfig: tournamentScoringConfigInputSchema.optional(),
   championshipConfig: championshipConfigInputSchema.optional(),
   voteConfig: voteConfigInputSchema.optional(),
   allowDraw: z.boolean().default(true).optional(),
   scoreEnabled: z.boolean().default(true).optional(),
-  startDate: z.iso.datetime()
-    .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
-  endDate: z.iso.datetime()
-    .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
+  startDate: z.iso.datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
+  endDate: z.iso.datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
   disciplineId: z.uuid(vmsg("validation.invalidDisciplineId")).optional(),
   minScore: z.number().int().min(0).nullable().optional(),
   maxScore: z.number().int().min(0).nullable().optional(),
@@ -252,11 +238,7 @@ export const updateTournamentFormSchema = baseTournamentUpdateFormSchema
 // Schema for updates (API with ISO strings)
 export const updateTournamentSchema = z
   .object({
-    name: z
-      .string()
-      .min(3, vmsg("validation.nameMin3"))
-      .max(100, vmsg("validation.nameMax100"))
-      .optional(),
+    name: z.string().min(3, vmsg("validation.nameMin3")).max(100, vmsg("validation.nameMax100")).optional(),
     description: z.string().optional(),
     mode: tournamentModeSchema.optional(),
     teamMode: teamModeSchema.optional(),
@@ -267,10 +249,12 @@ export const updateTournamentSchema = z
     voteConfig: voteConfigInputSchema.optional(),
     allowDraw: z.boolean().optional(),
     scoreEnabled: z.boolean().optional(),
-    startDate: z.iso.datetime()
+    startDate: z.iso
+      .datetime()
       .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
       .optional(),
-    endDate: z.iso.datetime()
+    endDate: z.iso
+      .datetime()
       .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
       .optional(),
     status: tournamentStatusSchema.optional(),
@@ -301,20 +285,12 @@ export const listTournamentsQuerySchema = z.object({
 
 // Types for forms (frontend)
 export type BaseTournamentFormData = z.infer<typeof baseTournamentFormSchema>;
-export type BaseTournamentUpdateFormData = z.infer<
-  typeof baseTournamentUpdateFormSchema
->;
-export type CreateTournamentFormData = z.infer<
-  typeof createTournamentFormSchema
->;
-export type UpdateTournamentFormData = z.infer<
-  typeof updateTournamentFormSchema
->;
+export type BaseTournamentUpdateFormData = z.infer<typeof baseTournamentUpdateFormSchema>;
+export type CreateTournamentFormData = z.infer<typeof createTournamentFormSchema>;
+export type UpdateTournamentFormData = z.infer<typeof updateTournamentFormSchema>;
 
 // Types for the API (backend)
-export type CreateTournamentRequestData = z.infer<
-  typeof createTournamentRequestSchema
->;
+export type CreateTournamentRequestData = z.infer<typeof createTournamentRequestSchema>;
 export type CreateTournamentApiData = z.infer<typeof createTournamentSchema>;
 export type UpdateTournamentApiData = z.infer<typeof updateTournamentSchema>;
 
@@ -329,9 +305,7 @@ function toLocalDateStr(d: Date): string {
 /**
  * Converts form data (with Date objects) into an API payload (with ISO strings)
  */
-export function formDataToApiPayload<
-  T extends { startDate?: Date; endDate?: Date },
->(
+export function formDataToApiPayload<T extends { startDate?: Date; endDate?: Date }>(
   formData: T,
 ): Omit<T, "startDate" | "endDate"> & {
   startDate?: string;
@@ -356,9 +330,7 @@ export interface FlatTournamentConfigFields {
 }
 
 function compact<T extends object>(values: T): Partial<T> | undefined {
-  const entries = Object.entries(values).filter(
-    ([, value]) => value !== undefined && value !== null,
-  );
+  const entries = Object.entries(values).filter(([, value]) => value !== undefined && value !== null);
   return entries.length > 0 ? (Object.fromEntries(entries) as Partial<T>) : undefined;
 }
 
@@ -401,9 +373,7 @@ export function nestTournamentConfigs<T extends FlatTournamentConfigFields>(
 /**
  * Converts API data (with ISO strings) into form data (with Date objects)
  */
-export function apiDataToFormData<
-  T extends { startDate?: string; endDate?: string },
->(
+export function apiDataToFormData<T extends { startDate?: string; endDate?: string }>(
   apiData: T,
 ): Omit<T, "startDate" | "endDate"> & {
   startDate?: Date;
@@ -454,10 +424,7 @@ export interface TournamentSummary {
   isParticipant: boolean;
 }
 
-export interface ClientTournamentSummary extends Omit<
-  TournamentSummary,
-  "startDate" | "endDate"
-> {
+export interface ClientTournamentSummary extends Omit<TournamentSummary, "startDate" | "endDate"> {
   startDate: Date;
   endDate: Date;
 }
@@ -479,10 +446,7 @@ export interface ClientTournamentWithStats extends Omit<
  * Type for CreateTournamentRequestData on the frontend side
  * Dates can be Date objects (will be serialized to strings by JSON.stringify)
  */
-export interface ClientCreateTournamentRequest extends Omit<
-  CreateTournamentRequestData,
-  "startDate" | "endDate"
-> {
+export interface ClientCreateTournamentRequest extends Omit<CreateTournamentRequestData, "startDate" | "endDate"> {
   startDate: Date | string;
   endDate: Date | string;
 }
@@ -491,10 +455,7 @@ export interface ClientCreateTournamentRequest extends Omit<
  * Type for UpdateTournamentApiData on the frontend side
  * Dates can be Date objects (will be serialized to strings by JSON.stringify)
  */
-export interface ClientUpdateTournamentRequest extends Omit<
-  UpdateTournamentApiData,
-  "startDate" | "endDate"
-> {
+export interface ClientUpdateTournamentRequest extends Omit<UpdateTournamentApiData, "startDate" | "endDate"> {
   startDate?: Date | string;
   endDate?: Date | string;
 }

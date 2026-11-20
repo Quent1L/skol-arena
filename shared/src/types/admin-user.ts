@@ -93,12 +93,7 @@ export type AdminUserDeletionBlocker = z.infer<typeof adminUserDeletionBlockerSc
 export const adminUserStatusEnum = ["active", "deactivated"] as const;
 export type AdminUserStatus = (typeof adminUserStatusEnum)[number];
 
-export const adminUserSortEnum = [
-  "displayName",
-  "role",
-  "createdAt",
-  "lastLoginAt",
-] as const;
+export const adminUserSortEnum = ["displayName", "role", "createdAt", "lastLoginAt"] as const;
 export type AdminUserSort = (typeof adminUserSortEnum)[number];
 
 export const adminUserListQuerySchema = z.object({
