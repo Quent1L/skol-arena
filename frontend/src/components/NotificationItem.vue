@@ -250,10 +250,9 @@ async function handleDelete(event: Event) {
 }
 
 const cardClasses = computed(() => [
-  'notif-card relative p-3 pl-4 rounded-xl border cursor-pointer select-none',
-  props.notif.isRead
-    ? 'bg-white border-gray-200 dark:bg-gray-800/80 dark:border-gray-700'
-    : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-600',
+  // Same surface as the app's cards: the border matches the background until hovered.
+  'notif-card relative p-3 pl-4 rounded-xl border border-gray-800 hover:border-gray-700 cursor-pointer select-none',
+  props.notif.isRead ? 'bg-gray-800/80' : 'bg-gray-800',
   blocking.value ? 'notif-card--blocking' : '',
 ])
 </script>
@@ -262,17 +261,16 @@ const cardClasses = computed(() => [
 .notif-card {
   transition:
     box-shadow 0.2s ease,
-    border-color 0.2s ease,
-    background 0.2s ease;
+    border-color 0.2s ease;
   will-change: transform;
 }
 
 .notif-card:hover {
-  box-shadow: 0 6px 18px -12px rgb(0 0 0 / 0.45);
+  box-shadow: 0 10px 24px -14px rgb(0 0 0 / 0.6);
 }
 
 /* The accent bar: a colour on the edge says what the notification is about before
-   a word is read, and doubles as the unread marker. */
+   a word is read. */
 .notif-accent {
   position: absolute;
   inset-block: 0.5rem;
