@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useNow } from '@vueuse/core'
+import { useIntervalFn, useNow } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import type { MatchVotes } from '@skol-arena/shared/types/index'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
@@ -100,7 +100,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 // Ticks every minute so the time left stays true on a page left open.
-const now = useNow({ interval: 60_000 })
+const now = useNow({ scheduler: (cb) => useIntervalFn(cb, 60_000) })
 
 const mvp = computed(() => props.votes.mvp)
 

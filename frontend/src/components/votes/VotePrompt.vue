@@ -130,7 +130,7 @@ import { screenTakenOver, waitForFreeScreen } from '@/composables/useScreenTakeo
 import { onWsEvent } from '@/composables/notification/notification.socket'
 import { useBottomNavPresence } from '@/composables/ui/useBottomNav'
 import { useViewport } from '@/composables/useViewport'
-import { useNow, useSwipe } from '@vueuse/core'
+import { useIntervalFn, useNow, useSwipe } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import { playersById } from './vote-players'
@@ -169,7 +169,7 @@ const nameOf = (id: string) => players.value.get(id)?.displayName ?? '?'
 // long as the match is still recent enough to vote on it.
 const TOURNAMENT_ROUTES = new Set(['tournament-detail', 'tournament-tab'])
 const route = useRoute()
-const now = useNow({ interval: 30_000 })
+const now = useNow({ scheduler: (cb) => useIntervalFn(cb, 30_000) })
 const onTournamentPage = computed(
   () =>
     TOURNAMENT_ROUTES.has(String(route.name ?? '')) &&

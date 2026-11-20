@@ -1,5 +1,5 @@
 import { computed, type Ref } from 'vue'
-import { useNow } from '@vueuse/core'
+import { useIntervalFn, useNow } from '@vueuse/core'
 import type { ClientBaseTournament } from '@skol-arena/shared/types/index'
 import { useConfigService } from '@/composables/config/config.service'
 
@@ -59,7 +59,7 @@ export function dateRangeIssue(
  */
 export function useMatchDateBounds(tournament: Ref<ClientBaseTournament | null>) {
   const { config } = useConfigService()
-  const now = useNow({ interval: FLOOR_REFRESH_MS })
+  const now = useNow({ scheduler: (cb) => useIntervalFn(cb, FLOOR_REFRESH_MS) })
 
   const rankedMaxAgeHours = computed(
     () => config.value?.ranked.matchMaxAgeHours ?? FALLBACK_MATCH_MAX_AGE_HOURS,
