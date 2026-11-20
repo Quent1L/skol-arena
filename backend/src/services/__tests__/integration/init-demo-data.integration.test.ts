@@ -14,7 +14,19 @@ import { count, eq, isNotNull } from "drizzle-orm";
 import { initializeDemoDataIfRequested, isDemoDataRequested } from "../../../utils/init-demo-data";
 import { initializeAdminIfNeeded } from "../../../utils/init-admin";
 import { DEMO_PEOPLE, POOL_OUTCOMES } from "../../../demo/demo-dataset";
-import { appUsers, disciplines, matches, outcomeTypes, playerMmr, tournaments, user } from "../../../db/schema";
+import {
+  appUsers,
+  disciplines,
+  fairPlayVotes,
+  matches,
+  mvpVotes,
+  outcomeTypes,
+  playerMmr,
+  rankTiers,
+  tournaments,
+  tournamentVoteConfigs,
+  user,
+} from "../../../db/schema";
 
 const ORIGINAL = process.env.INIT_DEMO_DATA;
 
@@ -135,6 +147,17 @@ describe("initializeDemoDataIfRequested", () => {
     const ladder = await testDb.select().from(playerMmr).where(eq(playerMmr.seasonId, ranked.id));
     expect(ladder.length).toBe(DEMO_PEOPLE.length);
     expect(new Set(ladder.map((p) => p.currentMmr)).size).toBeGreaterThan(1);
+
+    // Default tier names, translated by the client from their key.
+    const tiers = await testDb.select().from(rankTiers).where(eq(rankTiers.seasonId, ranked.id));
+    expect(tiers.map((t) => t.nameKey).sort()).toEqual(["CHALLENGER", "CONFIRMED", "EXPERT", "LEGEND", "ROOKIE"]);
+
+    // Fair-play everywhere it is on, MVP in the team league.
+    expect(await testDb.select().from(tournamentVoteConfigs)).toHaveLength(3);
+    const [{ n: fairPlay }] = await testDb.select({ n: count() }).from(fairPlayVotes) as [{ n: number }];
+    const [{ n: mvp }] = await testDb.select({ n: count() }).from(mvpVotes) as [{ n: number }];
+    expect(fairPlay).toBeGreaterThan(0);
+    expect(mvp).toBeGreaterThan(0);
   }, 120_000);
 
   it("makes the bootstrap admin step aside once the demo is loaded", async () => {

@@ -7,7 +7,8 @@
  * on the real services wherever one exists (entries, rulesets, brackets, MMR), so
  * the data is what the app would have produced by hand.
  */
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { FAIR_PLAY_TAGS } from "@skol-arena/shared/types/index";
 import { db } from "../config/database";
 import {
   user,
@@ -28,11 +29,15 @@ import {
   bracketMatchMetadata,
   teams,
   teamMembers,
+  tournamentVoteConfigs,
+  fairPlayVotes,
+  mvpVotes,
 } from "../db/schema";
 import { newId } from "../utils/uuid";
 import { entryRepository } from "../repository/entry.repository";
 import { tournamentRulesetRepository } from "../repository/tournament-ruleset.repository";
 import { bracketService } from "../services/bracket.service";
+import type { Random } from "./random";
 
 // ---------------------------------------------------------------------------
 // Users
@@ -395,4 +400,94 @@ export async function playBracketRound(
     await bracketService.advanceWinnerToNextRound(meta.matchId);
     await bracketService.advanceLoserToNextRound(meta.matchId);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Fair-play and MVP votes
+// ---------------------------------------------------------------------------
+
+type VoteConfigRow = Omit<typeof tournamentVoteConfigs.$inferInsert, "id" | "tournamentId">;
+
+/** Turns fair-play and MVP votes on, with the defaults otherwise. */
+export async function enableVotes(tournamentId: string, config: VoteConfigRow = { fairPlayEnabled: true, mvpEnabled: true }) {
+  await db.insert(tournamentVoteConfigs).values({ tournamentId, ...config });
+}
+
+export type VoteSeedOptions = {
+  random: Random;
+  now: Date;
+  /** Players who always get a 👍 and draw most MVP ballots, so the rankings have leaders. */
+  favourites?: string[];
+  /** The one player who collects 👎, so the organizer's fair-play view has something to show. */
+  hothead?: string;
+};
+
+type Lineup = { matchId: string; createdAt: Date; winnerSide: "A" | "B" | null; sides: [string[], string[]] };
+
+/** Players of each side of every finalized match: only those count in the vote stats. */
+async function finalizedLineups(tournamentId: string): Promise<Lineup[]> {
+  const rows = await db
+    .select({
+      matchId: matches.id,
+      createdAt: matches.createdAt,
+      winnerSide: matches.winnerSide,
+      position: matchSides.position,
+      playerId: tournamentEntryPlayers.playerId,
+    })
+    .from(matches)
+    .innerJoin(matchSides, eq(matchSides.matchId, matches.id))
+    .innerJoin(tournamentEntryPlayers, eq(tournamentEntryPlayers.entryId, matchSides.entryId))
+    .where(and(eq(matches.tournamentId, tournamentId), eq(matches.status, "finalized")));
+  const byMatch = new Map<string, Lineup>();
+  for (const row of rows) {
+    const lineup = byMatch.get(row.matchId) ?? { ...row, winnerSide: row.winnerSide as Lineup["winnerSide"], sides: [[], []] };
+    lineup.sides[row.position === 1 ? 0 : 1].push(row.playerId);
+    byMatch.set(row.matchId, lineup);
+  }
+  return [...byMatch.values()];
+}
+
+function fairPlayVote(opts: VoteSeedOptions, target: string) {
+  const downOdds = target === opts.hothead ? 0.35 : 0.04;
+  if (opts.favourites?.includes(target) || opts.random.next() >= downOdds) return { value: "up" as const, tags: null };
+  const tags = target === opts.hothead ? ["attitude", "abusive_dispute"] : FAIR_PLAY_TAGS;
+  return { value: "down" as const, tags: [tags[opts.random.int(0, tags.length - 1)]!] };
+}
+
+/** A teammate or opponent from the winning side, a favourite most of the time. */
+function mvpPick(opts: VoteSeedOptions, lineup: Lineup, voter: string): string | null {
+  const winners = lineup.winnerSide ? lineup.sides[lineup.winnerSide === "A" ? 0 : 1] : lineup.sides.flat();
+  const candidates = winners.filter((p) => p !== voter);
+  if (candidates.length === 0) return null;
+  const favourite = candidates.find((p) => opts.favourites?.includes(p));
+  if (favourite && opts.random.next() < 0.7) return favourite;
+  return candidates[opts.random.int(0, candidates.length - 1)]!;
+}
+
+/**
+ * Ballots on every finalized match of a tournament, cast shortly after it: most
+ * players rate their opponents, and in team matches they name an MVP.
+ */
+export async function seedVotes(tournamentId: string, opts: VoteSeedOptions): Promise<void> {
+  const fairPlay: (typeof fairPlayVotes.$inferInsert)[] = [];
+  const mvp: (typeof mvpVotes.$inferInsert)[] = [];
+  for (const lineup of await finalizedLineups(tournamentId)) {
+    const createdAt = new Date(Math.min(lineup.createdAt.getTime() + 20 * 60_000, opts.now.getTime()));
+    const teamMatch = lineup.sides.some((side) => side.length >= 2);
+    for (const [index, side] of lineup.sides.entries()) {
+      for (const voterId of side) {
+        if (opts.random.next() < 0.25) continue; // not everyone bothers
+        const base = { matchId: lineup.matchId, voterId, createdAt, updatedAt: createdAt };
+        for (const targetId of lineup.sides[1 - index]!) fairPlay.push({ ...base, targetId, ...fairPlayVote(opts, targetId) });
+        const mvpTarget = teamMatch ? mvpPick(opts, lineup, voterId) : null;
+        if (mvpTarget) mvp.push({ ...base, targetId: mvpTarget, voterRole: "player" });
+      }
+    }
+  }
+  await insertInChunks(fairPlay, (chunk) => db.insert(fairPlayVotes).values(chunk));
+  await insertInChunks(mvp, (chunk) => db.insert(mvpVotes).values(chunk));
+}
+
+async function insertInChunks<T>(rows: T[], insert: (chunk: T[]) => Promise<unknown>): Promise<void> {
+  for (let i = 0; i < rows.length; i += 500) await insert(rows.slice(i, i + 500));
 }

@@ -17,7 +17,6 @@ import {
   tournamentScoringConfigs,
   championshipConfigs,
   rankedSeasonConfigs,
-  rankTiers,
   bracketConfigs,
   bracketRounds,
   tournamentAdmins,
@@ -31,6 +30,7 @@ import { bracketService } from "../services/bracket.service";
 import { rankedSeasonService } from "../services/ranked-season.service";
 import { rulesMatchHistoryService } from "../services/rules-match-history.service";
 import { playerMmrRepository } from "../repository/player-mmr.repository";
+import { rankedSeasonRepository } from "../repository/ranked-season.repository";
 import { readAvatar } from "./avatars";
 import { buildPairings, createRandom, favouredWins, type Random } from "./random";
 import {
@@ -38,6 +38,8 @@ import {
   createCompetition,
   createDiscipline,
   createTeam,
+  enableVotes,
+  seedVotes,
   insertMatch,
   outcomeOf,
   playBracketRound,
@@ -342,6 +344,8 @@ async function seedPoolLeague(ctx: DemoContext, pool: SeededDiscipline): Promise
   const played = await playLeague(ctx, pool, tournamentId, opts);
   const pending = await playPendingForAdmin(ctx, pool, tournamentId, ["ava", "noah", "maya", "ethan"]);
   await standingsService.recalculatePointsInternal(tournamentId);
+  await enableVotes(tournamentId, { fairPlayEnabled: true });
+  await seedVotes(tournamentId, voteOptions(ctx, ["hana", "oliver"], "mateo"));
   return played + pending;
 }
 
@@ -361,17 +365,18 @@ async function seedSpringLeague(ctx: DemoContext, pool: SeededDiscipline): Promi
   return played;
 }
 
+function voteOptions(ctx: DemoContext, favourites: string[], hothead?: string) {
+  return {
+    random: ctx.random,
+    now: ctx.now,
+    favourites: favourites.map((key) => idOf(ctx, key)),
+    hothead: hothead ? idOf(ctx, hothead) : undefined,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Ranked season
 // ---------------------------------------------------------------------------
-
-const RANK_TIERS = [
-  { level: 1, name: "Bronze", percentile: 0, minMmr: 700, subRanks: 3, iconClass: "fa fa-seedling" },
-  { level: 2, name: "Silver", percentile: 0.35, minMmr: 900, subRanks: 3, iconClass: "fa fa-shield-halved" },
-  { level: 3, name: "Gold", percentile: 0.6, minMmr: 1100, subRanks: 3, iconClass: "fa fa-star" },
-  { level: 4, name: "Platinum", percentile: 0.82, minMmr: 1300, subRanks: 3, iconClass: "fa fa-gem" },
-  { level: 5, name: "Diamond", percentile: 0.94, minMmr: 1500, subRanks: 1, iconClass: "fa fa-crown" },
-];
 
 async function createRankedSeason(ctx: DemoContext, pool: SeededDiscipline): Promise<string> {
   const row = baseRow(ctx, pool, {
@@ -390,7 +395,8 @@ async function createRankedSeason(ctx: DemoContext, pool: SeededDiscipline): Pro
   });
   const seasonId = await createCompetition(row, DEMO_PEOPLE.map((p) => idOf(ctx, p.key)));
   await db.insert(rankedSeasonConfigs).values({ tournamentId: seasonId, baseMmr: 1000, kFactor: 32, placementMatches: 5 });
-  await db.insert(rankTiers).values(RANK_TIERS.map((tier) => ({ seasonId, ...tier })));
+  // The default ladder: tiers named by key, so they follow the visitor's language.
+  await rankedSeasonRepository.initDefaultTiers(seasonId, 1000);
   return seasonId;
 }
 
@@ -451,6 +457,8 @@ async function seedRankedSeason(ctx: DemoContext, pool: SeededDiscipline): Promi
   }
 
   await computeSeasonStandings(seasonId);
+  await enableVotes(seasonId, { fairPlayEnabled: true });
+  await seedVotes(seasonId, voteOptions(ctx, ["sofia", "lucas"], "ethan"));
   return matchIds.length;
 }
 
@@ -560,6 +568,9 @@ async function seedDoublesLeague(ctx: DemoContext, discipline: SeededDiscipline)
     });
   }
   await standingsService.recalculatePointsInternal(tournamentId);
+  // MVP only means something in team matches: the doubles are where it shows.
+  await enableVotes(tournamentId);
+  await seedVotes(tournamentId, voteOptions(ctx, ["ava", "noah"]));
   return pairs.length;
 }
 

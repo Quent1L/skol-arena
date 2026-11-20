@@ -24,7 +24,6 @@ import {
   tournamentScoringConfigs,
   championshipConfigs,
   rankedSeasonConfigs,
-  rankTiers,
   bracketConfigs,
   bracketRounds,
 } from "../src/db/schema";
@@ -35,6 +34,7 @@ import { standingsService } from "../src/services/standings.service";
 import { mmrCalculationService } from "../src/services/mmr-calculation.service";
 import { bracketService } from "../src/services/bracket.service";
 import { rankedSeasonService } from "../src/services/ranked-season.service";
+import { rankedSeasonRepository } from "../src/repository/ranked-season.repository";
 import { readAvatar, type AvatarName } from "../src/demo/avatars";
 import { buildPairings as pairUp, createRandom, favouredWins as favoured } from "../src/demo/random";
 import {
@@ -44,6 +44,8 @@ import {
   insertMatch as insertSeededMatch,
   outcomeOf,
   playBracketRound,
+  enableVotes,
+  seedVotes,
   type MatchStatus,
 } from "../src/demo/builders";
 
@@ -461,13 +463,8 @@ async function seedRankedSeason(discipline: DisciplineIds): Promise<string> {
     kFactor: 32,
     placementMatches: 5,
   });
-  await db.insert(rankTiers).values([
-    { seasonId, level: 1, name: "Bronze", percentile: 0, minMmr: 700, subRanks: 3, iconClass: "fa fa-seedling" },
-    { seasonId, level: 2, name: "Silver", percentile: 0.35, minMmr: 900, subRanks: 3, iconClass: "fa fa-shield-halved" },
-    { seasonId, level: 3, name: "Gold", percentile: 0.6, minMmr: 1100, subRanks: 3, iconClass: "fa fa-star" },
-    { seasonId, level: 4, name: "Platinum", percentile: 0.82, minMmr: 1300, subRanks: 3, iconClass: "fa fa-gem" },
-    { seasonId, level: 5, name: "Diamond", percentile: 0.94, minMmr: 1500, subRanks: 1, iconClass: "fa fa-crown" },
-  ]);
+  // The default ladder: tiers named by key, so the shots follow the capture language.
+  await rankedSeasonRepository.initDefaultTiers(seasonId, 1000);
 
   const pairs = buildPairings(playerIds, 2).slice(0, 84);
   const matchIds: string[] = [];
@@ -532,6 +529,83 @@ async function seedRankedSeason(discipline: DisciplineIds): Promise<string> {
 
   console.log(`Seeded ranked season (${matchIds.length} matches, MMR computed)`);
   return seasonId;
+}
+
+// ---------------------------------------------------------------------------
+// Doubles league (fair-play and MVP votes)
+// ---------------------------------------------------------------------------
+
+const DOUBLES_KEYS = ["theo", "camille", "ilyas", "marta", "lucas", "anais", "youssef", "nina"];
+
+/** Four of the doubles players drawn into two pairs, side A first. */
+function drawDoubles(): [string[], string[]] {
+  const four = random.shuffle(DOUBLES_KEYS.map(id)).slice(0, 4);
+  return [four.slice(0, 2), four.slice(2)];
+}
+
+function doublesStrength(players: string[]): number {
+  return players.reduce((sum, p) => sum + (strengthOf.get(p) ?? 0.5), 0) / players.length;
+}
+
+async function insertDoubles(tournamentId: string, discipline: DisciplineIds, sides: [string[], string[]], playedAt: Date) {
+  const [scoreA, scoreB] = drawScore(favoured(random, doublesStrength(sides[0]), doublesStrength(sides[1])));
+  return insertSeededMatch({
+    tournamentId,
+    sides: [
+      { playerIds: sides[0], score: scoreA },
+      { playerIds: sides[1], score: scoreB },
+    ],
+    outcomeTypeId: discipline.standard,
+    playedAt,
+  });
+}
+
+/**
+ * Flex 2v2 league dated on the real clock: votes only count for "of the week" over
+ * the last seven real days, and MVP only exists in team matches. Its newest match,
+ * Theo's, is left without ballots so the match screen shows the vote panel open.
+ */
+async function seedDoublesLeague(discipline: DisciplineIds): Promise<string> {
+  const tournamentId = newId();
+  await createCompetition(
+    {
+      id: tournamentId,
+      name: "Doubles Night League",
+      description: "Pick a partner on the night, play two against two. Rate your opponents and name the MVP after each game.",
+      mode: "championship",
+      teamMode: "flex",
+      status: "ongoing",
+      minTeamSize: 2,
+      maxTeamSize: 2,
+      scoreEnabled: true,
+      allowDraw: false,
+      minScore: 0,
+      maxScore: 10,
+      validationMode: "strict",
+      validationTimerHours: 48,
+      startDate: dateStr(hoursAgo(24 * 24)),
+      endDate: dateStr(hoursAgo(-24 * 30)),
+      disciplineId: discipline.discipline,
+      createdBy: id(ADMIN.key),
+      createdAt: hoursAgo(24 * 26),
+    },
+    DOUBLES_KEYS.map(id),
+  );
+  await db.insert(tournamentScoringConfigs).values({ tournamentId, pointPerVictory: 3, pointPerDraw: 1, pointPerLoss: 0 });
+  await db.insert(championshipConfigs).values({ tournamentId, maxMatchesPerPlayer: 24, maxTimesWithSamePartner: 8, maxTimesWithSameOpponent: 8 });
+  await enableVotes(tournamentId);
+
+  const count = 36;
+  for (let i = 0; i < count; i++) {
+    await insertDoubles(tournamentId, discipline, drawDoubles(), hoursAgo(24 * 22 - i * ((24 * 21) / count)));
+  }
+  await seedVotes(tournamentId, { random, now: REAL_NOW, favourites: [id("ilyas"), id("anais")], hothead: id("youssef") });
+
+  const theoSide = [id("theo"), id("marta")];
+  await insertDoubles(tournamentId, discipline, [theoSide, [id("ilyas"), id("nina")]], hoursAgo(3));
+  await standingsService.recalculatePointsInternal(tournamentId);
+  console.log(`Seeded doubles league "Doubles Night League" (${count + 1} matches, votes)`);
+  return tournamentId;
 }
 
 // ---------------------------------------------------------------------------
@@ -654,7 +728,7 @@ async function main() {
     "501, straight out. Report the number of legs won by each side.",
   );
 
-  await seedChampionship({
+  const summerId = await seedChampionship({
     name: "Summer League 2026",
     description:
       "The main league. Play when you are both free, report the score, and the table updates itself.",
@@ -681,6 +755,10 @@ async function main() {
 
   await seedRankedSeason(tableFootball);
   await seedBracket(tableFootball);
+  await seedDoublesLeague(tableFootball);
+  // Last, so its draws leave the ladder and bracket above exactly as they were.
+  await enableVotes(summerId, { fairPlayEnabled: true });
+  await seedVotes(summerId, { random, now: REAL_NOW, favourites: [id("camille")], hothead: id("jonas") });
 
   console.log("Showcase seed complete.");
   process.exit(0);
