@@ -62,7 +62,7 @@
         </div>
       </button>
 
-      <!-- Format & règles -->
+      <!-- Format -->
       <button
         @click="navigateTo('settings')"
         class="group flex items-center justify-between p-4 sm:p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md active:scale-[0.98] transition-all text-left cursor-pointer"
@@ -142,7 +142,7 @@
         />
       </button>
 
-      <!-- Rules -->
+      <!-- Rulebook: the written text, not the settings -->
       <button
         v-if="store.tournament!.rulesId"
         @click="router.push(`/rules/${store.tournament!.rulesId}`)"
@@ -174,11 +174,6 @@
       class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-6 tournament-description text-gray-700 dark:text-gray-300"
       v-html="safeDescription"
     />
-
-    <MmrExplainerCard
-      v-if="store.tournament!.mode === 'ranked'"
-      :tournament-id="route.params.id as string"
-    />
   </div>
 </template>
 
@@ -187,7 +182,6 @@ import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useTournamentDetailStore } from '@/stores/tournamentDetail.store'
-import MmrExplainerCard from '@/components/ranked/MmrExplainerCard.vue'
 import { sanitizeHtml } from '@/utils/sanitize-html'
 
 const store = useTournamentDetailStore()

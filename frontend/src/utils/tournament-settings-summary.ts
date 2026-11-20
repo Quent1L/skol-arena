@@ -5,7 +5,7 @@ import {
   resolveVoteConfig,
 } from '@skol-arena/shared'
 
-/** One line of the "Format & rules" tab: an icon, a heading and a plain sentence. */
+/** One line of the "Format" tab: an icon, a heading and a plain sentence. */
 export interface SettingsRow {
   id: string
   icon: string

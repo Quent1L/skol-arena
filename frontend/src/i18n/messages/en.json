@@ -2189,7 +2189,7 @@
       "matches": "Matches",
       "standings": "Standings",
       "stats": "Stats",
-      "settings": "Format & rules",
+      "settings": "Format",
       "teams": "Teams",
       "participants": "Participants"
     }
@@ -2248,15 +2248,15 @@
       "title": "Participants"
     },
     "rules": {
-      "subtitle": "View rules",
-      "title": "Rules"
+      "subtitle": "Read the full rulebook",
+      "title": "Rulebook"
     },
     "teams": {
       "subtitle": "Manage teams",
       "title": "Teams"
     },
     "settings": {
-      "title": "Format & rules",
+      "title": "Format",
       "subtitle": "How matches are played"
     }
   },
@@ -3068,7 +3068,7 @@
     "range": "{min} vs {min} to {max} vs {max}"
   },
   "tournamentSettingsTab": {
-    "intro": "The key rules of this competition, as they are set up.",
+    "intro": "How this competition is set up: match format, points, result validation.",
     "mode": {
       "title": "Competition type",
       "championship": "League: play your matches whenever you like, every result earns points in the standings.",
