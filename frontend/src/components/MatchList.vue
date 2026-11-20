@@ -120,6 +120,7 @@
         class="pr-1"
         :class="props.scrollMode === 'container' ? 'overflow-y-auto' : undefined"
         :style="props.scrollMode === 'container' ? 'max-height: calc(100vh - 200px)' : undefined"
+        @scroll.passive="rememberScroll"
       >
         <div :class="gridClass">
           <MatchCard
@@ -141,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent, onUnmounted, watch } from 'vue'
+import { ref, computed, defineAsyncComponent, nextTick, onActivated, onUnmounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useInfiniteScroll } from '@vueuse/core'
@@ -373,6 +374,17 @@ useInfiniteScroll(
     canLoadMore: () => hasMore.value && !loading.value && props.scrollMode !== 'none',
   },
 )
+
+// A kept-alive page detaches this list while a match is open, and a detached element
+// drops its scrollTop: the router only restores the window's, so the list restores its own.
+let savedScrollTop = 0
+function rememberScroll() {
+  if (container.value?.isConnected) savedScrollTop = container.value.scrollTop
+}
+onActivated(async () => {
+  await nextTick()
+  if (container.value) container.value.scrollTop = savedScrollTop
+})
 
 function resetFilters() {
   filtersStore.reset()

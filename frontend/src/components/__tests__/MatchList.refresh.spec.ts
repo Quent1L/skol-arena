@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { KeepAlive, defineComponent, h, ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createI18n } from 'vue-i18n'
@@ -104,5 +105,36 @@ describe('MatchList — live MVP', () => {
     expect(list).toHaveBeenCalledTimes(1)
     const entry = wrapper.findComponent({ name: 'MatchCard' }).props('entry') as ClientMatchCard
     expect(entry.sides.flatMap((s) => s.players).filter((p) => p.isMvp).map((p) => p.id)).toEqual(['p1'])
+  })
+})
+
+describe('MatchList — kept alive', () => {
+  it('restores its own scroll position when the page comes back', async () => {
+    const shown = ref(true)
+    const Host = defineComponent({
+      setup: () => () =>
+        h(KeepAlive, null, [
+          shown.value ? h(MatchList, { tournamentId: 't1', scrollMode: 'container' }) : h('div'),
+        ]),
+    })
+    const wrapper = mount(Host, {
+      attachTo: document.body,
+      global: { plugins: [i18n], stubs: { MatchCard: true, PlayerPickerDialog: true } },
+    })
+    await flushPromises()
+
+    const list = wrapper.find('.overflow-y-auto').element as HTMLElement
+    // jsdom has no layout: give the element a writable scrollTop.
+    Object.defineProperty(list, 'scrollTop', { value: 640, writable: true })
+    list.dispatchEvent(new Event('scroll'))
+
+    shown.value = false
+    await flushPromises()
+    list.scrollTop = 0 // what a detached element reports
+    shown.value = true
+    await flushPromises()
+
+    expect(list.scrollTop).toBe(640)
+    wrapper.unmount()
   })
 })
