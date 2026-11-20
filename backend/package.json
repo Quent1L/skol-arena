@@ -24,7 +24,7 @@
     "@standard-community/standard-json": "^0.3.5",
     "@standard-community/standard-openapi": "^0.2.9",
     "better-auth": "catalog:",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.9",
     "drizzle-orm": "^0.45.2",
     "graphile-worker": "^0.17.3",
     "hono": "^4.13.3",
