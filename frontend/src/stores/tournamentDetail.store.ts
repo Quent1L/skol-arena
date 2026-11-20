@@ -165,8 +165,7 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
         label: i18n.global.t('common.edit'),
         icon: 'i-fa7-solid:pencil',
         command: () => router.push(editPath),
-      })
-      items.push({
+      }, {
         label: i18n.global.t('tournamentDetailMenu.announcements'),
         icon: 'i-fa7-solid:bullhorn',
         command: () => {

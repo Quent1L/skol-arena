@@ -394,7 +394,7 @@ async function initialize() {
   await updateIndicator()
   await maybeAutoOpenRewind()
   // Announcements for this tournament's players, shown by the app-wide pop-up host.
-  if (store.isAuthenticated) void announcementPopups.loadPending(tournamentId.value)
+  if (store.isAuthenticated) announcementPopups.loadPending(tournamentId.value)
 
   offWsHandlers.push(
     onWsOpen(() => sendWsMessage({ event: 'subscribe_tournament', tournamentId: tournamentId.value })),

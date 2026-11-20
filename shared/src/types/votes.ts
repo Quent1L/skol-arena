@@ -215,7 +215,7 @@ export function designateMvp(
   }
   const valid = [...tally].filter(([, t]) => t.fromPlayer && t.votes >= config.mvpMinVotes);
   const top = Math.max(0, ...valid.map(([, t]) => t.votes));
-  const leaders = valid.filter(([, t]) => t.votes === top).map(([id]) => id).sort();
+  const leaders = valid.filter(([, t]) => t.votes === top).map(([id]) => id).sort((a, b) => (a < b ? -1 : Number(a > b))); // code-unit order: locale-independent
   if (leaders.length > 1 && config.mvpTieRule === "none") return [];
   return leaders;
 }

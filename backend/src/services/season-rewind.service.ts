@@ -329,7 +329,7 @@ export class SeasonRewindService {
     extras: {
       badges: BadgeRow[];
       nextSeason: RewindConclusion["nextSeason"];
-      votes?: PlayerRewindPayload["votes"];
+      votes: PlayerRewindPayload["votes"];
     },
   ): PlayerRewindPayload {
     const rank = context.rankByPlayer.get(agg.playerId) ?? 0;

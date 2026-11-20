@@ -88,7 +88,7 @@
           </div>
         </template>
 
-        <p v-else class="text-sm font-medium text-highlighted" role="status">{{ t('votePrompt.thanks') }}</p>
+        <output v-else class="block text-sm font-medium text-highlighted">{{ t('votePrompt.thanks') }}</output>
       </div>
 
       <UButton

@@ -43,6 +43,8 @@ watch(
 )
 
 const percent = (rate: number | null) => (rate == null ? '—' : `${Math.round(rate * 100)} %`)
+const rankSuffix = (rank: number | null) => (rank ? ` (#${rank})` : '')
+const tagLabel = (tag: string) => t(`matchVotes.fairPlay.tags.${tag}`)
 
 const hasMine = computed(() => {
   const m = mine.value
@@ -54,7 +56,7 @@ const myKpis = computed(() => {
   return [
     {
       label: t('voteStats.mine.fairPlayRate'),
-      value: m.fairPlay.rate == null ? '—' : `${percent(m.fairPlay.rate)}${m.fairPlay.rank ? ` (#${m.fairPlay.rank})` : ''}`,
+      value: m.fairPlay.rate == null ? '—' : percent(m.fairPlay.rate) + rankSuffix(m.fairPlay.rank),
     },
     { label: t('voteStats.mine.votesCast'), value: `${m.cast.count} · ${percent(m.cast.upRate)} 👍` },
     { label: t('voteStats.mine.mvpTitles'), value: `${m.mvp.titles} / ${m.mvp.teamMatches}` },
@@ -63,6 +65,6 @@ const myKpis = computed(() => {
 })
 
 const tagLine = computed(() =>
-  mine.value!.fairPlay.tags.map((x) => `${t(`matchVotes.fairPlay.tags.${x.tag}`)} ×${x.count}`).join(', '),
+  mine.value!.fairPlay.tags.map((x) => `${tagLabel(x.tag)} ×${x.count}`).join(', '),
 )
 </script>

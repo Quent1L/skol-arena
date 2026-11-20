@@ -50,7 +50,7 @@ const composing = ref(false)
 
 watch(open, (isOpen) => {
   composing.value = false
-  if (isOpen) void load(props.tournamentId).catch((err: Error) => showError(err))
+  if (isOpen) load(props.tournamentId).catch((err: Error) => showError(err))
 })
 
 async function onPublish(payload: CreateAnnouncementInput) {

@@ -115,8 +115,9 @@ async function reveal(playerId: string) {
   }
 }
 
+const tagLabel = (tag: string) => t(`matchVotes.fairPlay.tags.${tag}`)
 const tagLine = (tags: { tag: string; count: number }[]) =>
-  tags.map((x) => `${t(`matchVotes.fairPlay.tags.${x.tag}`)} ×${x.count}`).join(', ')
+  tags.map((x) => `${tagLabel(x.tag)} ×${x.count}`).join(', ')
 
 onMounted(() => {
   void getTournament(tournamentId.value)

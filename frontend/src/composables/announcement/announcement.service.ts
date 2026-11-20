@@ -12,34 +12,34 @@ import {
  */
 const popupQueue = ref<ClientAnnouncementPopup[]>([])
 
+/** Without a tournament: the app-wide pop-ups. Never throws — a pop-up is a nicety. */
+async function loadPending(tournamentId?: string) {
+  try {
+    const pending = await announcementApi.pending(tournamentId)
+    const known = new Set(popupQueue.value.map((a) => a.id))
+    popupQueue.value = [...popupQueue.value, ...pending.filter((a) => !known.has(a.id))]
+  } catch {
+    // Not shown this time; it will be on the next visit.
+  }
+}
+
+/** Dismisses the pop-up on screen. Its copy in the bell is marked read server-side. */
+async function dismissCurrent() {
+  const [current, ...rest] = popupQueue.value
+  if (!current) return
+  popupQueue.value = rest
+  try {
+    await announcementApi.markSeen(current.id)
+  } catch {
+    // It shows again next time rather than being lost.
+  }
+}
+
+function clear() {
+  popupQueue.value = []
+}
+
 export function useAnnouncementPopups() {
-  /** Without a tournament: the app-wide pop-ups. Never throws — a pop-up is a nicety. */
-  async function loadPending(tournamentId?: string) {
-    try {
-      const pending = await announcementApi.pending(tournamentId)
-      const known = new Set(popupQueue.value.map((a) => a.id))
-      popupQueue.value = [...popupQueue.value, ...pending.filter((a) => !known.has(a.id))]
-    } catch {
-      // Not shown this time; it will be on the next visit.
-    }
-  }
-
-  /** Dismisses the pop-up on screen. Its copy in the bell is marked read server-side. */
-  async function dismissCurrent() {
-    const [current, ...rest] = popupQueue.value
-    if (!current) return
-    popupQueue.value = rest
-    try {
-      await announcementApi.markSeen(current.id)
-    } catch {
-      // It shows again next time rather than being lost.
-    }
-  }
-
-  function clear() {
-    popupQueue.value = []
-  }
-
   return {
     current: computed(() => popupQueue.value[0] ?? null),
     remaining: computed(() => Math.max(0, popupQueue.value.length - 1)),

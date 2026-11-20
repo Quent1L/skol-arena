@@ -145,7 +145,7 @@ describe("initializeDemoDataIfRequested", () => {
     // The ladder was computed by the engine, not left at the base rating.
     const ranked = rows.find((t) => t.mode === "ranked")!;
     const ladder = await testDb.select().from(playerMmr).where(eq(playerMmr.seasonId, ranked.id));
-    expect(ladder.length).toBe(DEMO_PEOPLE.length);
+    expect(ladder).toHaveLength(DEMO_PEOPLE.length);
     expect(new Set(ladder.map((p) => p.currentMmr)).size).toBeGreaterThan(1);
 
     // Default tier names, translated by the client from their key.

@@ -73,14 +73,14 @@ const tournamentOptions = computed(() => [
 
 watch(composing, (isOpen) => {
   if (isOpen && tournaments.value.length === 0) {
-    void listTournaments().catch((err: Error) => showError(err))
+    listTournaments().catch((err: Error) => showError(err))
   }
   // loadSeasons keeps its own error state instead of throwing
   if (isOpen && seasons.value.length === 0) void loadSeasons()
 })
 
 onMounted(() => {
-  void load().catch((err: Error) => showError(err))
+  load().catch((err: Error) => showError(err))
 })
 
 async function onPublish(payload: CreateAnnouncementInput) {

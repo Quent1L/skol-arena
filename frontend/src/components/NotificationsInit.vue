@@ -17,7 +17,7 @@ watch(isAuthenticated, (authenticated) => {
   if (authenticated) {
     void load()
     // App-wide announcements show once at launch; a tournament's when it is opened.
-    void announcementPopups.loadPending()
+    announcementPopups.loadPending()
     connect()
   } else {
     announcementPopups.clear()

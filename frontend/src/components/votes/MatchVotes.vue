@@ -19,9 +19,9 @@
       @remove="removeFairPlay"
       @team-up="teamUp"
     />
-    <p v-if="justSaved" class="text-right text-xs text-primary" role="status">
+    <output v-if="justSaved" class="block text-right text-xs text-primary">
       {{ t('matchVotes.saved') }}
-    </p>
+    </output>
   </div>
 </template>
 

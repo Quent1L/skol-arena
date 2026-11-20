@@ -20,7 +20,7 @@ export const createAnnouncementSchema = z
       .min(1, vmsg("validation.contentRequired"))
       .max(ANNOUNCEMENT_BODY_MAX, vmsg("validation.announcementBodyMax")),
     audience: announcementAudienceSchema,
-    tournamentId: z.string().uuid().nullable().optional(),
+    tournamentId: z.uuid().nullable().optional(),
     /** Delivered as a notification in the bell (and as a push on subscribed devices). */
     inFeed: z.boolean(),
     /** Shown once as a pop-up: on opening the tournament, or the app for `all`. */
@@ -53,12 +53,12 @@ export const createAnnouncementSchema = z
   });
 
 export const listAnnouncementsQuerySchema = z.object({
-  tournamentId: z.string().uuid().optional(),
+  tournamentId: z.uuid().optional(),
 });
 
 export const pendingAnnouncementsQuerySchema = z.object({
   /** Without it, only the app-wide pop-ups are returned. */
-  tournamentId: z.string().uuid().optional(),
+  tournamentId: z.uuid().optional(),
 });
 
 export const announcementSchema = z

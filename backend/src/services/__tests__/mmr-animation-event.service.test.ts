@@ -645,6 +645,6 @@ describe("markViewed", () => {
     await mmrAnimationEventService.markViewed(["evt-1"], "player-1");
 
     expect(mockNotificationService.markMatchCreatedRead.mock.calls[0]).toEqual(["player-1", ["match-1"]]);
-    expect(mockRuleFiringRepo.markSeen.mock.calls.length).toBe(0);
+    expect(mockRuleFiringRepo.markSeen).not.toHaveBeenCalled();
   });
 });

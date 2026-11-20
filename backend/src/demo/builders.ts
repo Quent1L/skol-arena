@@ -409,8 +409,8 @@ export async function playBracketRound(
 type VoteConfigRow = Omit<typeof tournamentVoteConfigs.$inferInsert, "id" | "tournamentId">;
 
 /** Turns fair-play and MVP votes on, with the defaults otherwise. */
-export async function enableVotes(tournamentId: string, config: VoteConfigRow = { fairPlayEnabled: true, mvpEnabled: true }) {
-  await db.insert(tournamentVoteConfigs).values({ tournamentId, ...config });
+export async function enableVotes(tournamentId: string, config?: VoteConfigRow) {
+  await db.insert(tournamentVoteConfigs).values({ tournamentId, ...(config ?? { fairPlayEnabled: true, mvpEnabled: true }) });
 }
 
 export type VoteSeedOptions = {
@@ -456,7 +456,9 @@ function fairPlayVote(opts: VoteSeedOptions, target: string) {
 
 /** A teammate or opponent from the winning side, a favourite most of the time. */
 function mvpPick(opts: VoteSeedOptions, lineup: Lineup, voter: string): string | null {
-  const winners = lineup.winnerSide ? lineup.sides[lineup.winnerSide === "A" ? 0 : 1] : lineup.sides.flat();
+  const [sideA, sideB] = lineup.sides;
+  let winners = lineup.sides.flat();
+  if (lineup.winnerSide) winners = lineup.winnerSide === "A" ? sideA : sideB;
   const candidates = winners.filter((p) => p !== voter);
   if (candidates.length === 0) return null;
   const favourite = candidates.find((p) => opts.favourites?.includes(p));
@@ -471,21 +473,29 @@ function mvpPick(opts: VoteSeedOptions, lineup: Lineup, voter: string): string |
 export async function seedVotes(tournamentId: string, opts: VoteSeedOptions): Promise<void> {
   const fairPlay: (typeof fairPlayVotes.$inferInsert)[] = [];
   const mvp: (typeof mvpVotes.$inferInsert)[] = [];
-  for (const lineup of await finalizedLineups(tournamentId)) {
-    const createdAt = new Date(Math.min(lineup.createdAt.getTime() + 20 * 60_000, opts.now.getTime()));
-    const teamMatch = lineup.sides.some((side) => side.length >= 2);
-    for (const [index, side] of lineup.sides.entries()) {
-      for (const voterId of side) {
-        if (opts.random.next() < 0.25) continue; // not everyone bothers
-        const base = { matchId: lineup.matchId, voterId, createdAt, updatedAt: createdAt };
-        for (const targetId of lineup.sides[1 - index]!) fairPlay.push({ ...base, targetId, ...fairPlayVote(opts, targetId) });
-        const mvpTarget = teamMatch ? mvpPick(opts, lineup, voterId) : null;
-        if (mvpTarget) mvp.push({ ...base, targetId: mvpTarget, voterRole: "player" });
-      }
-    }
-  }
+  for (const lineup of await finalizedLineups(tournamentId)) castMatchBallots(opts, lineup, fairPlay, mvp);
   await insertInChunks(fairPlay, (chunk) => db.insert(fairPlayVotes).values(chunk));
   await insertInChunks(mvp, (chunk) => db.insert(mvpVotes).values(chunk));
+}
+
+/** One match's ballots, cast 20 minutes after it, appended to `fairPlay` and `mvp`. */
+function castMatchBallots(
+  opts: VoteSeedOptions,
+  lineup: Lineup,
+  fairPlay: (typeof fairPlayVotes.$inferInsert)[],
+  mvp: (typeof mvpVotes.$inferInsert)[],
+): void {
+  const createdAt = new Date(Math.min(lineup.createdAt.getTime() + 20 * 60_000, opts.now.getTime()));
+  const teamMatch = lineup.sides.some((side) => side.length >= 2);
+  for (const [index, side] of lineup.sides.entries()) {
+    for (const voterId of side) {
+      if (opts.random.next() < 0.25) continue; // not everyone bothers
+      const base = { matchId: lineup.matchId, voterId, createdAt, updatedAt: createdAt };
+      for (const targetId of lineup.sides[1 - index]!) fairPlay.push({ ...base, targetId, ...fairPlayVote(opts, targetId) });
+      const mvpTarget = teamMatch ? mvpPick(opts, lineup, voterId) : null;
+      if (mvpTarget) mvp.push({ ...base, targetId: mvpTarget, voterRole: "player" });
+    }
+  }
 }
 
 async function insertInChunks<T>(rows: T[], insert: (chunk: T[]) => Promise<unknown>): Promise<void> {
