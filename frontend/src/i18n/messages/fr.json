@@ -2209,6 +2209,10 @@
     "statusOngoing": "En cours",
     "statusOpen": "Ouvert"
   },
+  "tournamentNotStarted": {
+    "title": "Commence le {date}",
+    "message": "Se déroule du {start} au {end}. Le classement et les stats apparaîtront avec les premiers résultats ; les matchs peuvent déjà être planifiés."
+  },
   "tournamentInfosTab": {
     "badges": {
       "subtitle": "Badges à débloquer",

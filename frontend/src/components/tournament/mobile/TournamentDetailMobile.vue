@@ -41,8 +41,9 @@
         and a height capped to the viewport would drop the switcher after one screen.
       -->
       <div v-if="isVisited('stats')" v-show="activeTab === 'stats'" class="flex-1 flex flex-col">
+        <TournamentNotStarted v-if="store.hasNotStarted" />
         <!-- Sub-tabs: ranked + authenticated only. Mounted from the first visit onwards. -->
-        <template v-if="hasStatsSubTabs">
+        <template v-else-if="hasStatsSubTabs">
           <SubTabTrack
             class="flex-1"
             :options="statsSubTabs"
@@ -73,7 +74,9 @@
         v-show="activeTab === 'standings'"
         class="flex-1 flex flex-col"
       >
+        <TournamentNotStarted v-if="store.hasNotStarted" />
         <StandingsTable
+          v-else
           class="flex-1"
           :tournament-id="store.tournamentId"
           :allow-draw="store.tournament!.allowDraw"
@@ -121,7 +124,9 @@
         v-show="activeTab === 'standings'"
         class="flex-1 flex flex-col"
       >
+        <TournamentNotStarted v-if="store.hasNotStarted" />
         <RankedLeaderboard
+          v-else
           class="flex-1"
           :players="store.rankedLeaderboard"
           :provisional-players="store.rankedProvisionalLeaderboard"
@@ -163,6 +168,7 @@ import { useTournamentDetailStore } from '@/stores/tournamentDetail.store'
 import { useSubTabs } from '@/composables/ui/useSubTabs'
 import SubTabTrack from '@/components/ui/SubTabTrack.vue'
 import TournamentHeader from '@/components/tournament/TournamentHeader.vue'
+import TournamentNotStarted from '@/components/tournament/TournamentNotStarted.vue'
 import { toStandingsConfig } from '@/utils/standings-config'
 import TournamentInfosTab from '@/views/tournament/tabs/TournamentInfosTab.vue'
 import MobileBottomNav from '@/components/tournament/mobile/MobileBottomNav.vue'

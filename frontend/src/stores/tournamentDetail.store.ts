@@ -95,6 +95,14 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
       appUser.value?.role !== 'kiosk',
   )
 
+  // Scheduled for later: no result can exist yet, so standings and stats have nothing to show.
+  const hasNotStarted = computed(
+    () =>
+      !!tournament.value &&
+      tournament.value.status !== 'finished' &&
+      new Date(tournament.value.startDate).getTime() > Date.now(),
+  )
+
   const canLeaveTournament = computed(() => tournamentSvc.canLeaveTournament(tournament.value))
 
   const canManageTournament = computed(() => {
@@ -502,6 +510,7 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
     // Computed permissions
     isParticipant,
     canJoinTournament,
+    hasNotStarted,
     canLeaveTournament,
     canManageTournament,
     canCreateMatch,

@@ -162,6 +162,7 @@ declare module 'vue' {
     TournamentDetailMobile: typeof import('./src/components/tournament/mobile/TournamentDetailMobile.vue')['default']
     TournamentDetailSkeleton: typeof import('./src/components/tournament/TournamentDetailSkeleton.vue')['default']
     TournamentHeader: typeof import('./src/components/tournament/TournamentHeader.vue')['default']
+    TournamentNotStarted: typeof import('./src/components/tournament/TournamentNotStarted.vue')['default']
     TournamentParticipantsList: typeof import('./src/components/tournament/TournamentParticipantsList.vue')['default']
     TournamentRow: typeof import('./src/components/tournament/TournamentRow.vue')['default']
     TournamentTabSkeleton: typeof import('./src/components/tournament/TournamentTabSkeleton.vue')['default']

@@ -1,7 +1,8 @@
 <template>
   <div>
+    <TournamentNotStarted v-if="store.hasNotStarted" />
     <StandingsTable
-      v-if="store.tournament!.mode === 'championship'"
+      v-else-if="store.tournament!.mode === 'championship'"
       :tournament-id="store.tournamentId"
       :allow-draw="store.tournament!.allowDraw"
       :score-enabled="store.tournament!.scoreEnabled ?? true"
@@ -38,6 +39,7 @@ import { useTournamentDetailStore } from '@/stores/tournamentDetail.store'
 import StandingsTable from '@/components/tournament/StandingsTable.vue'
 import { toStandingsConfig } from '@/utils/standings-config'
 import RankedLeaderboard from '@/components/ranked/RankedLeaderboard.vue'
+import TournamentNotStarted from '@/components/tournament/TournamentNotStarted.vue'
 
 const store = useTournamentDetailStore()
 

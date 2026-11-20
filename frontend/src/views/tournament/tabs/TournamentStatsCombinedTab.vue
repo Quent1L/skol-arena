@@ -1,5 +1,6 @@
 <template>
-  <div v-if="hasOwnProfile" class="flex gap-6">
+  <TournamentNotStarted v-if="store.hasNotStarted" />
+  <div v-else-if="hasOwnProfile" class="flex gap-6">
     <SubTabSidebar :options="subTabs" :model-value="sub" @update:model-value="setSub" />
 
     <!-- Content -->
@@ -68,6 +69,7 @@
 import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTournamentDetailStore } from '@/stores/tournamentDetail.store'
+import TournamentNotStarted from '@/components/tournament/TournamentNotStarted.vue'
 import { useSubTabs } from '@/composables/ui/useSubTabs'
 import SubTabSidebar from '@/components/ui/SubTabSidebar.vue'
 import PlayerMmrProfile from '@/components/ranked/PlayerMmrProfile.vue'

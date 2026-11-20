@@ -2209,6 +2209,10 @@
     "statusOngoing": "Ongoing",
     "statusOpen": "Open"
   },
+  "tournamentNotStarted": {
+    "title": "Starts on {date}",
+    "message": "Runs from {start} to {end}. Standings and stats will appear with the first results; matches can already be planned."
+  },
   "tournamentInfosTab": {
     "badges": {
       "subtitle": "Unlockable badges",
