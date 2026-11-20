@@ -24,6 +24,7 @@ beforeEach(() => {
     { playerId: "p4", teamSide: "B" },
   ];
   (tournamentRepository as any).getAdminUserIds = async () => ["admin-1", "admin-2"];
+  (userRepository as any).getActiveSuperAdminIds = async () => [];
   (notificationService as any).hasUnreadOfTypeForMatch = async () => false;
 });
 
@@ -163,6 +164,18 @@ describe("MatchNotificationBuilder", () => {
     expect(sample.translationParams.tournamentName).toBe("Tour");
     expect(sample.requiresAction).toBe(true);
     expect(sample.matchId).toBe("m-3");
+  });
+
+  it("notifyDisputeEscalation also reaches every super admin, once each, never the disputer", async () => {
+    (matchRepository as any).getById = async () => ({ id: "m-9", tournamentId: "t-1", status: "disputed" });
+    (matchRepository as any).getTournament = async () => ({ name: "Tour" });
+    // admin-2 is both organizer and super admin; super-2 raised the dispute
+    (userRepository as any).getActiveSuperAdminIds = async () => ["super-1", "admin-2", "super-2"];
+
+    await matchNotificationBuilder.notifyDisputeEscalation("m-9", "super-2");
+
+    expect(sentPayloads.map((p) => p.userId).sort()).toEqual(["admin-1", "admin-2", "super-1"]);
+    expect(sentPayloads.every((p) => p.requiresAction)).toBe(true);
   });
 
   it("notifyPostFinalizationDispute asks the organizers to arbitrate and merely informs the players", async () => {

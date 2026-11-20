@@ -18,6 +18,15 @@ function containsPattern(term: string): string {
 }
 
 export class UserRepository {
+  /** Super admins who can still sign in: they arbitrate disputes in every tournament. */
+  async getActiveSuperAdminIds(): Promise<string[]> {
+    const rows = await db
+      .select({ id: appUsers.id })
+      .from(appUsers)
+      .where(and(eq(appUsers.role, "super_admin"), isNull(appUsers.archivedAt), isNull(appUsers.deactivatedAt)));
+    return rows.map((row) => row.id);
+  }
+
   /**
    * Get app_user by external ID
    */

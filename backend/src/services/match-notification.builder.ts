@@ -103,7 +103,7 @@ export class MatchNotificationBuilder {
 
     const tournament = await matchRepository.getTournament(match.tournamentId)
     const disputer = await userRepository.getById(disputedBy)
-    const admins = await tournamentRepository.getAdminUserIds(match.tournamentId)
+    const admins = await this.arbitratorIds(match.tournamentId, disputedBy)
     const matchDate = this.serializeMatchDate(match.playedAt)
 
     for (const adminId of admins) {
@@ -122,6 +122,18 @@ export class MatchNotificationBuilder {
         matchId,
       })
     }
+  }
+
+  /**
+   * Everyone who may settle a dispute: the tournament's own organizers and every super
+   * admin, minus the person who raised it.
+   */
+  private async arbitratorIds(tournamentId: string, except: string): Promise<string[]> {
+    const [organizers, superAdmins] = await Promise.all([
+      tournamentRepository.getAdminUserIds(tournamentId),
+      userRepository.getActiveSuperAdminIds(),
+    ])
+    return [...new Set([...organizers, ...superAdmins])].filter((id) => id !== except)
   }
 
   /**
@@ -178,13 +190,11 @@ export class MatchNotificationBuilder {
     const disputerName = disputer?.displayName ?? null
     const matchDate = this.serializeMatchDate(match.playedAt)
 
-    const admins = await tournamentRepository.getAdminUserIds(match.tournamentId)
+    const admins = await this.arbitratorIds(match.tournamentId, disputedBy)
     const players = this.recipientsExcept(participants, disputedBy)
     const recipients = new Map<string, boolean>()
     for (const playerId of players) recipients.set(playerId, false)
-    for (const adminId of admins) {
-      if (adminId !== disputedBy) recipients.set(adminId, true)
-    }
+    for (const adminId of admins) recipients.set(adminId, true)
 
     for (const [userId, requiresAction] of recipients) {
       await notificationService.send({

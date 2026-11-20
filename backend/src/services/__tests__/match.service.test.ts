@@ -120,6 +120,7 @@ beforeEach(() => {
   };
 
   usrRepo = userRepository as unknown as Partial<UserRepository>;
+  usrRepo.getActiveSuperAdminIds = async () => [];
   usrRepo.getById = async (id: string) =>
     ({
       id,
