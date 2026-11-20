@@ -30,12 +30,14 @@ RUN bun run --cwd ./shared build
 RUN bun run --cwd ./frontend build-only
 
 # Bundle the backend so the runtime stage needs no node_modules
+# zod-to-json-schema: optional zod v3 path of @standard-community/standard-json, try/catch-guarded
 RUN bun build ./backend/src/index.ts \
     --target bun \
     --outdir ./backend/dist \
     --minify \
     --sourcemap=none \
-    --loader .json:json
+    --loader .json:json \
+    --external zod-to-json-schema
 
 
 # --- Production ------------------------------------------------

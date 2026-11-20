@@ -26,7 +26,7 @@
     "build": "bun run build:shared && bun run build:frontend && bun run build:backend && bun run build:docs",
     "build:shared": "cd shared && bun run build",
     "build:frontend": "cd frontend && bun run build",
-    "build:backend": "bun build ./backend/src/index.ts --target bun --outdir ./backend/dist --minify --sourcemap=none --loader .json:json",
+    "build:backend": "bun build ./backend/src/index.ts --target bun --outdir ./backend/dist --minify --sourcemap=none --loader .json:json --external zod-to-json-schema",
     "build:docs": "cd docs && bun run build",
     "type-check": "bun run type-check:shared && bun run type-check:backend && bun run type-check:frontend && bun run type-check:docs",
     "type-check:shared": "cd shared && bun run type-check",
@@ -59,13 +59,13 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@commitlint/cli": "^21.2.2",
-    "@commitlint/config-conventional": "^21.2.2",
-    "@release-it/bumper": "^8.0.0",
-    "@release-it/conventional-changelog": "^12.0.0",
-    "concurrently": "^10.0.5",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@release-it/bumper": "^8.0.1",
+    "@release-it/conventional-changelog": "^12.0.2",
+    "concurrently": "^10.0.7",
     "husky": "^9.1.7",
-    "release-it": "^21.0.2"
+    "release-it": "^21.1.2"
   },
   "overrides": {
     "prosemirror-model": "1.25.11",
@@ -80,8 +80,8 @@
       "docs"
     ],
     "catalog": {
-      "zod": "4.4.3",
-      "better-auth": "1.6.23",
+      "zod": "4.6.7",
+      "better-auth": "1.6.35",
       "typescript": "6.0.3"
     }
   }

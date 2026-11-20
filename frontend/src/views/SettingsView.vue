@@ -272,8 +272,7 @@
         <div class="space-y-4">
           <UAlert v-if="joinOrgSuccess" color="success" variant="subtle" icon="i-fa7-solid:check">
             <template #title>
-              {{ t('settings.groups.joinedPrefix') }} <strong>{{ joinOrgSuccessName }}</strong
-              >.
+              {{ t('settings.groups.joinedPrefix') }} <strong>{{ joinOrgSuccessName }}</strong>.
             </template>
           </UAlert>
 

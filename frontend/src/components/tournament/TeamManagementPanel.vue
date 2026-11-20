@@ -122,8 +122,7 @@
         <div class="flex flex-col gap-4">
           <span class="text-sm text-gray-500 dark:text-gray-400">
             {{ t('teamManagementPanel.addPlayerDescription') }}
-            <strong>{{ targetTeam?.name }}</strong
-            >.
+            <strong>{{ targetTeam?.name }}</strong>.
           </span>
           <USelectMenu
             v-model.nullable="selectedUserId"
