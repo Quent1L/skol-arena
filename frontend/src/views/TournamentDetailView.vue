@@ -376,6 +376,19 @@ function onVisibilityChange() {
 const releaseBootHold = acquireScreen()
 onUnmounted(releaseBootHold)
 
+/** Opens the mode's default tab when the URL names none (`/tournaments/:id`). */
+function applyDefaultTab() {
+  if (route.params.tab) return
+  const defaultTab = store.tournament?.mode === 'bracket' ? 'bracket' : 'standings'
+  router.replace({ name: 'tournament-tab', params: { id: tournamentId.value, tab: defaultTab } })
+}
+
+// Kept alive: a tab-less link back to this tournament reactivates the page without
+// remounting it, so initialize() does not run again and the default tab must follow here.
+watch(activeTabName, (tab) => {
+  if (!tab && store.tournament?.id === tournamentId.value) applyDefaultTab()
+})
+
 async function initialize() {
   document.addEventListener('visibilitychange', onVisibilityChange)
   try {
@@ -405,12 +418,7 @@ async function initialize() {
     return
   }
 
-  // Set default tab based on mode if no child route yet
-  if (!route.params.tab) {
-    const mode = store.tournament?.mode
-    const defaultTab = mode === 'bracket' ? 'bracket' : 'standings'
-    router.replace({ name: 'tournament-tab', params: { id: tournamentId.value, tab: defaultTab } })
-  }
+  applyDefaultTab()
 
   await updateIndicator()
   await maybeAutoOpenRewind()
