@@ -23,7 +23,7 @@ services:
       retries: 10
 
   app:
-    image: skill-arena:beta-20
+    image: quent1l/skol-arena:latest
     depends_on:
       db:
         condition: service_healthy
