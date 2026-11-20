@@ -17,6 +17,7 @@ const { t } = useI18n()
 const tabComponents: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   infos: defineAsyncComponent(() => import('./TournamentInfosTab.vue')),
   participants: defineAsyncComponent(() => import('./TournamentParticipantsTab.vue')),
+  settings: defineAsyncComponent(() => import('./TournamentSettingsTab.vue')),
   teams: defineAsyncComponent(() => import('./TournamentTeamsTab.vue')),
   stats: defineAsyncComponent(() => import('./TournamentStatsCombinedTab.vue')),
   standings: defineAsyncComponent(() => import('./TournamentStandingsTab.vue')),

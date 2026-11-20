@@ -2188,7 +2188,10 @@
       "infos": "Info",
       "matches": "Matches",
       "standings": "Standings",
-      "stats": "Stats"
+      "stats": "Stats",
+      "settings": "Format & rules",
+      "teams": "Teams",
+      "participants": "Participants"
     }
   },
   "tournamentFormView": {
@@ -2251,6 +2254,10 @@
     "teams": {
       "subtitle": "Manage teams",
       "title": "Teams"
+    },
+    "settings": {
+      "title": "Format & rules",
+      "subtitle": "How matches are played"
     }
   },
   "tournamentList": {
@@ -3059,5 +3066,53 @@
   "matchFormat": {
     "exact": "{size} vs {size}",
     "range": "{min} vs {min} to {max} vs {max}"
+  },
+  "tournamentSettingsTab": {
+    "intro": "The key rules of this competition, as they are set up.",
+    "mode": {
+      "title": "Competition type",
+      "championship": "League: play your matches whenever you like, every result earns points in the standings.",
+      "bracket": "Knockout bracket: the winner moves on to the next round, the loser is out.",
+      "ranked": "Ranked: every win raises your rating, every loss lowers it. The leaderboard follows the rating."
+    },
+    "format": {
+      "title": "Match format",
+      "solo": "1 vs 1 matches: everyone plays for themselves.",
+      "flexExact": "{format} matches, teams are formed freely for each match.",
+      "flexRange": "Matches from {format}, teams are formed freely for each match.",
+      "staticExact": "Fixed teams of {size} players: you always play with the same teammates.",
+      "staticRange": "Fixed teams of {min} to {max} players: you always play with the same teammates."
+    },
+    "result": {
+      "title": "Result",
+      "drawAllowed": "Draws are possible.",
+      "noDraw": "No draws: there must be a winner.",
+      "winnerOnly": "Only the winner is entered, not the score.",
+      "score": "Each side's score is entered.",
+      "scoreRange": "Each side's score is entered, between {min} and {max}.",
+      "points": "A win earns {win} pts, a draw {draw} pts, a loss {loss} pts.",
+      "pointsNoDraw": "A win earns {win} pts, a loss {loss} pts."
+    },
+    "limits": {
+      "title": "Limits",
+      "matches": "{max} matches at most per player.",
+      "opponent": "{max} times at most against the same opponents.",
+      "partner": "{max} times at most with the same teammate."
+    },
+    "validation": {
+      "title": "Result validation",
+      "none": "A result counts as soon as it is entered. It can be disputed for 7 days.",
+      "auto": "A result is validated automatically after a while unless someone disputes it.",
+      "autoTimer": "A result is validated automatically after {hours} h unless someone disputes it.",
+      "strict": "An opponent must confirm the result for it to count.",
+      "admin": "An organiser validates each result before it counts."
+    },
+    "votes": {
+      "title": "After-match votes",
+      "fairPlay": "Players vote on their opponents' fair play.",
+      "mvp": "In team matches, players elect the MVP.",
+      "mvpSpectators": "In team matches, players and spectators elect the MVP.",
+      "noEffect": "These votes change neither the result nor the standings."
+    }
   }
 }

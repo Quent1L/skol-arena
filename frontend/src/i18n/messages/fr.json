@@ -2188,7 +2188,10 @@
       "infos": "Infos",
       "matches": "Matchs",
       "standings": "Classement",
-      "stats": "Stats"
+      "stats": "Stats",
+      "settings": "Format & règles",
+      "teams": "Équipes",
+      "participants": "Participants"
     }
   },
   "tournamentFormView": {
@@ -2251,6 +2254,10 @@
     "teams": {
       "subtitle": "Gérer les équipes",
       "title": "Équipes"
+    },
+    "settings": {
+      "title": "Format & règles",
+      "subtitle": "Comment se jouent les matchs"
     }
   },
   "tournamentList": {
@@ -3059,5 +3066,53 @@
   "matchFormat": {
     "exact": "{size} contre {size}",
     "range": "{min} contre {min} à {max} contre {max}"
+  },
+  "tournamentSettingsTab": {
+    "intro": "L'essentiel des règles de cette compétition, telles qu'elles sont configurées.",
+    "mode": {
+      "title": "Type de compétition",
+      "championship": "Championnat : jouez vos matchs quand vous voulez, chaque résultat rapporte des points au classement.",
+      "bracket": "Tableau à élimination : le vainqueur passe au tour suivant, le perdant est éliminé.",
+      "ranked": "Classé : chaque victoire fait monter votre cote, chaque défaite la fait baisser. Le classement suit la cote."
+    },
+    "format": {
+      "title": "Format des matchs",
+      "solo": "Matchs en 1 contre 1 : chacun joue pour soi.",
+      "flexExact": "Matchs en {format}, les équipes se forment librement à chaque match.",
+      "flexRange": "Matchs de {format}, les équipes se forment librement à chaque match.",
+      "staticExact": "Équipes fixes de {size} joueurs : vous jouez toujours avec les mêmes coéquipiers.",
+      "staticRange": "Équipes fixes de {min} à {max} joueurs : vous jouez toujours avec les mêmes coéquipiers."
+    },
+    "result": {
+      "title": "Résultat",
+      "drawAllowed": "Les matchs nuls sont possibles.",
+      "noDraw": "Pas de match nul : il faut un vainqueur.",
+      "winnerOnly": "Seul le vainqueur est saisi, pas le score.",
+      "score": "Le score de chaque camp est saisi.",
+      "scoreRange": "Le score de chaque camp est saisi, entre {min} et {max}.",
+      "points": "Une victoire rapporte {win} pts, un nul {draw} pts, une défaite {loss} pts.",
+      "pointsNoDraw": "Une victoire rapporte {win} pts, une défaite {loss} pts."
+    },
+    "limits": {
+      "title": "Limites",
+      "matches": "{max} matchs maximum par joueur.",
+      "opponent": "{max} fois maximum contre les mêmes adversaires.",
+      "partner": "{max} fois maximum avec le même coéquipier."
+    },
+    "validation": {
+      "title": "Validation des résultats",
+      "none": "Un résultat compte dès qu'il est saisi. Il reste contestable pendant 7 jours.",
+      "auto": "Un résultat est validé automatiquement après un délai si personne ne le conteste.",
+      "autoTimer": "Un résultat est validé automatiquement après {hours} h si personne ne le conteste.",
+      "strict": "Un adversaire doit confirmer le résultat pour qu'il compte.",
+      "admin": "Un organisateur valide chaque résultat avant qu'il compte."
+    },
+    "votes": {
+      "title": "Votes après match",
+      "fairPlay": "Les joueurs votent pour le fair-play de leurs adversaires.",
+      "mvp": "Dans les matchs en équipe, les joueurs élisent le MVP.",
+      "mvpSpectators": "Dans les matchs en équipe, les joueurs et les spectateurs élisent le MVP.",
+      "noEffect": "Ces votes ne changent ni le résultat ni le classement."
+    }
   }
 }

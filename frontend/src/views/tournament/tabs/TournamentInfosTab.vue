@@ -62,6 +62,32 @@
         </div>
       </button>
 
+      <!-- Format & règles -->
+      <button
+        @click="navigateTo('settings')"
+        class="group flex items-center justify-between p-4 sm:p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md active:scale-[0.98] transition-all text-left cursor-pointer"
+        data-testid="settings-card"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center shrink-0"
+          >
+            <i class="fa fa-sliders text-violet-600 dark:text-violet-400 text-sm sm:text-base" />
+          </div>
+          <div>
+            <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
+              {{ t('tournamentInfosTab.settings.title') }}
+            </div>
+            <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+              {{ t('tournamentInfosTab.settings.subtitle') }}
+            </div>
+          </div>
+        </div>
+        <i
+          class="fa fa-chevron-right text-gray-400 text-xs sm:text-sm group-hover:text-primary-500 transition-colors shrink-0"
+        />
+      </button>
+
       <!-- Équipes (static uniquement) -->
       <button
         v-if="store.tournament!.teamMode === 'static'"
