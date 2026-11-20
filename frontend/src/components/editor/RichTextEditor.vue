@@ -142,10 +142,7 @@
       <button
         type="button"
         class="toolbar-btn"
-        @click="
-          showImageInput = !showImageInput
-          showLinkInput = false
-        "
+        @click="toggleImageInput"
         :class="{ active: showImageInput }"
         :title="t('richTextEditor.toolbar.insertImage')"
       >
@@ -269,6 +266,11 @@ watch(showLinkInput, async (val) => {
     linkInputRef.value?.focus()
   }
 })
+
+function toggleImageInput() {
+  showImageInput.value = !showImageInput.value
+  showLinkInput.value = false
+}
 
 function toggleLinkInput() {
   if (editor.value?.isActive('link')) {
