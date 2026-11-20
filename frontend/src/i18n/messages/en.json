@@ -672,6 +672,11 @@
   },
   "loginView": {
     "backToHome": "← Back to home",
+    "demo": {
+      "title": "Demo instance",
+      "description": "Sign in as the demo super admin to explore every screen. Every demo player uses the same password.",
+      "useButton": "Sign in with the demo account"
+    },
     "emailLabel": "Email",
     "emailPlaceholder": "your{'@'}email.com",
     "forgotPassword": "Forgot password?",

@@ -672,6 +672,11 @@
   },
   "loginView": {
     "backToHome": "← Retour à l'accueil",
+    "demo": {
+      "title": "Instance de démonstration",
+      "description": "Connectez-vous en super admin de démo pour explorer tous les écrans. Tous les joueurs de démo ont le même mot de passe.",
+      "useButton": "Se connecter avec le compte démo"
+    },
     "emailLabel": "Adresse email",
     "emailPlaceholder": "vous{'@'}exemple.com",
     "forgotPassword": "Mot de passe oublié ?",

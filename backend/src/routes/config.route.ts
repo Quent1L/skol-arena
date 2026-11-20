@@ -3,6 +3,7 @@ import { showEmailPasswordForm } from "../config/auth";
 import { appConfigSchema } from "@skol-arena/shared/types/index";
 import { createAppHono } from "../types/hono";
 import { rankedMatchMaxAgeHours } from "../config/ranked";
+import { demoCredentials } from "../utils/init-demo-data";
 
 const configRoute = createAppHono();
 
@@ -14,10 +15,11 @@ configRoute.get(
     description:
       "Server settings the client needs before a user is known: which sign-in " +
       "methods are enabled, the public key used to register for push, and the " +
-      "ranked reporting window the match form mirrors.",
+      "ranked reporting window the match form mirrors. On a demo instance, also " +
+      "the demo super admin's sign-in, so the login screen can show it.",
     success: { description: "Current configuration", schema: appConfigSchema },
   }),
-  (c) => {
+  async (c) => {
     // Resolved once in config/auth.ts, including the deprecated-name fallback.
     const isEmailPasswordEnabled = showEmailPasswordForm;
     const isKeycloakEnabled = !!(
@@ -47,6 +49,7 @@ configRoute.get(
       ranked: {
         matchMaxAgeHours: rankedMatchMaxAgeHours(),
       },
+      demo: await demoCredentials(),
     });
   }
 );

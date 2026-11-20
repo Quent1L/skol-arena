@@ -1,5 +1,6 @@
 import { db } from "../config/database";
-import { appUsers, disciplines, tournaments } from "../db/schema";
+import { eq } from "drizzle-orm";
+import { appUsers, disciplines, tournaments, user } from "../db/schema";
 import { seedDemoData } from "../demo/demo-seed";
 import { DEMO_ADMIN_KEY, DEMO_PASSWORD, demoEmail } from "../demo/demo-dataset";
 import { logger } from "./logger";
@@ -8,6 +9,26 @@ import { logger } from "./logger";
 export function isDemoDataRequested(): boolean {
   const raw = process.env.INIT_DEMO_DATA?.trim().toLowerCase();
   return raw === "true" || raw === "1" || raw === "yes";
+}
+
+/**
+ * The demo super admin's sign-in, for the login screen and the logs. Null unless demo
+ * mode is on and the demo account actually exists: a database that already held data
+ * when the flag was set never got it.
+ * shortcut: shows the seeded password even if alex changed it; fine for a throwaway demo.
+ */
+export async function demoCredentials(): Promise<{ email: string; password: string } | null> {
+  if (!isDemoDataRequested()) return null;
+  const email = demoEmail(DEMO_ADMIN_KEY);
+  const [account] = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
+  return account ? { email, password: DEMO_PASSWORD } : null;
+}
+
+function logCredentials(credentials: { email: string; password: string }): void {
+  logger.info(
+    credentials,
+    "DEMO CREDENTIALS — super admin, also shown on the login page. Every demo player signs in with the same password (<first name>@skol.demo)",
+  );
 }
 
 /**
@@ -35,7 +56,9 @@ export async function initializeDemoDataIfRequested(): Promise<void> {
   if (!isDemoDataRequested()) return;
 
   if (await databaseHasData()) {
-    logger.info("INIT_DEMO_DATA is set but the database already contains data: demo data not loaded.");
+    const credentials = await demoCredentials();
+    if (credentials) logCredentials(credentials);
+    else logger.info("INIT_DEMO_DATA is set but the database already contains data: demo data not loaded.");
     return;
   }
 
@@ -47,10 +70,7 @@ export async function initializeDemoDataIfRequested(): Promise<void> {
       { ...summary, durationMs: Date.now() - started },
       "Demo data loaded",
     );
-    logger.info(
-      { email: demoEmail(DEMO_ADMIN_KEY), password: DEMO_PASSWORD },
-      "DEMO CREDENTIALS — super admin. Every demo player signs in with the same password (<first name>@skol.demo)",
-    );
+    logCredentials({ email: demoEmail(DEMO_ADMIN_KEY), password: DEMO_PASSWORD });
   } catch (err) {
     logger.error(
       { err },

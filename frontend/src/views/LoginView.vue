@@ -30,6 +30,36 @@
         >
           <!-- Email/Password form (only if enabled or ?native=true) -->
           <template v-if="showEmailPassword">
+            <!-- Demo instance: the super admin's sign-in, one click away -->
+            <UAlert
+              v-if="demo"
+              color="info"
+              variant="subtle"
+              icon="i-fa7-solid:flask"
+              :title="t('loginView.demo.title')"
+              data-testid="demo-credentials"
+            >
+              <template #description>
+                <p>{{ t('loginView.demo.description') }}</p>
+                <dl class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                  <dt class="text-muted">{{ t('loginView.emailLabel') }}</dt>
+                  <dd class="font-mono select-all break-all">{{ demo.email }}</dd>
+                  <dt class="text-muted">{{ t('loginView.passwordLabel') }}</dt>
+                  <dd class="font-mono select-all break-all">{{ demo.password }}</dd>
+                </dl>
+                <UButton
+                  type="submit"
+                  class="mt-3"
+                  color="info"
+                  variant="solid"
+                  size="sm"
+                  icon="i-fa7-solid:right-to-bracket"
+                  :label="t('loginView.demo.useButton')"
+                  @click="fillDemoAccount"
+                />
+              </template>
+            </UAlert>
+
             <UFormField name="email" :label="t('loginView.emailLabel')" size="xl">
               <UInput
                 id="email"
@@ -122,6 +152,7 @@ const keycloakEnabled = computed(() => config.value?.auth?.keycloak?.enabled ?? 
 const keycloakLoginLabel = computed(
   () => config.value?.auth?.keycloak?.loginLabel ?? t('loginView.keycloakDefaultLabel'),
 )
+const demo = computed(() => config.value?.demo ?? null)
 const forceNative = computed(() => route.query.native === 'true')
 const showEmailPassword = computed(() => emailPasswordEnabled.value || forceNative.value)
 const noAuthMethodAvailable = computed(() => !showEmailPassword.value && !keycloakEnabled.value)
@@ -136,6 +167,11 @@ if (route.query.error) {
 }
 
 const state = reactive<LoginFormData>({ email: '', password: '' })
+
+// Runs before the submit event, so the form validates and sends the demo sign-in.
+function fillDemoAccount() {
+  if (demo.value) Object.assign(state, demo.value)
+}
 
 async function onSubmit({ data: values }: FormSubmitEvent<LoginFormData>) {
   try {

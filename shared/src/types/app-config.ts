@@ -43,6 +43,12 @@ export const rankedConfigSchema = z
 
 export type RankedConfig = z.infer<typeof rankedConfigSchema>;
 
+export const demoConfigSchema = z
+  .object({ email: z.string(), password: z.string() })
+  .meta({ id: "DemoConfig" });
+
+export type DemoConfig = z.infer<typeof demoConfigSchema>;
+
 /**
  * What GET /config returns: the handful of server settings the SPA needs before a
  * user is known — which sign-in methods are available, the push public key, and the
@@ -53,6 +59,8 @@ export const appConfigSchema = z
     vapidPublicKey: z.string().nullable(),
     auth: authConfigSchema,
     ranked: rankedConfigSchema,
+    /** Sign-in of the demo super admin, shown on the login screen. Null outside a demo instance. */
+    demo: demoConfigSchema.nullable(),
   })
   .meta({ id: "AppConfig" });
 
