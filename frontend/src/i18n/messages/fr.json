@@ -2088,9 +2088,12 @@
   },
   "teamsStep": {
     "next": "Suivant",
+    "noResults": "Aucune équipe trouvée",
     "previous": "Précédent",
-    "selectTeam": "Sélectionner une équipe",
-    "team": "Équipe {number}"
+    "searchPlaceholder": "Rechercher une équipe...",
+    "selectTeams": "Sélectionner les équipes",
+    "selectedTeams": "Équipes sélectionnées",
+    "title": "Équipes"
   },
   "tournamentBadgesTab": {
     "alreadyEarnedIn": "Déjà gagné : {seasons}",

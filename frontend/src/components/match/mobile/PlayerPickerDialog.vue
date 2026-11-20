@@ -19,7 +19,7 @@
         <div class="p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <UInput
             v-model="searchQuery"
-            :placeholder="t('playerPickerDialog.searchPlaceholder')"
+            :placeholder="searchPlaceholder ?? t('playerPickerDialog.searchPlaceholder')"
             size="xl"
             class="w-full"
           >
@@ -43,7 +43,7 @@
             <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
           </div>
           <div v-else-if="displayedPlayers.length === 0" class="text-center p-8 text-gray-500">
-            {{ t('playerPickerDialog.noResults') }}
+            {{ emptyText ?? t('playerPickerDialog.noResults') }}
           </div>
           <div
             v-for="player in displayedPlayers"
@@ -62,8 +62,11 @@
               class="mr-3"
               :class="{ 'ring-2 ring-blue-500': !single && isSelected(player.id) }"
             />
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
               <div class="font-medium">{{ player.displayName }}</div>
+              <div v-if="player.subtitle" class="text-sm text-muted truncate">
+                {{ player.subtitle }}
+              </div>
             </div>
             <div v-if="!single && isSelected(player.id)" class="text-blue-600 dark:text-blue-400">
               <i class="fas fa-check-circle text-xl" />
@@ -94,6 +97,7 @@ interface Player {
   displayName: string
   avatarUrl?: string
   shortName?: string
+  subtitle?: string
 }
 
 interface Props {
@@ -102,6 +106,8 @@ interface Props {
   selectedIds?: string[]
   single?: boolean
   searchFn?: (query: string) => Promise<Player[]>
+  searchPlaceholder?: string
+  emptyText?: string
 }
 
 const { t } = useI18n()
