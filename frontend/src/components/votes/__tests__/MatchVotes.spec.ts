@@ -43,12 +43,12 @@ describe('MatchVotes', () => {
   it('scrolls to the fair-play panel once loaded when the URL points at it', async () => {
     route.hash = '#fair-play'
     const wrapper = mountVotes()
-    votes.value = { fairPlay: {}, mvp: null } as unknown as MatchVotesData
+    votes.value = { isOpen: true, fairPlay: {}, mvp: null } as unknown as MatchVotesData
     await flushPromises()
     expect(scrollIntoView).toHaveBeenCalledTimes(1)
 
     // A refetch (someone else voted) does not yank the page back.
-    votes.value = { fairPlay: {}, mvp: null } as unknown as MatchVotesData
+    votes.value = { isOpen: true, fairPlay: {}, mvp: null } as unknown as MatchVotesData
     await flushPromises()
     expect(scrollIntoView).toHaveBeenCalledTimes(1)
     wrapper.unmount()
@@ -57,9 +57,18 @@ describe('MatchVotes', () => {
   it('leaves the scroll alone on a plain visit', async () => {
     route.hash = ''
     const wrapper = mountVotes()
-    votes.value = { fairPlay: {}, mvp: null } as unknown as MatchVotesData
+    votes.value = { isOpen: true, fairPlay: {}, mvp: null } as unknown as MatchVotesData
     await flushPromises()
     expect(scrollIntoView).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('drops both panels once voting has closed', async () => {
+    route.hash = ''
+    const wrapper = mountVotes()
+    votes.value = { isOpen: false, fairPlay: {}, mvp: {} } as unknown as MatchVotesData
+    await flushPromises()
+    expect(wrapper.find('#fair-play').exists()).toBe(false)
     wrapper.unmount()
   })
 })

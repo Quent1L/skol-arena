@@ -1,5 +1,6 @@
 <template>
-  <div v-if="fairPlayVotes || mvpVotes" class="space-y-4">
+  <!-- Closed: nothing left to do here, the MVP stays flagged on the scoreboard. -->
+  <div v-if="votes?.isOpen && (fairPlayVotes || mvpVotes)" class="space-y-4">
     <MvpSection
       v-if="mvpVotes"
       :votes="mvpVotes"
@@ -36,7 +37,7 @@ import FairPlaySection from './FairPlaySection.vue'
 import MvpSection from './MvpSection.vue'
 import { playersById, type VotePlayer } from './vote-players'
 
-/** Fair-play and MVP sections of the match page; renders nothing when both are off. */
+/** Fair-play and MVP sections of the match page; renders nothing when both are off or voting closed. */
 const props = defineProps<{
   matchId: string
   sides: { players: VotePlayer[] }[]
