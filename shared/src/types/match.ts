@@ -307,6 +307,9 @@ export const POST_FINALIZATION_DISPUTE_DAYS = 7;
  */
 export const SELF_AMEND_WINDOW_HOURS = 48;
 
+/** The statuses a match may be finalized from. */
+export const FINALIZABLE_MATCH_STATUSES = ["reported", "disputed", "confirmed", "pending_confirmation"] as const;
+
 const SELF_VALIDATED_REASONS: ReadonlySet<MatchFinalizationReason | null | undefined> = new Set([
   "auto_validation",
   "trust_score",

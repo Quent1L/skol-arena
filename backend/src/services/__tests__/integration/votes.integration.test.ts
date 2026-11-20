@@ -14,6 +14,7 @@ import { webSocketService } from "../../websocket.service";
 import {
   appUsers,
   fairPlayVotes,
+  matchResults,
   matchSides,
   matches,
   mvpVotes,
@@ -217,6 +218,22 @@ describe("Fair-play & MVP votes (integration)", () => {
       expect(await testDb.select().from(mvpVotes).where(eq(mvpVotes.voterId, member))).toEqual([]);
     });
 
+    it("opens the vote window when the result is entered, not when a scheduled match was created", async () => {
+      const id = await match2v2(72);
+      // Created 72h ago (drawn ahead), result entered just now.
+      await testDb.insert(matchResults).values({ matchId: id, reportedBy: alice, reportedAt: new Date() });
+      const votes = await voteService.castMvp(id, alice, bob);
+      expect(votes.isOpen).toBe(true);
+      expect(votes.mvp?.myVote).toBe(bob);
+    });
+
+    it("never lets a player drop their own ballot through the spectator withdrawal", async () => {
+      const id = await match2v2();
+      await voteService.castMvp(id, alice, bob);
+      await expect(voteService.withdrawSpectator(id, alice)).rejects.toThrow("VOTE_NOT_ALLOWED");
+      expect(await testDb.select().from(mvpVotes).where(eq(mvpVotes.voterId, alice))).toHaveLength(1);
+    });
+
     it("blocks a second vote for the same player within the week", async () => {
       await setConfig({ mvpSameTargetLimit: "weekly" });
       await voteService.castMvp(await match2v2(), alice, bob);
@@ -358,6 +375,34 @@ describe("Fair-play & MVP votes (integration)", () => {
   });
 
   describe("vote prompts", () => {
+    async function promptState(userId: string) {
+      const [state] = await testDb
+        .select()
+        .from(playerVotePromptStates)
+        .where(eq(playerVotePromptStates.userId, userId));
+      return state;
+    }
+
+    it("never counts an explicit skip, nor the 'shown' record, toward the snooze", async () => {
+      for (let i = 0; i < 3; i++) {
+        const id = await match2v2();
+        await voteService.recordPrompt(id, carol, "expired"); // shown
+        await voteService.recordPrompt(id, carol, "skipped");
+      }
+      expect((await promptState(carol))?.snoozedUntil ?? null).toBeNull();
+      expect((await promptState(carol))?.consecutiveIgnored ?? 0).toBe(0);
+    });
+
+    it("keeps a prompt answered by a vote as voted, whatever the card sends next", async () => {
+      const id = await match2v2();
+      await voteService.recordPrompt(id, carol, "expired"); // shown
+      await voteService.castMvp(id, carol, bob);
+      await voteService.recordPrompt(id, carol, "dismissed");
+      const [row] = await testDb.select().from(votePrompts).where(eq(votePrompts.matchId, id));
+      expect(row?.outcome).toBe("voted");
+      expect((await promptState(carol))?.consecutiveIgnored ?? 0).toBe(0);
+    });
+
     it("offers the author a prompt for a fresh match, once", async () => {
       const id = await match2v2();
       const prompt = await voteService.getPromptForMatch(id, alice);
@@ -378,7 +423,11 @@ describe("Fair-play & MVP votes (integration)", () => {
     });
 
     it("snoozes prompts for a week after three ignored in a row", async () => {
-      for (let i = 0; i < 3; i++) await voteService.recordPrompt(await match2v2(), carol, "dismissed");
+      for (let i = 0; i < 3; i++) {
+        const id = await match2v2();
+        await voteService.recordPrompt(id, carol, "expired"); // shown
+        await voteService.recordPrompt(id, carol, "dismissed");
+      }
       const [state] = await testDb
         .select()
         .from(playerVotePromptStates)

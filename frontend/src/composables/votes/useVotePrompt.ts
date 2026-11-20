@@ -1,11 +1,13 @@
 import { computed, ref } from 'vue'
-import type { VotePrompt } from '@skol-arena/shared/types/index'
+import type { VotePrompt, VotePromptOutcome } from '@skol-arena/shared/types/index'
 import { votesApi } from './votes.api'
 
 export type VotePromptSource = 'entry' | 'open'
 
 /** The single vote prompt on screen. Module-level: one host shows it app-wide. */
 const current = ref<{ prompt: VotePrompt; source: VotePromptSource } | null>(null)
+/** The "shown" record of the prompt on screen: its outcome is only sent once it landed. */
+let shownRecord: Promise<void> | null = null
 
 /**
  * The post-match vote toast. Never throws and never insists: a prompt that cannot be
@@ -45,23 +47,36 @@ export function useVotePrompt() {
   }
 
   /**
-   * Called once the prompt is actually on screen (on its tournament page). Recorded at once as `expired` so it
-   * never shows twice, even if the app is closed under it; a vote cast from it later
-   * settles it as `voted` and resets the back-off server-side.
+   * Called once the prompt is actually on screen (on its tournament page). Recorded at
+   * once so it never shows twice, even if the app is closed under it. This first record
+   * counts as nothing; `finish` then says how it ended.
    */
-  async function markShown(): Promise<void> {
+  function markShown(): void {
     const matchId = current.value?.prompt.matchId
     if (!matchId) return
+    // Worst case it shows once more.
+    shownRecord = votesApi.recordPrompt(matchId, 'expired').catch(() => {})
+  }
+
+  /** Closes the prompt and settles it server-side, after its "shown" record landed. */
+  async function finish(outcome: VotePromptOutcome): Promise<void> {
+    const matchId = current.value?.prompt.matchId
+    const shown = shownRecord
+    close()
+    if (!matchId || !shown) return
+    await shown
     try {
-      await votesApi.recordPrompt(matchId, 'expired')
+      await votesApi.recordPrompt(matchId, outcome)
     } catch {
-      // Worst case it shows once more.
+      // Unsettled: it counts as ignored, nothing worse.
     }
   }
 
+  /** Drops the prompt without a word to the server, e.g. on logout. */
   function close(): void {
     current.value = null
+    shownRecord = null
   }
 
-  return { current: computed(() => current.value), offerForMatch, offerPending, markShown, close }
+  return { current: computed(() => current.value), offerForMatch, offerPending, markShown, finish, close }
 }

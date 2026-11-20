@@ -83,7 +83,7 @@
               size="sm"
               :to="`/matches/${prompt.matchId}`"
               data-testid="vote-prompt-more"
-              @click="end"
+              @click="end('skipped')"
             />
           </div>
         </template>
@@ -99,7 +99,7 @@
         class="-mr-2 -mt-2 self-start"
         :aria-label="t('common.close')"
         data-testid="vote-prompt-close"
-        @click="end"
+        @click="end('dismissed')"
       />
 
       <UProgress
@@ -117,6 +117,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { VotePromptOutcome } from '@skol-arena/shared/types/index'
 import { votesApi } from '@/composables/votes/votes.api'
 import { useVotePrompt } from '@/composables/votes/useVotePrompt'
 import { screenTakenOver, waitForFreeScreen } from '@/composables/useScreenTakeover'
@@ -147,7 +148,7 @@ const props = withDefaults(
 const { t } = useI18n()
 const hasBottomNav = useBottomNavPresence()
 const { isMobile } = useViewport()
-const { current, offerPending, markShown, close } = useVotePrompt()
+const { current, offerPending, markShown, finish } = useVotePrompt()
 
 type Step = 'mvp' | 'fairPlay' | 'thanks'
 const step = ref<Step>('mvp')
@@ -168,7 +169,7 @@ const onTournamentPage = computed(
     TOURNAMENT_ROUTES.has(String(route.name ?? '')) && route.params.id === current.value?.prompt.tournamentId,
 )
 const expired = computed(() => !!current.value && current.value.prompt.expiresAt.getTime() <= now.value.getTime())
-watch(expired, (isExpired) => isExpired && end())
+watch(expired, (isExpired) => isExpired && end('expired'))
 const visible = computed(
   () => !!current.value && settled.value && !screenTakenOver.value && onTournamentPage.value && !expired.value,
 )
@@ -213,7 +214,7 @@ watch(
     if (!on) return
     ticker = setInterval(() => {
       remaining.value -= TICK_MS
-      if (remaining.value <= 0) end()
+      if (remaining.value <= 0) end('expired')
     }, TICK_MS)
   },
   { immediate: true },
@@ -227,7 +228,7 @@ const cardRef = ref<HTMLElement | null>(null)
 const { isSwiping, lengthX } = useSwipe(cardRef, {
   threshold: 10,
   onSwipeEnd(_event, direction) {
-    if (Math.abs(lengthX.value) > SWIPE_DISMISS_PX || direction === 'down') end()
+    if (Math.abs(lengthX.value) > SWIPE_DISMISS_PX || direction === 'down') end('dismissed')
   },
 })
 const swipeStyle = computed(() =>
@@ -235,9 +236,12 @@ const swipeStyle = computed(() =>
 )
 
 // ── Flow ────────────────────────────────────────────────────────────────
-function end() {
+/** Whether a vote cast from this card went through: then it ended as `voted`, however closed. */
+let votedAny = false
+
+function end(outcome: VotePromptOutcome) {
   clearInterval(ticker)
-  close()
+  void finish(votedAny ? 'voted' : outcome)
 }
 
 function next() {
@@ -247,13 +251,14 @@ function next() {
     return
   }
   step.value = 'thanks'
-  setTimeout(end, props.thanksMs)
+  setTimeout(() => end('skipped'), props.thanksMs)
 }
 
 async function vote(call: () => Promise<unknown>) {
   busy.value = true
   try {
     await call()
+    votedAny = true
   } catch {
     // A refused vote (window closed, limit) just moves on: the match page explains it.
   } finally {
@@ -265,7 +270,7 @@ async function vote(call: () => Promise<unknown>) {
 const pickMvp = (id: string) => vote(() => votesApi.castMvp(prompt.value.matchId, id))
 function skipMvp() {
   if (prompt.value.fairPlayTargetIds.length > 0) next()
-  else end()
+  else end('skipped')
 }
 function thumbsUp() {
   const { matchId, fairPlayTargetIds } = prompt.value
@@ -292,6 +297,7 @@ async function settle() {
 watch(
   () => current.value?.prompt.matchId,
   (id) => {
+    votedAny = false
     if (id) step.value = current.value!.prompt.mvpCandidateIds.length > 0 ? 'mvp' : 'fairPlay'
     void settle()
   },
@@ -307,7 +313,7 @@ watch(visible, (isVisible) => {
   if (!isVisible || !id || id === shownMatchId) return
   shownMatchId = id
   restartGauge()
-  void markShown()
+  markShown()
 })
 
 function onVisibility() {

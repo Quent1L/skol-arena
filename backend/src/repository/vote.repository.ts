@@ -3,6 +3,7 @@ import { db } from "../config/database";
 import {
   appUsers,
   fairPlayVotes,
+  matchResults,
   matchSides,
   matchSpectators,
   matches,
@@ -31,6 +32,8 @@ export interface VoteMatch {
   status: string;
   createdBy: string | null;
   createdAt: Date;
+  /** When the result was entered: a match scheduled ahead is created long before. */
+  enteredAt: Date;
   playedAt: Date;
   winnerSide: string | null;
   players: VoteMatchPlayer[];
@@ -45,13 +48,16 @@ export class VoteRepository {
         status: matches.status,
         createdBy: matches.createdBy,
         createdAt: matches.createdAt,
+        reportedAt: matchResults.reportedAt,
         playedAt: matches.playedAt,
         winnerSide: matches.winnerSide,
       })
       .from(matches)
+      .leftJoin(matchResults, eq(matchResults.matchId, matches.id))
       .where(eq(matches.id, matchId));
     if (!match) return null;
-    return { ...match, players: await this.getMatchPlayers(matchId) };
+    const { reportedAt, ...rest } = match;
+    return { ...rest, enteredAt: reportedAt ?? match.createdAt, players: await this.getMatchPlayers(matchId) };
   }
 
   async getMatchPlayers(matchId: string): Promise<VoteMatchPlayer[]> {
@@ -150,7 +156,9 @@ export class VoteRepository {
     await db.transaction(async (tx) => {
       await tx
         .delete(mvpVotes)
-        .where(and(eq(mvpVotes.matchId, matchId), eq(mvpVotes.voterId, userId)));
+        .where(
+          and(eq(mvpVotes.matchId, matchId), eq(mvpVotes.voterId, userId), eq(mvpVotes.voterRole, "spectator")),
+        );
       await tx
         .delete(matchSpectators)
         .where(and(eq(matchSpectators.matchId, matchId), eq(matchSpectators.userId, userId)));
@@ -275,6 +283,18 @@ export class VoteRepository {
       .onConflictDoNothing()
       .returning({ matchId: votePrompts.matchId });
     return inserted.length > 0;
+  }
+
+  /** Sets how a prompt ended, unless a vote already settled it. Whether it changed. */
+  async settlePrompt(matchId: string, userId: string, outcome: VotePromptOutcome): Promise<boolean> {
+    const updated = await db
+      .update(votePrompts)
+      .set({ outcome })
+      .where(
+        and(eq(votePrompts.matchId, matchId), eq(votePrompts.userId, userId), ne(votePrompts.outcome, "voted")),
+      )
+      .returning({ matchId: votePrompts.matchId });
+    return updated.length > 0;
   }
 
   async markPromptVoted(matchId: string, userId: string): Promise<void> {

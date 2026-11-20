@@ -53,4 +53,25 @@ describe("webSocketService tournament subscriptions", () => {
 
     expect(webSocketService.isSubscribedToTournament(tournamentId, userId)).toBe(false);
   });
+
+  it("keeps broadcasting past a socket that throws or is closing, without throwing", () => {
+    const tournamentId = crypto.randomUUID();
+    const broken = fakeSocket();
+    broken.send.mockImplementation(() => {
+      throw new Error("socket closed");
+    });
+    const closing = { send: mock(() => {}), readyState: 2 } as unknown as WSContext & {
+      send: ReturnType<typeof mock>;
+    };
+    const healthy = fakeSocket();
+    for (const ws of [broken, closing, healthy]) webSocketService.subscribeToTournament(tournamentId, ws);
+
+    expect(() => webSocketService.broadcastToTournament(tournamentId, { event: "x" })).not.toThrow();
+    expect(closing.send).not.toHaveBeenCalled();
+    expect(healthy.send).toHaveBeenCalledTimes(1);
+
+    webSocketService.broadcastToTournament(tournamentId, { event: "y" });
+    expect(broken.send).toHaveBeenCalledTimes(1);
+    expect(healthy.send).toHaveBeenCalledTimes(2);
+  });
 });

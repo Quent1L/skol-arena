@@ -1465,13 +1465,20 @@ export class MatchService {
         continue
       }
 
-      await this.finalizeMatch(
-        match.id,
-        { finalizationReason: 'auto_validation' },
-        undefined,
-        backgroundTasks,
-      )
-      finalized.push(match.id)
+      // One match failing (a player confirming it at the same instant) must not stall the batch.
+      try {
+        await this.finalizeMatch(
+          match.id,
+          { finalizationReason: 'auto_validation' },
+          undefined,
+          backgroundTasks,
+        )
+        finalized.push(match.id)
+      } catch (err) {
+        if (!(err instanceof AppError && err.code === ErrorCode.MATCH_ALREADY_FINALIZED)) {
+          logger.error({ err, matchId: match.id }, 'Auto-finalization failed')
+        }
+      }
     }
 
     // Wait for all background tasks to complete before returning

@@ -154,7 +154,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTeamService } from '@/composables/team/team.service'
 import { participantApi } from '@/composables/participant.api'
-import { onWsEvent, sendWsMessage } from '@/composables/notification/notification.socket'
+import { onWsEvent } from '@/composables/notification/notification.socket'
 import type { ClientTeam, ParticipantListItem } from '@skol-arena/shared/types/index'
 
 const props = defineProps<{
@@ -262,8 +262,8 @@ onMounted(async () => {
     participants.value = await participantApi.getTournamentParticipants(props.tournamentId)
   }
 
-  sendWsMessage({ event: 'subscribe_tournament', tournamentId: props.tournamentId })
-
+  // The tournament page owns the subscription: the server keeps one per socket, so an
+  // unsubscribe from here on unmount would cut the whole page's live feed.
   offCreated.value = onWsEvent('team_created', (data) => {
     const team = data as ClientTeam
     if (!teams.value.some((t) => t.id === team.id)) {
@@ -284,7 +284,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  sendWsMessage({ event: 'unsubscribe_tournament', tournamentId: props.tournamentId })
   offCreated.value?.()
   offUpdated.value?.()
   offDeleted.value?.()

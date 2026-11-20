@@ -1369,6 +1369,8 @@ export const notifications = pgTable(
       t.createdAt.desc(),
       t.id.desc(),
     ),
+    index("notifications_match_idx").on(t.matchId),
+    index("notifications_announcement_idx").on(t.announcementId),
   ],
 );
 

@@ -127,6 +127,31 @@ describe("matchRepository (integration)", () => {
       expect((rejected as PromiseRejectedResult).reason).toBeInstanceOf(BadRequestError);
       expect((rejected as PromiseRejectedResult).reason.code).toBe("MATCH_ALREADY_FINALIZED");
     });
+
+    it("never brings a match cancelled meanwhile back as finalized", async () => {
+      const ownTournamentId = await seed.createTournament(admin);
+      await insertTournamentConfigs(testDb, ownTournamentId);
+      const id = await matchRepository.create({
+        tournamentId: ownTournamentId,
+        sides: [
+          { position: 1, playerIds: [ann!] },
+          { position: 2, playerIds: [cat!] },
+        ],
+        scoreA: 1,
+        scoreB: 0,
+        status: "reported",
+        reportedBy: ann,
+        playedAt: earlier,
+        createdBy: admin,
+      });
+      // The finalize read "reported" and passed its check, then a cancel committed.
+      await matchRepository.update(id, { status: "cancelled" });
+
+      await expect(matchRepository.update(id, { status: "finalized", finalizedAt: new Date() })).rejects.toThrow(
+        "MATCH_ALREADY_FINALIZED",
+      );
+      expect((await matchRepository.getById(id))?.status).toBe("cancelled");
+    });
   });
 
   describe("listing", () => {

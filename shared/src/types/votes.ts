@@ -7,12 +7,13 @@ import { SELF_AMEND_WINDOW_HOURS } from "./match";
 
 /**
  * Votes stay open as long as the author may still amend a result on their own:
- * the window is fixed at entry, `created_at + VOTE_WINDOW_HOURS`.
+ * the window is fixed when the result is entered (`reported_at`, not `created_at`: a
+ * bracket or scheduled match is created long before it is played).
  */
 export const VOTE_WINDOW_HOURS = SELF_AMEND_WINDOW_HOURS;
 
-export function voteWindowCloseAt(createdAt: Date): Date {
-  return new Date(createdAt.getTime() + VOTE_WINDOW_HOURS * 60 * 60 * 1000);
+export function voteWindowCloseAt(enteredAt: Date): Date {
+  return new Date(enteredAt.getTime() + VOTE_WINDOW_HOURS * 60 * 60 * 1000);
 }
 
 export const mvpTieRuleSchema = z.enum(["co_mvp", "none"]);

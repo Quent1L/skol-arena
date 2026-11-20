@@ -25,6 +25,8 @@ vi.mock('@/composables/notification/notification.socket', () => ({
   useNotificationSocket: () => ({ connect, disconnect }),
 }))
 vi.mock('@/composables/useAuth', () => ({ useAuth: () => ({ isAuthenticated }) }))
+const closeVotePrompt = vi.fn()
+vi.mock('@/composables/votes/useVotePrompt', () => ({ useVotePrompt: () => ({ close: closeVotePrompt }) }))
 
 const pwa = {
   shouldShowBanner: ref(false),
@@ -146,6 +148,17 @@ describe('NotificationsInit', () => {
     isAuthenticated.value = false
     await nextTick()
     expect(disconnect).toHaveBeenCalledTimes(2)
+  })
+
+  it("drops the pending vote prompt on logout, so the next account never sees it", async () => {
+    isAuthenticated.value = true
+    mountWithPlugins(NotificationsInit, { global: { plugins } })
+    closeVotePrompt.mockClear()
+
+    isAuthenticated.value = false
+    await nextTick()
+
+    expect(closeVotePrompt).toHaveBeenCalledTimes(1)
   })
 
   it('connects straight away when already signed in, and disconnects on unmount', () => {

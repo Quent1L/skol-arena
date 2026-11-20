@@ -25,6 +25,11 @@ const nextCursor = ref<string | null>(null)
  */
 const unreadCount = ref(0)
 const total = ref(0)
+/**
+ * Unloaded notifications already counted down. A match opened here hears of its read
+ * twice — the HTTP answer and the socket echo — and nothing else would tell them apart.
+ */
+const countedReadUnloaded = new Set<string>()
 
 function normalize(raw: RawNotification): Notification {
   return { ...raw }
@@ -95,8 +100,9 @@ export function useNotificationService() {
   function markReadLocally(ids: string[]) {
     for (const id of ids) {
       const notif = notifications.value.find((n) => n.id === id)
-      if (notif?.isRead) continue
+      if (notif?.isRead || (!notif && countedReadUnloaded.has(id))) continue
       if (notif) notif.isRead = true
+      else countedReadUnloaded.add(id)
       unreadCount.value = Math.max(0, unreadCount.value - 1)
     }
   }

@@ -1534,6 +1534,22 @@ describe("MatchService - Auto-Finalization", () => {
     expect(result.total).toBe(2);
   });
 
+  it("keeps finalizing the batch when one match was finalized meanwhile", async () => {
+    const pastDate = new Date(Date.now() - 100 * 3_600_000);
+    repo.getMatchesPendingFinalization = async () =>
+      ["m-raced", "m-next"].map((id) => ({ id, status: "reported", confirmationDeadline: pastDate })) as any[];
+    confRepo.getByMatchId = async () => [];
+    repo.getById = async (id: string) => ({ id, tournamentId: "t-1", status: "reported" }) as any;
+    repo.update = async (id: string, data: UpdateMatchData) => {
+      if (id === "m-raced") throw new BadRequestError(ErrorCode.MATCH_ALREADY_FINALIZED);
+      return { id, ...data } as any;
+    };
+
+    const result = await matchService.autoFinalizeExpiredMatches();
+
+    expect(result.finalized).toEqual(["m-next"]);
+  });
+
   it("should mark expired matches as disputed when contestation exists", async () => {
     const pastDate = new Date();
     pastDate.setHours(pastDate.getHours() - 100);

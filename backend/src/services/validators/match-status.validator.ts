@@ -1,5 +1,5 @@
 import { BadRequestError, ErrorCode } from "../../types/errors";
-import type { MatchStatus } from "@skol-arena/shared/types/index";
+import { FINALIZABLE_MATCH_STATUSES, type MatchStatus } from "@skol-arena/shared/types/index";
 
 /**
  * Validator for match status transitions
@@ -57,7 +57,7 @@ export class MatchStatusValidator {
      * Validate match carries a result that can be finalized
      */
     validateCanFinalize(status: MatchStatus): void {
-        if (!["reported", "disputed", "confirmed", "pending_confirmation"].includes(status)) {
+        if (!(FINALIZABLE_MATCH_STATUSES as readonly string[]).includes(status)) {
             throw new BadRequestError(ErrorCode.MATCH_INVALID_STATUS);
         }
     }

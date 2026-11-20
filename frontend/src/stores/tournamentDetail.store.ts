@@ -23,6 +23,15 @@ import type {
   PlayerStatsResponse,
 } from '@skol-arena/shared/types/index'
 
+/** `YYYY-MM-DD` of a date-only value, still a string or already revived to UTC midnight. */
+function startDay(value: string | Date): string {
+  return (typeof value === 'string' ? value : value.toISOString()).slice(0, 10)
+}
+
+function localDay(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
   const router = useRouter()
   const { isAuthenticated, appUser, userRole } = useAuth()
@@ -96,12 +105,15 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
   )
 
   // Scheduled for later: no result can exist yet, so standings and stats have nothing to show.
-  const hasNotStarted = computed(
-    () =>
-      !!tournament.value &&
-      tournament.value.status !== 'finished' &&
-      new Date(tournament.value.startDate).getTime() > Date.now(),
-  )
+  // An organizer may start early: once ongoing, the date no longer matters. The start is a
+  // calendar day, compared with the local one (not UTC midnight).
+  // shortcut: an `open` tournament that already took matches before its date still shows
+  // "starts on"; check the match count here if organizers report it.
+  const hasNotStarted = computed(() => {
+    const t = tournament.value
+    if (!t || (t.status !== 'draft' && t.status !== 'open')) return false
+    return startDay(t.startDate) > localDay(new Date())
+  })
 
   const canLeaveTournament = computed(() => tournamentSvc.canLeaveTournament(tournament.value))
 
@@ -304,12 +316,11 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
           .then((s) => { playerStats.value = s }),
       ])
       profileChartHistory.value = chartHistory
+      // A request started for the previous tournament must not vouch for this one. A
+      // failed one leaves it unloaded, so the next visit to the pane tries again.
+      if (tournamentId.value === seasonId) playerProfileLoaded.value = true
     } finally {
-      // A request started for the previous tournament must not vouch for this one.
-      if (tournamentId.value === seasonId) {
-        playerProfileLoaded.value = true
-        playerProfileRequest = null
-      }
+      if (tournamentId.value === seasonId) playerProfileRequest = null
     }
   }
 
@@ -414,6 +425,8 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
       }
       await Promise.all(promises)
       matchesRefreshKey.value += 1
+      // A kept-alive standings table missed what happened on the pages in between.
+      standingsRefreshKey.value += 1
     })
   }
 

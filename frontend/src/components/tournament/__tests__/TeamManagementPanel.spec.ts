@@ -94,19 +94,13 @@ beforeEach(() => {
 })
 
 describe('TeamManagementPanel — loading and live updates', () => {
-  it('loads the teams, subscribes to the tournament and unsubscribes on unmount', async () => {
+  it('loads the teams and never touches the page-owned tournament subscription', async () => {
     const { wrapper } = await mountPanel()
     expect(service.loadTeams).toHaveBeenCalledWith('t1')
-    expect(sendWsMessage).toHaveBeenCalledWith({
-      event: 'subscribe_tournament',
-      tournamentId: 't1',
-    })
 
     wrapper.unmount()
-    expect(sendWsMessage).toHaveBeenCalledWith({
-      event: 'unsubscribe_tournament',
-      tournamentId: 't1',
-    })
+    // An unsubscribe here would cut the whole tournament page's live feed.
+    expect(sendWsMessage).not.toHaveBeenCalled()
     expect(off).toHaveBeenCalledTimes(3)
   })
 

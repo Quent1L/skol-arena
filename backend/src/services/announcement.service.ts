@@ -44,6 +44,14 @@ async function resolveRecipients(row: AnnouncementRow): Promise<string[]> {
   return ids.filter((id) => id !== row.createdBy);
 }
 
+async function isInAudience(row: AnnouncementRow, userId: string): Promise<boolean> {
+  if (row.createdBy === userId) return false;
+  if (row.audience === "tournament" && row.tournamentId) {
+    return await tournamentRepository.isActiveParticipant(row.tournamentId, userId);
+  }
+  return true;
+}
+
 function toFeedNotification(
   row: AnnouncementRow,
   userId: string,
@@ -154,7 +162,8 @@ export const announcementService = {
   /** The pop-up was dismissed: never shown again, and its feed copy reads as read. */
   async markSeen(userId: string, id: string): Promise<void> {
     const row = await announcementRepository.findById(id);
-    if (!row) throw new NotFoundError(ErrorCode.NOT_FOUND);
+    // Outside the audience reads as missing: no view counted, no id confirmed.
+    if (!row || !(await isInAudience(row, userId))) throw new NotFoundError(ErrorCode.NOT_FOUND);
     await announcementRepository.markSeen(id, userId);
     await notificationService.markAnnouncementRead(userId, id);
   },

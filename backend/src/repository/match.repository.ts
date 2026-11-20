@@ -23,6 +23,7 @@ import {
   resolveScoringConfig,
   resolveRulesetOutcome,
   ENTERED_MATCH_STATUSES,
+  FINALIZABLE_MATCH_STATUSES,
 } from "@skol-arena/shared";
 import { TOURNAMENT_CONFIGS_WITH } from "./tournament-config.columns";
 import { entryRepository } from "./entry.repository";
@@ -637,9 +638,10 @@ export class MatchRepository {
     const hasMatchFields = Object.values(matchFields).some((v) => v !== undefined);
 
     if (hasMatchFields) {
+      // Only from a finalizable status: a cancel racing the finalize must not be undone.
       const target =
         data.status === "finalized"
-          ? and(eq(matches.id, id), ne(matches.status, "finalized"))
+          ? and(eq(matches.id, id), inArray(matches.status, [...FINALIZABLE_MATCH_STATUSES]))
           : eq(matches.id, id);
       const [updated] = await tx.update(matches).set(matchFields).where(target).returning();
       return updated;

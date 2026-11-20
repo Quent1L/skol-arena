@@ -230,6 +230,17 @@ describe('notification service server-side reads', () => {
     expect(service.unreadCount.value).toBe(0)
   })
 
+  it('counts an unloaded notification down once, though the HTTP answer and the socket echo both name it', async () => {
+    vi.spyOn(notificationApi, 'list').mockResolvedValue(page([makeNotif('n-1')], { unreadCount: 5, total: 30 }))
+    await service.load()
+    vi.spyOn(notificationApi, 'markMatchRead').mockResolvedValue({ ids: ['n-beyond-page'] })
+
+    await service.markMatchRead('match-1')
+    service.markReadLocally(['n-beyond-page'])
+
+    expect(service.unreadCount.value).toBe(4)
+  })
+
   it('never throws when the match read fails', async () => {
     vi.spyOn(notificationApi, 'markMatchRead').mockRejectedValue(new Error('offline'))
     await expect(service.markMatchRead('match-1')).resolves.toBeUndefined()

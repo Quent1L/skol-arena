@@ -72,8 +72,18 @@ export class WebSocketService {
     const subs = this.tournamentSubscriptions.get(tournamentId);
     if (!subs) return;
     const message = JSON.stringify(data);
+    // One closing socket must not cut the others off nor throw into the caller.
     for (const ws of subs) {
-      ws.send(message);
+      if (ws.readyState !== undefined && ws.readyState !== 1) {
+        this.unsubscribeFromTournament(tournamentId, ws);
+        continue;
+      }
+      try {
+        ws.send(message);
+      } catch (err) {
+        logger.error({ err, tournamentId }, "[WS] Failed to broadcast to a tournament subscriber");
+        this.unsubscribeFromTournament(tournamentId, ws);
+      }
     }
   }
 

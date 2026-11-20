@@ -51,7 +51,7 @@ export class VoteService {
 
     const config = resolveVoteConfig(await tournamentRepository.getVoteConfig(match.tournamentId));
     const me = match.players.find((p) => p.id === userId);
-    const closesAt = voteWindowCloseAt(match.createdAt);
+    const closesAt = voteWindowCloseAt(match.enteredAt);
     const sideSizes = [1, 2].map((pos) => match.players.filter((p) => p.position === pos).length);
     return {
       match,
@@ -212,6 +212,7 @@ export class VoteService {
 
   async withdrawSpectator(matchId: string, userId: string) {
     const ctx = await this.loadContext(matchId, userId);
+    if (ctx.role !== "spectator") throw new ForbiddenError(ErrorCode.VOTE_NOT_ALLOWED);
     if (!ctx.isOpen) throw new ConflictError(ErrorCode.VOTING_CLOSED);
     await voteRepository.removeSpectator(matchId, userId);
     void this.broadcastMvpChange(ctx);
@@ -393,20 +394,17 @@ export class VoteService {
   }
 
   /**
-   * Records how a shown prompt ended. Only the first outcome sticks (a prompt shows
-   * once per match), except `voted`, which may settle it later. Three ignored prompts
-   * in a row snooze them for a week.
+   * The first record of a prompt marks it shown, so it never shows twice even if the app
+   * is closed under it, and counts as nothing. The next one says how it ended; `voted`
+   * then sticks. Three ignored prompts (dismissed, or left to expire) in a row snooze
+   * them for a week — an explicit skip is an answer, not an ignore.
    */
   async recordPrompt(matchId: string, userId: string, outcome: VotePromptOutcome): Promise<void> {
     const ctx = await this.loadContext(matchId, userId);
     if (ctx.role !== "player") throw new ForbiddenError(ErrorCode.VOTE_NOT_ALLOWED);
-    const inserted = await voteRepository.recordPrompt(matchId, userId, outcome);
-    if (!inserted) {
-      if (outcome === "voted") await voteRepository.markPromptVoted(matchId, userId);
-      return;
-    }
-    if (outcome !== "dismissed" && outcome !== "expired") return;
-    await this.bumpIgnored(userId);
+    if (await voteRepository.recordPrompt(matchId, userId, outcome)) return;
+    const settled = await voteRepository.settlePrompt(matchId, userId, outcome);
+    if (settled && (outcome === "dismissed" || outcome === "expired")) await this.bumpIgnored(userId);
   }
 
   private async bumpIgnored(userId: string): Promise<void> {

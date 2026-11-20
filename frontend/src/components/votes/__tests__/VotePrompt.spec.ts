@@ -141,6 +141,45 @@ describe('VotePrompt', () => {
     expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
   })
 
+  it('settles a closed card as dismissed, only once its "shown" record landed', async () => {
+    let landShown!: () => void
+    api.recordPrompt.mockImplementationOnce(() => new Promise<void>((r) => (landShown = r)))
+    const wrapper = await mountPrompt(prompt())
+    await wrapper.get('[data-testid="vote-prompt-close"]').trigger('click')
+    await flushPromises()
+    expect(api.recordPrompt).toHaveBeenCalledTimes(1)
+    landShown()
+    await flushPromises()
+    expect(api.recordPrompt.mock.calls).toEqual([
+      ['m1', 'expired'],
+      ['m1', 'dismissed'],
+    ])
+  })
+
+  it('settles an explicit skip as skipped, never as ignored', async () => {
+    const wrapper = await mountPrompt(prompt({ fairPlayTargetIds: [] }))
+    await wrapper.get('[data-testid="vote-prompt-skip"]').trigger('click')
+    await flushPromises()
+    expect(api.recordPrompt).toHaveBeenLastCalledWith('m1', 'skipped')
+  })
+
+  it('settles as voted once a vote went through, even if closed afterwards', async () => {
+    const wrapper = await mountPrompt(prompt())
+    await wrapper.get('[data-testid="vote-prompt-mvp-julie"]').trigger('click')
+    await flushPromises()
+    await wrapper.get('[data-testid="vote-prompt-close"]').trigger('click')
+    await flushPromises()
+    expect(api.recordPrompt).toHaveBeenLastCalledWith('m1', 'voted')
+  })
+
+  it('settles a card left alone as expired', async () => {
+    await mountPrompt(prompt())
+    await vi.advanceTimersByTimeAsync(7000)
+    await flushPromises()
+    expect(api.recordPrompt).toHaveBeenLastCalledWith('m1', 'expired')
+    expect(api.recordPrompt).toHaveBeenCalledTimes(2)
+  })
+
   it('drains its progress bar as the countdown runs', async () => {
     const wrapper = await mountPrompt(prompt())
     const value = () => Number(wrapper.get('[data-testid="vote-prompt-progress"] [role="progressbar"]').attributes('aria-valuenow'))

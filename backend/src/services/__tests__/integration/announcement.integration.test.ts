@@ -201,6 +201,17 @@ describe("Announcements (integration)", () => {
     });
   });
 
+  it("refuses a view from someone outside the announcement's audience", async () => {
+    const { id } = await announcementService.create(superAdmin, input({ audience: "tournament", tournamentId }));
+
+    await expect(announcementService.markSeen(outsider, id)).rejects.toThrow("NOT_FOUND");
+    await expect(announcementService.markSeen(bob, id)).rejects.toThrow("NOT_FOUND");
+    await announcementService.markSeen(alice, id);
+
+    const [listed] = await announcementService.list(superAdmin, tournamentId);
+    expect(listed?.seenCount).toBe(1);
+  });
+
   it("deleting an announcement removes its copies from every feed, open bells included", async () => {
     const { id } = await announcementService.create(superAdmin, input({}));
     const [aliceCopy] = await feedOf(alice);

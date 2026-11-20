@@ -13,7 +13,7 @@ vi.mock('@/composables/useAuth', () => ({
   }),
 }))
 
-const tournamentRef = ref<{ mode: string } | null>({ mode: 'ranked' })
+const tournamentRef = ref<{ mode: string; status?: string; startDate?: string } | null>({ mode: 'ranked' })
 
 vi.mock('@/composables/tournament/tournament.service', () => ({
   useTournamentService: () => ({
@@ -303,6 +303,36 @@ describe('useTournamentDetailStore — background refresh indicator', () => {
 
     expect(store.matchesRefreshKey).toBe(before + 2)
   })
+
+  it('reloads a kept-alive standings table on a silent refresh', async () => {
+    const store = useTournamentDetailStore()
+    await store.initialize('tournament-a')
+    const before = store.standingsRefreshKey
+
+    await store.refreshSilently()
+
+    expect(store.standingsRefreshKey).toBe(before + 1)
+  })
+})
+
+describe('useTournamentDetailStore — hasNotStarted', () => {
+  it('ignores the start date once the tournament is ongoing', () => {
+    tournamentRef.value = { mode: 'championship', status: 'ongoing', startDate: '2026-03-20' }
+    expect(useTournamentDetailStore().hasNotStarted).toBe(false)
+  })
+
+  it('holds an open tournament until its start day', () => {
+    tournamentRef.value = { mode: 'championship', status: 'open', startDate: '2026-03-12' }
+    expect(useTournamentDetailStore().hasNotStarted).toBe(true)
+  })
+
+  it('counts the start day as started from local midnight, not UTC midnight', () => {
+    // 00:30 local on the start day: still the previous day in UTC east of Greenwich,
+    // the very hour `new Date('YYYY-MM-DD')` (UTC midnight) got wrong.
+    vi.setSystemTime(new Date('2026-03-12T00:30:00'))
+    tournamentRef.value = { mode: 'championship', status: 'open', startDate: '2026-03-12' }
+    expect(useTournamentDetailStore().hasNotStarted).toBe(false)
+  })
 })
 
 describe('useTournamentDetailStore — uninitialized store', () => {
@@ -370,6 +400,21 @@ describe('useTournamentDetailStore — player profile loaded state', () => {
     await Promise.all([store.ensurePlayerProfile(), store.ensurePlayerProfile()])
 
     expect(loadPlayerMmr).toHaveBeenCalledTimes(1)
+  })
+
+  it('stays unloaded after a failed request, so the next visit retries', async () => {
+    tournamentRef.value = { mode: 'championship' }
+    const { playerApi } = await import('@/composables/player/player.api')
+    vi.mocked(playerApi.getStats).mockRejectedValueOnce(new Error('network'))
+    const store = useTournamentDetailStore()
+    await store.initialize('tournament-a')
+
+    await expect(store.ensurePlayerProfile()).rejects.toThrow('network')
+    expect(store.playerProfileLoaded).toBe(false)
+
+    await store.ensurePlayerProfile()
+    expect(store.playerProfileLoaded).toBe(true)
+    expect(playerApi.getStats).toHaveBeenCalledTimes(2)
   })
 
   it('goes back to unloaded on another tournament', async () => {
