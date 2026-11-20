@@ -351,7 +351,7 @@ async function playPendingForAdmin(
 
 async function seedPoolLeague(ctx: DemoContext, pool: SeededDiscipline): Promise<number> {
   const opts: LeagueOptions = {
-    name: "Pool League",
+    name: "Pool League 1v1",
     description: "The club's main league. Play when you are both free, report the score, and the table updates itself.",
     playerKeys: DEMO_PEOPLE.map((p) => p.key),
     status: "ongoing",
@@ -405,6 +405,8 @@ async function createRankedSeason(ctx: DemoContext, pool: SeededDiscipline): Pro
     mode: "ranked",
     // No confirmation step: a ranked result counts the moment it is reported.
     validationMode: "none",
+    // Flex 1 to 2 per side: 1v1 and 2v2 both count, unlike the strictly 1v1 leagues.
+    maxTeamSize: 2,
     // Ladder games are won or lost, nobody counts racks: the winner is all that is entered.
     scoreEnabled: false,
     minScore: null,
