@@ -23,6 +23,7 @@ const userService = {
     createdAt: new Date("2026-01-01"),
     updatedAt: new Date("2026-01-02"),
   })),
+  updatePreferences: mock(async (..._a: any[]): Promise<any> => ({ id: "u1", autoSelectSelfInMatch: false })),
   getAllUsers: mock(async (..._a: any[]): Promise<any[]> => [
     {
       id: "u2",
@@ -128,6 +129,31 @@ describe("PATCH /users/me", () => {
 
     expect(res.status).toBe(400);
     expect(userService.updateProfile).not.toHaveBeenCalled();
+  });
+});
+
+describe("PATCH /users/me/preferences", () => {
+  it("saves the caller's own settings", async () => {
+    const res = await app.request("/users/me/preferences", {
+      method: "PATCH",
+      headers: authed,
+      body: JSON.stringify({ autoSelectSelfInMatch: false }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ autoSelectSelfInMatch: false });
+    expect(userService.updatePreferences).toHaveBeenCalledWith("u1", { autoSelectSelfInMatch: false });
+  });
+
+  it("rejects a body that is not a boolean setting", async () => {
+    const res = await app.request("/users/me/preferences", {
+      method: "PATCH",
+      headers: authed,
+      body: JSON.stringify({ autoSelectSelfInMatch: "no" }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(userService.updatePreferences).not.toHaveBeenCalled();
   });
 });
 

@@ -1,4 +1,5 @@
 import http from '@/config/ApiConfig'
+import type { UserPreferences } from '@skol-arena/shared'
 
 const BASE_URL = '/api/users'
 
@@ -10,6 +11,8 @@ export interface UserResponse {
   role: 'player' | 'tournament_admin' | 'super_admin' | 'kiosk'
   /** Current avatar version; null when the user has none. */
   avatarVersion: string | null
+  /** Match entry starts with this user already picked. */
+  autoSelectSelfInMatch: boolean
   createdAt: string
   updatedAt: string
   betterAuth: {
@@ -40,6 +43,11 @@ export const userApi = {
    */
   async updateProfile(data: { displayName: string; shortName: string }): Promise<UserResponse> {
     const response = await http.patch<UserResponse>(`${BASE_URL}/me`, data)
+    return response.data
+  },
+
+  async updatePreferences(data: UserPreferences): Promise<UserPreferences> {
+    const response = await http.patch<UserPreferences>(`${BASE_URL}/me/preferences`, data)
     return response.data
   },
 

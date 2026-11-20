@@ -319,13 +319,18 @@ describe('CreateMatchView', () => {
     expect(wrapper.findComponent(DesktopProbe).exists()).toBe(true)
   })
 
-  it('non-admin participant user: auto-added to allPlayerIds', async () => {
+  it('participant user: auto-added to allPlayerIds', async () => {
     const wrapper = await mountView({}, { role: 'player' })
     expect(getProbe(wrapper).vm.formState.allPlayerIds).toEqual(['u1'])
   })
 
-  it('admin user: not auto-added to allPlayerIds', async () => {
+  it('admin user: auto-added too, admins also play', async () => {
     const wrapper = await mountView({}, { role: 'tournament_admin' })
+    expect(getProbe(wrapper).vm.formState.allPlayerIds).toEqual(['u1'])
+  })
+
+  it('user who turned the setting off: not auto-added', async () => {
+    const wrapper = await mountView({}, { role: 'player', autoSelectSelfInMatch: false })
     expect(getProbe(wrapper).vm.formState.allPlayerIds).toEqual([])
   })
 

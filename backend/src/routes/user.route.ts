@@ -8,6 +8,7 @@ import { validate } from "../api/validator";
 import { describe } from "../api/describe";
 import {
   updateProfileSchema,
+  userPreferencesSchema,
   playerStatsFiltersSchema,
   userSearchSchema,
   playerComparisonSchema,
@@ -53,6 +54,7 @@ users.get(
       shortName: appUser.shortName,
       role: appUser.role,
       avatarVersion: appUser.avatarVersion ?? null,
+      autoSelectSelfInMatch: appUser.autoSelectSelfInMatch,
       createdAt: appUser.createdAt,
       updatedAt: appUser.updatedAt,
       // Include Better Auth user info as well
@@ -95,6 +97,23 @@ users.patch(
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
     });
+  },
+);
+
+// PATCH /users/me/preferences - Update current user settings
+users.patch(
+  "/me/preferences",
+  requireAuth,
+  describe({
+    tags: TAGS,
+    summary: "Update the current user's preferences",
+    auth: true,
+    success: { description: "The saved preferences", schema: userPreferencesSchema },
+  }),
+  validate("json", userPreferencesSchema),
+  async (c) => {
+    const updated = await userService.updatePreferences(c.get("appUserId"), c.req.valid("json"));
+    return c.json({ autoSelectSelfInMatch: updated.autoSelectSelfInMatch });
   },
 );
 

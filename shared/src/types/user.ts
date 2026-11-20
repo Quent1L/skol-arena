@@ -43,6 +43,8 @@ export type AppUser = z.infer<typeof appUserSchema>;
  */
 export const appUserWithAuthSchema = appUserSchema
   .extend({
+    /** The signed-in user's own setting, only on `/users/me`. */
+    autoSelectSelfInMatch: z.boolean(),
     betterAuth: z.object({
       id: z.string().optional(),
       email: z.string().optional(),

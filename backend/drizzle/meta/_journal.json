@@ -687,6 +687,13 @@
       "when": 1777526400053,
       "tag": "0097_notifications_match_announcement_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1777612800054,
+      "tag": "0098_auto_select_self_in_match",
+      "breakpoints": true
     }
   ]
 }

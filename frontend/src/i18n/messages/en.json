@@ -1952,6 +1952,12 @@
     "avatar": {
       "title": "Profile picture",
       "description": "Visible to other players. Every change applies immediately."
+    },
+    "matchEntry": {
+      "title": "Match entry",
+      "autoSelectSelf": "Pre-select me",
+      "autoSelectSelfDesc": "When I enter a match, I'm already added to the players. Turn it off if you mostly enter other people's matches.",
+      "saveError": "Could not save this setting"
     }
   },
   "signupView": {

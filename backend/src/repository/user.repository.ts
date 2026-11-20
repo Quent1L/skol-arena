@@ -123,6 +123,7 @@ export class UserRepository {
       role?: UserRole;
       deactivatedAt?: Date | null;
       deactivatedBy?: string | null;
+      autoSelectSelfInMatch?: boolean;
     },
   ) {
     const [updated] = await db.update(appUsers).set(data).where(eq(appUsers.id, id)).returning();

@@ -286,6 +286,9 @@ export const appUsers = pgTable(
     // regenerates and re-logs its password on every restart.
     bootstrapPending: boolean("bootstrap_pending").notNull().default(false),
     trustScoreCount: integer("trust_score_count").notNull().default(0),
+    // Match entry starts with the user already picked; off for organisers who mostly
+    // report other people's matches.
+    autoSelectSelfInMatch: boolean("auto_select_self_in_match").notNull().default(true),
     // Random id of the current avatar, part of every avatar URL: a new upload
     // yields a new URL, which is what lets those URLs be cached for long.
     avatarVersion: uuid("avatar_version"),

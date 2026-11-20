@@ -41,6 +41,8 @@ export interface AuthMockState {
   user: { id: string; email: string; displayName?: string } | null
   role: 'player' | 'tournament_admin' | 'super_admin' | 'kiosk'
   initialized: boolean
+  /** The account setting; defaults to on, like a fresh account. */
+  autoSelectSelfInMatch?: boolean
 }
 
 export function makeAuthMock(state: AuthMockState) {
@@ -52,6 +54,7 @@ export function makeAuthMock(state: AuthMockState) {
           email: state.user.email,
           displayName: state.user.displayName ?? state.user.email,
           role: state.role,
+          autoSelectSelfInMatch: state.autoSelectSelfInMatch ?? true,
           betterAuth: { email: state.user.email },
         }
       : null,

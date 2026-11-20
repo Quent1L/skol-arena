@@ -172,6 +172,28 @@
           />
         </SettingsSection>
 
+        <!-- Saisie de match -->
+        <SettingsSection
+          v-if="appUser"
+          :title="t('settings.matchEntry.title')"
+          icon="fas fa-pen-to-square"
+        >
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="font-medium">{{ t('settings.matchEntry.autoSelectSelf') }}</p>
+              <p class="text-sm opacity-70">{{ t('settings.matchEntry.autoSelectSelfDesc') }}</p>
+            </div>
+            <USwitch
+              :model-value="appUser.autoSelectSelfInMatch"
+              :disabled="preferencesSaving"
+              size="lg"
+              :aria-label="t('settings.matchEntry.autoSelectSelf')"
+              data-testid="auto-select-self-switch"
+              @update:model-value="toggleAutoSelectSelf"
+            />
+          </div>
+        </SettingsSection>
+
         <!-- Compte -->
         <SettingsSection :title="t('settings.account.title')" icon="fas fa-user">
           <!-- An SSO-only account has no password to re-enter, so the change
@@ -472,8 +494,10 @@ import { useDebounceFn } from '@vueuse/core'
 import AvatarEditor from '@/components/avatar/AvatarEditor.vue'
 import PasswordInput from '@/components/forms/PasswordInput.vue'
 import SettingsSection from '@/components/settings/SettingsSection.vue'
+import { useAppToast } from '@/composables/useAppToast'
 
 const { t } = useI18n()
+const toast = useAppToast()
 const { currentLocale, availableLocales } = useLocale()
 const currentLocaleFlag = computed(
   () => availableLocales.find((l) => l.code === currentLocale.value)?.flag,
@@ -701,6 +725,21 @@ onMounted(async () => {
     // Keep the default: showing the change-password flow is the safe failure mode.
   }
 })
+
+const preferencesSaving = ref(false)
+
+async function toggleAutoSelectSelf(value: boolean) {
+  preferencesSaving.value = true
+  try {
+    await userApi.updatePreferences({ autoSelectSelfInMatch: value })
+    // Match entry reads the setting from `appUser`.
+    await fetchUserData()
+  } catch {
+    toast.add({ severity: 'error', summary: t('settings.matchEntry.saveError'), life: 4000 })
+  } finally {
+    preferencesSaving.value = false
+  }
+}
 
 async function togglePushNotifications(newValue: boolean) {
   console.log('[Settings] Toggle push notifications:', newValue, 'current:', pushEnabled.value)

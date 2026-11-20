@@ -23,6 +23,7 @@ import type {
   AdminUserDetail,
   AdminUserListQuery,
   UpdateProfileInput,
+  UserPreferences,
   PlayerProfile,
 } from "@skol-arena/shared";
 
@@ -175,6 +176,14 @@ export class UserService {
     const updated = await userRepository.updateAppUser(appUserId, data);
     if (renamed) {
       await playerCacheService.invalidateDenormalizedNames([appUserId]);
+    }
+    return updated;
+  }
+
+  async updatePreferences(appUserId: string, data: UserPreferences) {
+    const updated = await userRepository.updateAppUser(appUserId, data);
+    if (!updated) {
+      throw new NotFoundError(ErrorCode.USER_NOT_FOUND);
     }
     return updated;
   }

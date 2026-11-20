@@ -85,7 +85,7 @@ const { playersMap, setPlayersMap, getMatch } = useMatchService()
 const { loadTournamentWithErrorHandling } = useTournamentService()
 const { teams, loadTeams } = useTeamService()
 const { getTournamentParticipants, error: participantsError } = useParticipantService()
-const { isAdmin, appUser } = useAuth()
+const { appUser } = useAuth()
 
 const tournament = ref<ClientBaseTournament | null>(null)
 const isBracketMatch = computed(() => tournament.value?.mode === 'bracket')
@@ -280,7 +280,8 @@ async function loadForm() {
     if (sourceMatch) {
       if (matchId) applyExistingMatch(sourceMatch)
       else applyRematch(sourceMatch)
-    } else if (!isAdmin.value && appUser.value) {
+    } else if (appUser.value?.autoSelectSelfInMatch) {
+      // Opt-out setting, for organisers who mostly enter other people's matches.
       // Only on a blank form: hydrating from a match replaces `allPlayerIds`
       // wholesale, so pre-selecting oneself there has never had any effect.
       const userId = appUser.value.id
