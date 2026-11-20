@@ -65,7 +65,7 @@
                 class="font-label font-semibold tracking-tight truncate text-center text-highlighted min-w-0"
                 >{{ player.displayName }}</span
               >
-              <MvpBadge v-if="player.isMvp" />
+              <MvpBadge v-if="player.isMvp" icon-only />
             </span>
           </div>
         </div>
@@ -111,7 +111,7 @@
                 class="font-label font-semibold tracking-tight truncate text-center text-highlighted min-w-0"
                 >{{ player.displayName }}</span
               >
-              <MvpBadge v-if="player.isMvp" />
+              <MvpBadge v-if="player.isMvp" icon-only />
             </span>
           </div>
         </div>
