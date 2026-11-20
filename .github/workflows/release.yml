@@ -36,6 +36,13 @@ jobs:
         id: gate
         run: bun scripts/release-gate.ts
 
+      # Vitest, vue-tsc, ESLint, Prettier and Astro run on Node, not Bun (their bins carry a
+      # node shebang): the version comes from `engines.node` in the root package.json.
+      - if: steps.gate.outputs.proceed == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: package.json
+
       - if: steps.gate.outputs.proceed == 'true'
         run: bun install --frozen-lockfile
 

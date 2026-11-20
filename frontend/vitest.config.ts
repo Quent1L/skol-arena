@@ -7,6 +7,9 @@ export default mergeConfig(
   defineConfig({
     test: {
       environment: 'jsdom',
+      // Node's own global localStorage (on by default since 25) shadows jsdom's, and is
+      // undefined without --localstorage-file.
+      execArgv: ['--no-experimental-webstorage'],
       exclude: [...configDefaults.exclude, 'e2e/**'],
       setupFiles: ['./vitest.setup.ts'],
       root: fileURLToPath(new URL('./', import.meta.url)),

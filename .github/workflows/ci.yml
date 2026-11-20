@@ -21,6 +21,12 @@ jobs:
       # Bun version comes from `engines.bun` in the root package.json, as in release.yml.
       - uses: oven-sh/setup-bun@v2
 
+      # Vitest, vue-tsc, ESLint, Prettier and Astro run on Node, not Bun (their bins carry a
+      # node shebang): the version comes from `engines.node` in the root package.json.
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: package.json
+
       - run: bun install --frozen-lockfile
 
       - run: bun run build:shared
