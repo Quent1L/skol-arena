@@ -27,7 +27,7 @@ export const RANKED_SLIDES: DeviceSlide[] = [
   {
     desktop: rankedDesktop,
     mobile: rankedMobile,
-    alt: 'A ranked leaderboard grouped into Diamond, Platinum, Gold and Silver tiers',
+    alt: 'A ranked leaderboard grouped into Legend, Expert, Advanced and Challenger tiers',
     caption: 'Rank tiers that follow the player pool, not fixed bands',
     label: 'The ladder',
   },

@@ -1,6 +1,5 @@
 ---
 import type { CollectionEntry } from 'astro:content'
-import type { ImageMetadata } from 'astro'
 import { getCollection, render } from 'astro:content'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { softwareApplication } from '../lib/schema'
@@ -9,11 +8,17 @@ import SectionHeading from '../components/SectionHeading.astro'
 import FeatureCard from '../components/FeatureCard.astro'
 import DeviceShot from '../components/DeviceShot.astro'
 import RankedSpotlight from '../components/RankedSpotlight.astro'
+import DeviceCarousel from '../components/DeviceCarousel.astro'
+import type { DeviceSlide } from '../lib/ranked-shots'
 
 import standingsDesktop from '../assets/screenshots/standings-desktop.png'
 import standingsMobile from '../assets/screenshots/standings-mobile.png'
 import bracketDesktop from '../assets/screenshots/bracket-desktop.png'
 import bracketMobile from '../assets/screenshots/bracket-mobile.png'
+import votesDesktop from '../assets/screenshots/votes-desktop.png'
+import votesMobile from '../assets/screenshots/votes-mobile.png'
+import matchVotesDesktop from '../assets/screenshots/match-votes-desktop.png'
+import matchVotesMobile from '../assets/screenshots/match-votes-mobile.png'
 
 type Pillar = 'championship' | 'bracket' | 'ranked' | 'platform'
 
@@ -24,22 +29,41 @@ const RANKED_ID = 'features/ranked-mode'
  * simply renders full width: an empty frame saying "screenshot coming soon" is
  * worse than no frame at all.
  */
-const SHOTS: Record<
-  string,
-  { desktop: ImageMetadata; mobile: ImageMetadata; alt: string; caption: string }
-> = {
-  'features/championship-limits': {
-    desktop: standingsDesktop,
-    mobile: standingsMobile,
-    alt: 'Championship standings with points, matches played, wins, losses and score difference',
-    caption: 'Standings, once the caps have been applied',
-  },
-  'features/bracket-seeding': {
-    desktop: bracketDesktop,
-    mobile: bracketMobile,
-    alt: 'A single elimination bracket with quarter-finals and semi-finals played',
-    caption: 'A bracket drawn from a finished season',
-  },
+const SHOTS: Record<string, DeviceSlide[]> = {
+  'features/championship-limits': [
+    {
+      desktop: standingsDesktop,
+      mobile: standingsMobile,
+      alt: 'Championship standings with points, matches played, wins, losses and score difference',
+      caption: 'Standings, once the caps have been applied',
+      label: 'Standings',
+    },
+  ],
+  'features/fair-play-mvp': [
+    {
+      desktop: votesDesktop,
+      mobile: votesMobile,
+      alt: 'Fair-play and MVP rankings of a doubles league, with the fair-play player and the MVP of the week',
+      caption: 'Fair-play and MVP rankings in the stats tab',
+      label: 'Vote rankings',
+    },
+    {
+      desktop: matchVotesDesktop,
+      mobile: matchVotesMobile,
+      alt: 'A finished doubles match with its vote panel open: a thumbs up or down per opponent and an MVP pick',
+      caption: 'Voting on the match page, open for 48 hours',
+      label: 'Match votes',
+    },
+  ],
+  'features/bracket-seeding': [
+    {
+      desktop: bracketDesktop,
+      mobile: bracketMobile,
+      alt: 'A single elimination bracket with quarter-finals and semi-finals played',
+      caption: 'A bracket drawn from a finished season',
+      label: 'Bracket',
+    },
+  ],
 }
 const byOrder = (a: CollectionEntry<'showcase'>, b: CollectionEntry<'showcase'>) =>
   a.data.order - b.data.order
@@ -192,7 +216,16 @@ const sections = await Promise.all(
                     {SHOTS[feature.id] && (
                       <div class="md:col-span-2">
                         <div class="md:sticky md:top-24">
-                          <DeviceShot {...SHOTS[feature.id]} />
+                          {SHOTS[feature.id].length > 1 ? (
+                            <DeviceCarousel slides={SHOTS[feature.id]} />
+                          ) : (
+                            <DeviceShot
+                              desktop={SHOTS[feature.id][0]!.desktop}
+                              mobile={SHOTS[feature.id][0]!.mobile}
+                              alt={SHOTS[feature.id][0]!.alt}
+                              caption={SHOTS[feature.id][0]!.caption}
+                            />
+                          )}
                         </div>
                       </div>
                     )}

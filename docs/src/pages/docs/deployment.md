@@ -166,10 +166,12 @@ that has been playing for a few months:
   win on foul (black ball potted early, scratch on the black…) and forfeit (no-show,
   withdrawal) — table football and darts;
 - **six competitions**: an ongoing pool league, last season's finished one, a ranked
-  season with its ladder and tiers, a cup bracket waiting for its final, a table
+  season with its ladder and the default tiers, a cup bracket waiting for its final, a table
   football league played by fixed teams of two, and a darts open still taking
   registrations;
-- **close to 400 matches**, a few of them waiting for your confirmation and one disputed.
+- **close to 400 matches**, a few of them waiting for your confirmation and one disputed;
+- **fair-play and MVP votes** on the leagues and the ranked season, so their rankings and
+  the players of the week are already filled in.
 
 The repository ships a ready-made Compose file for it:
 
@@ -177,8 +179,9 @@ The repository ships a ready-made Compose file for it:
 docker compose -f docker-compose.demo.yml up
 ```
 
-Then open `http://localhost:3000/login` and sign in with the credentials
-printed in the logs:
+Then open `http://localhost:3000/login`: on a demo instance, the login page shows the
+super admin's email and password, and a button signs you in with them in one click.
+They are also printed in the logs on every start:
 
 ```bash
 docker compose -f docker-compose.demo.yml logs app | grep "DEMO CREDENTIALS"

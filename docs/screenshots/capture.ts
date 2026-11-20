@@ -54,6 +54,12 @@ async function resolveTargets() {
   const season = await one(`select id from tournaments where name = 'Ranked Season 4'`)
   const cup = await one(`select id from tournaments where name = 'Friday Night Cup'`)
   const theo = await one(`select id from app_users where display_name = 'Theo Marchand'`)
+  const doubles = await one(`select id from tournaments where name = 'Doubles Night League'`)
+  // Theo's newest doubles match: finished, still open to votes, none cast yet.
+  const voteMatch = await one(
+    `select id from matches where tournament_id = $1 order by played_at desc limit 1`,
+    [doubles.id],
+  )
   // The one match still waiting on its opponent: that is the screen the
   // "players confirm their own results" section is about.
   const pending = await one(
@@ -67,6 +73,8 @@ async function resolveTargets() {
     cupId: cup.id,
     theoId: theo.id,
     pendingMatchId: pending.id,
+    doublesId: doubles.id,
+    voteMatchId: voteMatch.id,
   }
 }
 
@@ -164,6 +172,8 @@ async function main() {
     // of a ranked season — which is what the showcase account is.
     { name: 'season-profile', path: `/tournaments/${targets.seasonId}/stats?statsSub=profile`, settle: 1600 },
     { name: 'season-stats', path: `/tournaments/${targets.seasonId}/stats?statsSub=global`, settle: 1600 },
+    { name: 'votes', path: `/tournaments/${targets.doublesId}/stats?statsSub=global`, settle: 1600 },
+    { name: 'match-votes', path: `/matches/${targets.voteMatchId}`, settle: 1200 },
   ]
 
   const browser = await chromium.launch()
