@@ -65,17 +65,22 @@ function enterDelay(index: number): string {
 
     <!-- First load: the shape of the list before its content -->
     <div v-if="loading && notifications.length === 0" class="space-y-3">
-      <div v-for="i in 3" :key="`sk-${i}`" class="notif-skeleton sk-shimmer bg-slate-200 dark:bg-slate-700"></div>
+      <div
+        v-for="i in 3"
+        :key="`sk-${i}`"
+        class="notif-skeleton sk-shimmer bg-slate-200 dark:bg-slate-700"
+      ></div>
     </div>
 
     <div v-else-if="loadingMore" class="space-y-3 pt-1">
-      <div v-for="i in 2" :key="`sk-more-${i}`" class="notif-skeleton sk-shimmer bg-slate-200 dark:bg-slate-700"></div>
+      <div
+        v-for="i in 2"
+        :key="`sk-more-${i}`"
+        class="notif-skeleton sk-shimmer bg-slate-200 dark:bg-slate-700"
+      ></div>
     </div>
 
-    <p
-      v-else-if="notifications.length === 0"
-      class="text-center text-xs opacity-60 py-4"
-    >
+    <p v-else-if="notifications.length === 0" class="text-center text-xs opacity-60 py-4">
       {{ t('notificationList.empty') }}
     </p>
 

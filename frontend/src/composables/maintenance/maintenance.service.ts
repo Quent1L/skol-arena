@@ -57,7 +57,10 @@ export function useMaintenanceService() {
       lastMigration.value = result
       if (info.value) info.value = { ...info.value, avatarStorage: result.report }
       status.value = {
-        avatarStorage: { driver: result.report.driver, strandedDrivers: result.report.strandedDrivers },
+        avatarStorage: {
+          driver: result.report.driver,
+          strandedDrivers: result.report.strandedDrivers,
+        },
       }
       toast.add({
         severity: result.failed > 0 ? 'warn' : 'success',

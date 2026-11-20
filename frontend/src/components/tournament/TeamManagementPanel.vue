@@ -1,6 +1,11 @@
 <template>
   <div class="p-4 space-y-4">
-    <UAlert v-if="isLocked" color="warning" variant="subtle" :title="t('teamManagementPanel.teamsLocked')" />
+    <UAlert
+      v-if="isLocked"
+      color="warning"
+      variant="subtle"
+      :title="t('teamManagementPanel.teamsLocked')"
+    />
 
     <UAlert
       v-if="!isLocked && props.isParticipant && isAlreadyInTeam"

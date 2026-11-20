@@ -29,15 +29,29 @@
           </UFormField>
 
           <UFormField name="name" :label="t('registerView.nameLabel')" size="xl">
-            <UInput id="name" v-model="state.name" autocomplete="name" placeholder="John Doe" class="w-full" />
+            <UInput
+              id="name"
+              v-model="state.name"
+              autocomplete="name"
+              placeholder="John Doe"
+              class="w-full"
+            />
           </UFormField>
 
           <UFormField name="password" :label="t('registerView.passwordLabel')" size="xl">
             <PasswordInput id="password" v-model="state.password" autocomplete="new-password" />
           </UFormField>
 
-          <UFormField name="passwordConfirm" :label="t('registerView.passwordConfirmLabel')" size="xl">
-            <PasswordInput id="passwordConfirm" v-model="state.passwordConfirm" autocomplete="new-password" />
+          <UFormField
+            name="passwordConfirm"
+            :label="t('registerView.passwordConfirmLabel')"
+            size="xl"
+          >
+            <PasswordInput
+              id="passwordConfirm"
+              v-model="state.passwordConfirm"
+              autocomplete="new-password"
+            />
           </UFormField>
 
           <UAlert v-if="error" color="error" variant="subtle" :title="error" />

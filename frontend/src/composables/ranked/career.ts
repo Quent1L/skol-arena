@@ -66,9 +66,7 @@ export function careerPeak(
  * (`tournaments.discipline_id` is ON DELETE SET NULL) land in a trailing null group
  * rather than disappearing.
  */
-export function groupCareerByDiscipline(
-  seasons: PlayerCareerSeason[],
-): CareerDisciplineGroup[] {
+export function groupCareerByDiscipline(seasons: PlayerCareerSeason[]): CareerDisciplineGroup[] {
   const groups = new Map<string, CareerDisciplineGroup>()
 
   for (const season of seasons) {

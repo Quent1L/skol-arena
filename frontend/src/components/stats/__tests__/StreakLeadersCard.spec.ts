@@ -93,7 +93,10 @@ describe('StreakLeadersCard', () => {
   })
 
   it('draws each bar relative to the longest streak of the card', () => {
-    const wrapper = mountCard([entry({ currentStreak: 8 }), entry({ playerId: 'p2', currentStreak: 2 })])
+    const wrapper = mountCard([
+      entry({ currentStreak: 8 }),
+      entry({ playerId: 'p2', currentStreak: 2 }),
+    ])
 
     const bars = wrapper.findAll('[data-test="stat-leader-row"] .h-full')
     expect(bars[0].attributes('style')).toContain('width: 100%')

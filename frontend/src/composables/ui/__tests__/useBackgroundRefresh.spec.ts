@@ -61,7 +61,10 @@ describe('useBackgroundRefresh', () => {
     const { refresh } = inScope()
     const first = deferred()
     const second = deferred()
-    const running = Promise.all([refresh.run(() => first.promise), refresh.run(() => second.promise)])
+    const running = Promise.all([
+      refresh.run(() => first.promise),
+      refresh.run(() => second.promise),
+    ])
 
     await vi.advanceTimersByTimeAsync(REFRESH_INDICATOR_DELAY_MS)
     first.resolve()

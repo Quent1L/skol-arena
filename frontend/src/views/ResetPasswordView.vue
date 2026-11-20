@@ -13,7 +13,11 @@
         <div v-if="!tokenValid">
           <UAlert color="error" variant="subtle" :title="t('resetPasswordView.invalidLink')" />
           <div class="text-center mt-4">
-            <UButton size="xl" :label="t('resetPasswordView.requestNewLink')" to="/forgot-password" />
+            <UButton
+              size="xl"
+              :label="t('resetPasswordView.requestNewLink')"
+              to="/forgot-password"
+            />
           </div>
         </div>
 
@@ -31,8 +35,16 @@
               <PasswordInput id="password" v-model="state.password" autocomplete="new-password" />
             </UFormField>
 
-            <UFormField name="passwordConfirm" :label="t('resetPasswordView.confirmPasswordLabel')" size="xl">
-              <PasswordInput id="passwordConfirm" v-model="state.passwordConfirm" autocomplete="new-password" />
+            <UFormField
+              name="passwordConfirm"
+              :label="t('resetPasswordView.confirmPasswordLabel')"
+              size="xl"
+            >
+              <PasswordInput
+                id="passwordConfirm"
+                v-model="state.passwordConfirm"
+                autocomplete="new-password"
+              />
             </UFormField>
 
             <UAlert v-if="error" color="error" variant="subtle" :title="error" />

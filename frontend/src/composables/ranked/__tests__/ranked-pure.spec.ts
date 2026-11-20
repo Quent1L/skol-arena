@@ -206,8 +206,11 @@ describe('getPeakMmr', () => {
 })
 
 describe('sortBySeasonMetric', () => {
-  const seasonPlayer = (id: string, peakMmr: number, avgMmr: number) =>
-    ({ ...makePlayerMmr({ player: { id, displayName: id, shortName: id } }), peakMmr, avgMmr })
+  const seasonPlayer = (id: string, peakMmr: number, avgMmr: number) => ({
+    ...makePlayerMmr({ player: { id, displayName: id, shortName: id } }),
+    peakMmr,
+    avgMmr,
+  })
 
   const players = [
     seasonPlayer('a', 1200, 1400),
@@ -261,7 +264,10 @@ describe('splitByPlacement', () => {
   })
 
   it('sets players who left apart, whatever their placement progress', () => {
-    const gone = (id: string, matchesPlayed: number) => ({ ...player(id, matchesPlayed), inactive: true })
+    const gone = (id: string, matchesPlayed: number) => ({
+      ...player(id, matchesPlayed),
+      inactive: true,
+    })
     const { placed, inPlacement, inactive } = splitByPlacement(
       [player('a', 10), gone('x', 10), player('b', 1), gone('y', 1)],
       5,

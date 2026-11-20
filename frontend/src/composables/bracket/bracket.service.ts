@@ -64,7 +64,8 @@ export function useBracketService() {
       currentParticipants.value = result.currentParticipants ?? 0
       return result
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : t('bracketService.errors.eligibilityFailed')
+      const errorMsg =
+        err instanceof Error ? err.message : t('bracketService.errors.eligibilityFailed')
       toast.add({
         severity: 'error',
         summary: t('common.error'),
@@ -96,8 +97,13 @@ export function useBracketService() {
       return data
     } catch (err: unknown) {
       let detail = err instanceof Error ? err.message : t('bracketService.errors.generateFailed')
-      if (err instanceof Error && (err as Error & { cause?: unknown }).cause === 'CHAMPIONSHIP_PARTICIPANTS_WITHOUT_MATCHES') {
-        const participants = ((err as Error & { details?: { participants?: Array<{ name: string }> } }).details?.participants) ?? []
+      if (
+        err instanceof Error &&
+        (err as Error & { cause?: unknown }).cause === 'CHAMPIONSHIP_PARTICIPANTS_WITHOUT_MATCHES'
+      ) {
+        const participants =
+          (err as Error & { details?: { participants?: Array<{ name: string }> } }).details
+            ?.participants ?? []
         const names = participants.map((p) => p.name).join(', ')
         detail = names.length
           ? t('bracketService.errors.participantsWithoutMatchesNamed', { names })
@@ -141,8 +147,13 @@ export function useBracketService() {
       return data
     } catch (err: unknown) {
       let detail = err instanceof Error ? err.message : t('bracketService.errors.regenerateFailed')
-      if (err instanceof Error && (err as Error & { cause?: unknown }).cause === 'CHAMPIONSHIP_PARTICIPANTS_WITHOUT_MATCHES') {
-        const participants = ((err as Error & { details?: { participants?: Array<{ name: string }> } }).details?.participants) ?? []
+      if (
+        err instanceof Error &&
+        (err as Error & { cause?: unknown }).cause === 'CHAMPIONSHIP_PARTICIPANTS_WITHOUT_MATCHES'
+      ) {
+        const participants =
+          (err as Error & { details?: { participants?: Array<{ name: string }> } }).details
+            ?.participants ?? []
         const names = participants.map((p) => p.name).join(', ')
         detail = names.length
           ? t('bracketService.errors.participantsWithoutMatchesNamed', { names })

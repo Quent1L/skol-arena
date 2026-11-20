@@ -51,7 +51,9 @@ describe('useFieldEditability', () => {
   })
 
   it('does not blame matches for a lock when none were entered', () => {
-    const { lockedByMatches } = useFieldEditability(ref({ ...(editability as object), enteredMatchCount: 0 } as never))
+    const { lockedByMatches } = useFieldEditability(
+      ref({ ...(editability as object), enteredMatchCount: 0 } as never),
+    )
 
     expect(lockedByMatches('format')).toBe(false)
   })

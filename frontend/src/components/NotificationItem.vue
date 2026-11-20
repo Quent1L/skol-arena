@@ -9,12 +9,7 @@
       <i class="fas fa-trash text-white text-base notif-swipe-icon" :style="swipeIconStyle"></i>
     </div>
 
-    <div
-      ref="cardRef"
-      :class="cardClasses"
-      :style="cardStyle"
-      @click="handleClick"
-    >
+    <div ref="cardRef" :class="cardClasses" :style="cardStyle" @click="handleClick">
       <span class="notif-accent" :style="{ background: accent }" aria-hidden="true"></span>
 
       <div class="flex gap-3">
@@ -29,7 +24,12 @@
         <div class="min-w-0 flex-1">
           <div class="flex items-start justify-between gap-2">
             <h3 class="notif-title font-semibold text-sm md:text-[0.95rem] leading-snug min-w-0">
-              <span v-if="!props.notif.isRead" class="notif-dot" :style="{ background: accent }" aria-hidden="true"></span>
+              <span
+                v-if="!props.notif.isRead"
+                class="notif-dot"
+                :style="{ background: accent }"
+                aria-hidden="true"
+              ></span>
               {{ title }}
             </h3>
             <div class="flex items-center gap-1 flex-shrink-0">
@@ -53,8 +53,7 @@
           <pre
             class="notif-message text-xs md:text-sm opacity-75 whitespace-pre-wrap mt-0.5"
             style="font-family: inherit"
-            >{{ message }}</pre
-          >
+            >{{ message }}</pre>
 
           <span v-if="blocking" class="notif-action-chip text-amber-700 dark:text-amber-300">
             <i class="fas fa-triangle-exclamation text-[9px]"></i>
@@ -142,9 +141,7 @@ const cardStyle = computed(() => ({
   transition: cardTransition.value,
 }))
 
-const swipeProgress = computed(() =>
-  Math.min(Math.max(0, swipeOffset.value) / SWIPE_THRESHOLD, 1),
-)
+const swipeProgress = computed(() => Math.min(Math.max(0, swipeOffset.value) / SWIPE_THRESHOLD, 1))
 
 const swipeBackgroundStyle = computed(() => ({
   opacity: String(Math.min(1, swipeProgress.value * 1.3)),
@@ -220,7 +217,7 @@ function formatDate(date: Date): string {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   })
 }
 

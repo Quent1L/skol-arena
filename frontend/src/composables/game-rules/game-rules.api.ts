@@ -1,5 +1,9 @@
 import http from '@/config/ApiConfig'
-import type { ClientGameRule, CreateGameRuleData, UpdateGameRuleData } from '@skol-arena/shared/types/index'
+import type {
+  ClientGameRule,
+  CreateGameRuleData,
+  UpdateGameRuleData,
+} from '@skol-arena/shared/types/index'
 
 const BASE_URL = '/api/game-rules'
 

@@ -22,6 +22,7 @@
     "type-check": "vue-tsc --build",
     "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix --cache",
+    "lint:prettier": "prettier --check src/",
     "lint": "run-s lint:*",
     "format": "prettier --write src/"
   },

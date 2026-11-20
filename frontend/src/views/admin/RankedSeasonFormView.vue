@@ -214,7 +214,10 @@
                 />
               </UFormField>
 
-              <UCheckbox v-model="automation.carryMmr" :label="t('rankedSeasonFormView.labelCarryMmr')" />
+              <UCheckbox
+                v-model="automation.carryMmr"
+                :label="t('rankedSeasonFormView.labelCarryMmr')"
+              />
               <UFormField
                 v-if="automation.carryMmr"
                 class="ps-6"

@@ -5,7 +5,10 @@ import { mountWithPlugins } from '@/test-support/mount'
 import PlayerTournamentProfile from '../PlayerTournamentProfile.vue'
 
 vi.mock('vue-i18n', () => ({
-  useI18n: () => ({ t: (key: string, params?: Record<string, unknown>) => (params?.name ? `${key}:${params.name}` : key) }),
+  useI18n: () => ({
+    t: (key: string, params?: Record<string, unknown>) =>
+      params?.name ? `${key}:${params.name}` : key,
+  }),
   createI18n: () => ({ global: { t: (key: string) => key }, install: () => {} }),
 }))
 
@@ -14,11 +17,26 @@ vi.mock('@/composables/team/team.service', async () => {
   const { ref } = await import('vue')
   const list = ref<unknown[]>([])
   return {
-    useTeamService: () => ({ teams: list, loadTeams: async () => { list.value = teams } }),
+    useTeamService: () => ({
+      teams: list,
+      loadTeams: async () => {
+        list.value = teams
+      },
+    }),
   }
 })
 
-const relation = [{ playerId: 'p2', displayName: 'Bob', shortName: 'bob', matchesPlayed: 3, wins: 2, losses: 1, winRate: 67 }]
+const relation = [
+  {
+    playerId: 'p2',
+    displayName: 'Bob',
+    shortName: 'bob',
+    matchesPlayed: 3,
+    wins: 2,
+    losses: 1,
+    winRate: 67,
+  },
+]
 
 function stats(overrides: Partial<PlayerDetailStats> = {}): PlayerDetailStats {
   return {
@@ -34,14 +52,21 @@ function stats(overrides: Partial<PlayerDetailStats> = {}): PlayerDetailStats {
     bestPartners: relation,
     nemeses: relation,
     outcomeTypeStats: [],
-    formatStats: [{ teamSize: 2, opponentSize: 2, wins: 3, draws: 0, losses: 1, winRate: 75, matchesPlayed: 4 }],
+    formatStats: [
+      { teamSize: 2, opponentSize: 2, wins: 3, draws: 0, losses: 1, winRate: 75, matchesPlayed: 4 },
+    ],
     h2hStats: [],
     tournamentHistory: [],
     ...overrides,
   } as PlayerDetailStats
 }
 
-const stubs = { PlayerBadges: true, PlayerRelationStats: true, RecentFormSection: true, InfoTooltip: true }
+const stubs = {
+  PlayerBadges: true,
+  PlayerRelationStats: true,
+  RecentFormSection: true,
+  InfoTooltip: true,
+}
 
 async function mount(props: Record<string, unknown>) {
   const wrapper = mountWithPlugins(PlayerTournamentProfile, {

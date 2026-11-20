@@ -38,123 +38,140 @@
       data-testid="standings-columns"
     >
       <div class="flex-1" />
-      <div v-if="allowDraw" class="w-14 text-right">{{ t('standingsTable.columnWinLossRatio') }}</div>
+      <div v-if="allowDraw" class="w-14 text-right">
+        {{ t('standingsTable.columnWinLossRatio') }}
+      </div>
       <UTooltip :text="t('standingsTable.tooltipBuchholz')">
         <div class="w-14 text-right cursor-help">{{ t('standingsTable.columnBuchholz') }}</div>
       </UTooltip>
       <UTooltip :text="t('standingsTable.tooltipVictoryQuality')">
-        <div class="w-14 text-right cursor-help">{{ t('standingsTable.columnVictoryQuality') }}</div>
+        <div class="w-14 text-right cursor-help">
+          {{ t('standingsTable.columnVictoryQuality') }}
+        </div>
       </UTooltip>
       <div class="w-14 text-right">{{ t('standingsTable.columnWinRate') }}</div>
       <div class="w-10 text-right">{{ t('standingsTable.ptsUnit') }}</div>
     </div>
 
     <template v-for="(entry, index) in entries" :key="entry.id">
-    <!-- Players who left keep their results but no position: the server lists them last. -->
-    <div
-      v-if="index === firstInactiveIndex"
-      class="flex items-center gap-2 px-4 pt-4 pb-2 border-t border-dashed border-white/10 text-[10px] font-bold uppercase tracking-wide text-gray-500"
-      data-testid="standings-inactive-header"
-    >
-      <i class="fa fa-user-slash" />
-      <span>{{ t('standingsTable.inactiveSection') }}</span>
-      <InfoTooltip :text="t('standingsTable.inactiveSectionHint')" />
-    </div>
-    <div
-      class="flex items-center border-t border-white/5 transition-colors"
-      :class="[
-        entry.id === currentUserId ? 'bg-primary-900/30 hover:bg-primary-800/40' : 'hover:bg-white/5',
-        { 'opacity-60': entry.inactive },
-      ]"
-      :data-testid="entry.inactive ? 'standings-inactive-row' : 'standings-row'"
-    >
-      <component
-        :is="teamMode === 'flex' ? RouterLink : 'div'"
-        v-bind="teamMode === 'flex' ? { to: playerLink(entry.id, tournamentId) } : {}"
-        class="flex flex-1 min-w-0 items-center gap-3 pl-4 py-2.5 md:pr-4"
+      <!-- Players who left keep their results but no position: the server lists them last. -->
+      <div
+        v-if="index === firstInactiveIndex"
+        class="flex items-center gap-2 px-4 pt-4 pb-2 border-t border-dashed border-white/10 text-[10px] font-bold uppercase tracking-wide text-gray-500"
+        data-testid="standings-inactive-header"
       >
-        <div v-if="entry.inactive" class="w-5 text-center text-xs font-bold shrink-0 text-gray-600">
-          —
-        </div>
-        <div v-else class="w-5 text-center text-xs font-bold shrink-0" :class="rankClass(index)">
-          {{ index + 1 }}
-        </div>
-
-        <PlayerAvatar
-          :name="entry.name"
-          :color-key="entry.shortName"
-          :player-id="teamMode === 'flex' ? entry.id : undefined"
-          shape="square"
-          size="sm"
-          class="shrink-0"
-        />
-
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-1.5 min-w-0">
-            <span class="font-semibold text-sm truncate">{{ entry.name }}</span>
-            <span
-              v-if="entry.id === currentUserId"
-              class="text-[9px] font-bold text-primary-400 uppercase tracking-wide shrink-0"
-              >{{ t('rankedLeaderboard.you') }}</span
-            >
-            <span
-              v-if="entry.inactive"
-              class="text-[9px] font-bold text-gray-400 uppercase tracking-wide shrink-0"
-              >{{ t('standingsTable.inactive') }}</span
-            >
+        <i class="fa fa-user-slash" />
+        <span>{{ t('standingsTable.inactiveSection') }}</span>
+        <InfoTooltip :text="t('standingsTable.inactiveSectionHint')" />
+      </div>
+      <div
+        class="flex items-center border-t border-white/5 transition-colors"
+        :class="[
+          entry.id === currentUserId
+            ? 'bg-primary-900/30 hover:bg-primary-800/40'
+            : 'hover:bg-white/5',
+          { 'opacity-60': entry.inactive },
+        ]"
+        :data-testid="entry.inactive ? 'standings-inactive-row' : 'standings-row'"
+      >
+        <component
+          :is="teamMode === 'flex' ? RouterLink : 'div'"
+          v-bind="teamMode === 'flex' ? { to: playerLink(entry.id, tournamentId) } : {}"
+          class="flex flex-1 min-w-0 items-center gap-3 pl-4 py-2.5 md:pr-4"
+        >
+          <div
+            v-if="entry.inactive"
+            class="w-5 text-center text-xs font-bold shrink-0 text-gray-600"
+          >
+            —
           </div>
-          <div class="flex items-center gap-2 text-[10px] text-gray-400 tabular-nums">
-            <span>{{ playedLabel(entry) }}</span>
-            <span v-if="entry.matchesPlayed > 0">
-              <span class="text-green-400">{{ entry.wins }}{{ t('standingsTable.columnWins') }}</span>
-              <template v-if="allowDraw">
-                · <span>{{ entry.draws }}{{ t('standingsTable.columnDraws') }}</span>
-              </template>
-              · <span class="text-red-400">{{ entry.losses }}{{ t('standingsTable.columnLosses') }}</span>
-            </span>
-            <span v-if="scoreEnabled && entry.matchesPlayed > 0" :class="diffClass(entry.scoreDiff)">
-              {{ entry.scoreDiff > 0 ? '+' : '' }}{{ entry.scoreDiff }}
-            </span>
+          <div v-else class="w-5 text-center text-xs font-bold shrink-0" :class="rankClass(index)">
+            {{ index + 1 }}
           </div>
-        </div>
 
-        <div class="hidden md:contents text-sm text-gray-300 tabular-nums">
-          <div v-if="allowDraw" class="w-14 text-right shrink-0">
-            {{ formatRatio(entry.winLossRatio) }}
-          </div>
-          <div class="w-14 text-right shrink-0">{{ entry.buchholzScore }}</div>
-          <UPopover mode="hover" :open-delay="100">
-            <div class="w-14 text-right shrink-0 cursor-help">
-              {{ Math.round(entry.victoryQuality) }}
+          <PlayerAvatar
+            :name="entry.name"
+            :color-key="entry.shortName"
+            :player-id="teamMode === 'flex' ? entry.id : undefined"
+            shape="square"
+            size="sm"
+            class="shrink-0"
+          />
+
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="font-semibold text-sm truncate">{{ entry.name }}</span>
+              <span
+                v-if="entry.id === currentUserId"
+                class="text-[9px] font-bold text-primary-400 uppercase tracking-wide shrink-0"
+                >{{ t('rankedLeaderboard.you') }}</span
+              >
+              <span
+                v-if="entry.inactive"
+                class="text-[9px] font-bold text-gray-400 uppercase tracking-wide shrink-0"
+                >{{ t('standingsTable.inactive') }}</span
+              >
             </div>
-            <template #content>
-              <QualityBreakdown :entry="entry" />
-            </template>
-          </UPopover>
-          <div class="w-14 text-right shrink-0">{{ formatPercent(entry.winRate) }}</div>
-        </div>
+            <div class="flex items-center gap-2 text-[10px] text-gray-400 tabular-nums">
+              <span>{{ playedLabel(entry) }}</span>
+              <span v-if="entry.matchesPlayed > 0">
+                <span class="text-green-400"
+                  >{{ entry.wins }}{{ t('standingsTable.columnWins') }}</span
+                >
+                <template v-if="allowDraw">
+                  · <span>{{ entry.draws }}{{ t('standingsTable.columnDraws') }}</span>
+                </template>
+                ·
+                <span class="text-red-400"
+                  >{{ entry.losses }}{{ t('standingsTable.columnLosses') }}</span
+                >
+              </span>
+              <span
+                v-if="scoreEnabled && entry.matchesPlayed > 0"
+                :class="diffClass(entry.scoreDiff)"
+              >
+                {{ entry.scoreDiff > 0 ? '+' : '' }}{{ entry.scoreDiff }}
+              </span>
+            </div>
+          </div>
 
-        <div class="w-10 text-right shrink-0">
-          <div class="font-black text-sm tabular-nums">{{ entry.points }}</div>
-          <div class="text-[10px] text-gray-500 md:hidden">{{ t('standingsTable.ptsUnit') }}</div>
-        </div>
-      </component>
+          <div class="hidden md:contents text-sm text-gray-300 tabular-nums">
+            <div v-if="allowDraw" class="w-14 text-right shrink-0">
+              {{ formatRatio(entry.winLossRatio) }}
+            </div>
+            <div class="w-14 text-right shrink-0">{{ entry.buchholzScore }}</div>
+            <UPopover mode="hover" :open-delay="100">
+              <div class="w-14 text-right shrink-0 cursor-help">
+                {{ Math.round(entry.victoryQuality) }}
+              </div>
+              <template #content>
+                <QualityBreakdown :entry="entry" />
+              </template>
+            </UPopover>
+            <div class="w-14 text-right shrink-0">{{ formatPercent(entry.winRate) }}</div>
+          </div>
 
-      <!-- Outside the link: opening the tiebreakers must not open the profile. -->
-      <UPopover>
-        <UButton
-          icon="i-fa7-solid:circle-question"
-          color="neutral"
-          variant="ghost"
-          size="sm"
-          class="mx-1.5 shrink-0 rounded-full text-gray-500 md:hidden"
-          :aria-label="t('standingsTable.tiebreakerDetails', { name: entry.name })"
-        />
-        <template #content>
-          <TiebreakerDetails :entry="entry" :allow-draw="allowDraw" />
-        </template>
-      </UPopover>
-    </div>
+          <div class="w-10 text-right shrink-0">
+            <div class="font-black text-sm tabular-nums">{{ entry.points }}</div>
+            <div class="text-[10px] text-gray-500 md:hidden">{{ t('standingsTable.ptsUnit') }}</div>
+          </div>
+        </component>
+
+        <!-- Outside the link: opening the tiebreakers must not open the profile. -->
+        <UPopover>
+          <UButton
+            icon="i-fa7-solid:circle-question"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            class="mx-1.5 shrink-0 rounded-full text-gray-500 md:hidden"
+            :aria-label="t('standingsTable.tiebreakerDetails', { name: entry.name })"
+          />
+          <template #content>
+            <TiebreakerDetails :entry="entry" :allow-draw="allowDraw" />
+          </template>
+        </UPopover>
+      </div>
     </template>
   </div>
 </template>
@@ -209,5 +226,4 @@ function playedLabel(entry: StandingsEntry): string {
     number: count,
   })
 }
-
 </script>

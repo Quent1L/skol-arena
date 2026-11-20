@@ -3,7 +3,9 @@ import http from '@/config/ApiConfig'
 import { apiBaseURL } from '@/config/api-base'
 import { useAvatarService, resetAvatarCache, avatarLookupsSettled } from '../avatar.service'
 
-vi.mock('@/config/ApiConfig', async () => (await import('@/test-support/mock-modules')).apiConfigMock())
+vi.mock('@/config/ApiConfig', async () =>
+  (await import('@/test-support/mock-modules')).apiConfigMock(),
+)
 
 const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`
 const flush = () => avatarLookupsSettled()
@@ -16,7 +18,9 @@ describe('avatar service', () => {
   })
 
   it('batches every id asked for in the same tick into one lookup', async () => {
-    vi.mocked(http.post).mockResolvedValue({ data: { avatars: { [uuid(1)]: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' } } })
+    vi.mocked(http.post).mockResolvedValue({
+      data: { avatars: { [uuid(1)]: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' } },
+    })
     const { versionFor } = useAvatarService()
 
     versionFor(uuid(1))
@@ -74,7 +78,9 @@ describe('avatar service', () => {
   })
 
   it('records the new version after an upload and forgets it after a removal', async () => {
-    vi.mocked(http.put).mockResolvedValue({ data: { avatarVersion: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' } })
+    vi.mocked(http.put).mockResolvedValue({
+      data: { avatarVersion: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' },
+    })
     vi.mocked(http.delete).mockResolvedValue({ data: undefined })
     const { upload, remove, versionFor } = useAvatarService()
 

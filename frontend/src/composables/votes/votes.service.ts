@@ -53,7 +53,8 @@ export function useMatchVotes() {
     v.fairPlay ? { ...v, fairPlay: { ...v.fairPlay, myVotes } } : v
   const otherFairPlay = (v: MatchVotes, targetId: string) =>
     (v.fairPlay?.myVotes ?? []).filter((vote) => vote.targetId !== targetId)
-  const withMvp = (v: MatchVotes, myVote: string | null) => (v.mvp ? { ...v, mvp: { ...v.mvp, myVote } } : v)
+  const withMvp = (v: MatchVotes, myVote: string | null) =>
+    v.mvp ? { ...v, mvp: { ...v.mvp, myVote } } : v
 
   return {
     votes,
@@ -74,7 +75,14 @@ export function useMatchVotes() {
     declareSpectator: () => run(() => votesApi.declareSpectator(matchId())),
     withdrawSpectator: () => run(() => votesApi.withdrawSpectator(matchId())),
     castMvp: (targetId: string) =>
-      run(() => votesApi.castMvp(matchId(), targetId), (v) => withMvp(v, targetId)),
-    removeMvp: () => run(() => votesApi.removeMvp(matchId()), (v) => withMvp(v, null)),
+      run(
+        () => votesApi.castMvp(matchId(), targetId),
+        (v) => withMvp(v, targetId),
+      ),
+    removeMvp: () =>
+      run(
+        () => votesApi.removeMvp(matchId()),
+        (v) => withMvp(v, null),
+      ),
   }
 }

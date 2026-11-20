@@ -105,7 +105,12 @@ export function useAdminUsersService() {
       syncListEntry(updated)
       return true
     } catch (err) {
-      fail(err, active ? 'adminUsersService.errors.reactivateFailed' : 'adminUsersService.errors.deactivateFailed')
+      fail(
+        err,
+        active
+          ? 'adminUsersService.errors.reactivateFailed'
+          : 'adminUsersService.errors.deactivateFailed',
+      )
       return false
     } finally {
       loading.value = false

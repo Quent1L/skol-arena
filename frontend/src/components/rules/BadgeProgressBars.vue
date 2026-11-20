@@ -4,7 +4,9 @@
       <UProgress :model-value="percent(counter)" size="sm" />
       <div class="mt-1 text-xs tabular-nums text-slate-500">
         {{ t('badgeProgress.count', { current: counter.current, target: counter.target }) }}
-        <template v-if="counter.window === 'discipline'"> · {{ t('badgeProgress.allSeasons') }}</template>
+        <template v-if="counter.window === 'discipline'">
+          · {{ t('badgeProgress.allSeasons') }}</template
+        >
       </div>
     </div>
   </div>

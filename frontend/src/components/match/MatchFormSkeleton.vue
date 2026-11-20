@@ -14,9 +14,7 @@
         </div>
 
         <!-- Step progress indicator -->
-        <div
-          class="px-4 pt-3 pb-2 bg-white dark:bg-slate-800 border-b dark:border-slate-700"
-        >
+        <div class="px-4 pt-3 pb-2 bg-white dark:bg-slate-800 border-b dark:border-slate-700">
           <div class="flex items-center">
             <template v-for="(step, idx) in STEP_COUNT_RANGE" :key="step">
               <USkeleton class="size-[2.25rem] rounded-full flex-none!" />

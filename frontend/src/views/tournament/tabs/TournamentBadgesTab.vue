@@ -1,15 +1,28 @@
 <template>
   <div class="space-y-4 sm:space-y-6">
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-6">
+    <div
+      class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-6"
+    >
       <div class="flex items-center gap-2 mb-6">
-        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
+        <div
+          class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0"
+        >
           <i class="fa fa-medal text-purple-600 dark:text-purple-400 text-sm sm:text-base" />
         </div>
         <div>
-          <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{{ t('tournamentBadgesTab.title') }}</div>
+          <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
+            {{ t('tournamentBadgesTab.title') }}
+          </div>
           <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-            <template v-if="appUser">{{ t('tournamentBadgesTab.earnedCount', { earned: earnedCount, total: availableBadges.length }) }}</template>
-            <template v-else>{{ t('tournamentBadgesTab.availableCount', { count: availableBadges.length }) }}</template>
+            <template v-if="appUser">{{
+              t('tournamentBadgesTab.earnedCount', {
+                earned: earnedCount,
+                total: availableBadges.length,
+              })
+            }}</template>
+            <template v-else>{{
+              t('tournamentBadgesTab.availableCount', { count: availableBadges.length })
+            }}</template>
           </div>
         </div>
       </div>
@@ -18,7 +31,10 @@
         <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
       </div>
 
-      <div v-else-if="availableBadges.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+      <div
+        v-else-if="availableBadges.length === 0"
+        class="text-center py-8 text-gray-500 dark:text-gray-400"
+      >
         <i class="fa fa-medal text-4xl mb-3 block opacity-30" />
         <p>{{ t('tournamentBadgesTab.emptyState') }}</p>
       </div>
@@ -33,12 +49,20 @@
           <button
             type="button"
             class="h-full w-full flex flex-col items-center justify-center text-center p-4 rounded-xl gap-2 transition-all hover:scale-[1.03] hover:shadow-md cursor-pointer"
-            :class="isEarned(badge.ruleId)
-              ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 hover:border-purple-400 dark:hover:border-purple-500'
-              : ['bg-slate-100 dark:bg-slate-800', progressOf(badge).length ? '' : 'opacity-50 hover:opacity-80']"
+            :class="
+              isEarned(badge.ruleId)
+                ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 hover:border-purple-400 dark:hover:border-purple-500'
+                : [
+                    'bg-slate-100 dark:bg-slate-800',
+                    progressOf(badge).length ? '' : 'opacity-50 hover:opacity-80',
+                  ]
+            "
           >
             <i
-              :class="[badge.icon || 'fa fa-medal', isEarned(badge.ruleId) ? 'text-purple-600' : 'text-gray-400 dark:text-gray-500']"
+              :class="[
+                badge.icon || 'fa fa-medal',
+                isEarned(badge.ruleId) ? 'text-purple-600' : 'text-gray-400 dark:text-gray-500',
+              ]"
               class="text-3xl"
             />
             <div class="font-semibold text-sm leading-tight">{{ badge.label }}</div>
@@ -48,18 +72,25 @@
             >
               {{ t('tournamentBadgesTab.lifetimeBadge') }}
             </span>
-            <div v-if="isEarned(badge.ruleId)" class="text-xs text-purple-600 dark:text-purple-400 font-medium">
+            <div
+              v-if="isEarned(badge.ruleId)"
+              class="text-xs text-purple-600 dark:text-purple-400 font-medium"
+            >
               <i class="fa fa-check mr-1" />{{ formatDate(getEarnedDate(badge.ruleId)) }}
             </div>
             <div v-else-if="previousSeasons(badge.ruleId).length" class="text-xs text-slate-500">
               <i class="fa fa-clock-rotate-left mr-1" />{{
-                t('tournamentBadgesTab.alreadyEarnedIn', { seasons: previousSeasons(badge.ruleId).join(', ') })
+                t('tournamentBadgesTab.alreadyEarnedIn', {
+                  seasons: previousSeasons(badge.ruleId).join(', '),
+                })
               }}
             </div>
             <BadgeProgressBars v-if="progressOf(badge).length" :counters="progressOf(badge)" />
             <div v-if="badge.holders?.length" class="mt-auto flex items-center gap-1.5">
               <PlayerAvatarStack :players="badge.holders" size="xs" />
-              <span class="text-xs text-slate-500">{{ t('badgeDetail.holders', badge.holders.length) }}</span>
+              <span class="text-xs text-slate-500">{{
+                t('badgeDetail.holders', badge.holders.length)
+              }}</span>
             </div>
           </button>
         </BadgeDetailModal>
@@ -102,7 +133,10 @@ const tournamentId = computed(() => route.params.id as string)
  * would hide the thing the player still has to do.
  */
 const earnedHere = computed(
-  () => new Map(playerBadges.value.filter((b) => b.seasonId === tournamentId.value).map((b) => [b.ruleId, b])),
+  () =>
+    new Map(
+      playerBadges.value.filter((b) => b.seasonId === tournamentId.value).map((b) => [b.ruleId, b]),
+    ),
 )
 
 /** Seasons other than this one where the badge was already won, most recent first. */
@@ -118,7 +152,9 @@ const earnedElsewhere = computed(() => {
   return byRule
 })
 
-const earnedCount = computed(() => availableBadges.value.filter((b) => earnedHere.value.has(b.ruleId)).length)
+const earnedCount = computed(
+  () => availableBadges.value.filter((b) => earnedHere.value.has(b.ruleId)).length,
+)
 
 function isEarned(ruleId: string): boolean {
   return earnedHere.value.has(ruleId)
@@ -134,7 +170,9 @@ function previousSeasons(ruleId: string): string[] {
 
 /** Nothing left to chase once earned here, or for good when the badge is a lifetime one. */
 function progressOf(badge: AvailableBadge): BadgeCounterProgress[] {
-  const done = isEarned(badge.ruleId) || (badge.recurrence === 'once' && previousSeasons(badge.ruleId).length > 0)
+  const done =
+    isEarned(badge.ruleId) ||
+    (badge.recurrence === 'once' && previousSeasons(badge.ruleId).length > 0)
   if (done) return []
   return progress.value.find((p) => p.ruleId === badge.ruleId)?.counters ?? []
 }
@@ -164,7 +202,11 @@ async function load({ silent = false } = {}) {
   }
 }
 
-watch(() => route.params.id, () => load(), { immediate: true })
+watch(
+  () => route.params.id,
+  () => load(),
+  { immediate: true },
+)
 
 const reloadSilently = () => load({ silent: true })
 const offAwarded = onWsEvent('badge_awarded', reloadSilently)

@@ -18,12 +18,7 @@ const TIERS = [
 ]
 
 // Imported, not copied: the component reads the very same beats.
-const {
-  entry: ENTRY_MS,
-  segment: SEGMENT_MS,
-  flash: FLASH_MS,
-  swap: SWAP_MS,
-} = MMR_REVEAL_TIMING
+const { entry: ENTRY_MS, segment: SEGMENT_MS, flash: FLASH_MS, swap: SWAP_MS } = MMR_REVEAL_TIMING
 /** Enough to flush the two frames the bar waits before it starts travelling. */
 const RAF_MS = 50
 
@@ -35,7 +30,8 @@ function mountReveal(over: Partial<MmrAnimationEventResponse> = {}) {
 
 // The component teleports to <body>, so every query goes through the document.
 const backdrop = () => document.body.querySelector('.reveal-backdrop') as HTMLElement
-const counter = () => document.body.querySelector('[data-testid="mmr-counter"]')?.textContent?.trim()
+const counter = () =>
+  document.body.querySelector('[data-testid="mmr-counter"]')?.textContent?.trim()
 const continueBtn = () =>
   [...document.body.querySelectorAll('button')].find((b) =>
     b.textContent?.includes('mmrRevealAnimation.continue'),
@@ -57,7 +53,9 @@ const fillStyle = (part: 'base' | 'delta') => {
 
 const originalMatchMedia = window.matchMedia
 const stubReducedMotion = () => {
-  window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia
+  window.matchMedia = vi
+    .fn()
+    .mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia
 }
 
 beforeEach(() => vi.useFakeTimers())

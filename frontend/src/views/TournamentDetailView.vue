@@ -149,18 +149,18 @@
     <!-- Not found -->
     <div v-else class="tournament-detail-view">
       <UCard variant="soft" class="text-center py-12">
-          <div class="space-y-4">
-            <i class="fa fa-triangle-exclamation text-4xl text-orange-400"></i>
-            <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300">
-              {{ t('tournamentDetailView.notFound.title') }}
-            </h3>
-            <p class="text-gray-500 dark:text-gray-400">
-              {{ t('tournamentDetailView.notFound.description') }}
-            </p>
-            <div>
-              <UButton :label="t('tournamentDetailView.notFound.backBtn')" to="/" />
-            </div>
+        <div class="space-y-4">
+          <i class="fa fa-triangle-exclamation text-4xl text-orange-400"></i>
+          <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300">
+            {{ t('tournamentDetailView.notFound.title') }}
+          </h3>
+          <p class="text-gray-500 dark:text-gray-400">
+            {{ t('tournamentDetailView.notFound.description') }}
+          </p>
+          <div>
+            <UButton :label="t('tournamentDetailView.notFound.backBtn')" to="/" />
           </div>
+        </div>
       </UCard>
     </div>
 
@@ -172,13 +172,17 @@
       @close="animationQueue.dismissAll()"
     />
     <MmrRevealAnimation
-      v-else-if="isActive && store.tournament?.mode === 'ranked' && animationQueue.currentEvent.value"
+      v-else-if="
+        isActive && store.tournament?.mode === 'ranked' && animationQueue.currentEvent.value
+      "
       :event="animationQueue.currentEvent.value"
       :tiers="store.rankedTiers"
       @close="animationQueue.acknowledgeCurrentEvent()"
     />
     <BadgeRevealAnimation
-      v-else-if="isActive && store.tournament?.mode === 'ranked' && animationQueue.currentBadge.value"
+      v-else-if="
+        isActive && store.tournament?.mode === 'ranked' && animationQueue.currentBadge.value
+      "
       :badge="animationQueue.currentBadge.value"
       @close="animationQueue.acknowledgeCurrentBadge()"
     />
@@ -228,13 +232,27 @@ const TournamentDetailMobile = defineAsyncComponent(
 import TournamentDetailSkeleton from '@/components/tournament/TournamentDetailSkeleton.vue'
 import BackgroundRefreshIndicator from '@/components/ui/BackgroundRefreshIndicator.vue'
 import PageTitleBar from '@/components/ui/PageTitleBar.vue'
-import type { MmrAnimationWsPayload, BadgeAnimationWsPayload, MmrRecapReadyPayload, StandingsUpdatedEvent } from '@skol-arena/shared'
+import type {
+  MmrAnimationWsPayload,
+  BadgeAnimationWsPayload,
+  MmrRecapReadyPayload,
+  StandingsUpdatedEvent,
+} from '@skol-arena/shared'
 import OverflowMenuButton from '@/components/OverflowMenuButton.vue'
-import { onWsEvent, onWsOpen, sendWsMessage, useNotificationSocket } from '@/composables/notification/notification.socket'
+import {
+  onWsEvent,
+  onWsOpen,
+  sendWsMessage,
+  useNotificationSocket,
+} from '@/composables/notification/notification.socket'
 import { useMMrAnimationQueue } from '@/composables/ranked/useMMrAnimationQueue'
-const MmrRevealAnimation = defineAsyncComponent(() => import('@/components/ranked/MmrRevealAnimation.vue'))
+const MmrRevealAnimation = defineAsyncComponent(
+  () => import('@/components/ranked/MmrRevealAnimation.vue'),
+)
 const MmrRecapCard = defineAsyncComponent(() => import('@/components/ranked/MmrRecapCard.vue'))
-const BadgeRevealAnimation = defineAsyncComponent(() => import('@/components/ranked/BadgeRevealAnimation.vue'))
+const BadgeRevealAnimation = defineAsyncComponent(
+  () => import('@/components/ranked/BadgeRevealAnimation.vue'),
+)
 const RewindLauncher = defineAsyncComponent(() => import('@/components/rewind/RewindLauncher.vue'))
 import { useRewindService } from '@/composables/ranked/rewind.service'
 
@@ -302,9 +320,12 @@ const visibleTabs = computed(() => {
   const tabs: { value: string; label: string; badge?: number }[] = [
     { value: 'infos', label: t('tournamentDetailView.tabs.infos') },
   ]
-  if (mode === 'championship') tabs.push({ value: 'standings', label: t('tournamentDetailView.tabs.standings') })
-  if (mode === 'bracket') tabs.push({ value: 'bracket', label: t('tournamentDetailView.tabs.bracket') })
-  if (mode === 'ranked') tabs.push({ value: 'standings', label: t('tournamentDetailView.tabs.standings') })
+  if (mode === 'championship')
+    tabs.push({ value: 'standings', label: t('tournamentDetailView.tabs.standings') })
+  if (mode === 'bracket')
+    tabs.push({ value: 'bracket', label: t('tournamentDetailView.tabs.bracket') })
+  if (mode === 'ranked')
+    tabs.push({ value: 'standings', label: t('tournamentDetailView.tabs.standings') })
   tabs.push(
     { value: 'matches', label: t('tournamentDetailView.tabs.matches') },
     { value: 'stats', label: t('tournamentDetailView.tabs.stats') },
@@ -397,7 +418,9 @@ async function initialize() {
   if (store.isAuthenticated) announcementPopups.loadPending(tournamentId.value)
 
   offWsHandlers.push(
-    onWsOpen(() => sendWsMessage({ event: 'subscribe_tournament', tournamentId: tournamentId.value })),
+    onWsOpen(() =>
+      sendWsMessage({ event: 'subscribe_tournament', tournamentId: tournamentId.value }),
+    ),
   )
   sendWsMessage({ event: 'subscribe_tournament', tournamentId: tournamentId.value })
 

@@ -17,11 +17,18 @@ export const votesApi = {
   async get(matchId: string): Promise<MatchVotes> {
     return (await http.get<MatchVotes>(`${BASE_URL}/matches/${matchId}/votes`)).data
   },
-  async castFairPlay(matchId: string, targetId: string, input: CastFairPlayVoteInput): Promise<MatchVotes> {
-    return (await http.put<MatchVotes>(`${BASE_URL}/matches/${matchId}/fair-play/${targetId}`, input)).data
+  async castFairPlay(
+    matchId: string,
+    targetId: string,
+    input: CastFairPlayVoteInput,
+  ): Promise<MatchVotes> {
+    return (
+      await http.put<MatchVotes>(`${BASE_URL}/matches/${matchId}/fair-play/${targetId}`, input)
+    ).data
   },
   async removeFairPlay(matchId: string, targetId: string): Promise<MatchVotes> {
-    return (await http.delete<MatchVotes>(`${BASE_URL}/matches/${matchId}/fair-play/${targetId}`)).data
+    return (await http.delete<MatchVotes>(`${BASE_URL}/matches/${matchId}/fair-play/${targetId}`))
+      .data
   },
   async castFairPlayTeamUp(matchId: string): Promise<MatchVotes> {
     return (await http.put<MatchVotes>(`${BASE_URL}/matches/${matchId}/fair-play`)).data
@@ -48,13 +55,17 @@ export const votesApi = {
     await http.post(`${BASE_URL}/matches/${matchId}/vote-prompt`, { outcome })
   },
   async publicStats(tournamentId: string): Promise<TournamentVoteStats> {
-    return (await http.get<TournamentVoteStats>(`${BASE_URL}/tournaments/${tournamentId}/votes/stats`)).data
+    return (
+      await http.get<TournamentVoteStats>(`${BASE_URL}/tournaments/${tournamentId}/votes/stats`)
+    ).data
   },
   async myStats(tournamentId: string): Promise<MyVoteStats> {
-    return (await http.get<MyVoteStats>(`${BASE_URL}/tournaments/${tournamentId}/votes/stats/me`)).data
+    return (await http.get<MyVoteStats>(`${BASE_URL}/tournaments/${tournamentId}/votes/stats/me`))
+      .data
   },
   async adminStats(tournamentId: string): Promise<AdminVoteStats> {
-    return (await http.get<AdminVoteStats>(`${BASE_URL}/tournaments/${tournamentId}/votes/admin`)).data
+    return (await http.get<AdminVoteStats>(`${BASE_URL}/tournaments/${tournamentId}/votes/admin`))
+      .data
   },
   async reveal(tournamentId: string, playerId: string): Promise<RevealedVoters> {
     const url = `${BASE_URL}/tournaments/${tournamentId}/votes/admin/reveal/${playerId}`

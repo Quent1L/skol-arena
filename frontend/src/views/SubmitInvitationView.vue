@@ -66,7 +66,11 @@
               class="flex-1 justify-center"
               :disabled="!codeValid || isSubmitting"
               :loading="isSubmitting"
-              :label="isSubmitting ? t('submitInvitationView.submitting') : t('submitInvitationView.submit')"
+              :label="
+                isSubmitting
+                  ? t('submitInvitationView.submitting')
+                  : t('submitInvitationView.submit')
+              "
               @click="submitCode"
             />
 
@@ -119,7 +123,7 @@ const submitError = ref<string | null>(null)
 onMounted(async () => {
   const cookieCode = document.cookie
     .split('; ')
-    .find(row => row.startsWith('invitation_code='))
+    .find((row) => row.startsWith('invitation_code='))
     ?.split('=')[1]
 
   if (!cookieCode) return

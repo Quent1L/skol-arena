@@ -1,4 +1,12 @@
-import { computed, ref, toValue, watch, type ComputedRef, type MaybeRefOrGetter, type Ref } from 'vue'
+import {
+  computed,
+  ref,
+  toValue,
+  watch,
+  type ComputedRef,
+  type MaybeRefOrGetter,
+  type Ref,
+} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 export interface SubTabOption<V extends string = string> {

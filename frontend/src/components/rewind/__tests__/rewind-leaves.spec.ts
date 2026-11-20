@@ -106,7 +106,13 @@ describe('RewindCardShell', () => {
 })
 
 describe('AwardRow', () => {
-  const props = { label: 'King', playerName: 'Ann', value: 7, icon: 'fa fa-crown', accent: '#fbbf24' }
+  const props = {
+    label: 'King',
+    playerName: 'Ann',
+    value: 7,
+    icon: 'fa fa-crown',
+    accent: '#fbbf24',
+  }
 
   it('shows the winner and the value with its detail', () => {
     const wrapper = mountWithPlugins(AwardRow, {
@@ -145,7 +151,9 @@ describe('RelationRow', () => {
 })
 
 describe('TotalsCard', () => {
-  const player = { totals: { matchesPlayed: 10, wins: 6, draws: 1, losses: 3, winRate: 60 } } as never
+  const player = {
+    totals: { matchesPlayed: 10, wins: 6, draws: 1, losses: 3, winRate: 60 },
+  } as never
 
   beforeEach(() => {
     vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => (cb(0), 1))

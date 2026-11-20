@@ -60,13 +60,13 @@
     </div>
 
     <UCard v-else variant="soft" class="py-12 text-center">
-        <div class="space-y-4">
-          <i class="fa fa-film block text-4xl text-gray-400" />
-          <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300">
-            {{ t('rewind.archive.empty.title') }}
-          </h3>
-          <p class="text-gray-500 dark:text-gray-400">{{ t('rewind.archive.empty.hint') }}</p>
-        </div>
+      <div class="space-y-4">
+        <i class="fa fa-film block text-4xl text-gray-400" />
+        <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300">
+          {{ t('rewind.archive.empty.title') }}
+        </h3>
+        <p class="text-gray-500 dark:text-gray-400">{{ t('rewind.archive.empty.hint') }}</p>
+      </div>
     </UCard>
 
     <RewindLauncher v-model:open="open" :season-id="activeSeasonId" />

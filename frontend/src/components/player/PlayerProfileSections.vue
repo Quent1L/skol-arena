@@ -18,7 +18,11 @@
   </div>
 
   <!-- Win rate by format: compact rows, like the head-to-head split of the comparison -->
-  <div v-if="!fixedTeam && formatStats?.length" class="rounded-xl p-4 bg-gray-800" data-test="format-stats">
+  <div
+    v-if="!fixedTeam && formatStats?.length"
+    class="rounded-xl p-4 bg-gray-800"
+    data-test="format-stats"
+  >
     <div
       class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-1.5"
     >

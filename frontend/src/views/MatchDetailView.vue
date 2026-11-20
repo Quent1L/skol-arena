@@ -150,7 +150,9 @@
       <SurfacePanel v-if="metaItems.length > 0" class="reveal" :style="revealDelay(2)">
         <div class="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
           <div v-for="item in metaItems" :key="item.label" class="min-w-0">
-            <div class="font-label flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted">
+            <div
+              class="font-label flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted"
+            >
               <i :class="item.icon" class="w-3 text-center" aria-hidden="true" />
               {{ item.label }}
             </div>
@@ -237,11 +239,11 @@
         :ui="{ content: 'sm:max-w-xl', footer: 'justify-end' }"
       >
         <template #body>
-        <p v-if="match.status === 'finalized'" class="mb-2 font-semibold text-amber-400">
-          <i class="fa fa-triangle-exclamation mr-1" aria-hidden="true" />
-          {{ t('matchDetailView.cancelFinalizedWarning') }}
-        </p>
-        <p class="text-white/70">{{ t('matchDetailView.cancelConfirmation') }}</p>
+          <p v-if="match.status === 'finalized'" class="mb-2 font-semibold text-amber-400">
+            <i class="fa fa-triangle-exclamation mr-1" aria-hidden="true" />
+            {{ t('matchDetailView.cancelFinalizedWarning') }}
+          </p>
+          <p class="text-white/70">{{ t('matchDetailView.cancelConfirmation') }}</p>
         </template>
         <template #footer>
           <UButton
@@ -519,8 +521,12 @@ const { value: countB } = useCountUp(() => sideB.value?.score ?? 0, {
   active: scoreRevealActive,
 })
 
-const displayScoreA = computed(() => (scoreRevealActive.value ? countA.value : (sideA.value?.score ?? 0)))
-const displayScoreB = computed(() => (scoreRevealActive.value ? countB.value : (sideB.value?.score ?? 0)))
+const displayScoreA = computed(() =>
+  scoreRevealActive.value ? countA.value : (sideA.value?.score ?? 0),
+)
+const displayScoreB = computed(() =>
+  scoreRevealActive.value ? countB.value : (sideB.value?.score ?? 0),
+)
 
 function scoreClass(side?: MatchDetailSide): string {
   if (!hasReportedWinner.value) return 'text-white/70'
@@ -708,7 +714,11 @@ const metaItems = computed<{ icon: string; label: string; value: string }[]>(() 
   if (!m) return []
 
   const items: { icon: string; label: string; value: string }[] = [
-    { icon: 'fa fa-calendar-day', label: metaLabel('matchDetailView.matchDate'), value: formatDate(m.playedAt) },
+    {
+      icon: 'fa fa-calendar-day',
+      label: metaLabel('matchDetailView.matchDate'),
+      value: formatDate(m.playedAt),
+    },
   ]
 
   if (m.creator) {

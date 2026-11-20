@@ -6,7 +6,9 @@
         {{ teamAName }}
       </h4>
       <ul class="text-sm space-y-1">
-        <li v-if="teamAPlayers.length === 0" class="text-gray-500">{{ t('teamPreview.noPlayersSelected') }}</li>
+        <li v-if="teamAPlayers.length === 0" class="text-gray-500">
+          {{ t('teamPreview.noPlayersSelected') }}
+        </li>
         <li v-for="(p, idx) in teamAPlayers" :key="`a-${idx}`">{{ p }}</li>
       </ul>
     </div>
@@ -17,7 +19,9 @@
         {{ teamBName }}
       </h4>
       <ul class="text-sm space-y-1">
-        <li v-if="teamBPlayers.length === 0" class="text-gray-500">{{ t('teamPreview.noPlayersSelected') }}</li>
+        <li v-if="teamBPlayers.length === 0" class="text-gray-500">
+          {{ t('teamPreview.noPlayersSelected') }}
+        </li>
         <li v-for="(p, idx) in teamBPlayers" :key="`b-${idx}`">{{ p }}</li>
       </ul>
     </div>

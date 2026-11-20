@@ -30,7 +30,11 @@
 
       <div class="flex w-0 flex-1 flex-col gap-2">
         <!-- Right after entering a match, this card replaces the "match saved" toast. -->
-        <p v-if="current.source === 'entry' && step !== 'thanks'" class="flex items-center gap-1.5 text-sm text-muted" data-testid="vote-prompt-saved">
+        <p
+          v-if="current.source === 'entry' && step !== 'thanks'"
+          class="flex items-center gap-1.5 text-sm text-muted"
+          data-testid="vote-prompt-saved"
+        >
           <UIcon name="i-fa7-solid:check" class="size-3.5 text-success" />
           {{ t('votePrompt.matchSaved') }}
         </p>
@@ -88,7 +92,9 @@
           </div>
         </template>
 
-        <output v-else class="block text-sm font-medium text-highlighted">{{ t('votePrompt.thanks') }}</output>
+        <output v-else class="block text-sm font-medium text-highlighted">{{
+          t('votePrompt.thanks')
+        }}</output>
       </div>
 
       <UButton
@@ -166,14 +172,21 @@ const route = useRoute()
 const now = useNow({ interval: 30_000 })
 const onTournamentPage = computed(
   () =>
-    TOURNAMENT_ROUTES.has(String(route.name ?? '')) && route.params.id === current.value?.prompt.tournamentId,
+    TOURNAMENT_ROUTES.has(String(route.name ?? '')) &&
+    route.params.id === current.value?.prompt.tournamentId,
 )
-const expired = computed(() => !!current.value && current.value.prompt.expiresAt.getTime() <= now.value.getTime())
+const expired = computed(
+  () => !!current.value && current.value.prompt.expiresAt.getTime() <= now.value.getTime(),
+)
 watch(expired, (isExpired) => isExpired && end('expired'))
 const visible = computed(
-  () => !!current.value && settled.value && !screenTakenOver.value && onTournamentPage.value && !expired.value,
+  () =>
+    !!current.value &&
+    settled.value &&
+    !screenTakenOver.value &&
+    onTournamentPage.value &&
+    !expired.value,
 )
-
 
 const fairPlayQuestion = computed(() =>
   prompt.value.fairPlayTargetIds.length > 1
@@ -197,7 +210,12 @@ const engaged = ref(false)
 const pageVisible = ref(document.visibilityState !== 'hidden')
 const running = computed(
   () =>
-    visible.value && pageVisible.value && !hovered.value && !frozen.value && !engaged.value && step.value !== 'thanks',
+    visible.value &&
+    pageVisible.value &&
+    !hovered.value &&
+    !frozen.value &&
+    !engaged.value &&
+    step.value !== 'thanks',
 )
 let ticker: ReturnType<typeof setInterval> | undefined
 
@@ -232,7 +250,9 @@ const { isSwiping, lengthX } = useSwipe(cardRef, {
   },
 })
 const swipeStyle = computed(() =>
-  isSwiping.value ? { transform: `translateX(${-lengthX.value}px)`, transition: 'none' } : undefined,
+  isSwiping.value
+    ? { transform: `translateX(${-lengthX.value}px)`, transition: 'none' }
+    : undefined,
 )
 
 // ── Flow ────────────────────────────────────────────────────────────────

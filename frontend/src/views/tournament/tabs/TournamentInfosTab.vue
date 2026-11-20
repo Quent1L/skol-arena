@@ -5,39 +5,60 @@
       class="flex items-center gap-3 p-4 sm:p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800"
       data-testid="tournament-dates"
     >
-      <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center shrink-0">
+      <div
+        class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center shrink-0"
+      >
         <i class="fa fa-calendar-days text-sky-600 dark:text-sky-400 text-sm sm:text-base" />
       </div>
       <div class="grid grid-cols-2 gap-3 flex-1 min-w-0">
         <div class="min-w-0">
-          <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ t('tournamentInfosTab.dates.start') }}</div>
-          <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">{{ formatDay(store.tournament!.startDate) }}</div>
+          <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            {{ t('tournamentInfosTab.dates.start') }}
+          </div>
+          <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">
+            {{ formatDay(store.tournament!.startDate) }}
+          </div>
         </div>
         <div class="min-w-0">
-          <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ t('tournamentInfosTab.dates.end') }}</div>
-          <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">{{ formatDay(store.tournament!.endDate) }}</div>
+          <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            {{ t('tournamentInfosTab.dates.end') }}
+          </div>
+          <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">
+            {{ formatDay(store.tournament!.endDate) }}
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4" :class="store.tournament!.teamMode === 'static' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'">
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"
+      :class="store.tournament!.teamMode === 'static' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'"
+    >
       <!-- Participants -->
       <button
         @click="navigateTo('participants')"
         class="group flex items-center justify-between p-4 sm:p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md active:scale-[0.98] transition-all text-left cursor-pointer"
       >
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+          <div
+            class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"
+          >
             <i class="fa fa-users text-blue-600 dark:text-blue-400 text-sm sm:text-base" />
           </div>
           <div>
-            <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{{ t('tournamentInfosTab.participants.title') }}</div>
-            <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ t('tournamentInfosTab.participants.subtitle') }}</div>
+            <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
+              {{ t('tournamentInfosTab.participants.title') }}
+            </div>
+            <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+              {{ t('tournamentInfosTab.participants.subtitle') }}
+            </div>
           </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
           <UBadge :label="store.participantCount" color="info" size="sm" />
-          <i class="fa fa-chevron-right text-gray-400 text-xs sm:text-sm group-hover:text-primary-500 transition-colors" />
+          <i
+            class="fa fa-chevron-right text-gray-400 text-xs sm:text-sm group-hover:text-primary-500 transition-colors"
+          />
         </div>
       </button>
 
@@ -48,15 +69,25 @@
         class="group flex items-center justify-between p-4 sm:p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md active:scale-[0.98] transition-all text-left cursor-pointer"
       >
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
-            <i class="fa fa-shield-halved text-green-600 dark:text-green-400 text-sm sm:text-base" />
+          <div
+            class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0"
+          >
+            <i
+              class="fa fa-shield-halved text-green-600 dark:text-green-400 text-sm sm:text-base"
+            />
           </div>
           <div>
-            <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{{ t('tournamentInfosTab.teams.title') }}</div>
-            <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ t('tournamentInfosTab.teams.subtitle') }}</div>
+            <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
+              {{ t('tournamentInfosTab.teams.title') }}
+            </div>
+            <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+              {{ t('tournamentInfosTab.teams.subtitle') }}
+            </div>
           </div>
         </div>
-        <i class="fa fa-chevron-right text-gray-400 text-xs sm:text-sm group-hover:text-primary-500 transition-colors shrink-0" />
+        <i
+          class="fa fa-chevron-right text-gray-400 text-xs sm:text-sm group-hover:text-primary-500 transition-colors shrink-0"
+        />
       </button>
 
       <!-- Badges -->
@@ -66,15 +97,23 @@
         class="group flex items-center justify-between p-4 sm:p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md active:scale-[0.98] transition-all text-left cursor-pointer"
       >
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
+          <div
+            class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0"
+          >
             <i class="fa fa-medal text-purple-600 dark:text-purple-400 text-sm sm:text-base" />
           </div>
           <div>
-            <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{{ t('tournamentInfosTab.badges.title') }}</div>
-            <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ t('tournamentInfosTab.badges.subtitle') }}</div>
+            <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
+              {{ t('tournamentInfosTab.badges.title') }}
+            </div>
+            <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+              {{ t('tournamentInfosTab.badges.subtitle') }}
+            </div>
           </div>
         </div>
-        <i class="fa fa-chevron-right text-gray-400 text-xs sm:text-sm group-hover:text-primary-500 transition-colors shrink-0" />
+        <i
+          class="fa fa-chevron-right text-gray-400 text-xs sm:text-sm group-hover:text-primary-500 transition-colors shrink-0"
+        />
       </button>
 
       <!-- Rules -->
@@ -84,15 +123,23 @@
         class="group flex items-center justify-between p-4 sm:p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md active:scale-[0.98] transition-all text-left cursor-pointer"
       >
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+          <div
+            class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0"
+          >
             <i class="fa fa-scroll text-amber-600 dark:text-amber-400 text-sm sm:text-base" />
           </div>
           <div>
-            <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{{ t('tournamentInfosTab.rules.title') }}</div>
-            <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ t('tournamentInfosTab.rules.subtitle') }}</div>
+            <div class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
+              {{ t('tournamentInfosTab.rules.title') }}
+            </div>
+            <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+              {{ t('tournamentInfosTab.rules.subtitle') }}
+            </div>
           </div>
         </div>
-        <i class="fa fa-chevron-right text-gray-400 text-xs sm:text-sm group-hover:text-primary-500 transition-colors shrink-0" />
+        <i
+          class="fa fa-chevron-right text-gray-400 text-xs sm:text-sm group-hover:text-primary-500 transition-colors shrink-0"
+        />
       </button>
     </div>
 
@@ -104,9 +151,8 @@
 
     <MmrExplainerCard
       v-if="store.tournament!.mode === 'ranked'"
-      :tournament-id="(route.params.id as string)"
+      :tournament-id="route.params.id as string"
     />
-
   </div>
 </template>
 

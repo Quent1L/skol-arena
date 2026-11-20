@@ -20,9 +20,7 @@ export interface StandingsTournamentConfig {
  * scoring satellite is absent on modes that award no points, so the shared
  * defaults stand in — the same fallback the backend applies.
  */
-export function toStandingsConfig(
-  tournament: ClientBaseTournament,
-): StandingsTournamentConfig {
+export function toStandingsConfig(tournament: ClientBaseTournament): StandingsTournamentConfig {
   return {
     pointPerVictory: tournament.scoringConfig?.pointPerVictory ?? SCORING_DEFAULTS.pointPerVictory,
     pointPerDraw: tournament.scoringConfig?.pointPerDraw ?? SCORING_DEFAULTS.pointPerDraw,

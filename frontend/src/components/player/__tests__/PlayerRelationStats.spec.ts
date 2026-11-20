@@ -43,7 +43,15 @@ describe('PlayerRelationStats', () => {
     const wrapper = mountWithPlugins(PlayerRelationStats, {
       props: {
         nemeses: [
-          relation({ playerId: 'p2', displayName: 'Alice', count: 22, wins: 4, losses: 18, winRate: 18, chemistryDelta: undefined }),
+          relation({
+            playerId: 'p2',
+            displayName: 'Alice',
+            count: 22,
+            wins: 4,
+            losses: 18,
+            winRate: 18,
+            chemistryDelta: undefined,
+          }),
         ],
       },
     })

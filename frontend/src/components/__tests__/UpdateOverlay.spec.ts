@@ -91,7 +91,7 @@ describe('UpdateOverlay', () => {
     expect(wrapper.text()).not.toContain('fichiers')
   })
 
-  it("offers no way out when the update is mandatory", async () => {
+  it('offers no way out when the update is mandatory', async () => {
     vi.useFakeTimers()
     const wrapper = mountOverlay({ phase: 'downloading', forced: true })
 

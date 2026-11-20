@@ -8,7 +8,12 @@ const { unreadCount } = useNotificationService()
 
 <template>
   <!-- A plain trigger: NotificationDropdown decides between the popover and the page. -->
-  <UButton :aria-label="t('notificationBell.ariaLabel')" color="neutral" variant="ghost" class="px-3">
+  <UButton
+    :aria-label="t('notificationBell.ariaLabel')"
+    color="neutral"
+    variant="ghost"
+    class="px-3"
+  >
     <UChip
       :show="unreadCount > 0"
       :text="unreadCount"

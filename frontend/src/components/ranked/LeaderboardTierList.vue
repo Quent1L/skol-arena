@@ -52,7 +52,9 @@
           <span class="font-bold text-sm" :style="{ color: tierTextColor(group.tier) }">{{
             tierName(group.tier)
           }}</span>
-          <span class="text-xs text-gray-500 ml-auto shrink-0">{{ tierThreshold(group.tier) }}</span>
+          <span class="text-xs text-gray-500 ml-auto shrink-0">{{
+            tierThreshold(group.tier)
+          }}</span>
         </div>
 
         <!-- Player rows -->

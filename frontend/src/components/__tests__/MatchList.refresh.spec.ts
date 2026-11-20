@@ -7,7 +7,9 @@ import type { ClientMatchCard } from '@skol-arena/shared/types/index'
 
 const list = vi.fn()
 
-vi.mock('@/composables/match/match.api', () => ({ matchApi: { list: (...args: unknown[]) => list(...args) } }))
+vi.mock('@/composables/match/match.api', () => ({
+  matchApi: { list: (...args: unknown[]) => list(...args) },
+}))
 vi.mock('@vueuse/core', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@vueuse/core')>()),
   useInfiniteScroll: vi.fn(),
@@ -23,7 +25,13 @@ vi.mock('@/composables/notification/notification.socket', () => ({
 
 import MatchList from '../MatchList.vue'
 
-const i18n = createI18n({ legacy: false, locale: 'fr', missingWarn: false, fallbackWarn: false, messages: { fr: {} } })
+const i18n = createI18n({
+  legacy: false,
+  locale: 'fr',
+  missingWarn: false,
+  fallbackWarn: false,
+  messages: { fr: {} },
+})
 
 function card(id: string): ClientMatchCard {
   return { id, playedAt: new Date(), sides: [] } as unknown as ClientMatchCard
@@ -88,7 +96,10 @@ describe('MatchList — live MVP', () => {
           playedAt: new Date(),
           sides: [
             { position: 1, players: [{ id: 'p1', displayName: 'Paul', shortName: 'PA' }] },
-            { position: 2, players: [{ id: 'p2', displayName: 'Marc', shortName: 'MA', isMvp: true }] },
+            {
+              position: 2,
+              players: [{ id: 'p2', displayName: 'Marc', shortName: 'MA', isMvp: true }],
+            },
           ],
         },
       ],
@@ -104,7 +115,12 @@ describe('MatchList — live MVP', () => {
 
     expect(list).toHaveBeenCalledTimes(1)
     const entry = wrapper.findComponent({ name: 'MatchCard' }).props('entry') as ClientMatchCard
-    expect(entry.sides.flatMap((s) => s.players).filter((p) => p.isMvp).map((p) => p.id)).toEqual(['p1'])
+    expect(
+      entry.sides
+        .flatMap((s) => s.players)
+        .filter((p) => p.isMvp)
+        .map((p) => p.id),
+    ).toEqual(['p1'])
   })
 })
 

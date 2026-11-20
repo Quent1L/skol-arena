@@ -20,7 +20,7 @@ export const playerApi = {
 
   async getTournaments(playerId: string): Promise<{ tournaments: PlayerTournamentOption[] }> {
     const response = await http.get<{ tournaments: PlayerTournamentOption[] }>(
-      `${BASE_URL}/${playerId}/tournaments`
+      `${BASE_URL}/${playerId}/tournaments`,
     )
     return response.data
   },

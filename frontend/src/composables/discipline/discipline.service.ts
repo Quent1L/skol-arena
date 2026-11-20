@@ -33,8 +33,7 @@ export function useDisciplineService() {
       error.value = null
       disciplines.value = await disciplineApi.list(includeArchived)
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : t('disciplineService.errors.listFailed')
+      const message = err instanceof Error ? err.message : t('disciplineService.errors.listFailed')
       error.value = message
       toast.add({
         severity: 'error',
@@ -55,8 +54,7 @@ export function useDisciplineService() {
       await loadOutcomeTypes(id)
       return currentDiscipline.value
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : t('disciplineService.errors.getFailed')
+      const message = err instanceof Error ? err.message : t('disciplineService.errors.getFailed')
       error.value = message
       toast.add({
         severity: 'error',
@@ -443,9 +441,7 @@ export function useDisciplineService() {
       return outcomeReason
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : t('disciplineService.errors.outcomeReasonUpdateFailed')
+        err instanceof Error ? err.message : t('disciplineService.errors.outcomeReasonUpdateFailed')
       error.value = message
       toast.add({
         severity: 'error',
@@ -472,9 +468,7 @@ export function useDisciplineService() {
       })
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : t('disciplineService.errors.outcomeReasonDeleteFailed')
+        err instanceof Error ? err.message : t('disciplineService.errors.outcomeReasonDeleteFailed')
       error.value = message
       toast.add({
         severity: 'error',

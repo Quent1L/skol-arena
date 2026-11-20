@@ -38,7 +38,10 @@ const StandingsStub = defineComponent({
   props: ['teamMode'],
   render: () => h('div'),
 })
-vi.mock('@/components/tournament/StandingsTable.vue', () => ({ __esModule: true, default: StandingsStub }))
+vi.mock('@/components/tournament/StandingsTable.vue', () => ({
+  __esModule: true,
+  default: StandingsStub,
+}))
 
 import TournamentDetailMobile from '../TournamentDetailMobile.vue'
 

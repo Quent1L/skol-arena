@@ -7,8 +7,20 @@ import BadgeDetailModal from '../BadgeDetailModal.vue'
 
 vi.mock('vue-i18n', async () => (await import('@/test-support/mock-modules')).i18nEchoMock())
 
-const alice: BadgeHolder = { id: 'p-1', displayName: 'Alice', shortName: 'ALI', count: 2, earnedHere: true }
-const bob: BadgeHolder = { id: 'p-2', displayName: 'Bob', shortName: 'BOB', count: 1, earnedHere: false }
+const alice: BadgeHolder = {
+  id: 'p-1',
+  displayName: 'Alice',
+  shortName: 'ALI',
+  count: 2,
+  earnedHere: true,
+}
+const bob: BadgeHolder = {
+  id: 'p-2',
+  displayName: 'Bob',
+  shortName: 'BOB',
+  count: 1,
+  earnedHere: false,
+}
 
 function badge(holders: BadgeHolder[]): AvailableBadge {
   return {
@@ -41,7 +53,9 @@ describe('BadgeDetailModal', () => {
     const wrapper = await open([alice])
 
     expect(dialog().textContent).toContain('Sniper')
-    expect(dialog().textContent).toContain('Win ten matches without conceding a single point in any of them')
+    expect(dialog().textContent).toContain(
+      'Win ten matches without conceding a single point in any of them',
+    )
     wrapper.unmount()
   })
 

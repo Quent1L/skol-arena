@@ -219,7 +219,10 @@ export function useTournamentService() {
       // Update status in list summary
       const listIndex = tournaments.value.findIndex((t) => t.id === id)
       if (listIndex !== -1) {
-        tournaments.value[listIndex] = { ...tournaments.value[listIndex], status: tournament.status }
+        tournaments.value[listIndex] = {
+          ...tournaments.value[listIndex],
+          status: tournament.status,
+        }
       }
 
       // Update current
@@ -229,7 +232,8 @@ export function useTournamentService() {
 
       return tournament
     } catch (err: unknown) {
-      error.value = err instanceof Error ? err.message : t('tournamentService.errors.statusChangeFailed')
+      error.value =
+        err instanceof Error ? err.message : t('tournamentService.errors.statusChangeFailed')
       throw err
     } finally {
       loading.value = false
@@ -268,7 +272,10 @@ export function useTournamentService() {
    */
   function isTournamentOpenForJoin(tournament: TournamentResponse | null): boolean {
     if (!tournament) return false
-    return ['open'].includes(tournament.status) || (tournament.status === 'ongoing' && tournament.mode === 'ranked')
+    return (
+      ['open'].includes(tournament.status) ||
+      (tournament.status === 'ongoing' && tournament.mode === 'ranked')
+    )
   }
 
   /**

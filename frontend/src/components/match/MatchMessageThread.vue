@@ -28,10 +28,7 @@
       <ul v-else class="space-y-2">
         <li v-for="entry in renderedMessages" :key="entry.message.id">
           <!-- System messages are timeline events, not speech: a hairline, not a bubble -->
-          <div
-            v-if="entry.message.kind === 'system'"
-            class="flex items-center gap-2 py-1"
-          >
+          <div v-if="entry.message.kind === 'system'" class="flex items-center gap-2 py-1">
             <span class="h-px flex-1 bg-slate-700/60" aria-hidden="true" />
             <span class="font-label text-center text-[11px] uppercase tracking-wide text-muted">
               {{ renderBody(entry.message) }}
@@ -129,7 +126,9 @@
           <div class="mt-1 flex items-center justify-between gap-2 px-1">
             <span
               class="font-label text-[11px] tabular-nums"
-              :class="draft.length > MATCH_MESSAGE_MAX_LENGTH - 50 ? 'text-amber-400' : 'text-muted'"
+              :class="
+                draft.length > MATCH_MESSAGE_MAX_LENGTH - 50 ? 'text-amber-400' : 'text-muted'
+              "
             >
               {{ draft.length }} / {{ MATCH_MESSAGE_MAX_LENGTH }}
             </span>
@@ -162,10 +161,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {
-  MATCH_MESSAGE_MAX_LENGTH,
-  type ClientMatchMessage,
-} from '@skol-arena/shared/types/index'
+import { MATCH_MESSAGE_MAX_LENGTH, type ClientMatchMessage } from '@skol-arena/shared/types/index'
 import { useMatchMessageService } from '@/composables/match/match-message.service'
 import PlayerAvatar from '@/components/PlayerAvatar.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -196,9 +192,7 @@ const GROUPING_WINDOW_MS = 5 * 60 * 1000
  * The badge counts what people said, not what the match did: system events arrive on
  * their own and would make an untouched thread look busy.
  */
-const userMessageCount = computed(
-  () => messages.value.filter((m) => m.kind === 'user').length,
-)
+const userMessageCount = computed(() => messages.value.filter((m) => m.kind === 'user').length)
 
 const renderedMessages = computed(() =>
   messages.value.map((message, index) => {
@@ -214,7 +208,10 @@ const renderedMessages = computed(() =>
 
     return {
       message,
-      isOwn: message.kind === 'user' && !!props.currentUserId && message.author?.id === props.currentUserId,
+      isOwn:
+        message.kind === 'user' &&
+        !!props.currentUserId &&
+        message.author?.id === props.currentUserId,
       showHeader: !(sameAuthor && withinWindow),
     }
   }),

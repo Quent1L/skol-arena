@@ -32,7 +32,11 @@
         />
       </div>
 
-      <output v-if="armedKind" class="flex items-center gap-2 text-sm text-primary" data-testid="compose-duel-hint">
+      <output
+        v-if="armedKind"
+        class="flex items-center gap-2 text-sm text-primary"
+        data-testid="compose-duel-hint"
+      >
         <i class="fa fa-wand-magic-sparkles" />
         {{ t('compositionStep.duelHint') }}
       </output>

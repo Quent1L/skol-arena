@@ -101,7 +101,8 @@ export function getMatchLabel(
   mmrDelta: number,
 ): string | null {
   const expectedScore = calculateExpectedScore(mmrBefore, opponentAvgMmr)
-  if (mmrBefore < 900 && opponentAvgMmr > mmrBefore + 100) return i18n.global.t('rankedService.matchLabel.rookieProtection')
+  if (mmrBefore < 900 && opponentAvgMmr > mmrBefore + 100)
+    return i18n.global.t('rankedService.matchLabel.rookieProtection')
   if (expectedScore < 0.35 && mmrDelta > 0) return i18n.global.t('rankedService.matchLabel.exploit')
   if (expectedScore > 0.65) return i18n.global.t('rankedService.matchLabel.favorite')
   return null
@@ -139,7 +140,8 @@ export function useRankedService() {
     try {
       seasons.value = await rankedApi.listSeasons(filters)
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadSeasonsFailed')
+      error.value =
+        err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadSeasonsFailed')
     } finally {
       loading.value = false
     }
@@ -151,32 +153,31 @@ export function useRankedService() {
     try {
       currentSeason.value = await rankedApi.getSeasonById(id)
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadSeasonFailed')
+      error.value =
+        err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadSeasonFailed')
     } finally {
       loading.value = false
     }
   }
 
-  async function createSeason(
-    data: CreateRankedSeasonFormData,
-  ): Promise<RankedSeason | null> {
+  async function createSeason(data: CreateRankedSeasonFormData): Promise<RankedSeason | null> {
     loading.value = true
     error.value = null
     try {
       const payload = formDataToApiPayload(data) as unknown as CreateRankedSeasonInput
       return await rankedApi.createSeason(payload)
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.createSeasonFailed')
+      error.value =
+        err instanceof Error
+          ? err.message
+          : i18n.global.t('rankedService.errors.createSeasonFailed')
       return null
     } finally {
       loading.value = false
     }
   }
 
-  async function updateSeason(
-    id: string,
-    data: UpdateRankedSeasonFormData,
-  ): Promise<boolean> {
+  async function updateSeason(id: string, data: UpdateRankedSeasonFormData): Promise<boolean> {
     loading.value = true
     error.value = null
     try {
@@ -186,7 +187,9 @@ export function useRankedService() {
       return true
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : i18n.global.t('rankedService.errors.updateSeasonFailed')
+        err instanceof Error
+          ? err.message
+          : i18n.global.t('rankedService.errors.updateSeasonFailed')
       return false
     } finally {
       loading.value = false
@@ -225,10 +228,7 @@ export function useRankedService() {
     }
   }
 
-  async function setAutomation(
-    id: string,
-    data: RankedSeasonAutomationInput,
-  ): Promise<boolean> {
+  async function setAutomation(id: string, data: RankedSeasonAutomationInput): Promise<boolean> {
     loading.value = true
     error.value = null
     try {
@@ -291,7 +291,10 @@ export function useRankedService() {
       placementMatches.value = data.placementMatches ?? 0
       tiers.value = tiersData
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadLeaderboardFailed')
+      error.value =
+        err instanceof Error
+          ? err.message
+          : i18n.global.t('rankedService.errors.loadLeaderboardFailed')
     } finally {
       loading.value = false
     }
@@ -304,7 +307,10 @@ export function useRankedService() {
       const data = await rankedApi.getProvisionalLeaderboard(seasonId)
       provisionalLeaderboard.value = data.players
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadProvisionalLeaderboardFailed')
+      error.value =
+        err instanceof Error
+          ? err.message
+          : i18n.global.t('rankedService.errors.loadProvisionalLeaderboardFailed')
     } finally {
       provisionalLoading.value = false
     }
@@ -317,7 +323,10 @@ export function useRankedService() {
       const data = await rankedApi.getSeasonMmrLeaderboard(seasonId)
       seasonMmrLeaderboard.value = data.players
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadSeasonMmrLeaderboardFailed')
+      error.value =
+        err instanceof Error
+          ? err.message
+          : i18n.global.t('rankedService.errors.loadSeasonMmrLeaderboardFailed')
     } finally {
       seasonMmrLoading.value = false
     }
@@ -363,7 +372,8 @@ export function useRankedService() {
       playerHistoryOffset.value += results.length
       playerHistoryHasMore.value = results.length === HISTORY_PAGE_SIZE
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadHistoryFailed')
+      error.value =
+        err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadHistoryFailed')
     } finally {
       loading.value = false
     }
@@ -380,7 +390,8 @@ export function useRankedService() {
     try {
       tiers.value = await rankedApi.getTiers(seasonId)
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadTiersFailed')
+      error.value =
+        err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadTiersFailed')
     } finally {
       loading.value = false
     }
@@ -395,14 +406,19 @@ export function useRankedService() {
       tiers.value = await rankedApi.createTier(seasonId, data)
       return true
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.createTierFailed')
+      error.value =
+        err instanceof Error ? err.message : i18n.global.t('rankedService.errors.createTierFailed')
       return false
     } finally {
       loading.value = false
     }
   }
 
-  async function updateTier(seasonId: string, level: number, data: UpdateRankTierInput): Promise<boolean> {
+  async function updateTier(
+    seasonId: string,
+    level: number,
+    data: UpdateRankTierInput,
+  ): Promise<boolean> {
     loading.value = true
     error.value = null
     try {
@@ -410,7 +426,8 @@ export function useRankedService() {
       tiers.value = tiers.value.map((t) => (t.level === level ? updated : t))
       return true
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.updateTierFailed')
+      error.value =
+        err instanceof Error ? err.message : i18n.global.t('rankedService.errors.updateTierFailed')
       return false
     } finally {
       loading.value = false
@@ -424,7 +441,8 @@ export function useRankedService() {
       tiers.value = await rankedApi.deleteTier(seasonId, level)
       return true
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.deleteTierFailed')
+      error.value =
+        err instanceof Error ? err.message : i18n.global.t('rankedService.errors.deleteTierFailed')
       return false
     } finally {
       loading.value = false
@@ -438,7 +456,10 @@ export function useRankedService() {
       tiers.value = await rankedApi.recalculateTiers(seasonId)
       return true
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.recalculateTiersFailed')
+      error.value =
+        err instanceof Error
+          ? err.message
+          : i18n.global.t('rankedService.errors.recalculateTiersFailed')
       return false
     } finally {
       loading.value = false
@@ -459,7 +480,9 @@ export function useRankedService() {
       )
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadWeeklyMmrFailed')
+        err instanceof Error
+          ? err.message
+          : i18n.global.t('rankedService.errors.loadWeeklyMmrFailed')
       weeklyMmrLeaders.value = null
     } finally {
       loading.value = false
@@ -472,7 +495,10 @@ export function useRankedService() {
     try {
       finishedSeasons.value = await rankedApi.getFinishedSeasons()
     } catch (err) {
-      error.value = err instanceof Error ? err.message : i18n.global.t('rankedService.errors.loadFinishedSeasonsFailed')
+      error.value =
+        err instanceof Error
+          ? err.message
+          : i18n.global.t('rankedService.errors.loadFinishedSeasonsFailed')
     } finally {
       loading.value = false
     }

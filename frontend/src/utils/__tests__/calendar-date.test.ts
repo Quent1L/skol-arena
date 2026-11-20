@@ -49,7 +49,9 @@ describe('calendar-date', () => {
   it('ends a day at its last local millisecond', () => {
     const end = endOfLocalDay(new CalendarDate(2026, 11, 30))!
     expect([end.getFullYear(), end.getMonth(), end.getDate()]).toEqual([2026, 10, 30])
-    expect([end.getHours(), end.getMinutes(), end.getSeconds(), end.getMilliseconds()]).toEqual([23, 59, 59, 999])
+    expect([end.getHours(), end.getMinutes(), end.getSeconds(), end.getMilliseconds()]).toEqual([
+      23, 59, 59, 999,
+    ])
     expect(endOfLocalDay(undefined)).toBeUndefined()
   })
 })

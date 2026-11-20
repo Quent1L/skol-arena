@@ -117,7 +117,12 @@ beforeEach(() => {
     role: 'player',
   })
   appUserRef.value = { id: 'me', role: 'player' }
-  tournamentRef.value = { mode: 'ranked', startDate: '2026-03-01', endDate: '2026-03-11', disciplineId: 'd1' }
+  tournamentRef.value = {
+    mode: 'ranked',
+    startDate: '2026-03-01',
+    endDate: '2026-03-11',
+    disciplineId: 'd1',
+  }
   leaderboardRef.value = []
   playerMmrRef.value = null
   h.loadPlayerMmr.mockResolvedValue([])

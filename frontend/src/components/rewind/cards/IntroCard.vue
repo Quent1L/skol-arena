@@ -11,7 +11,12 @@
       </div>
 
       <p class="text-center text-sm text-gray-400">
-        {{ t('rewind.intro.period', { start: formatDate(season.season.startDate), end: formatDate(season.season.endDate) }) }}
+        {{
+          t('rewind.intro.period', {
+            start: formatDate(season.season.startDate),
+            end: formatDate(season.season.endDate),
+          })
+        }}
       </p>
 
       <div class="grid w-full grid-cols-2 gap-3">

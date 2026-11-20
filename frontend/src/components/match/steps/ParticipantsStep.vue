@@ -163,7 +163,8 @@ watch(
 
 const filteredPlayers = computed(() =>
   allPlayers.value.filter(
-    (p) => matchesSearch(p.displayName, searchQuery.value) && !allPlayerIdsModel.value.includes(p.id),
+    (p) =>
+      matchesSearch(p.displayName, searchQuery.value) && !allPlayerIdsModel.value.includes(p.id),
   ),
 )
 

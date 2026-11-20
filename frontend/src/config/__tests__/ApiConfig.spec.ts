@@ -12,7 +12,10 @@ describe('ApiConfig version negotiation', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } })),
+      vi.fn(
+        async () =>
+          new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } }),
+      ),
     )
   })
 
@@ -48,7 +51,10 @@ describe('ApiConfig language', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } })),
+      vi.fn(
+        async () =>
+          new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } }),
+      ),
     )
   })
 
@@ -74,7 +80,10 @@ describe('ApiConfig write sequence', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } })),
+      vi.fn(
+        async () =>
+          new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } }),
+      ),
     )
   })
 

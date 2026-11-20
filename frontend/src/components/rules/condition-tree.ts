@@ -107,7 +107,12 @@ export function fromConditions(conditions: RuleConditions | null | undefined): B
       window: conditions.params?.window,
     }
   }
-  return { kind: 'leaf', fact: conditions.fact, operator: conditions.operator, value: conditions.value }
+  return {
+    kind: 'leaf',
+    fact: conditions.fact,
+    operator: conditions.operator,
+    value: conditions.value,
+  }
 }
 
 const COUNTER_SELECTOR = '[data-palette-type="count"], [data-condition-count]'

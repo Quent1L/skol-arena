@@ -21,114 +21,122 @@
         class="mb-4 px-4 py-3 bg-orange-50 dark:bg-orange-900/30 border border-orange-300 dark:border-orange-700 rounded-lg text-sm text-orange-700 dark:text-orange-300 flex items-start gap-2"
       >
         <i class="fa fa-exclamation-triangle mt-0.5 shrink-0" />
-        <span>{{ t('bracketView.optimalCountWarning', { lower: nearestPowersOf2(currentParticipants)[0], upper: nearestPowersOf2(currentParticipants)[1], count: currentParticipants }) }}</span>
+        <span>{{
+          t('bracketView.optimalCountWarning', {
+            lower: nearestPowersOf2(currentParticipants)[0],
+            upper: nearestPowersOf2(currentParticipants)[1],
+            count: currentParticipants,
+          })
+        }}</span>
       </div>
 
       <!-- Admin Controls -->
       <div v-if="canManage" class="mb-6 flex gap-3 items-center flex-wrap">
-      <UButton
-        v-if="!hasBracket"
-        :label="t('bracketView.generateBracket')"
-        icon="i-fa7-solid:sitemap"
-        size="lg"
-        :disabled="!isOptimalCount"
-        @click="showGenerateDialog = true"
-      />
-
-      <template v-else>
         <UButton
-          :label="t('bracketView.regenerate')"
-          icon="i-fa7-solid:rotate-right"
-          variant="outline"
+          v-if="!hasBracket"
+          :label="t('bracketView.generateBracket')"
+          icon="i-fa7-solid:sitemap"
           size="lg"
-          @click="handleRegenerate"
+          :disabled="!isOptimalCount"
+          @click="showGenerateDialog = true"
         />
-        <UButton
-          :label="t('bracketView.deleteBracket')"
-          icon="i-fa7-solid:trash"
-          color="error"
-          variant="outline"
-          size="lg"
-          @click="confirmDelete"
-        />
-      </template>
 
-      <UButton
-        :label="t('bracketView.refresh')"
-        icon="i-fa7-solid:arrows-rotate"
-        color="neutral"
-        variant="outline"
-        size="lg"
-        :loading="loading"
-        @click="loadBracketData"
-      />
-    </div>
-
-    <!-- Loading State -->
-    <div v-if="loading && !bracketData" class="flex justify-center items-center py-20">
-      <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
-    </div>
-
-    <!-- Empty State -->
-    <div
-      v-else-if="!bracketData"
-      class="flex flex-col items-center justify-center py-20 text-center"
-    >
-      <i class="fa fa-sitemap text-6xl text-gray-300 dark:text-gray-600 mb-4" />
-      <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-        {{ t('bracketView.noBracketTitle') }}
-      </h3>
-      <p class="text-gray-600 dark:text-gray-400 mb-6 max-w-md">
-        {{ t('bracketView.noBracketDesc') }}
-        <template v-if="canManage">
-          {{ t('bracketView.noBracketDescAdmin') }}
-        </template>
         <template v-else>
-          {{ t('bracketView.noBracketDescUser') }}
+          <UButton
+            :label="t('bracketView.regenerate')"
+            icon="i-fa7-solid:rotate-right"
+            variant="outline"
+            size="lg"
+            @click="handleRegenerate"
+          />
+          <UButton
+            :label="t('bracketView.deleteBracket')"
+            icon="i-fa7-solid:trash"
+            color="error"
+            variant="outline"
+            size="lg"
+            @click="confirmDelete"
+          />
         </template>
-      </p>
 
-      <UButton
-        v-if="canManage"
-        :label="t('bracketView.generateBracket')"
-        icon="i-fa7-solid:sitemap"
-        size="xl"
-        :disabled="!isOptimalCount"
-        @click="showGenerateDialog = true"
-      />
-    </div>
-
-    <!-- Bracket Display -->
-    <div v-else class="bracket-container">
-      <!-- Bracket Info -->
-      <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <div class="text-gray-600 dark:text-gray-400">{{ t('bracketView.infoType') }}</div>
-            <div class="font-semibold capitalize">
-              {{ bracketData.config.bracketType.replace('_', ' ') }}
-            </div>
-          </div>
-          <div>
-            <div class="text-gray-600 dark:text-gray-400">{{ t('bracketView.infoSeeding') }}</div>
-            <div class="font-semibold capitalize">
-              {{ bracketData.config.seedingType.replace('_', ' ') }}
-            </div>
-          </div>
-          <div>
-            <div class="text-gray-600 dark:text-gray-400">{{ t('bracketView.infoParticipants') }}</div>
-            <div class="font-semibold">{{ bracketData.config.totalParticipants }}</div>
-          </div>
-          <div>
-            <div class="text-gray-600 dark:text-gray-400">{{ t('bracketView.infoRounds') }}</div>
-            <div class="font-semibold">{{ bracketData.config.roundsCount }}</div>
-          </div>
-        </div>
+        <UButton
+          :label="t('bracketView.refresh')"
+          icon="i-fa7-solid:arrows-rotate"
+          color="neutral"
+          variant="outline"
+          size="lg"
+          :loading="loading"
+          @click="loadBracketData"
+        />
       </div>
 
-      <!-- Tournament Bracket Component -->
-      <TournamentBracket :bracket-data="bracketData" />
-    </div>
+      <!-- Loading State -->
+      <div v-if="loading && !bracketData" class="flex justify-center items-center py-20">
+        <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
+      </div>
+
+      <!-- Empty State -->
+      <div
+        v-else-if="!bracketData"
+        class="flex flex-col items-center justify-center py-20 text-center"
+      >
+        <i class="fa fa-sitemap text-6xl text-gray-300 dark:text-gray-600 mb-4" />
+        <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          {{ t('bracketView.noBracketTitle') }}
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-6 max-w-md">
+          {{ t('bracketView.noBracketDesc') }}
+          <template v-if="canManage">
+            {{ t('bracketView.noBracketDescAdmin') }}
+          </template>
+          <template v-else>
+            {{ t('bracketView.noBracketDescUser') }}
+          </template>
+        </p>
+
+        <UButton
+          v-if="canManage"
+          :label="t('bracketView.generateBracket')"
+          icon="i-fa7-solid:sitemap"
+          size="xl"
+          :disabled="!isOptimalCount"
+          @click="showGenerateDialog = true"
+        />
+      </div>
+
+      <!-- Bracket Display -->
+      <div v-else class="bracket-container">
+        <!-- Bracket Info -->
+        <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <div class="text-gray-600 dark:text-gray-400">{{ t('bracketView.infoType') }}</div>
+              <div class="font-semibold capitalize">
+                {{ bracketData.config.bracketType.replace('_', ' ') }}
+              </div>
+            </div>
+            <div>
+              <div class="text-gray-600 dark:text-gray-400">{{ t('bracketView.infoSeeding') }}</div>
+              <div class="font-semibold capitalize">
+                {{ bracketData.config.seedingType.replace('_', ' ') }}
+              </div>
+            </div>
+            <div>
+              <div class="text-gray-600 dark:text-gray-400">
+                {{ t('bracketView.infoParticipants') }}
+              </div>
+              <div class="font-semibold">{{ bracketData.config.totalParticipants }}</div>
+            </div>
+            <div>
+              <div class="text-gray-600 dark:text-gray-400">{{ t('bracketView.infoRounds') }}</div>
+              <div class="font-semibold">{{ bracketData.config.roundsCount }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tournament Bracket Component -->
+        <TournamentBracket :bracket-data="bracketData" />
+      </div>
 
       <!-- Generate/Regenerate Dialog -->
       <GenerateBracketDialog
@@ -229,8 +237,8 @@ const canManage = computed(() => {
   return props.tournament ? canManageTournament(props.tournament) : false
 })
 
-const isOptimalCount = computed(() =>
-  currentParticipants.value >= 2 && isPowerOf2(currentParticipants.value)
+const isOptimalCount = computed(
+  () => currentParticipants.value >= 2 && isPowerOf2(currentParticipants.value),
 )
 
 const isBracketTournament = computed(() => {
@@ -294,6 +302,5 @@ async function handleDeleteBracket() {
 
 .bracket-container {
   width: 100%;
-
 }
 </style>

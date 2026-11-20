@@ -29,10 +29,7 @@ export const outcomeTypeApi = {
     return response.data
   },
 
-  async update(
-    id: string,
-    payload: UpdateOutcomeTypeRequestData,
-  ): Promise<OutcomeType> {
+  async update(id: string, payload: UpdateOutcomeTypeRequestData): Promise<OutcomeType> {
     const response = await http.patch<OutcomeType>(`${BASE_URL}/${id}`, payload)
     return response.data
   },
@@ -52,5 +49,3 @@ export const outcomeTypeApi = {
     return response.data
   },
 }
-
-

@@ -9,7 +9,10 @@ vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key: string) => key }) }))
 const getPlayerBadges = vi.fn()
 const getAvailableBadges = vi.fn()
 vi.mock('@/composables/rules/rules.api', () => ({
-  rulesApi: { getPlayerBadges: () => getPlayerBadges(), getAvailableBadges: () => getAvailableBadges() },
+  rulesApi: {
+    getPlayerBadges: () => getPlayerBadges(),
+    getAvailableBadges: () => getAvailableBadges(),
+  },
 }))
 vi.mock('@/composables/notification/notification.socket', () => ({ onWsEvent: () => () => {} }))
 
@@ -32,7 +35,9 @@ function award(overrides: Partial<ClientPlayerBadge> = {}): ClientPlayerBadge {
 
 async function mountWith(badges: ClientPlayerBadge[], tournamentId?: string, available = 1) {
   getPlayerBadges.mockResolvedValue(badges)
-  getAvailableBadges.mockResolvedValue(Array.from({ length: available }, (_, i) => ({ ruleId: `r${i}` })))
+  getAvailableBadges.mockResolvedValue(
+    Array.from({ length: available }, (_, i) => ({ ruleId: `r${i}` })),
+  )
   const wrapper = mountWithPlugins(PlayerBadges, { props: { playerId: 'p1', tournamentId } })
   await flushPromises()
   return wrapper
@@ -47,7 +52,12 @@ describe('PlayerBadges', () => {
   it('shows one tile per badge, however many times it was won', async () => {
     const wrapper = await mountWith([
       award({ id: 'a1', seasonId: 'season-4', seasonName: 'Saison 4' }),
-      award({ id: 'a2', seasonId: 'season-3', seasonName: 'Saison 3', awardedAt: new Date('2025-11-08T10:00:00Z') }),
+      award({
+        id: 'a2',
+        seasonId: 'season-3',
+        seasonName: 'Saison 3',
+        awardedAt: new Date('2025-11-08T10:00:00Z'),
+      }),
       award({ id: 'a3', ruleId: 'rule-night', label: 'Noctambule' }),
     ])
 

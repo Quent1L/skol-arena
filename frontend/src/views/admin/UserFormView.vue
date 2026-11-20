@@ -25,7 +25,9 @@
       <UForm :schema="adminUpdateUserSchema" :state="state" @submit="onSubmit">
         <UCard>
           <template #header>
-            <h2 class="font-semibold text-highlighted">{{ t('adminUserFormView.identitySection') }}</h2>
+            <h2 class="font-semibold text-highlighted">
+              {{ t('adminUserFormView.identitySection') }}
+            </h2>
           </template>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <UFormField name="displayName" :label="t('adminUserFormView.displayNameLabel')">
@@ -54,7 +56,9 @@
                   variant="subtle"
                 />
               </div>
-              <span v-else class="text-sm text-dimmed">{{ t('adminUsersList.authProviders.none') }}</span>
+              <span v-else class="text-sm text-dimmed">{{
+                t('adminUsersList.authProviders.none')
+              }}</span>
             </UFormField>
           </div>
           <template #footer>
@@ -104,7 +108,11 @@
               @click="confirmRemoveAvatar"
             />
             <p class="text-sm text-muted">
-              {{ hasAvatar ? t('adminUserFormView.removeAvatarHint') : t('adminUserFormView.noAvatar') }}
+              {{
+                hasAvatar
+                  ? t('adminUserFormView.removeAvatarHint')
+                  : t('adminUserFormView.noAvatar')
+              }}
             </p>
           </div>
         </div>
@@ -167,7 +175,9 @@
            Restoring moves that new identity onto this archived history. -->
       <UCard v-if="isArchived">
         <template #header>
-          <h2 class="font-semibold text-highlighted">{{ t('adminUserFormView.restoreSection') }}</h2>
+          <h2 class="font-semibold text-highlighted">
+            {{ t('adminUserFormView.restoreSection') }}
+          </h2>
         </template>
         <p class="mb-3 text-sm text-muted">{{ t('adminUserFormView.restoreExplanation') }}</p>
 
@@ -283,7 +293,9 @@
           <UIcon name="i-fa7-solid:triangle-exclamation" class="size-6 shrink-0 text-error" />
           <div class="text-sm">
             <i18n-t keypath="adminUsersList.deleteConfirmMessage" tag="p" scope="global">
-              <template #name><strong>{{ currentUser?.displayName }}</strong></template>
+              <template #name
+                ><strong>{{ currentUser?.displayName }}</strong></template
+              >
             </i18n-t>
             <p class="mt-2 text-muted">{{ t('adminUsersList.deleteIrreversibleNotice') }}</p>
           </div>
@@ -329,7 +341,9 @@
           <UIcon name="i-fa7-solid:triangle-exclamation" class="size-6 shrink-0 text-warning" />
           <div class="text-sm">
             <i18n-t keypath="adminUserFormView.archiveConfirmMessage" tag="p" scope="global">
-              <template #name><strong>{{ currentUser?.displayName }}</strong></template>
+              <template #name
+                ><strong>{{ currentUser?.displayName }}</strong></template
+              >
             </i18n-t>
             <p class="mt-2 text-muted">{{ t('adminUserFormView.archiveExplanation') }}</p>
           </div>

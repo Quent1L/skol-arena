@@ -2,7 +2,10 @@
   <UModal
     :open="visible"
     :title="t('propagateRuleset.header')"
-    :ui="{ content: 'sm:max-w-2xl', footer: 'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end' }"
+    :ui="{
+      content: 'sm:max-w-2xl',
+      footer: 'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end',
+    }"
     @update:open="(open) => emit('update:visible', open)"
   >
     <template #body>

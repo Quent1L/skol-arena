@@ -1,7 +1,10 @@
 <template>
   <!-- Mirrors the chrome the tournament will render, down to the tab actually being
        opened, so the page settles rather than being rebuilt when the data lands. -->
-  <div class="sk-shimmer" :class="variant === 'mobile' ? '' : 'min-h-screen bg-gray-50 dark:bg-gray-900'">
+  <div
+    class="sk-shimmer"
+    :class="variant === 'mobile' ? '' : 'min-h-screen bg-gray-50 dark:bg-gray-900'"
+  >
     <!-- Mobile sub-page (teams, badges): its own title bar, no bottom nav. -->
     <div v-if="isMobileSubPage" class="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       <div
@@ -43,7 +46,9 @@
     </template>
 
     <template v-else>
-      <div class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-6">
+      <div
+        class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-6"
+      >
         <div class="max-w-5xl mx-auto">
           <div class="flex items-center gap-3 mb-4">
             <USkeleton class="size-[2.5rem] rounded-full" />

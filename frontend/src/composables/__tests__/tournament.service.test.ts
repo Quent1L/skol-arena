@@ -28,7 +28,10 @@ vi.mock('../tournament/tournament.api')
 vi.mock('../useAuth')
 
 describe('useTournamentService', () => {
-  const mockCurrentUser = ref<{ id: string; role: string } | null>({ id: 'user-1', role: 'super_admin' })
+  const mockCurrentUser = ref<{ id: string; role: string } | null>({
+    id: 'user-1',
+    role: 'super_admin',
+  })
   const mockIsSuperAdmin = ref(true)
 
   beforeEach(() => {
@@ -140,13 +143,19 @@ describe('useTournamentService', () => {
   describe('isTournamentOpenForJoin', () => {
     it('open in status open', () => {
       const { isTournamentOpenForJoin } = useTournamentService()
-      expect(isTournamentOpenForJoin({ status: 'open', mode: 'championship' } as TournamentResponse)).toBe(true)
+      expect(
+        isTournamentOpenForJoin({ status: 'open', mode: 'championship' } as TournamentResponse),
+      ).toBe(true)
     })
 
     it('ranked stays joinable while ongoing', () => {
       const { isTournamentOpenForJoin } = useTournamentService()
-      expect(isTournamentOpenForJoin({ status: 'ongoing', mode: 'ranked' } as TournamentResponse)).toBe(true)
-      expect(isTournamentOpenForJoin({ status: 'ongoing', mode: 'championship' } as TournamentResponse)).toBe(false)
+      expect(
+        isTournamentOpenForJoin({ status: 'ongoing', mode: 'ranked' } as TournamentResponse),
+      ).toBe(true)
+      expect(
+        isTournamentOpenForJoin({ status: 'ongoing', mode: 'championship' } as TournamentResponse),
+      ).toBe(false)
     })
 
     it('null → false', () => {
@@ -164,7 +173,9 @@ describe('useTournamentService', () => {
 
     it('a started bracket cannot be left', () => {
       const { canLeaveTournament } = useTournamentService()
-      expect(canLeaveTournament({ mode: 'bracket', status: 'ongoing' } as TournamentResponse)).toBe(false)
+      expect(canLeaveTournament({ mode: 'bracket', status: 'ongoing' } as TournamentResponse)).toBe(
+        false,
+      )
     })
 
     it('a championship or a ranked season can be left while ongoing', () => {
@@ -195,7 +206,11 @@ describe('useTournamentService', () => {
       expect(canCreateMatchInTournament(tournament, false, true)).toBe(false)
       expect(canCreateMatchInTournament(tournament, true, false)).toBe(false)
       expect(
-        canCreateMatchInTournament({ status: 'ongoing', mode: 'bracket' } as TournamentResponse, true, true),
+        canCreateMatchInTournament(
+          { status: 'ongoing', mode: 'bracket' } as TournamentResponse,
+          true,
+          true,
+        ),
       ).toBe(false)
     })
 
@@ -203,7 +218,12 @@ describe('useTournamentService', () => {
       const { canCreateMatchInTournament } = useTournamentService()
       expect(canCreateMatchInTournament(tournament, true, false, 'kiosk')).toBe(true)
       expect(
-        canCreateMatchInTournament({ status: 'finished', mode: 'championship' } as TournamentResponse, true, false, 'kiosk'),
+        canCreateMatchInTournament(
+          { status: 'finished', mode: 'championship' } as TournamentResponse,
+          true,
+          false,
+          'kiosk',
+        ),
       ).toBe(false)
     })
   })
@@ -384,7 +404,10 @@ describe('useTournamentService', () => {
 
       const { deleteTournament, tournaments, currentTournament, loading } = useTournamentService()
 
-      tournaments.value = [{ id: 't-1' } as TournamentListResponse, { id: 't-2' } as TournamentListResponse]
+      tournaments.value = [
+        { id: 't-1' } as TournamentListResponse,
+        { id: 't-2' } as TournamentListResponse,
+      ]
       currentTournament.value = { id: 't-1' } as TournamentResponse
 
       const result = await deleteTournament('t-1')

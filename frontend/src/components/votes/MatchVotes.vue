@@ -58,7 +58,11 @@ const {
   withdrawSpectator,
 } = useMatchVotes()
 
-watch(() => props.matchId, (id) => load(id), { immediate: true })
+watch(
+  () => props.matchId,
+  (id) => load(id),
+  { immediate: true },
+)
 
 // Someone else voted MVP or declared themselves spectator: refetch our own view.
 const offVotesWs = onWsEvent('match_votes_updated', (payload) => {
@@ -73,7 +77,11 @@ type WithMvp = MatchVotes & { mvp: NonNullable<MatchVotes['mvp']> }
 const fairPlayVotes = computed(() => (votes.value?.fairPlay ? (votes.value as WithFairPlay) : null))
 const mvpVotes = computed(() => (votes.value?.mvp ? (votes.value as WithMvp) : null))
 // The page flags the MVP on the scoreboard too, live with every vote.
-watch(() => votes.value?.mvp?.mvpPlayerIds ?? [], (ids) => emit('mvp', ids), { immediate: true })
+watch(
+  () => votes.value?.mvp?.mvpPlayerIds ?? [],
+  (ids) => emit('mvp', ids),
+  { immediate: true },
+)
 
 const justSaved = ref(false)
 let savedTimer: ReturnType<typeof setTimeout> | undefined

@@ -61,9 +61,7 @@ const losersRounds = computed(() =>
     .sort((a, b) => a.roundNumber - b.roundNumber),
 )
 
-const bronzeRound = computed(() =>
-  props.bracketData.rounds.find((r) => r.bracketType === 'bronze'),
-)
+const bronzeRound = computed(() => props.bracketData.rounds.find((r) => r.bracketType === 'bronze'))
 
 function goToMatch(matchId: string): void {
   router.push(`/matches/${matchId}`)

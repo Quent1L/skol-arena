@@ -4,7 +4,9 @@ import { maintenanceApi } from '../maintenance.api'
 import type { AvatarStorageReport, SystemInfo } from '@skol-arena/shared/types/index'
 
 vi.mock('vue-i18n', async () => (await import('@/test-support/mock-modules')).i18nEchoMock())
-vi.mock('@/config/ApiConfig', async () => (await import('@/test-support/mock-modules')).apiConfigMock())
+vi.mock('@/config/ApiConfig', async () =>
+  (await import('@/test-support/mock-modules')).apiConfigMock(),
+)
 const toastAdd = vi.fn()
 vi.mock('@/composables/useAppToast', () => ({ useAppToast: () => ({ add: toastAdd }) }))
 
@@ -69,8 +71,17 @@ describe('useMaintenanceService', () => {
 
   it('clears the flag and refreshes the report after a migration', async () => {
     vi.spyOn(maintenanceApi, 'getSystemInfo').mockResolvedValue(makeInfo(makeReport()))
-    const fresh = makeReport({ inActive: 3, stranded: [{ driver: 'postgres', count: 0 }], strandedDrivers: [] })
-    vi.spyOn(maintenanceApi, 'migrateAvatars').mockResolvedValue({ migrated: 2, failed: 0, missing: 0, report: fresh })
+    const fresh = makeReport({
+      inActive: 3,
+      stranded: [{ driver: 'postgres', count: 0 }],
+      strandedDrivers: [],
+    })
+    vi.spyOn(maintenanceApi, 'migrateAvatars').mockResolvedValue({
+      migrated: 2,
+      failed: 0,
+      missing: 0,
+      report: fresh,
+    })
     const service = useMaintenanceService()
     await service.loadSystemInfo()
     expect(service.hasStrandedAvatars.value).toBe(true)

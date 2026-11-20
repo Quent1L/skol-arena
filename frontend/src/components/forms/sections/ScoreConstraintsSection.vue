@@ -62,7 +62,5 @@ const props = defineProps<{
 
 const state = defineModel<ScoreConstraintsState>('state', { required: true })
 
-const { canEdit, lockedByMatches, enteredMatchCount } = useFieldEditability(
-  () => props.editability,
-)
+const { canEdit, lockedByMatches, enteredMatchCount } = useFieldEditability(() => props.editability)
 </script>

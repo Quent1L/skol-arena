@@ -42,7 +42,9 @@
               <div
                 class="h-full rounded-full"
                 :class="column.barClass"
-                :style="{ width: `${relativeWidth(entry.mmrGained, column.entries[0].mmrGained)}%` }"
+                :style="{
+                  width: `${relativeWidth(entry.mmrGained, column.entries[0].mmrGained)}%`,
+                }"
               />
             </div>
             <span class="text-[10px] text-gray-500 tabular-nums shrink-0">

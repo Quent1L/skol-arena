@@ -167,7 +167,6 @@
             />
           </div>
         </div>
-
       </template>
 
       <!-- Ranked tournament but player not found in season -->
@@ -243,9 +242,9 @@
                 class="text-xs px-2 py-0.5 rounded-full bg-gray-700 text-gray-300 font-medium"
                 >{{ modeLabel(group.mode) }}</span
               >
-              <span class="ml-auto text-xs text-gray-500"
-                >{{ t('playerDetailView.tournamentCount', { count: group.entries.length }) }}</span
-              >
+              <span class="ml-auto text-xs text-gray-500">{{
+                t('playerDetailView.tournamentCount', { count: group.entries.length })
+              }}</span>
             </div>
 
             <!-- Stats grid -->
@@ -260,9 +259,13 @@
               </div>
               <div class="rounded-xl bg-gray-700/50 p-3 text-center">
                 <div class="text-lg font-black">
-                  <span class="text-green-400">{{ group.wins }}{{ t('playerDetailView.winsShort') }}</span>
+                  <span class="text-green-400"
+                    >{{ group.wins }}{{ t('playerDetailView.winsShort') }}</span
+                  >
                   <span class="text-gray-600 text-sm mx-0.5">/</span>
-                  <span class="text-red-400">{{ group.losses }}{{ t('playerDetailView.lossesShort') }}</span>
+                  <span class="text-red-400"
+                    >{{ group.losses }}{{ t('playerDetailView.lossesShort') }}</span
+                  >
                 </div>
                 <div class="text-xs text-gray-400 mt-0.5">{{ t('playerDetailView.wdLabel') }}</div>
               </div>
@@ -282,9 +285,13 @@
                 <span class="text-xs text-gray-400 shrink-0 ml-3 tabular-nums">
                   {{ entry.matchesPlayed }}
                   {{ t('playerDetailView.matchesPlayedAbbr') }} &nbsp;·&nbsp;
-                  <span class="text-green-400">{{ entry.wins }}{{ t('playerDetailView.winsShort') }}</span>
+                  <span class="text-green-400"
+                    >{{ entry.wins }}{{ t('playerDetailView.winsShort') }}</span
+                  >
                   <span class="text-gray-600"> / </span>
-                  <span class="text-red-400">{{ entry.losses }}{{ t('playerDetailView.lossesShort') }}</span>
+                  <span class="text-red-400"
+                    >{{ entry.losses }}{{ t('playerDetailView.lossesShort') }}</span
+                  >
                 </span>
               </RouterLink>
             </div>
@@ -306,7 +313,8 @@
         <!-- Outcome type stats -->
         <OutcomeTypeStats
           v-if="
-            (!hasMultipleDisciplines || statsFilters.disciplineId) && stats?.outcomeTypeStats?.length
+            (!hasMultipleDisciplines || statsFilters.disciplineId) &&
+            stats?.outcomeTypeStats?.length
           "
           :stats="stats!.outcomeTypeStats"
         />
@@ -321,7 +329,6 @@
 
         <!-- Badges -->
         <PlayerBadges :player-id="playerId" />
-
 
         <!-- All matches -->
         <div class="py-4">
@@ -515,9 +522,7 @@ const careerSeasonIds = computed(() => new Set(career.value.map((season) => seas
 // The ranked career alone is enough to have something worth showing: a player who
 // only ever played ranked has no row left in the grouped grid once the career card
 // accounts for their seasons.
-const hasAnyStats = computed(
-  () => (stats.value?.totalMatches ?? 0) > 0 || career.value.length > 0,
-)
+const hasAnyStats = computed(() => (stats.value?.totalMatches ?? 0) > 0 || career.value.length > 0)
 
 const groupedStats = computed(() => {
   if (statsFilters.value.tournamentId || !stats.value) return null

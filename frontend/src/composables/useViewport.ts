@@ -5,10 +5,15 @@ const width = ref(typeof window !== 'undefined' ? window.innerWidth : 0)
 
 function computeIsMobile(): boolean {
   if (typeof window === 'undefined') return false
-  const isTouchPrimary = typeof window.matchMedia === 'function'
-    ? window.matchMedia('(hover: none) and (pointer: coarse)').matches
-    : false
-  return isTouchPrimary || Math.min(window.screen.width, window.screen.height) < 768 || window.innerWidth < 768
+  const isTouchPrimary =
+    typeof window.matchMedia === 'function'
+      ? window.matchMedia('(hover: none) and (pointer: coarse)').matches
+      : false
+  return (
+    isTouchPrimary ||
+    Math.min(window.screen.width, window.screen.height) < 768 ||
+    window.innerWidth < 768
+  )
 }
 
 const isMobile = ref(computeIsMobile())

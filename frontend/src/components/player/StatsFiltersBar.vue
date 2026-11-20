@@ -130,94 +130,98 @@
   </div>
 
   <!-- Mobile: drawer -->
-  <UDrawer v-model:open="drawerVisible" :title="t('statsFiltersBar.filters')" :ui="{ content: 'max-h-[85vh]' }">
+  <UDrawer
+    v-model:open="drawerVisible"
+    :title="t('statsFiltersBar.filters')"
+    :ui="{ content: 'max-h-[85vh]' }"
+  >
     <template #body>
-    <div class="flex flex-col gap-5 pb-2">
-      <!-- Mode A: editable draft controls -->
-      <template v-if="!isDraftLocked">
-        <div v-if="hasMultipleDisciplines" class="flex flex-col gap-1">
-          <label for="sfb-draft-discipline" class="text-sm font-medium">{{
-            t('statsFiltersBar.discipline')
-          }}</label>
-          <USelectMenu
-            id="sfb-draft-discipline"
-            v-model="draftDisciplineId"
-            :items="disciplineOptions"
-            value-key="value"
-            :placeholder="t('statsFiltersBar.allOption')"
-            :search-input="false"
-            size="lg"
-            :ui="{ content: 'min-w-fit' }"
-            class="w-full"
-          />
-        </div>
-        <div class="flex flex-col gap-1">
-          <label for="sfb-draft-tournament" class="text-sm font-medium">{{
-            t('statsFiltersBar.tournament')
-          }}</label>
-          <USelectMenu
-            id="sfb-draft-tournament"
-            v-model="draftTournamentId"
-            :items="mobileTournamentOptions"
-            value-key="value"
-            :placeholder="t('statsFiltersBar.allOption')"
-            :search-input="false"
-            size="lg"
-            :ui="{ content: 'min-w-fit' }"
-            class="w-full"
-          >
-            <template #item-label="{ item }">
-              <div class="flex items-center justify-between w-full gap-2">
-                <span class="truncate">{{ item.label }}</span>
-                <UBadge
-                  v-if="item.mode"
-                  :label="modeLabel(item.mode)"
-                  :color="modeColor(item.mode)"
-                  variant="soft"
-                  class="shrink-0"
-                />
-              </div>
-            </template>
-          </USelectMenu>
-        </div>
-        <div class="flex flex-col gap-1">
-          <span class="text-sm font-medium">{{ t('statsFiltersBar.mode') }}</span>
-          <UTabs
-            v-model="draftModeTab"
-            :items="tabItems(mobileModeOptions)"
-            :content="false"
-            color="neutral"
-            class="w-full"
-            :ui="TABS_UI"
-          />
-        </div>
-      </template>
+      <div class="flex flex-col gap-5 pb-2">
+        <!-- Mode A: editable draft controls -->
+        <template v-if="!isDraftLocked">
+          <div v-if="hasMultipleDisciplines" class="flex flex-col gap-1">
+            <label for="sfb-draft-discipline" class="text-sm font-medium">{{
+              t('statsFiltersBar.discipline')
+            }}</label>
+            <USelectMenu
+              id="sfb-draft-discipline"
+              v-model="draftDisciplineId"
+              :items="disciplineOptions"
+              value-key="value"
+              :placeholder="t('statsFiltersBar.allOption')"
+              :search-input="false"
+              size="lg"
+              :ui="{ content: 'min-w-fit' }"
+              class="w-full"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="sfb-draft-tournament" class="text-sm font-medium">{{
+              t('statsFiltersBar.tournament')
+            }}</label>
+            <USelectMenu
+              id="sfb-draft-tournament"
+              v-model="draftTournamentId"
+              :items="mobileTournamentOptions"
+              value-key="value"
+              :placeholder="t('statsFiltersBar.allOption')"
+              :search-input="false"
+              size="lg"
+              :ui="{ content: 'min-w-fit' }"
+              class="w-full"
+            >
+              <template #item-label="{ item }">
+                <div class="flex items-center justify-between w-full gap-2">
+                  <span class="truncate">{{ item.label }}</span>
+                  <UBadge
+                    v-if="item.mode"
+                    :label="modeLabel(item.mode)"
+                    :color="modeColor(item.mode)"
+                    variant="soft"
+                    class="shrink-0"
+                  />
+                </div>
+              </template>
+            </USelectMenu>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-sm font-medium">{{ t('statsFiltersBar.mode') }}</span>
+            <UTabs
+              v-model="draftModeTab"
+              :items="tabItems(mobileModeOptions)"
+              :content="false"
+              color="neutral"
+              class="w-full"
+              :ui="TABS_UI"
+            />
+          </div>
+        </template>
 
-      <!-- Mode B: draft tournament locked -->
-      <template v-else>
-        <div class="flex items-center gap-2 flex-wrap">
-          <button
-            class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-700/40 text-indigo-200 text-sm font-semibold hover:bg-indigo-700/60 transition-colors"
-            @click="draftTournamentId = undefined"
-          >
-            <i class="fa fa-xmark text-xs" />
-            {{ draftTournamentFull?.name }}
-          </button>
-          <span
-            v-if="draftTournamentFull?.disciplineName"
-            class="px-2.5 py-1 rounded-lg bg-gray-700 text-gray-300 text-sm"
-          >
-            {{ draftTournamentFull.disciplineName }}
-          </span>
-          <UBadge
-            v-if="draftTournamentFull?.mode"
-            :label="modeLabel(draftTournamentFull.mode)"
-            :color="modeColor(draftTournamentFull.mode)"
-            variant="soft"
-          />
-        </div>
-      </template>
-    </div>
+        <!-- Mode B: draft tournament locked -->
+        <template v-else>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-700/40 text-indigo-200 text-sm font-semibold hover:bg-indigo-700/60 transition-colors"
+              @click="draftTournamentId = undefined"
+            >
+              <i class="fa fa-xmark text-xs" />
+              {{ draftTournamentFull?.name }}
+            </button>
+            <span
+              v-if="draftTournamentFull?.disciplineName"
+              class="px-2.5 py-1 rounded-lg bg-gray-700 text-gray-300 text-sm"
+            >
+              {{ draftTournamentFull.disciplineName }}
+            </span>
+            <UBadge
+              v-if="draftTournamentFull?.mode"
+              :label="modeLabel(draftTournamentFull.mode)"
+              :color="modeColor(draftTournamentFull.mode)"
+              variant="soft"
+            />
+          </div>
+        </template>
+      </div>
     </template>
 
     <template #footer>
@@ -326,7 +330,9 @@ function buildModeOptions(disciplineId: string | undefined) {
     : allModes
   const available = disciplineId
     ? new Set(
-        props.availableTournaments.filter((t) => t.disciplineId === disciplineId).map((t) => t.mode),
+        props.availableTournaments
+          .filter((t) => t.disciplineId === disciplineId)
+          .map((t) => t.mode),
       )
     : null
   return [

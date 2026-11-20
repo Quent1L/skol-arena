@@ -12,18 +12,25 @@ export const MMR_FLOOR = 700
 export function getTierForMmr(mmr: number, allTiers: ClientRankTier[]): ClientRankTier | null {
   if (!allTiers.length) return null
   return (
-    [...allTiers].sort((a, b) => b.level - a.level).find((tier) => mmr >= tier.minMmr) ?? allTiers[0]
+    [...allTiers].sort((a, b) => b.level - a.level).find((tier) => mmr >= tier.minMmr) ??
+    allTiers[0]
   )
 }
 
 // Neighbours are resolved by order, never by `level ± 1`: levels are kept
 // contiguous server-side, but a season edited before that guarantee existed can
 // still have holes.
-export function getNextTier(tier: ClientRankTier, allTiers: ClientRankTier[]): ClientRankTier | null {
+export function getNextTier(
+  tier: ClientRankTier,
+  allTiers: ClientRankTier[],
+): ClientRankTier | null {
   return [...allTiers].sort((a, b) => a.level - b.level).find((t) => t.level > tier.level) ?? null
 }
 
-export function getPrevTier(tier: ClientRankTier, allTiers: ClientRankTier[]): ClientRankTier | null {
+export function getPrevTier(
+  tier: ClientRankTier,
+  allTiers: ClientRankTier[],
+): ClientRankTier | null {
   return [...allTiers].sort((a, b) => b.level - a.level).find((t) => t.level < tier.level) ?? null
 }
 

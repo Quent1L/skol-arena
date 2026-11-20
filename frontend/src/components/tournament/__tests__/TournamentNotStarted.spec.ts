@@ -6,7 +6,8 @@ import TournamentNotStarted from '../TournamentNotStarted.vue'
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
-    t: (key: string, params?: Record<string, string>) => `${key} ${Object.values(params ?? {}).join(' ')}`,
+    t: (key: string, params?: Record<string, string>) =>
+      `${key} ${Object.values(params ?? {}).join(' ')}`,
     locale: { value: 'fr' },
   }),
   createI18n: () => ({ global: { t: (key: string) => key }, install: () => {} }),

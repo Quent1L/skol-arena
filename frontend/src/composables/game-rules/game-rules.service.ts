@@ -1,7 +1,11 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { gameRulesApi } from './game-rules.api'
-import type { ClientGameRule, CreateGameRuleData, UpdateGameRuleData } from '@skol-arena/shared/types/index'
+import type {
+  ClientGameRule,
+  CreateGameRuleData,
+  UpdateGameRuleData,
+} from '@skol-arena/shared/types/index'
 
 export function useGameRulesService() {
   const { t } = useI18n()

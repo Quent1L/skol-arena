@@ -111,7 +111,9 @@ function buildLockup(markScale: number, word: typeof MARK_INK | null): Lockup {
   return {
     viewBox: box(view),
     aspectRatio: view.w / view.h,
-    markTransform: word ? `translate(${dx.toFixed(4)},${dy.toFixed(4)}) scale(${markScale})` : undefined,
+    markTransform: word
+      ? `translate(${dx.toFixed(4)},${dy.toFixed(4)}) scale(${markScale})`
+      : undefined,
     markFraction: {
       left: (markScale * markViewBox.x + dx - view.x) / view.w,
       top: (markScale * markViewBox.y + dy - view.y) / view.h,

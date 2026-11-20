@@ -28,7 +28,10 @@ export function groupTournamentHistory(
    */
   excludedTournamentIds: ReadonlySet<string> = new Set(),
 ): TournamentStatsGroup[] {
-  const map = new Map<string, Pick<TournamentStatsGroup, 'key' | 'discipline' | 'mode' | 'entries'>>()
+  const map = new Map<
+    string,
+    Pick<TournamentStatsGroup, 'key' | 'discipline' | 'mode' | 'entries'>
+  >()
 
   for (const entry of history) {
     if (excludedTournamentIds.has(entry.tournamentId)) continue

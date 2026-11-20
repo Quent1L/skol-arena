@@ -15,9 +15,7 @@ export const teamApi = {
 
   leave: (tournamentId: string, teamId: string) =>
     http
-      .delete<{ success: boolean }>(
-        `/api/tournaments/${tournamentId}/teams/${teamId}/leave`,
-      )
+      .delete<{ success: boolean }>(`/api/tournaments/${tournamentId}/teams/${teamId}/leave`)
       .then((r) => r.data),
 
   delete: (tournamentId: string, teamId: string) =>

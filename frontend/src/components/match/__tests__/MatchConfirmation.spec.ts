@@ -5,7 +5,11 @@ import { nextTick } from 'vue'
 import fr from '@/i18n/messages/fr.json'
 import { mountWithPlugins } from '@/test-support/mount'
 import MatchConfirmation from '../MatchConfirmation.vue'
-import type { ClientMatchDetail, MatchDetailConfirmation, MatchStatus } from '@skol-arena/shared/types/index'
+import type {
+  ClientMatchDetail,
+  MatchDetailConfirmation,
+  MatchStatus,
+} from '@skol-arena/shared/types/index'
 
 function makeConfirmation(over: Partial<MatchDetailConfirmation> = {}): MatchDetailConfirmation {
   return {
@@ -40,7 +44,10 @@ function makeFinalizedMatch(
   } as ClientMatchDetail
 }
 
-function makeMatch(status: MatchStatus, confirmations: MatchDetailConfirmation[]): ClientMatchDetail {
+function makeMatch(
+  status: MatchStatus,
+  confirmations: MatchDetailConfirmation[],
+): ClientMatchDetail {
   const side = (position: number, playerId: string, displayName: string) => ({
     position,
     score: position === 1 ? 3 : 1,

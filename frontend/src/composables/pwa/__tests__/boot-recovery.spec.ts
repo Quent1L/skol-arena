@@ -89,7 +89,10 @@ describe('boot-recovery', () => {
   })
 
   it('starts over once the previous attempts are old', () => {
-    sessionStorage.setItem('skol.bootRecovery', JSON.stringify({ attempts: 2, at: Date.now() - 61_000 }))
+    sessionStorage.setItem(
+      'skol.bootRecovery',
+      JSON.stringify({ attempts: 2, at: Date.now() - 61_000 }),
+    )
     boot()
     failScript('module')
 

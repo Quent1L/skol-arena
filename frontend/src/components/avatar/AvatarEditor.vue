@@ -1,12 +1,6 @@
 <template>
   <div class="flex items-center gap-4">
-    <PlayerAvatar
-      :name="name"
-      :color-key="colorKey"
-      :player-id="userId"
-      size="xl"
-      shape="square"
-    />
+    <PlayerAvatar :name="name" :color-key="colorKey" :player-id="userId" size="xl" shape="square" />
 
     <div class="flex flex-col gap-2 min-w-0">
       <div class="flex flex-wrap gap-2">

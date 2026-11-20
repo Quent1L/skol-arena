@@ -10,7 +10,9 @@ const i18n = createI18n({
   legacy: false,
   locale: 'en',
   messages: {
-    en: { announcementPopup: { kicker: 'Announcement', gotIt: 'Got it', next: 'Next ({count} more)' } },
+    en: {
+      announcementPopup: { kicker: 'Announcement', gotIt: 'Got it', next: 'Next ({count} more)' },
+    },
   },
 })
 
@@ -53,7 +55,10 @@ describe('AnnouncementPopup', () => {
       popup('a-2', 'Rule change'),
     ])
     await popups.loadPending()
-    wrapper = mountWithUi(AnnouncementPopup, { props: { settleMs: 0 }, global: { plugins: [i18n] } })
+    wrapper = mountWithUi(AnnouncementPopup, {
+      props: { settleMs: 0 },
+      global: { plugins: [i18n] },
+    })
     await vi.waitFor(() => expect(bodyText()).toContain('Three new badges'))
 
     expect(bodyText()).toContain('Body of Three new badges')

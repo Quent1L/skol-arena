@@ -14,20 +14,30 @@
           <p class="text-xs font-medium uppercase tracking-wide text-primary">
             {{ t('announcementPopup.kicker') }}
           </p>
-          <h2 class="text-lg font-semibold text-highlighted break-words" data-testid="announcement-title">
+          <h2
+            class="text-lg font-semibold text-highlighted break-words"
+            data-testid="announcement-title"
+          >
             {{ current?.title }}
           </h2>
         </div>
       </div>
     </template>
     <template #body>
-      <p class="text-sm text-default whitespace-pre-line break-words" data-testid="announcement-body">
+      <p
+        class="text-sm text-default whitespace-pre-line break-words"
+        data-testid="announcement-body"
+      >
         {{ current?.body }}
       </p>
     </template>
     <template #footer>
       <UButton
-        :label="remaining > 0 ? t('announcementPopup.next', { count: remaining }) : t('announcementPopup.gotIt')"
+        :label="
+          remaining > 0
+            ? t('announcementPopup.next', { count: remaining })
+            : t('announcementPopup.gotIt')
+        "
         block
         class="sm:w-auto"
         data-testid="announcement-dismiss"

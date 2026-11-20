@@ -270,7 +270,8 @@ describe('ResultStep — presentation helpers', () => {
       ],
     })
     const text = wrapper.text()
-    for (const name of ['Golden Goals', 'Rod Squad', 'Ava', 'Dan', 'Grace']) expect(text).toContain(name)
+    for (const name of ['Golden Goals', 'Rod Squad', 'Ava', 'Dan', 'Grace'])
+      expect(text).toContain(name)
     expect(text).not.toContain('resultStep.team')
   })
 

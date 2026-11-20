@@ -34,8 +34,10 @@ const summaryEl = () => document.body.querySelector('.text-gray-400')?.textConte
 const rowDeltas = () =>
   [...document.body.querySelectorAll('.divide-y .font-mono')].map((n) => n.textContent?.trim())
 const toggleBtn = () =>
-  [...document.body.querySelectorAll('button')].find((b) =>
-    b.textContent?.includes('mmrRecapCard.showDetail') || b.textContent?.includes('mmrRecapCard.hideDetail'),
+  [...document.body.querySelectorAll('button')].find(
+    (b) =>
+      b.textContent?.includes('mmrRecapCard.showDetail') ||
+      b.textContent?.includes('mmrRecapCard.hideDetail'),
   )
 
 /** The recap is not skippable, so tests let its sequence run out. */
@@ -165,8 +167,20 @@ describe('MmrRecapCard', () => {
     // events[0].mmrBefore would draw a long climb under a negative title.
     mountCard(
       [
-        ev({ reason: 'recalculated', mmrBefore: 1000, mmrAfter: 1030, mmrDelta: 30, displayDelta: -5 }),
-        ev({ reason: 'recalculated', mmrBefore: 1030, mmrAfter: 1050, mmrDelta: 20, displayDelta: -7 }),
+        ev({
+          reason: 'recalculated',
+          mmrBefore: 1000,
+          mmrAfter: 1030,
+          mmrDelta: 30,
+          displayDelta: -5,
+        }),
+        ev({
+          reason: 'recalculated',
+          mmrBefore: 1030,
+          mmrAfter: 1050,
+          mmrDelta: 20,
+          displayDelta: -7,
+        }),
       ],
       TIERS,
     )

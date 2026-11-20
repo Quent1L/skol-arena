@@ -43,7 +43,12 @@
     </template>
 
     <template #footer>
-      <UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="visible = false" />
+      <UButton
+        :label="t('common.cancel')"
+        color="neutral"
+        variant="ghost"
+        @click="visible = false"
+      />
       <UButton
         :label="t('avatarCropDialog.confirm')"
         icon="i-fa7-solid:check"
@@ -203,7 +208,17 @@ async function confirm() {
   const ctx = out.getContext('2d')
   if (!ctx) return
   ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(img, -offset.value.x / s, -offset.value.y / s, sourceSide, sourceSide, 0, 0, side, side)
+  ctx.drawImage(
+    img,
+    -offset.value.x / s,
+    -offset.value.y / s,
+    sourceSide,
+    sourceSide,
+    0,
+    0,
+    side,
+    side,
+  )
   const blob = await toBlob(out)
   if (blob) emit('cropped', blob)
   else emit('unreadable')

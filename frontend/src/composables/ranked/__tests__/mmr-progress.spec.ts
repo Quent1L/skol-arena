@@ -62,7 +62,7 @@ describe('buildMmrBarSegments', () => {
     expect(segment.toPct).toBe(50)
   })
 
-  it("rank up: the first segment ends at 100%, the second starts over at 0", () => {
+  it('rank up: the first segment ends at 100%, the second starts over at 0', () => {
     const segments = buildMmrBarSegments(1080, 1120, TIERS)
     expect(segments).toHaveLength(2)
     expect(segments[0]).toMatchObject({ fromPct: 90, toPct: 100, isFinal: false })

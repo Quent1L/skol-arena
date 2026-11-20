@@ -27,7 +27,12 @@
 
         <div class="flex items-center gap-3">
           <div v-if="!isAuthenticated" class="flex items-center gap-3">
-            <UButton :label="t('appHeader.signIn')" variant="ghost" size="lg" @click="handleLoginTap" />
+            <UButton
+              :label="t('appHeader.signIn')"
+              variant="ghost"
+              size="lg"
+              @click="handleLoginTap"
+            />
             <UButton :label="t('appHeader.signUp')" size="lg" @click="router.push('/signup')" />
           </div>
 
@@ -76,7 +81,10 @@
               </template>
               <template #item-leading="{ item, ui }">
                 <span class="relative inline-flex">
-                  <UIcon :name="item.icon!" :class="ui.itemLeadingIcon({ class: 'text-default' })" />
+                  <UIcon
+                    :name="item.icon!"
+                    :class="ui.itemLeadingIcon({ class: 'text-default' })"
+                  />
                   <span
                     v-if="item.value === 'whats-new' && whatsNew.hasUnseen.value"
                     class="unseen-dot -top-1 -right-1.5"

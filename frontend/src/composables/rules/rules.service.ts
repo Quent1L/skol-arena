@@ -1,6 +1,11 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { rulesApi, type BadgeReconciliationStatus, type CatalogFact, type RuleListFilters } from './rules.api'
+import {
+  rulesApi,
+  type BadgeReconciliationStatus,
+  type CatalogFact,
+  type RuleListFilters,
+} from './rules.api'
 import type {
   ClientRule,
   ClientRuleFiringDetail,
@@ -170,7 +175,8 @@ export function useRulesService() {
       await loadReconciliationStatus()
       return true
     } catch (err) {
-      error.value = err instanceof Error ? err.message : t('rulesService.errors.triggerReconciliationFailed')
+      error.value =
+        err instanceof Error ? err.message : t('rulesService.errors.triggerReconciliationFailed')
       return false
     }
   }

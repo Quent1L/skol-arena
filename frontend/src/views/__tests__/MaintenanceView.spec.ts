@@ -60,7 +60,9 @@ function mockService(strandedDrivers: AvatarStorageDriver[]) {
     loadStatus: vi.fn(),
     migrateAvatars: vi.fn(),
   }
-  vi.mocked(useMaintenanceService).mockReturnValue(service as unknown as ReturnType<typeof useMaintenanceService>)
+  vi.mocked(useMaintenanceService).mockReturnValue(
+    service as unknown as ReturnType<typeof useMaintenanceService>,
+  )
   return service
 }
 
@@ -99,7 +101,9 @@ describe('MaintenanceView', () => {
     const wrapper = mountWithUi(MaintenanceView)
     await flushPromises()
     expect(wrapper.find('[data-testid="app-version"]').text()).toContain('99.0.0')
-    expect(wrapper.find('[data-testid="app-version"]').text()).toContain('maintenanceView.app.staleClient')
+    expect(wrapper.find('[data-testid="app-version"]').text()).toContain(
+      'maintenanceView.app.staleClient',
+    )
   })
 
   it('falls back to the bundle version when the server does not know it', async () => {

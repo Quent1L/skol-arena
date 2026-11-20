@@ -13,7 +13,12 @@
       </UFormField>
 
       <UFormField name="disciplineId" :label="t('generalInfoSection.fields.discipline')" required>
-        <UInput v-if="disciplineLocked" :model-value="lockedDisciplineName" disabled class="w-full" />
+        <UInput
+          v-if="disciplineLocked"
+          :model-value="lockedDisciplineName"
+          disabled
+          class="w-full"
+        />
         <USelectMenu
           v-else
           v-model="state.disciplineId"
@@ -164,7 +169,5 @@ const endDate = useCalendarDateModel(
   (value) => (state.value.endDate = value),
 )
 
-const { canEdit, lockedByMatches, enteredMatchCount } = useFieldEditability(
-  () => props.editability,
-)
+const { canEdit, lockedByMatches, enteredMatchCount } = useFieldEditability(() => props.editability)
 </script>

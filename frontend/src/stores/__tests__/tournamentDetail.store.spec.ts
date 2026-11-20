@@ -13,7 +13,9 @@ vi.mock('@/composables/useAuth', () => ({
   }),
 }))
 
-const tournamentRef = ref<{ mode: string; status?: string; startDate?: string } | null>({ mode: 'ranked' })
+const tournamentRef = ref<{ mode: string; status?: string; startDate?: string } | null>({
+  mode: 'ranked',
+})
 
 vi.mock('@/composables/tournament/tournament.service', () => ({
   useTournamentService: () => ({
@@ -102,10 +104,7 @@ vi.mock('@/composables/player/player.api', () => ({
 }))
 
 import { useTournamentDetailStore } from '../tournamentDetail.store'
-import {
-  REFRESH_DONE_MS,
-  REFRESH_INDICATOR_DELAY_MS,
-} from '@/composables/ui/useBackgroundRefresh'
+import { REFRESH_DONE_MS, REFRESH_INDICATOR_DELAY_MS } from '@/composables/ui/useBackgroundRefresh'
 
 // A Wednesday, so the week start (Monday) is unambiguous.
 const WEDNESDAY = new Date('2026-03-11T10:00:00')

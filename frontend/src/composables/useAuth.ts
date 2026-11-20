@@ -12,7 +12,9 @@ import { i18n } from '@/i18n'
 import { useAvatarService } from '@/composables/avatar/avatar.service'
 
 type SessionResult = Awaited<ReturnType<typeof authClient.getSession>>
-type SessionState = { data: NonNullable<SessionResult['data']> | { user: null; session: null } | null }
+type SessionState = {
+  data: NonNullable<SessionResult['data']> | { user: null; session: null } | null
+}
 const sessionData = ref<SessionState>()
 const appUserData = ref<UserResponse | null>(null)
 const loading = ref(false)
@@ -175,8 +177,7 @@ export function useAuth() {
 
       return result
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : i18n.global.t('auth.errors.loginGeneric')
+      const message = err instanceof Error ? err.message : i18n.global.t('auth.errors.loginGeneric')
       error.value = message
       throw err
     } finally {
@@ -329,7 +330,6 @@ export function useAuth() {
     }
   }
 
-
   /**
    * Password reset request
    */
@@ -397,9 +397,7 @@ export function useAuth() {
       return result
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : i18n.global.t('auth.errors.passwordResetGeneric')
+        err instanceof Error ? err.message : i18n.global.t('auth.errors.passwordResetGeneric')
       error.value = message
       throw err
     } finally {
@@ -430,9 +428,7 @@ export function useAuth() {
       return result
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : i18n.global.t('auth.errors.passwordChangeGeneric')
+        err instanceof Error ? err.message : i18n.global.t('auth.errors.passwordChangeGeneric')
       error.value = message
       throw err
     } finally {

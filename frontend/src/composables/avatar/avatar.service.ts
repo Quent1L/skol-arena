@@ -1,5 +1,10 @@
 import { reactive } from 'vue'
-import { AVATAR_LOOKUP_MAX_IDS, AVATAR_SIZES, avatarPath, type AvatarSize } from '@skol-arena/shared'
+import {
+  AVATAR_LOOKUP_MAX_IDS,
+  AVATAR_SIZES,
+  avatarPath,
+  type AvatarSize,
+} from '@skol-arena/shared'
 import { apiBaseURL } from '@/config/api-base'
 
 /**

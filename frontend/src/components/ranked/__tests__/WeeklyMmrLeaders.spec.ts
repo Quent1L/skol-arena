@@ -80,10 +80,7 @@ describe('WeeklyMmrLeaders', () => {
 
   it('sizes the bars relative to the column leader', () => {
     const wrapper = mountCard({
-      gainers: [
-        leader({ playerId: 'a', mmrGained: 80 }),
-        leader({ playerId: 'b', mmrGained: 20 }),
-      ],
+      gainers: [leader({ playerId: 'a', mmrGained: 80 }), leader({ playerId: 'b', mmrGained: 20 })],
     })
     const bars = wrapper.find('[data-test="gainers-list"]').findAll('.rounded-full .rounded-full')
     expect(bars[0].attributes('style')).toContain('width: 100%')

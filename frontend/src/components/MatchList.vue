@@ -15,7 +15,9 @@
           "
         >
           <i class="fa fa-user text-xs"></i>
-          <span class="font-label text-xs font-bold uppercase tracking-wider">{{ t('matchList.myMatches') }}</span>
+          <span class="font-label text-xs font-bold uppercase tracking-wider">{{
+            t('matchList.myMatches')
+          }}</span>
         </button>
 
         <template v-if="myMatchesActive || props.playerMode">
@@ -46,7 +48,9 @@
           "
         >
           <i class="fa fa-gavel text-xs"></i>
-          <span class="font-label text-xs font-bold uppercase tracking-wider">{{ t('matchList.disputedOnly') }}</span>
+          <span class="font-label text-xs font-bold uppercase tracking-wider">{{
+            t('matchList.disputedOnly')
+          }}</span>
         </button>
 
         <button
@@ -127,7 +131,13 @@
             v-for="match in displayedMatches"
             :key="match.id"
             :entry="match"
-            :current-player-id="props.playerMode ? props.currentPlayerId : (myMatchesActive ? props.currentPlayerId : undefined)"
+            :current-player-id="
+              props.playerMode
+                ? props.currentPlayerId
+                : myMatchesActive
+                  ? props.currentPlayerId
+                  : undefined
+            "
           />
         </div>
 
@@ -148,12 +158,18 @@ import { useI18n } from 'vue-i18n'
 import { useInfiniteScroll } from '@vueuse/core'
 import { matchApi } from '@/composables/match/match.api'
 import { onWsEvent } from '@/composables/notification/notification.socket'
-import type { ClientMatchCard, MatchCardSide, MatchVotesUpdatedPayload } from '@skol-arena/shared/types/index'
+import type {
+  ClientMatchCard,
+  MatchCardSide,
+  MatchVotesUpdatedPayload,
+} from '@skol-arena/shared/types/index'
 import { useViewport } from '@/composables/useViewport'
 import { useMatchListFiltersStore } from '@/stores/matchListFilters.store'
 import MatchCard from './match/MatchCard.vue'
 // Only ever opened from the mobile filter bar, so it has no business in this chunk.
-const PlayerPickerDialog = defineAsyncComponent(() => import('./match/mobile/PlayerPickerDialog.vue'))
+const PlayerPickerDialog = defineAsyncComponent(
+  () => import('./match/mobile/PlayerPickerDialog.vue'),
+)
 
 const { t } = useI18n()
 
@@ -223,7 +239,11 @@ const outcomeFilters = computed(() => {
     { value: 'LOSS' as OutcomeFilter, label: t('matchList.outcome.loss'), icon: 'fa fa-times' },
   ]
   if (props.allowDraw !== false) {
-    filters.push({ value: 'DRAW' as OutcomeFilter, label: t('matchList.outcome.draw'), icon: 'fa fa-minus' })
+    filters.push({
+      value: 'DRAW' as OutcomeFilter,
+      label: t('matchList.outcome.draw'),
+      icon: 'fa fa-minus',
+    })
   }
   return filters
 })
@@ -283,7 +303,8 @@ function getOutcome(entry: ClientMatchCard): OutcomeFilter {
 }
 
 const displayedMatches = computed(() => {
-  if ((!myMatchesActive.value && !props.playerMode) || activeOutcomes.value.size === 0) return matches.value
+  if ((!myMatchesActive.value && !props.playerMode) || activeOutcomes.value.size === 0)
+    return matches.value
   return matches.value.filter((m) => activeOutcomes.value.has(getOutcome(m)))
 })
 

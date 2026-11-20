@@ -1,10 +1,6 @@
 <template>
   <UForm :schema="createAnnouncementSchema" :state="state" class="space-y-4" @submit="onSubmit">
-    <UFormField
-      v-if="allowGlobal"
-      name="audience"
-      :label="t('announcementForm.audienceLabel')"
-    >
+    <UFormField v-if="allowGlobal" name="audience" :label="t('announcementForm.audienceLabel')">
       <URadioGroup
         v-model="state.audience"
         :items="audienceItems"
@@ -59,7 +55,12 @@
       :help="t('announcementForm.expiresAtHelp')"
     >
       <div class="flex items-center gap-2">
-        <UInputDate v-model="expiresOn" :min-value="tomorrow" class="w-full" data-testid="announcement-expires" />
+        <UInputDate
+          v-model="expiresOn"
+          :min-value="tomorrow"
+          class="w-full"
+          data-testid="announcement-expires"
+        />
         <UButton
           v-if="expiresOn"
           icon="i-fa7-solid:xmark"

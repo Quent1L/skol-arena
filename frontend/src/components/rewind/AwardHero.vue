@@ -28,10 +28,7 @@
     <!-- The unit sits under the figure instead of extending it: "+342 MMR" on a
          single line ate the width the player's name needed. -->
     <div class="relative shrink-0 text-right">
-      <div
-        class="text-3xl font-black leading-none tabular-nums"
-        :style="{ color: accent }"
-      >
+      <div class="text-3xl font-black leading-none tabular-nums" :style="{ color: accent }">
         {{ prefix }}{{ counted }}
       </div>
       <div v-if="unit" class="text-xs uppercase tracking-widest text-gray-400">{{ unit }}</div>

@@ -42,94 +42,113 @@
       :ui="{ content: 'sm:max-w-2xl' }"
     >
       <template #body>
-      <div class="space-y-5 text-sm text-gray-700 dark:text-gray-300">
-        <section>
-          <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{{ t('standingsTable.pointsAwarded') }}</h3>
-          <ul class="space-y-1">
-            <li class="flex justify-between">
-              <span>{{ t('standingsTable.win') }}</span>
-              <span class="font-medium text-green-600 dark:text-green-400"
-                >{{ tournamentConfig?.pointPerVictory ?? SCORING_DEFAULTS.pointPerVictory }} {{ t('standingsTable.ptsUnit') }}</span
-              >
-            </li>
-            <li v-if="allowDraw" class="flex justify-between">
-              <span>{{ t('standingsTable.draw') }}</span>
-              <span class="font-medium text-gray-600 dark:text-gray-400"
-                >{{ tournamentConfig?.pointPerDraw ?? SCORING_DEFAULTS.pointPerDraw }} {{ t('standingsTable.ptsUnit') }}</span
-              >
-            </li>
-            <li class="flex justify-between">
-              <span>{{ t('standingsTable.loss') }}</span>
-              <span class="font-medium text-red-600 dark:text-red-400"
-                >{{ tournamentConfig?.pointPerLoss ?? SCORING_DEFAULTS.pointPerLoss }} {{ t('standingsTable.ptsUnit') }}</span
-              >
-            </li>
-          </ul>
-        </section>
+        <div class="space-y-5 text-sm text-gray-700 dark:text-gray-300">
+          <section>
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
+              {{ t('standingsTable.pointsAwarded') }}
+            </h3>
+            <ul class="space-y-1">
+              <li class="flex justify-between">
+                <span>{{ t('standingsTable.win') }}</span>
+                <span class="font-medium text-green-600 dark:text-green-400"
+                  >{{ tournamentConfig?.pointPerVictory ?? SCORING_DEFAULTS.pointPerVictory }}
+                  {{ t('standingsTable.ptsUnit') }}</span
+                >
+              </li>
+              <li v-if="allowDraw" class="flex justify-between">
+                <span>{{ t('standingsTable.draw') }}</span>
+                <span class="font-medium text-gray-600 dark:text-gray-400"
+                  >{{ tournamentConfig?.pointPerDraw ?? SCORING_DEFAULTS.pointPerDraw }}
+                  {{ t('standingsTable.ptsUnit') }}</span
+                >
+              </li>
+              <li class="flex justify-between">
+                <span>{{ t('standingsTable.loss') }}</span>
+                <span class="font-medium text-red-600 dark:text-red-400"
+                  >{{ tournamentConfig?.pointPerLoss ?? SCORING_DEFAULTS.pointPerLoss }}
+                  {{ t('standingsTable.ptsUnit') }}</span
+                >
+              </li>
+            </ul>
+          </section>
 
-        <section>
-          <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{{ t('standingsTable.rankingCriteria') }}</h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            {{ t('standingsTable.rankingCriteriaSubtitle') }}
-          </p>
-          <ol class="space-y-1.5 list-decimal list-inside">
-            <li>{{ t('standingsTable.criteriaPoints') }}</li>
-            <li>{{ t('standingsTable.criteriaWins') }}</li>
-            <li v-if="allowDraw">{{ t('standingsTable.criteriaWinLossRatio') }}</li>
-            <li>
-              {{ t('standingsTable.buchholzDesc') }}
-              <div class="text-xs text-gray-500 dark:text-gray-400 ml-4">
-                {{ t('standingsTable.buchholzExplanationLine1') }}<br />
-                {{ t('standingsTable.buchholzExplanationLine2') }}
-              </div>
-            </li>
-            <li>
-              {{
-                teamMode === 'flex'
-                  ? t('standingsTable.directConfrontationsPlayers')
-                  : t('standingsTable.directConfrontationsTeams')
-              }}
-            </li>
-            <li>
-              <span>{{ t('standingsTable.victoryQualityLabel') }}</span>
-              <div class="mt-1 ml-4 space-y-0.5">
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  {{ t('standingsTable.victoryQualityDesc') }}
-                </p>
-                <template v-if="outcomeTypes.length > 0">
-                  <ul class="text-xs space-y-0.5">
-                    <li v-for="ot in outcomeTypes" :key="ot.id" class="flex justify-between gap-4">
-                      <span class="text-gray-600 dark:text-gray-400">{{ ot.name }}</span>
-                      <span class="font-medium">{{ ot.points }} {{ t('standingsTable.ptUnit') }}</span>
-                    </li>
-                  </ul>
-                </template>
-                <p v-else class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ t('standingsTable.defaultPoints') }}
-                </p>
-              </div>
-            </li>
-            <li>{{ t('standingsTable.winRateCriteria') }}</li>
-          </ol>
-        </section>
+          <section>
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
+              {{ t('standingsTable.rankingCriteria') }}
+            </h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              {{ t('standingsTable.rankingCriteriaSubtitle') }}
+            </p>
+            <ol class="space-y-1.5 list-decimal list-inside">
+              <li>{{ t('standingsTable.criteriaPoints') }}</li>
+              <li>{{ t('standingsTable.criteriaWins') }}</li>
+              <li v-if="allowDraw">{{ t('standingsTable.criteriaWinLossRatio') }}</li>
+              <li>
+                {{ t('standingsTable.buchholzDesc') }}
+                <div class="text-xs text-gray-500 dark:text-gray-400 ml-4">
+                  {{ t('standingsTable.buchholzExplanationLine1') }}<br />
+                  {{ t('standingsTable.buchholzExplanationLine2') }}
+                </div>
+              </li>
+              <li>
+                {{
+                  teamMode === 'flex'
+                    ? t('standingsTable.directConfrontationsPlayers')
+                    : t('standingsTable.directConfrontationsTeams')
+                }}
+              </li>
+              <li>
+                <span>{{ t('standingsTable.victoryQualityLabel') }}</span>
+                <div class="mt-1 ml-4 space-y-0.5">
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    {{ t('standingsTable.victoryQualityDesc') }}
+                  </p>
+                  <template v-if="outcomeTypes.length > 0">
+                    <ul class="text-xs space-y-0.5">
+                      <li
+                        v-for="ot in outcomeTypes"
+                        :key="ot.id"
+                        class="flex justify-between gap-4"
+                      >
+                        <span class="text-gray-600 dark:text-gray-400">{{ ot.name }}</span>
+                        <span class="font-medium"
+                          >{{ ot.points }} {{ t('standingsTable.ptUnit') }}</span
+                        >
+                      </li>
+                    </ul>
+                  </template>
+                  <p v-else class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('standingsTable.defaultPoints') }}
+                  </p>
+                </div>
+              </li>
+              <li>{{ t('standingsTable.winRateCriteria') }}</li>
+            </ol>
+          </section>
 
-        <section>
-          <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
-            {{ t('standingsTable.officialVsProvisional') }}
-          </h3>
-          <ul class="space-y-1 text-xs">
-            <li><span>{{ t('standingsTable.official') }}</span> — {{ t('standingsTable.officialDesc') }}</li>
-            <li><span>{{ t('standingsTable.provisional') }}</span> — {{ t('standingsTable.provisionalDesc') }}</li>
-          </ul>
-        </section>
+          <section>
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
+              {{ t('standingsTable.officialVsProvisional') }}
+            </h3>
+            <ul class="space-y-1 text-xs">
+              <li>
+                <span>{{ t('standingsTable.official') }}</span> —
+                {{ t('standingsTable.officialDesc') }}
+              </li>
+              <li>
+                <span>{{ t('standingsTable.provisional') }}</span> —
+                {{ t('standingsTable.provisionalDesc') }}
+              </li>
+            </ul>
+          </section>
 
-        <section>
-          <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
-            {{ t('standingsTable.inactiveSection') }}
-          </h3>
-          <p class="text-xs">{{ t('standingsTable.inactiveSectionHint') }}</p>
-        </section>
-      </div>
+          <section>
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
+              {{ t('standingsTable.inactiveSection') }}
+            </h3>
+            <p class="text-xs">{{ t('standingsTable.inactiveSectionHint') }}</p>
+          </section>
+        </div>
       </template>
     </UModal>
   </div>

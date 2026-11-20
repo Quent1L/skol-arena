@@ -44,7 +44,8 @@ export function useWhatsNew(
   appVersion: string = __APP_VERSION__,
 ): WhatsNew {
   const hasUnseen = computed(
-    () => notesVersion !== '' && (seen.value === null || compareSemver(seen.value, notesVersion) < 0),
+    () =>
+      notesVersion !== '' && (seen.value === null || compareSemver(seen.value, notesVersion) < 0),
   )
   // Anchored on the notes this bundle knows about, which always have a section on the
   // page — the app's own version may have none.
@@ -60,4 +61,3 @@ export function useWhatsNew(
 
   return { hasUnseen, url, open }
 }
-

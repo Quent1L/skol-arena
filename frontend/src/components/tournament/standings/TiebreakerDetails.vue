@@ -20,7 +20,9 @@
           @click="qualityExpanded = !qualityExpanded"
         >
           <span class="flex-1">{{ t('standingsTable.tiebreakerQuality') }}</span>
-          <span class="font-medium">{{ entry.victoryQuality.toFixed(1) }} {{ t('standingsTable.ptsUnit') }}</span>
+          <span class="font-medium"
+            >{{ entry.victoryQuality.toFixed(1) }} {{ t('standingsTable.ptsUnit') }}</span
+          >
           <span class="w-4 shrink-0 text-center">
             <i
               class="fa text-xs text-gray-400"
@@ -42,7 +44,9 @@
           >
             <span
               >{{ detail.outcomeTypeName }}
-              <span class="text-gray-400">({{ detail.points }} {{ t('standingsTable.ptPerResult') }})</span></span
+              <span class="text-gray-400"
+                >({{ detail.points }} {{ t('standingsTable.ptPerResult') }})</span
+              ></span
             >
             <span class="flex gap-1 items-center">
               <span v-if="detail.wins > 0" class="text-green-600 dark:text-green-400"
@@ -74,8 +78,7 @@
                   : 'text-red-600 dark:text-red-400'
               "
             >
-              {{ entry.victoryQuality >= 0 ? '+' : ''
-              }}{{ entry.victoryQuality.toFixed(1) }}
+              {{ entry.victoryQuality >= 0 ? '+' : '' }}{{ entry.victoryQuality.toFixed(1) }}
             </span>
           </li>
         </ul>

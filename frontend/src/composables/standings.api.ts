@@ -12,7 +12,7 @@ export const standingsApi = {
    */
   async getOfficial(tournamentId: string): Promise<StandingsResult> {
     const response = await http.get<StandingsResult>(
-      `${BASE_URL}/${tournamentId}/standings/official`
+      `${BASE_URL}/${tournamentId}/standings/official`,
     )
     return response.data
   },
@@ -22,9 +22,8 @@ export const standingsApi = {
    */
   async getProvisional(tournamentId: string): Promise<StandingsResult> {
     const response = await http.get<StandingsResult>(
-      `${BASE_URL}/${tournamentId}/standings/provisional`
+      `${BASE_URL}/${tournamentId}/standings/provisional`,
     )
     return response.data
   },
 }
-

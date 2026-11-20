@@ -95,7 +95,11 @@ describe('NotificationItem', () => {
 
   it('marks an unread notification with a dot, a read one without', () => {
     expect(mountItem(makeNotif()).find('.notif-dot').exists()).toBe(true)
-    expect(mountItem(makeNotif({ isRead: true })).find('.notif-dot').exists()).toBe(false)
+    expect(
+      mountItem(makeNotif({ isRead: true }))
+        .find('.notif-dot')
+        .exists(),
+    ).toBe(false)
   })
 
   it('hands it back once the action has been settled elsewhere', () => {

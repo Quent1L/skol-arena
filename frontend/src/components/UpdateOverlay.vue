@@ -18,7 +18,10 @@
             class="update-progress-bar update-progress-measured"
             :style="{ width: `${percent}%` }"
           />
-          <div v-else-if="isDownloading" class="update-progress-bar update-progress-indeterminate" />
+          <div
+            v-else-if="isDownloading"
+            class="update-progress-bar update-progress-indeterminate"
+          />
           <div v-else class="update-progress-bar update-progress-timed" />
         </div>
         <p v-if="percent !== null" class="update-percent">{{ percent }}%</p>

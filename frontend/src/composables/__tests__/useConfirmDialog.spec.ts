@@ -19,7 +19,9 @@ function setup() {
 }
 
 function button(label: string) {
-  const found = [...document.body.querySelectorAll('button')].find((b) => b.textContent?.trim() === label)
+  const found = [...document.body.querySelectorAll('button')].find(
+    (b) => b.textContent?.trim() === label,
+  )
   if (!found) throw new Error(`no button "${label}"`)
   return found
 }

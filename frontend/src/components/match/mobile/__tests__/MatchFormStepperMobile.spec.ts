@@ -190,7 +190,10 @@ describe('MatchFormStepperMobile — what the footer allows', () => {
   })
 
   it('rejects a date outside the tournament window', async () => {
-    const ctx = makeContext({}, { startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') } as never)
+    const ctx = makeContext({}, {
+      startDate: new Date('2026-01-01'),
+      endDate: new Date('2026-12-31'),
+    } as never)
     const vm = mountStepper(ctx)
     expect(vm.canProceedStep).toBe(false)
   })

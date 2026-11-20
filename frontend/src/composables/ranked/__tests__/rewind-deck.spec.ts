@@ -149,7 +149,9 @@ describe('buildRewindCards', () => {
       fairPlayWorst: null,
       totals: { votes: 12, positiveRate: 92, topTag: null },
     }
-    expect(buildRewindCards(bundleOf({ season: seasonPayload({ votes }) }))).toContain('awardsVotes')
+    expect(buildRewindCards(bundleOf({ season: seasonPayload({ votes }) }))).toContain(
+      'awardsVotes',
+    )
   })
 
   it('hides the badges card when the player earned none', () => {

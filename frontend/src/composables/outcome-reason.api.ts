@@ -7,7 +7,6 @@ import type {
 
 const BASE_URL = '/api/outcome-reasons'
 
-
 export const outcomeReasonApi = {
   async list(outcomeTypeId?: string): Promise<OutcomeReason[]> {
     const params = outcomeTypeId ? { outcomeTypeId } : undefined
@@ -25,10 +24,7 @@ export const outcomeReasonApi = {
     return response.data
   },
 
-  async update(
-    id: string,
-    payload: UpdateOutcomeReasonRequestData,
-  ): Promise<OutcomeReason> {
+  async update(id: string, payload: UpdateOutcomeReasonRequestData): Promise<OutcomeReason> {
     const response = await http.patch<OutcomeReason>(`${BASE_URL}/${id}`, payload)
     return response.data
   },
@@ -38,5 +34,3 @@ export const outcomeReasonApi = {
     return response.data
   },
 }
-
-

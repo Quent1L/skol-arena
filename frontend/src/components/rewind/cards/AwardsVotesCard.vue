@@ -21,7 +21,11 @@
       <p v-if="podiumRest.length" class="text-center text-xs text-gray-400">
         {{ t('rewind.awards.votes.podium', { names: podiumRest.join(', ') }) }}
       </p>
-      <p v-if="mineLine" class="rounded-2xl bg-white/5 px-4 py-3 text-center text-sm" data-testid="rewind-vote-mine">
+      <p
+        v-if="mineLine"
+        class="rounded-2xl bg-white/5 px-4 py-3 text-center text-sm"
+        data-testid="rewind-vote-mine"
+      >
         {{ mineLine }}
       </p>
       <p class="text-center text-xs text-gray-400" data-testid="rewind-vote-totals">
@@ -58,7 +62,10 @@ const { t } = useI18n()
 const won = computed(() => new Set(props.awardsWon))
 const votes = computed(() => props.season.votes ?? null)
 
-type VoteAwardKey = Exclude<keyof NonNullable<SeasonRewindPayload['votes']>, 'totals' | 'fairPlayPodium'>
+type VoteAwardKey = Exclude<
+  keyof NonNullable<SeasonRewindPayload['votes']>,
+  'totals' | 'fairPlayPodium'
+>
 const ORDER: { key: VoteAwardKey; suffix?: string }[] = [
   { key: 'fairPlayPrize', suffix: ' %' },
   { key: 'teamCarrier' },
@@ -76,14 +83,18 @@ const rows = computed(() =>
   }),
 )
 
-const podiumRest = computed(() => (votes.value?.fairPlayPodium ?? []).slice(1).map((a) => a.player.displayName))
+const podiumRest = computed(() =>
+  (votes.value?.fairPlayPodium ?? []).slice(1).map((a) => a.player.displayName),
+)
 
 const mineLine = computed(() => {
   const m = props.mine
   if (!m) return null
   const parts: string[] = []
   if (m.fairPlayRate != null) {
-    parts.push(t('rewind.awards.votes.mineRate', { rate: m.fairPlayRate, rank: m.fairPlayRank ?? '—' }))
+    parts.push(
+      t('rewind.awards.votes.mineRate', { rate: m.fairPlayRate, rank: m.fairPlayRank ?? '—' }),
+    )
   }
   if (m.mvpTitles > 0) parts.push(t('rewind.awards.votes.mineMvp', { count: m.mvpTitles }))
   if (m.down > 0) {
@@ -96,8 +107,12 @@ const mineLine = computed(() => {
 const totalsLine = computed(() => {
   const totals = votes.value!.totals
   const parts = [t('rewind.awards.votes.totals', { count: totals.votes })]
-  if (totals.positiveRate != null) parts.push(t('rewind.awards.votes.positive', { rate: totals.positiveRate }))
-  if (totals.topTag) parts.push(t('rewind.awards.votes.topTag', { tag: t(`matchVotes.fairPlay.tags.${totals.topTag}`) }))
+  if (totals.positiveRate != null)
+    parts.push(t('rewind.awards.votes.positive', { rate: totals.positiveRate }))
+  if (totals.topTag)
+    parts.push(
+      t('rewind.awards.votes.topTag', { tag: t(`matchVotes.fairPlay.tags.${totals.topTag}`) }),
+    )
   return parts.join(' · ')
 })
 </script>

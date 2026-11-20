@@ -6,7 +6,9 @@ import { outcomeTypeApi } from '../../outcome-type.api'
 import { outcomeReasonApi } from '../../outcome-reason.api'
 
 vi.mock('vue-i18n', async () => (await import('@/test-support/mock-modules')).i18nEchoMock())
-vi.mock('@/config/ApiConfig', async () => (await import('@/test-support/mock-modules')).apiConfigMock())
+vi.mock('@/config/ApiConfig', async () =>
+  (await import('@/test-support/mock-modules')).apiConfigMock(),
+)
 const toastAdd = vi.fn()
 vi.mock('@/composables/useAppToast', () => ({ useAppToast: () => ({ add: toastAdd }) }))
 
@@ -19,19 +21,84 @@ type Mutation = {
 }
 
 const mutations: Mutation[] = [
-  { name: 'createDiscipline', call: (s) => s.createDiscipline({ name: 'x' } as never), api: disciplineApi, method: 'create' },
-  { name: 'updateDiscipline', call: (s) => s.updateDiscipline('d1', {} as never), api: disciplineApi, method: 'update' },
-  { name: 'deleteDiscipline', call: (s) => s.deleteDiscipline('d1'), api: disciplineApi, method: 'delete' },
-  { name: 'archiveDiscipline', call: (s) => s.archiveDiscipline('d1'), api: disciplineApi, method: 'archive' },
-  { name: 'restoreDiscipline', call: (s) => s.restoreDiscipline('d1'), api: disciplineApi, method: 'restore' },
-  { name: 'createOutcomeType', call: (s) => s.createOutcomeType({} as never), api: outcomeTypeApi, method: 'create' },
-  { name: 'updateOutcomeType', call: (s) => s.updateOutcomeType('o1', {} as never), api: outcomeTypeApi, method: 'update' },
-  { name: 'deleteOutcomeType', call: (s) => s.deleteOutcomeType('o1'), api: outcomeTypeApi, method: 'delete' },
-  { name: 'archiveOutcomeType', call: (s) => s.archiveOutcomeType('o1'), api: outcomeTypeApi, method: 'archive' },
-  { name: 'restoreOutcomeType', call: (s) => s.restoreOutcomeType('o1'), api: outcomeTypeApi, method: 'restore' },
-  { name: 'createOutcomeReason', call: (s) => s.createOutcomeReason({} as never), api: outcomeReasonApi, method: 'create' },
-  { name: 'updateOutcomeReason', call: (s) => s.updateOutcomeReason('r1', {} as never), api: outcomeReasonApi, method: 'update' },
-  { name: 'deleteOutcomeReason', call: (s) => s.deleteOutcomeReason('r1'), api: outcomeReasonApi, method: 'delete' },
+  {
+    name: 'createDiscipline',
+    call: (s) => s.createDiscipline({ name: 'x' } as never),
+    api: disciplineApi,
+    method: 'create',
+  },
+  {
+    name: 'updateDiscipline',
+    call: (s) => s.updateDiscipline('d1', {} as never),
+    api: disciplineApi,
+    method: 'update',
+  },
+  {
+    name: 'deleteDiscipline',
+    call: (s) => s.deleteDiscipline('d1'),
+    api: disciplineApi,
+    method: 'delete',
+  },
+  {
+    name: 'archiveDiscipline',
+    call: (s) => s.archiveDiscipline('d1'),
+    api: disciplineApi,
+    method: 'archive',
+  },
+  {
+    name: 'restoreDiscipline',
+    call: (s) => s.restoreDiscipline('d1'),
+    api: disciplineApi,
+    method: 'restore',
+  },
+  {
+    name: 'createOutcomeType',
+    call: (s) => s.createOutcomeType({} as never),
+    api: outcomeTypeApi,
+    method: 'create',
+  },
+  {
+    name: 'updateOutcomeType',
+    call: (s) => s.updateOutcomeType('o1', {} as never),
+    api: outcomeTypeApi,
+    method: 'update',
+  },
+  {
+    name: 'deleteOutcomeType',
+    call: (s) => s.deleteOutcomeType('o1'),
+    api: outcomeTypeApi,
+    method: 'delete',
+  },
+  {
+    name: 'archiveOutcomeType',
+    call: (s) => s.archiveOutcomeType('o1'),
+    api: outcomeTypeApi,
+    method: 'archive',
+  },
+  {
+    name: 'restoreOutcomeType',
+    call: (s) => s.restoreOutcomeType('o1'),
+    api: outcomeTypeApi,
+    method: 'restore',
+  },
+  {
+    name: 'createOutcomeReason',
+    call: (s) => s.createOutcomeReason({} as never),
+    api: outcomeReasonApi,
+    method: 'create',
+  },
+  {
+    name: 'updateOutcomeReason',
+    call: (s) => s.updateOutcomeReason('r1', {} as never),
+    api: outcomeReasonApi,
+    method: 'update',
+  },
+  {
+    name: 'deleteOutcomeReason',
+    call: (s) => s.deleteOutcomeReason('r1'),
+    api: outcomeReasonApi,
+    method: 'delete',
+  },
 ]
 
 describe('useDisciplineService', () => {
@@ -59,7 +126,9 @@ describe('useDisciplineService', () => {
       await expect(call(service)).rejects.toThrow('nope')
 
       expect(service.error.value).toBe('nope')
-      expect(toastAdd).toHaveBeenCalledWith(expect.objectContaining({ severity: 'error', detail: 'nope' }))
+      expect(toastAdd).toHaveBeenCalledWith(
+        expect.objectContaining({ severity: 'error', detail: 'nope' }),
+      )
       expect(service.loading.value).toBe(false)
     })
   })

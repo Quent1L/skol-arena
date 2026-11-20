@@ -137,7 +137,10 @@ describe('useMatchService', () => {
       vi.mocked(matchApi.update).mockResolvedValue(mockMatch)
 
       const { updateMatch } = useMatchService()
-      const input: UpdateMatchRequestData = { status: 'reported', playedAt: new Date().toISOString() }
+      const input: UpdateMatchRequestData = {
+        status: 'reported',
+        playedAt: new Date().toISOString(),
+      }
       const result = await updateMatch('match-1', input)
 
       expect(matchApi.update).toHaveBeenCalledWith('match-1', input)

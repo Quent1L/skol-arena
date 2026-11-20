@@ -11,7 +11,10 @@ const BOTH: SubTabOption<Value>[] = [
   { value: 'global', label: 'Global' },
 ]
 
-async function mountSubTabs(url = '/tournaments/1', options: Ref<SubTabOption<Value>[]> = ref(BOTH)) {
+async function mountSubTabs(
+  url = '/tournaments/1',
+  options: Ref<SubTabOption<Value>[]> = ref(BOTH),
+) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [{ path: '/:pathMatch(.*)*', component: { template: '<div />' } }],
@@ -38,7 +41,7 @@ describe('useSubTabs', () => {
     expect(api.activeIndex.value).toBe(0)
   })
 
-  it("restores the value carried by the URL", async () => {
+  it('restores the value carried by the URL', async () => {
     const { api } = await mountSubTabs('/tournaments/1?statsSub=global')
     expect(api.active.value).toBe('global')
   })
@@ -49,7 +52,7 @@ describe('useSubTabs', () => {
     expect(api.active.value).toBe('profile')
   })
 
-  it("writes the view to the URL, and removes the param for the default view", async () => {
+  it('writes the view to the URL, and removes the param for the default view', async () => {
     const { api, router } = await mountSubTabs('/tournaments/1?tab=stats')
 
     api.setActive('global')

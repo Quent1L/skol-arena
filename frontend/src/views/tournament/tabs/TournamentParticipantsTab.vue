@@ -1,7 +1,11 @@
 <template>
   <div class="space-y-6">
-    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-      <div class="flex items-center gap-2 mb-4 text-base font-semibold text-gray-900 dark:text-white">
+    <div
+      class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
+    >
+      <div
+        class="flex items-center gap-2 mb-4 text-base font-semibold text-gray-900 dark:text-white"
+      >
         {{ t('tournamentParticipantsTab.title') }}
         <UBadge :label="store.participantCount" color="info" size="sm" />
       </div>

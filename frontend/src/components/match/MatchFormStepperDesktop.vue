@@ -11,128 +11,128 @@
     </h1>
 
     <UCard variant="soft">
-        <div class="w-full">
-          <!-- Custom step progress indicator -->
-          <div class="flex items-center mb-6">
-            <template v-for="(step, idx) in visibleSteps" :key="step.value">
-              <button
-                class="bg-transparent border-0 p-0 flex-none"
-                :disabled="idx >= activeStepIndex"
-                @click="idx < activeStepIndex && (activeStep = step.value)"
-              >
-                <span
-                  :class="[
-                    'rounded-full border-2 w-10 h-10 inline-flex items-center justify-center transition-colors',
-                    activeStep === step.value
-                      ? 'bg-primary text-inverted border-primary'
-                      : idx < activeStepIndex
-                        ? 'bg-primary/10 border-primary text-primary cursor-pointer'
-                        : 'border-slate-300 dark:border-slate-600 text-slate-400',
-                  ]"
-                >
-                  <i :class="step.icon" />
-                </span>
-              </button>
-              <div
-                v-if="idx < visibleSteps.length - 1"
+      <div class="w-full">
+        <!-- Custom step progress indicator -->
+        <div class="flex items-center mb-6">
+          <template v-for="(step, idx) in visibleSteps" :key="step.value">
+            <button
+              class="bg-transparent border-0 p-0 flex-none"
+              :disabled="idx >= activeStepIndex"
+              @click="idx < activeStepIndex && (activeStep = step.value)"
+            >
+              <span
                 :class="[
-                  'flex-1 h-0.5 transition-colors',
-                  idx < activeStepIndex ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600',
+                  'rounded-full border-2 w-10 h-10 inline-flex items-center justify-center transition-colors',
+                  activeStep === step.value
+                    ? 'bg-primary text-inverted border-primary'
+                    : idx < activeStepIndex
+                      ? 'bg-primary/10 border-primary text-primary cursor-pointer'
+                      : 'border-slate-300 dark:border-slate-600 text-slate-400',
                 ]"
-              />
-            </template>
-          </div>
-
-          <!-- Step 1: Quand -->
-          <div v-if="activeStep === 'when'">
-            <WhenStep
-              v-model:played-at="formState.playedAt"
-              :min-date="tournamentMinDate"
-              :max-date="tournamentMaxDate"
-              @next="goToStep('when', nextStepAfterWhen)"
+              >
+                <i :class="step.icon" />
+              </span>
+            </button>
+            <div
+              v-if="idx < visibleSteps.length - 1"
+              :class="[
+                'flex-1 h-0.5 transition-colors',
+                idx < activeStepIndex ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600',
+              ]"
             />
-          </div>
-
-          <!-- Step 2a: Participants (flex) -->
-          <div v-if="isFlexMode && activeStep === 'participants'">
-            <ParticipantsStep
-              v-model:all-player-ids="formState.allPlayerIds"
-              :tournament-id="props.tournamentId"
-              :played-at="formState.playedAt"
-              :match-id="props.matchId"
-              :players="participants"
-              :next-label="
-                isFutureDate && isLastStepBeforeResult
-                  ? t('matchFormStepperMobile.scheduleMatch')
-                  : undefined
-              "
-              @previous="activeStep = 'when'"
-              @next="goToStepFromParticipants"
-            />
-          </div>
-
-          <!-- Step 2b: Teams (static) -->
-          <div v-if="isStaticMode && activeStep === 'teams'">
-            <h3 class="text-base font-semibold mb-4">
-              {{ t('matchFormStepperDesktop.teamsStep') }}
-            </h3>
-            <TeamsStep
-              v-model:sides="formState.sides"
-              :tournament-id="props.tournamentId"
-              :teams="teams"
-              :played-at="formState.playedAt"
-              :match-id="props.matchId"
-              :next-label="isFutureDate ? t('matchFormStepperMobile.scheduleMatch') : undefined"
-              @previous="activeStep = 'when'"
-              @next="goToStepAfterTeams"
-            />
-          </div>
-
-          <!-- Step 3: Composition (flex, >2 players) -->
-          <div v-if="isFlexMode && needsComposition && activeStep === 'composition'">
-            <CompositionStep
-              v-model:sides="formState.sides"
-              v-model:all-player-ids="formState.allPlayerIds"
-              :tournament-id="props.tournamentId"
-              :player-names="playersMap"
-              :played-at="formState.playedAt"
-              :match-id="props.matchId"
-              :next-label="isFutureDate ? t('matchFormStepperMobile.scheduleMatch') : undefined"
-              :standings="standings"
-              :allow-draw="tournament?.allowDraw ?? false"
-              :is-ranked="tournament?.mode === 'ranked'"
-              @previous="activeStep = 'participants'"
-              @next="goToStepAfterComposition"
-            />
-          </div>
-
-          <!-- Step 4: Result -->
-          <div v-if="activeStep === 'result'">
-            <ResultStep
-              v-model:sides="formState.sides"
-              v-model:winner="formState.winnerPosition"
-              v-model:outcome-type-id="formState.outcomeTypeId"
-              v-model:outcome-reason-id="formState.outcomeReasonId"
-              v-model:score-per-side="formState.scorePerSide"
-              :tournament-id="props.tournamentId"
-              :player-names="playersMap"
-              :teams="teams"
-              :score-enabled="tournament?.scoreEnabled ?? true"
-              :min-score="tournament?.minScore"
-              :max-score="tournament?.maxScore"
-              :loading="matchLoading"
-              :initial-outcome-types="outcomeTypes"
-              :initial-outcome-reasons="outcomeReasons"
-              :initial-score-instructions="scoreInstructions"
-              :allow-draw="tournament?.allowDraw ?? false"
-              :standings="standings"
-              :is-ranked="tournament?.mode === 'ranked'"
-              :submit-label="isEditMode ? t('common.update') : undefined"
-              @previous="goBackFromResult"
-              @create="submitMatch"
-            />
-          </div>
+          </template>
         </div>
+
+        <!-- Step 1: Quand -->
+        <div v-if="activeStep === 'when'">
+          <WhenStep
+            v-model:played-at="formState.playedAt"
+            :min-date="tournamentMinDate"
+            :max-date="tournamentMaxDate"
+            @next="goToStep('when', nextStepAfterWhen)"
+          />
+        </div>
+
+        <!-- Step 2a: Participants (flex) -->
+        <div v-if="isFlexMode && activeStep === 'participants'">
+          <ParticipantsStep
+            v-model:all-player-ids="formState.allPlayerIds"
+            :tournament-id="props.tournamentId"
+            :played-at="formState.playedAt"
+            :match-id="props.matchId"
+            :players="participants"
+            :next-label="
+              isFutureDate && isLastStepBeforeResult
+                ? t('matchFormStepperMobile.scheduleMatch')
+                : undefined
+            "
+            @previous="activeStep = 'when'"
+            @next="goToStepFromParticipants"
+          />
+        </div>
+
+        <!-- Step 2b: Teams (static) -->
+        <div v-if="isStaticMode && activeStep === 'teams'">
+          <h3 class="text-base font-semibold mb-4">
+            {{ t('matchFormStepperDesktop.teamsStep') }}
+          </h3>
+          <TeamsStep
+            v-model:sides="formState.sides"
+            :tournament-id="props.tournamentId"
+            :teams="teams"
+            :played-at="formState.playedAt"
+            :match-id="props.matchId"
+            :next-label="isFutureDate ? t('matchFormStepperMobile.scheduleMatch') : undefined"
+            @previous="activeStep = 'when'"
+            @next="goToStepAfterTeams"
+          />
+        </div>
+
+        <!-- Step 3: Composition (flex, >2 players) -->
+        <div v-if="isFlexMode && needsComposition && activeStep === 'composition'">
+          <CompositionStep
+            v-model:sides="formState.sides"
+            v-model:all-player-ids="formState.allPlayerIds"
+            :tournament-id="props.tournamentId"
+            :player-names="playersMap"
+            :played-at="formState.playedAt"
+            :match-id="props.matchId"
+            :next-label="isFutureDate ? t('matchFormStepperMobile.scheduleMatch') : undefined"
+            :standings="standings"
+            :allow-draw="tournament?.allowDraw ?? false"
+            :is-ranked="tournament?.mode === 'ranked'"
+            @previous="activeStep = 'participants'"
+            @next="goToStepAfterComposition"
+          />
+        </div>
+
+        <!-- Step 4: Result -->
+        <div v-if="activeStep === 'result'">
+          <ResultStep
+            v-model:sides="formState.sides"
+            v-model:winner="formState.winnerPosition"
+            v-model:outcome-type-id="formState.outcomeTypeId"
+            v-model:outcome-reason-id="formState.outcomeReasonId"
+            v-model:score-per-side="formState.scorePerSide"
+            :tournament-id="props.tournamentId"
+            :player-names="playersMap"
+            :teams="teams"
+            :score-enabled="tournament?.scoreEnabled ?? true"
+            :min-score="tournament?.minScore"
+            :max-score="tournament?.maxScore"
+            :loading="matchLoading"
+            :initial-outcome-types="outcomeTypes"
+            :initial-outcome-reasons="outcomeReasons"
+            :initial-score-instructions="scoreInstructions"
+            :allow-draw="tournament?.allowDraw ?? false"
+            :standings="standings"
+            :is-ranked="tournament?.mode === 'ranked'"
+            :submit-label="isEditMode ? t('common.update') : undefined"
+            @previous="goBackFromResult"
+            @create="submitMatch"
+          />
+        </div>
+      </div>
     </UCard>
   </div>
 </template>
@@ -283,7 +283,8 @@ async function submitMatch() {
     status: isScheduled ? 'scheduled' : 'reported',
     scoreA: isScheduled ? 0 : (formState.value.scorePerSide[1] ?? 0),
     scoreB: isScheduled ? 0 : (formState.value.scorePerSide[2] ?? 0),
-    winnerPosition: isScheduled || formState.value.winnerPosition === 0 ? null : formState.value.winnerPosition,
+    winnerPosition:
+      isScheduled || formState.value.winnerPosition === 0 ? null : formState.value.winnerPosition,
     outcomeTypeId: isScheduled ? undefined : (formState.value.outcomeTypeId ?? undefined),
     outcomeReasonId: isScheduled ? undefined : (formState.value.outcomeReasonId ?? undefined),
   }

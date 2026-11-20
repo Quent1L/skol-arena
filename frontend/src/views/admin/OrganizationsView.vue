@@ -191,7 +191,14 @@ import type { OrganizationWithMemberCount, OrganizationMemberWithUser } from '@s
 const { t } = useI18n()
 const toast = useAppToast()
 const { versionFor, removeFor: removeAvatarFor } = useAvatarService()
-const { listOrganizations, createOrganization, getMembers, addMember, removeMember, renameOrganization } = useOrganizationService()
+const {
+  listOrganizations,
+  createOrganization,
+  getMembers,
+  addMember,
+  removeMember,
+  renameOrganization,
+} = useOrganizationService()
 const { users, loading: isLoadingUsers, listUsers } = useUserService()
 
 const organizations = ref<OrganizationWithMemberCount[]>([])
@@ -211,7 +218,9 @@ const selectedUserIds = ref<string[]>([])
 const isAddingMembers = ref(false)
 
 const memberUserIds = computed(() => members.value.map((m) => m.userId))
-const availableUsers = computed(() => users.value.filter((u) => !memberUserIds.value.includes(u.id)))
+const availableUsers = computed(() =>
+  users.value.filter((u) => !memberUserIds.value.includes(u.id)),
+)
 
 const columns: TableColumn<OrganizationWithMemberCount>[] = [
   { accessorKey: 'name', header: sortableHeader(t('common.name')) },
@@ -252,7 +261,12 @@ async function loadOrganizations() {
   try {
     organizations.value = await listOrganizations()
   } catch (error: unknown) {
-    toast.add({ severity: 'error', summary: t('organizationsView.errorSummary'), detail: error instanceof Error ? error.message : t('organizationsView.errorLoading'), life: 3000 })
+    toast.add({
+      severity: 'error',
+      summary: t('organizationsView.errorSummary'),
+      detail: error instanceof Error ? error.message : t('organizationsView.errorLoading'),
+      life: 3000,
+    })
   } finally {
     isLoading.value = false
   }
@@ -267,11 +281,21 @@ async function handleCreate() {
   isCreating.value = true
   try {
     await createOrganization(newOrgName.value.trim())
-    toast.add({ severity: 'success', summary: t('organizationsView.orgCreatedSummary'), detail: t('organizationsView.orgCreatedDetail', { name: newOrgName.value }), life: 3000 })
+    toast.add({
+      severity: 'success',
+      summary: t('organizationsView.orgCreatedSummary'),
+      detail: t('organizationsView.orgCreatedDetail', { name: newOrgName.value }),
+      life: 3000,
+    })
     newOrgName.value = ''
     await loadOrganizations()
   } catch (error: unknown) {
-    toast.add({ severity: 'error', summary: t('organizationsView.errorSummary'), detail: error instanceof Error ? error.message : t('organizationsView.errorCreating'), life: 3000 })
+    toast.add({
+      severity: 'error',
+      summary: t('organizationsView.errorSummary'),
+      detail: error instanceof Error ? error.message : t('organizationsView.errorCreating'),
+      life: 3000,
+    })
   } finally {
     isCreating.value = false
   }
@@ -304,9 +328,19 @@ async function handleSaveName() {
     const idx = organizations.value.findIndex((o) => o.id === selectedOrg.value!.id)
     if (idx !== -1) organizations.value[idx].name = name
     selectedOrg.value.name = name
-    toast.add({ severity: 'success', summary: t('organizationsView.renamedSummary'), detail: t('organizationsView.renamedDetail', { name }), life: 3000 })
+    toast.add({
+      severity: 'success',
+      summary: t('organizationsView.renamedSummary'),
+      detail: t('organizationsView.renamedDetail', { name }),
+      life: 3000,
+    })
   } catch (error: unknown) {
-    toast.add({ severity: 'error', summary: t('organizationsView.errorSummary'), detail: error instanceof Error ? error.message : t('organizationsView.errorRenaming'), life: 3000 })
+    toast.add({
+      severity: 'error',
+      summary: t('organizationsView.errorSummary'),
+      detail: error instanceof Error ? error.message : t('organizationsView.errorRenaming'),
+      life: 3000,
+    })
   } finally {
     isSavingName.value = false
   }
@@ -319,9 +353,18 @@ async function handleRemoveMember(userId: string) {
     members.value = members.value.filter((m) => m.userId !== userId)
     const idx = organizations.value.findIndex((o) => o.id === selectedOrg.value!.id)
     if (idx !== -1) organizations.value[idx].memberCount--
-    toast.add({ severity: 'success', summary: t('organizationsView.memberRemovedSummary'), life: 2000 })
+    toast.add({
+      severity: 'success',
+      summary: t('organizationsView.memberRemovedSummary'),
+      life: 2000,
+    })
   } catch (error: unknown) {
-    toast.add({ severity: 'error', summary: t('organizationsView.errorSummary'), detail: error instanceof Error ? error.message : t('organizationsView.errorGeneric'), life: 3000 })
+    toast.add({
+      severity: 'error',
+      summary: t('organizationsView.errorSummary'),
+      detail: error instanceof Error ? error.message : t('organizationsView.errorGeneric'),
+      life: 3000,
+    })
   }
 }
 
@@ -329,9 +372,18 @@ async function handleRemoveMember(userId: string) {
 async function handleRemoveAvatar(userId: string) {
   try {
     await removeAvatarFor(userId)
-    toast.add({ severity: 'success', summary: t('organizationsView.avatarRemovedSummary'), life: 2000 })
+    toast.add({
+      severity: 'success',
+      summary: t('organizationsView.avatarRemovedSummary'),
+      life: 2000,
+    })
   } catch (error: unknown) {
-    toast.add({ severity: 'error', summary: t('organizationsView.errorSummary'), detail: error instanceof Error ? error.message : t('organizationsView.errorGeneric'), life: 3000 })
+    toast.add({
+      severity: 'error',
+      summary: t('organizationsView.errorSummary'),
+      detail: error instanceof Error ? error.message : t('organizationsView.errorGeneric'),
+      life: 3000,
+    })
   }
 }
 
@@ -344,9 +396,18 @@ async function handleAddMembers() {
     const idx = organizations.value.findIndex((o) => o.id === selectedOrg.value!.id)
     if (idx !== -1) organizations.value[idx].memberCount = members.value.length
     selectedUserIds.value = []
-    toast.add({ severity: 'success', summary: t('organizationsView.membersAddedSummary'), life: 2000 })
+    toast.add({
+      severity: 'success',
+      summary: t('organizationsView.membersAddedSummary'),
+      life: 2000,
+    })
   } catch (error: unknown) {
-    toast.add({ severity: 'error', summary: t('organizationsView.errorSummary'), detail: error instanceof Error ? error.message : t('organizationsView.errorGeneric'), life: 3000 })
+    toast.add({
+      severity: 'error',
+      summary: t('organizationsView.errorSummary'),
+      detail: error instanceof Error ? error.message : t('organizationsView.errorGeneric'),
+      life: 3000,
+    })
   } finally {
     isAddingMembers.value = false
   }
@@ -357,6 +418,10 @@ async function ensureUsersLoaded() {
 }
 
 function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })
+  return new Date(date).toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 }
 </script>

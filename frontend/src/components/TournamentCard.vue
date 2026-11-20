@@ -81,15 +81,16 @@
       </div>
 
       <!-- Bottom: participants + dates, or the results affordance once finished -->
-      <div
-        class="flex items-center gap-2 border-t border-white/10 pt-2 text-xs text-gray-500"
-      >
+      <div class="flex items-center gap-2 border-t border-white/10 pt-2 text-xs text-gray-500">
         <i class="fa fa-users text-gray-600" aria-hidden="true"></i>
         <span class="tabular-nums">{{
           t('tournamentCard.participants', tournament.participantCount ?? 0)
         }}</span>
 
-        <span v-if="isFinished" class="ml-auto flex items-center gap-1.5 font-semibold text-gray-300">
+        <span
+          v-if="isFinished"
+          class="ml-auto flex items-center gap-1.5 font-semibold text-gray-300"
+        >
           <i class="fa fa-chart-simple" aria-hidden="true"></i>
           {{ t('tournamentCard.viewResults') }}
         </span>

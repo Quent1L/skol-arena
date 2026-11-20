@@ -102,7 +102,9 @@ export const tournamentApi = {
   },
 
   async recalculatePoints(id: string): Promise<{ updatedMatches: number }> {
-    const response = await http.post<{ updatedMatches: number }>(`${BASE_URL}/${id}/recalculate-points`)
+    const response = await http.post<{ updatedMatches: number }>(
+      `${BASE_URL}/${id}/recalculate-points`,
+    )
     return response.data
   },
 

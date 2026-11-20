@@ -1,7 +1,12 @@
 <template>
-  <div class="rich-text-editor border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden" :class="{ 'opacity-50 pointer-events-none': disabled }">
+  <div
+    class="rich-text-editor border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden"
+    :class="{ 'opacity-50 pointer-events-none': disabled }"
+  >
     <!-- Toolbar -->
-    <div class="toolbar flex flex-wrap gap-1 p-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+    <div
+      class="toolbar flex flex-wrap gap-1 p-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600"
+    >
       <button
         type="button"
         class="toolbar-btn"
@@ -137,7 +142,10 @@
       <button
         type="button"
         class="toolbar-btn"
-        @click="showImageInput = !showImageInput; showLinkInput = false"
+        @click="
+          showImageInput = !showImageInput
+          showLinkInput = false
+        "
         :class="{ active: showImageInput }"
         :title="t('richTextEditor.toolbar.insertImage')"
       >
@@ -186,10 +194,7 @@
     </div>
 
     <!-- Editor area -->
-    <EditorContent
-      :editor="editor"
-      class="editor-content"
-    />
+    <EditorContent :editor="editor" class="editor-content" />
   </div>
 </template>
 

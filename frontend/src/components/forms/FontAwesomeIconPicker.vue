@@ -30,7 +30,10 @@
           />
 
           <!-- Tabs (hidden when searching): one scrollable row rather than a wall of chips on phones -->
-          <div v-if="!search" class="no-scrollbar -mx-1 flex gap-1 overflow-x-auto px-1 sm:flex-wrap">
+          <div
+            v-if="!search"
+            class="no-scrollbar -mx-1 flex gap-1 overflow-x-auto px-1 sm:flex-wrap"
+          >
             <UButton
               v-for="tab in TABS"
               :key="tab.key"

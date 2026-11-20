@@ -35,8 +35,18 @@
           <span class="font-medium" :class="{ 'opacity-60': row.original.archivedAt }">
             {{ row.original.name }}
           </span>
-          <UBadge v-if="row.original.isDefault" :label="t('outcomeTypeAdmin.default')" color="success" variant="subtle" />
-          <UBadge v-if="row.original.archivedAt" :label="t('outcomeTypeAdmin.archived')" color="neutral" variant="subtle" />
+          <UBadge
+            v-if="row.original.isDefault"
+            :label="t('outcomeTypeAdmin.default')"
+            color="success"
+            variant="subtle"
+          />
+          <UBadge
+            v-if="row.original.archivedAt"
+            :label="t('outcomeTypeAdmin.archived')"
+            color="neutral"
+            variant="subtle"
+          />
         </div>
         <!-- The numeric columns are hidden on phones: keep their values reachable. -->
         <p class="mt-1 text-xs text-muted sm:hidden">

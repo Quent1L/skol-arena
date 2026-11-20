@@ -30,12 +30,12 @@ describe('isVersionBelowMin', () => {
     expect(isVersionBelowMin('1.17.0', '1.18.0')).toBe(true)
   })
 
-  it("requires nothing at or above the floor", () => {
+  it('requires nothing at or above the floor', () => {
     expect(isVersionBelowMin('1.18.0', '1.18.0')).toBe(false)
     expect(isVersionBelowMin('1.20.0', '1.18.0')).toBe(false)
   })
 
-  it("requires nothing with no floor", () => {
+  it('requires nothing with no floor', () => {
     expect(isVersionBelowMin('1.17.0', null)).toBe(false)
     expect(isVersionBelowMin('1.17.0', '')).toBe(false)
   })

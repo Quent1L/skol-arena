@@ -26,7 +26,9 @@ vi.mock('@/composables/notification/notification.socket', () => ({
 }))
 vi.mock('@/composables/useAuth', () => ({ useAuth: () => ({ isAuthenticated }) }))
 const closeVotePrompt = vi.fn()
-vi.mock('@/composables/votes/useVotePrompt', () => ({ useVotePrompt: () => ({ close: closeVotePrompt }) }))
+vi.mock('@/composables/votes/useVotePrompt', () => ({
+  useVotePrompt: () => ({ close: closeVotePrompt }),
+}))
 
 const pwa = {
   shouldShowBanner: ref(false),
@@ -76,7 +78,10 @@ describe('FieldEditabilityNote', () => {
 
 describe('PasswordInput', () => {
   it('toggles between hidden and visible', async () => {
-    const wrapper = mountWithUi(PasswordInput, { props: { modelValue: 'secret' }, global: { plugins } })
+    const wrapper = mountWithUi(PasswordInput, {
+      props: { modelValue: 'secret' },
+      global: { plugins },
+    })
     const input = () => wrapper.find('input')
     const toggle = () => wrapper.find('button[aria-pressed]')
 
@@ -150,7 +155,7 @@ describe('NotificationsInit', () => {
     expect(disconnect).toHaveBeenCalledTimes(2)
   })
 
-  it("drops the pending vote prompt on logout, so the next account never sees it", async () => {
+  it('drops the pending vote prompt on logout, so the next account never sees it', async () => {
     isAuthenticated.value = true
     mountWithPlugins(NotificationsInit, { global: { plugins } })
     closeVotePrompt.mockClear()

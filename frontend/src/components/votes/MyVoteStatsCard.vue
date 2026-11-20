@@ -1,6 +1,10 @@
 <template>
   <!-- Visible to the player alone -->
-  <div v-if="mine && hasMine" class="rounded-xl border border-gray-800 bg-gray-800 p-4 sm:p-6" data-testid="my-vote-stats">
+  <div
+    v-if="mine && hasMine"
+    class="rounded-xl border border-gray-800 bg-gray-800 p-4 sm:p-6"
+    data-testid="my-vote-stats"
+  >
     <h2 class="mb-4 text-base font-semibold text-white">
       <i class="fa fa-user-shield mr-2 text-primary" />{{ t('voteStats.mine.title') }}
     </h2>
@@ -58,7 +62,10 @@ const myKpis = computed(() => {
       label: t('voteStats.mine.fairPlayRate'),
       value: m.fairPlay.rate == null ? '—' : percent(m.fairPlay.rate) + rankSuffix(m.fairPlay.rank),
     },
-    { label: t('voteStats.mine.votesCast'), value: `${m.cast.count} · ${percent(m.cast.upRate)} 👍` },
+    {
+      label: t('voteStats.mine.votesCast'),
+      value: `${m.cast.count} · ${percent(m.cast.upRate)} 👍`,
+    },
     { label: t('voteStats.mine.mvpTitles'), value: `${m.mvp.titles} / ${m.mvp.teamMatches}` },
     { label: t('voteStats.mine.spectated'), value: m.spectated },
   ]

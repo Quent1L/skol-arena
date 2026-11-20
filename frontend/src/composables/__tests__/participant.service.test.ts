@@ -139,12 +139,9 @@ describe('useParticipantService', () => {
         } as ParticipantListItem,
       ]
 
-      vi.mocked(participantApi.getTournamentParticipants).mockResolvedValue(
-        mockParticipants,
-      )
+      vi.mocked(participantApi.getTournamentParticipants).mockResolvedValue(mockParticipants)
 
-      const { getTournamentParticipants, participants, loading, error } =
-        useParticipantService()
+      const { getTournamentParticipants, participants, loading, error } = useParticipantService()
 
       expect(loading.value).toBe(false)
       expect(error.value).toBeNull()
@@ -153,21 +150,16 @@ describe('useParticipantService', () => {
 
       expect(loading.value).toBe(false)
       expect(error.value).toBeNull()
-      expect(participantApi.getTournamentParticipants).toHaveBeenCalledWith(
-        'tournament-1',
-      )
+      expect(participantApi.getTournamentParticipants).toHaveBeenCalledWith('tournament-1')
       expect(participants.value).toEqual(mockParticipants)
       expect(result).toEqual(mockParticipants)
     })
 
     it('should handle error when loading participants', async () => {
       const mockError = new Error('Failed to load')
-      vi.mocked(participantApi.getTournamentParticipants).mockRejectedValue(
-        mockError,
-      )
+      vi.mocked(participantApi.getTournamentParticipants).mockRejectedValue(mockError)
 
-      const { getTournamentParticipants, participants, loading, error } =
-        useParticipantService()
+      const { getTournamentParticipants, participants, loading, error } = useParticipantService()
 
       const result = await getTournamentParticipants('tournament-1')
 
@@ -178,4 +170,3 @@ describe('useParticipantService', () => {
     })
   })
 })
-

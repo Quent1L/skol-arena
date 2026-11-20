@@ -1,7 +1,11 @@
 <template>
   <div class="space-y-4" data-testid="player-tournament-profile">
     <!-- Fixed teams: every result below is the team's, shared by all its members. -->
-    <div v-if="fixedTeam && myTeam" class="flex items-center gap-2 text-sm font-semibold text-white" data-testid="my-team">
+    <div
+      v-if="fixedTeam && myTeam"
+      class="flex items-center gap-2 text-sm font-semibold text-white"
+      data-testid="my-team"
+    >
       <i class="fa fa-users text-primary" />
       {{ t('playerTournamentProfile.myTeam', { name: myTeam.name }) }}
     </div>

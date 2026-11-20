@@ -32,7 +32,11 @@
       </div>
 
       <!-- Tab: Participants -->
-      <div v-if="isVisited('participants')" v-show="activeTab === 'participants'" class="h-full p-4">
+      <div
+        v-if="isVisited('participants')"
+        v-show="activeTab === 'participants'"
+        class="h-full p-4"
+      >
         <TournamentParticipantsTab />
       </div>
 
@@ -178,12 +182,22 @@ import MobileBottomNav from '@/components/tournament/mobile/MobileBottomNav.vue'
 // the standings their tabs and dialogs, the bracket its own renderer. Kept
 // out of this chunk, they land while the reader is already looking at their tab.
 const MatchList = defineAsyncComponent(() => import('@/components/MatchList.vue'))
-const StandingsTable = defineAsyncComponent(() => import('@/components/tournament/StandingsTable.vue'))
+const StandingsTable = defineAsyncComponent(
+  () => import('@/components/tournament/StandingsTable.vue'),
+)
 const BracketView = defineAsyncComponent(() => import('@/components/bracket/BracketView.vue'))
-const RankedLeaderboard = defineAsyncComponent(() => import('@/components/ranked/RankedLeaderboard.vue'))
-const TournamentParticipantsTab = defineAsyncComponent(() => import('@/views/tournament/tabs/TournamentParticipantsTab.vue'))
-const TournamentStatsTab = defineAsyncComponent(() => import('@/views/tournament/tabs/TournamentStatsTab.vue'))
-const MobileProfilePane = defineAsyncComponent(() => import('@/components/tournament/mobile/MobileProfilePane.vue'))
+const RankedLeaderboard = defineAsyncComponent(
+  () => import('@/components/ranked/RankedLeaderboard.vue'),
+)
+const TournamentParticipantsTab = defineAsyncComponent(
+  () => import('@/views/tournament/tabs/TournamentParticipantsTab.vue'),
+)
+const TournamentStatsTab = defineAsyncComponent(
+  () => import('@/views/tournament/tabs/TournamentStatsTab.vue'),
+)
+const MobileProfilePane = defineAsyncComponent(
+  () => import('@/components/tournament/mobile/MobileProfilePane.vue'),
+)
 
 const { t } = useI18n()
 
@@ -256,4 +270,3 @@ function handleCreateMatch() {
   router.push(`/tournaments/${store.tournamentId}/create-match`)
 }
 </script>
-

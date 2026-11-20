@@ -21,7 +21,9 @@
           @click="winnerModel = side.position"
         >
           <div class="flex items-center justify-between mb-2">
-            <span class="truncate text-xs font-semibold text-slate-500">{{ sideLabel(side, idx) }}</span>
+            <span class="truncate text-xs font-semibold text-slate-500">{{
+              sideLabel(side, idx)
+            }}</span>
             <span class="flex items-center gap-2">
               <span
                 v-if="balance"

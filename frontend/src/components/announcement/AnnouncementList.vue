@@ -31,24 +31,47 @@
         </div>
         <div class="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted">
           <UBadge
-            :label="a.audience === 'all' ? t('announcementList.audienceAll') : (a.tournamentName ?? t('announcementList.audienceTournament'))"
+            :label="
+              a.audience === 'all'
+                ? t('announcementList.audienceAll')
+                : (a.tournamentName ?? t('announcementList.audienceTournament'))
+            "
             :icon="a.audience === 'all' ? 'i-fa7-solid:globe' : 'i-fa7-solid:trophy'"
             color="neutral"
             variant="subtle"
             size="sm"
           />
-          <UBadge v-if="a.inFeed" :label="t('announcementList.inFeed', { count: a.recipientCount })" icon="i-fa7-solid:bell" color="neutral" variant="subtle" size="sm" />
-          <UBadge v-if="a.asPopup" :label="t('announcementList.asPopup', { count: a.seenCount })" icon="i-fa7-solid:window-maximize" color="neutral" variant="subtle" size="sm" />
+          <UBadge
+            v-if="a.inFeed"
+            :label="t('announcementList.inFeed', { count: a.recipientCount })"
+            icon="i-fa7-solid:bell"
+            color="neutral"
+            variant="subtle"
+            size="sm"
+          />
+          <UBadge
+            v-if="a.asPopup"
+            :label="t('announcementList.asPopup', { count: a.seenCount })"
+            icon="i-fa7-solid:window-maximize"
+            color="neutral"
+            variant="subtle"
+            size="sm"
+          />
           <UBadge
             v-if="a.expiresAt"
-            :label="isExpired(a.expiresAt) ? t('announcementList.expired') : t('announcementList.until', { date: formatDate(a.expiresAt) })"
+            :label="
+              isExpired(a.expiresAt)
+                ? t('announcementList.expired')
+                : t('announcementList.until', { date: formatDate(a.expiresAt) })
+            "
             icon="i-fa7-solid:hourglass-end"
             :color="isExpired(a.expiresAt) ? 'neutral' : 'primary'"
             variant="subtle"
             size="sm"
           />
           <span class="ms-auto">
-            {{ formatDate(a.createdAt) }}<template v-if="a.authorName"> · {{ a.authorName }}</template>
+            {{ formatDate(a.createdAt)
+            }}<template v-if="a.authorName"> · {{ a.authorName }}</template>
           </span>
         </div>
       </li>
@@ -70,6 +93,10 @@ function isExpired(date: Date | string) {
 }
 
 function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString(locale.value, { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(date).toLocaleDateString(locale.value, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 </script>

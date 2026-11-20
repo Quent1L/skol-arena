@@ -137,7 +137,11 @@ const renderedIndexes = computed(() =>
 
 watch(
   renderedIndexes,
-  (indexes) => emit('visible-values', indexes.map((i) => values.value[i]!)),
+  (indexes) =>
+    emit(
+      'visible-values',
+      indexes.map((i) => values.value[i]!),
+    ),
   { immediate: true },
 )
 

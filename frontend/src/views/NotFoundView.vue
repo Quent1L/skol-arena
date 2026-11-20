@@ -23,7 +23,9 @@
         <div class="space-y-4">
           <h1 class="text-6xl font-bold text-gray-900 dark:text-white">404</h1>
 
-          <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ t('notFoundView.title') }}</h2>
+          <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">
+            {{ t('notFoundView.title') }}
+          </h2>
 
           <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
             {{ t('notFoundView.description') }}
@@ -54,9 +56,16 @@
 
           <!-- Quick links for logged-in users -->
           <div v-if="isAuthenticated" class="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">{{ t('notFoundView.quickLinks') }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+              {{ t('notFoundView.quickLinks') }}
+            </p>
             <div class="flex flex-wrap gap-2 justify-center">
-              <UButton :label="t('notFoundView.tournaments')" variant="ghost" size="sm" @click="router.push('/')" />
+              <UButton
+                :label="t('notFoundView.tournaments')"
+                variant="ghost"
+                size="sm"
+                @click="router.push('/')"
+              />
               <UButton
                 v-if="canManageTournaments"
                 :label="t('notFoundView.administration')"
@@ -70,10 +79,22 @@
 
         <!-- Message for logged-out users -->
         <div v-if="!isAuthenticated" class="pt-6 border-t border-gray-200 dark:border-gray-700">
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">{{ t('notFoundView.notLoggedIn') }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            {{ t('notFoundView.notLoggedIn') }}
+          </p>
           <div class="flex gap-2 justify-center">
-            <UButton :label="t('notFoundView.login')" variant="ghost" size="sm" @click="router.push('/login')" />
-            <UButton :label="t('notFoundView.register')" variant="ghost" size="sm" @click="router.push('/register')" />
+            <UButton
+              :label="t('notFoundView.login')"
+              variant="ghost"
+              size="sm"
+              @click="router.push('/login')"
+            />
+            <UButton
+              :label="t('notFoundView.register')"
+              variant="ghost"
+              size="sm"
+              @click="router.push('/register')"
+            />
           </div>
         </div>
       </div>

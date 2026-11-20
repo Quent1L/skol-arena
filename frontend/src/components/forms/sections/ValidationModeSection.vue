@@ -1,6 +1,8 @@
 <template>
   <section>
-    <h2 class="mb-4 text-lg font-semibold text-highlighted">{{ t('validationModeSection.title') }}</h2>
+    <h2 class="mb-4 text-lg font-semibold text-highlighted">
+      {{ t('validationModeSection.title') }}
+    </h2>
 
     <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" role="radiogroup">
       <button
@@ -21,7 +23,13 @@
         <span class="mb-2 flex flex-wrap items-center gap-2">
           <UIcon :name="option.icon" class="size-5" />
           <span class="text-sm font-semibold">{{ option.label }}</span>
-          <UBadge v-if="option.badge" :label="option.badge" color="neutral" variant="subtle" size="sm" />
+          <UBadge
+            v-if="option.badge"
+            :label="option.badge"
+            color="neutral"
+            variant="subtle"
+            size="sm"
+          />
         </span>
         <span class="block text-xs text-muted">{{ option.description }}</span>
       </button>
@@ -74,7 +82,9 @@ function setMode(mode: ValidationMode) {
   }
 }
 
-const modeOptions = computed<{ value: ValidationMode; label: string; icon: string; badge?: string; description: string }[]>(() => [
+const modeOptions = computed<
+  { value: ValidationMode; label: string; icon: string; badge?: string; description: string }[]
+>(() => [
   {
     value: 'auto',
     label: t('validationModeSection.modes.auto.label'),

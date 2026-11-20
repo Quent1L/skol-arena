@@ -111,13 +111,19 @@ describe('holdsCounter', () => {
   }
 
   it('spots the palette block, a counter, and a group holding one', () => {
-    expect(holdsCounter(dragged('<div data-palette-type="count"></div>').firstElementChild!)).toBe(true)
+    expect(holdsCounter(dragged('<div data-palette-type="count"></div>').firstElementChild!)).toBe(
+      true,
+    )
     expect(holdsCounter(dragged('<div data-condition-count></div>'))).toBe(true)
-    expect(holdsCounter(dragged('<div><div><div data-condition-count></div></div></div>'))).toBe(true)
+    expect(holdsCounter(dragged('<div><div><div data-condition-count></div></div></div>'))).toBe(
+      true,
+    )
   })
 
   it('lets every other block through', () => {
-    expect(holdsCounter(dragged('<div data-palette-type="leaf"></div>').firstElementChild!)).toBe(false)
+    expect(holdsCounter(dragged('<div data-palette-type="leaf"></div>').firstElementChild!)).toBe(
+      false,
+    )
     expect(holdsCounter(dragged('<div><span></span></div>'))).toBe(false)
   })
 })

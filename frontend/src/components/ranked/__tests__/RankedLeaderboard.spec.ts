@@ -220,7 +220,7 @@ describe('RankedLeaderboard', () => {
       )
     })
 
-    it("never shows their MMR, only their progress", () => {
+    it('never shows their MMR, only their progress', () => {
       const wrapper = mountWithPlacement()
       const row = wrapper
         .findAllComponents(RouterLinkStub)
@@ -320,9 +320,7 @@ describe('RankedLeaderboard', () => {
       const selected = wrapper
         .findAll('[data-test^="subtab-"]')
         .filter((button) => button.attributes('aria-selected') === 'true')
-      expect(selected.map((button) => button.text())).toEqual([
-        'rankedLeaderboard.modeProvisional',
-      ])
+      expect(selected.map((button) => button.text())).toEqual(['rankedLeaderboard.modeProvisional'])
     })
   })
 

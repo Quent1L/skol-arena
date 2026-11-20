@@ -5,16 +5,25 @@
     <template #body>
       <div class="flex items-start gap-3">
         <i :class="badge.icon || 'fa fa-medal'" class="text-2xl text-purple-600 shrink-0 mt-0.5" />
-        <p class="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">{{ badge.description }}</p>
+        <p class="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">
+          {{ badge.description }}
+        </p>
       </div>
 
       <div class="mt-5 text-xs font-bold text-gray-400 uppercase tracking-wide">
         {{ t('badgeDetail.holders', holders.length) }}
       </div>
-      <p v-if="!holders.length" class="mt-2 text-sm text-slate-500">{{ t('badgeDetail.noHolder') }}</p>
+      <p v-if="!holders.length" class="mt-2 text-sm text-slate-500">
+        {{ t('badgeDetail.noHolder') }}
+      </p>
       <ul v-else class="mt-1 divide-y divide-gray-200 dark:divide-gray-800">
         <li v-for="holder in holders" :key="holder.id" class="flex items-center gap-3 py-2">
-          <PlayerAvatar :name="holder.displayName" :color-key="holder.shortName" :player-id="holder.id" size="sm" />
+          <PlayerAvatar
+            :name="holder.displayName"
+            :color-key="holder.shortName"
+            :player-id="holder.id"
+            size="sm"
+          />
           <RouterLink
             :to="playerLink(holder.id, tournamentId)"
             class="min-w-0 flex-1 truncate text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"

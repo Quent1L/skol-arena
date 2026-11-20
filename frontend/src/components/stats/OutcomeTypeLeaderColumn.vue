@@ -130,7 +130,8 @@ const tooltip = computed(() => {
 })
 
 const icon = computed(() => {
-  if (isVolume.value) return isWinners.value ? 'fa fa-trophy text-amber-500' : 'fa fa-skull text-gray-400'
+  if (isVolume.value)
+    return isWinners.value ? 'fa fa-trophy text-amber-500' : 'fa fa-skull text-gray-400'
   return isWinners.value ? 'fa fa-bullseye text-emerald-500' : 'fa fa-heart-crack text-red-400'
 })
 
@@ -149,7 +150,11 @@ const honourRollTitle = computed(() =>
 )
 
 const moreTiedLabel = computed(() =>
-  t('tournamentStatsTab.outcomeTypeFunStats.moreTied', { count: props.board.omittedCount }, props.board.omittedCount),
+  t(
+    'tournamentStatsTab.outcomeTypeFunStats.moreTied',
+    { count: props.board.omittedCount },
+    props.board.omittedCount,
+  ),
 )
 
 function valueLabel(leader: OutcomeTypeLeader): string {

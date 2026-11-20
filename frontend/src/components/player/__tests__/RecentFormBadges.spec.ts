@@ -9,9 +9,7 @@ const mountWith = (locale: 'fr' | 'en', results: Array<'V' | 'D' | 'N'>) =>
   mount(RecentFormBadges, {
     props: { results },
     global: {
-      plugins: [
-        createI18n({ legacy: false, locale, fallbackLocale: 'fr', messages: { fr, en } }),
-      ],
+      plugins: [createI18n({ legacy: false, locale, fallbackLocale: 'fr', messages: { fr, en } })],
     },
   })
 

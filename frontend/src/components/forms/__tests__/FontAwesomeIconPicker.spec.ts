@@ -31,7 +31,9 @@ describe('FontAwesomeIconPicker', () => {
     await wrapper.find('input').setValue('billard')
     await wrapper.find('button[title="Billiards"]').trigger('click')
 
-    expect(wrapper.findComponent(FontAwesomeIconPicker).emitted('update:modelValue')?.[0]).toEqual(['icf icf-mdi--billiards'])
+    expect(wrapper.findComponent(FontAwesomeIconPicker).emitted('update:modelValue')?.[0]).toEqual([
+      'icf icf-mdi--billiards',
+    ])
   })
 
   it('still lists and labels Font Awesome icons', async () => {
@@ -39,7 +41,11 @@ describe('FontAwesomeIconPicker', () => {
     expect(wrapper.text()).toContain('Trophy')
 
     await wrapper.find('input').setValue('trophy')
-    expect(wrapper.find('button[title="Trophy"] i').classes()).toEqual(['fas', 'fa-trophy', 'text-xl'])
+    expect(wrapper.find('button[title="Trophy"] i').classes()).toEqual([
+      'fas',
+      'fa-trophy',
+      'text-xl',
+    ])
   })
 
   it('shows Iconify categories as tabs', () => {

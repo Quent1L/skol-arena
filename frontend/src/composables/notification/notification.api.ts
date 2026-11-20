@@ -56,23 +56,33 @@ export const notificationApi = {
   },
   /** The match was seen: its informational notifications are read. Returns their ids. */
   async markMatchRead(matchId: string): Promise<{ ids: string[] }> {
-    const res = await http.post<{ ids: string[] }>(`${BASE_URL}/me/notifications/matches/${matchId}/read`)
+    const res = await http.post<{ ids: string[] }>(
+      `${BASE_URL}/me/notifications/matches/${matchId}/read`,
+    )
     return res.data
   },
   async markActionCompleted(id: string): Promise<void> {
     await http.post(`${BASE_URL}/me/notifications/${id}/action-completed`)
   },
-  async registerPushDevice(payload: { subscriptionEndpoint: string; subscriptionData: unknown; deviceType: 'WEB' | 'ANDROID' | 'IOS'; locale?: string; timezone?: string }): Promise<void> {
+  async registerPushDevice(payload: {
+    subscriptionEndpoint: string
+    subscriptionData: unknown
+    deviceType: 'WEB' | 'ANDROID' | 'IOS'
+    locale?: string
+    timezone?: string
+  }): Promise<void> {
     await http.post(`${BASE_URL}/me/pushDevices`, payload)
   },
   async removePushDevice(deviceId: string): Promise<void> {
     await http.delete(`${BASE_URL}/me/pushDevices/${deviceId}`)
   },
-  async getPushDevices(): Promise<Array<{ id: string; deviceType: string; subscriptionEndpoint: string }>> {
+  async getPushDevices(): Promise<
+    Array<{ id: string; deviceType: string; subscriptionEndpoint: string }>
+  > {
     const res = await http.get(`${BASE_URL}/me/pushDevices`)
     return res.data
   },
   async delete(id: string): Promise<void> {
     await http.delete(`${BASE_URL}/me/notifications/${id}`)
-  }
+  },
 }

@@ -191,7 +191,8 @@ const cardProps = computed(() => {
 
   const { season, player } = props.bundle
   if (key === 'conclusion') return { player }
-  if (key === 'awardsVotes') return { season, awardsWon: player?.awardsWon ?? [], mine: player?.votes ?? null }
+  if (key === 'awardsVotes')
+    return { season, awardsWon: player?.awardsWon ?? [], mine: player?.votes ?? null }
   if (SEASON_CARDS.has(key)) return { season, awardsWon: player?.awardsWon ?? [] }
   // Whether the season ever produced a draw decides which figures a card shows,
   // so it travels with every player card rather than with the season ones.

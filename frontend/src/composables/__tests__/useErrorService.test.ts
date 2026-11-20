@@ -33,14 +33,16 @@ describe('errorService — unreachable server', () => {
       new Error('NetworkError when attempting to fetch resource.', { cause: NETWORK_ERROR }),
     )
 
-    expect(add).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+    expect(add).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
         severity: 'warn',
         summary: 'errorService.serverUnreachableSummary',
         detail: 'errorService.serverUnreachableDetail',
-      }))
+      }),
+    )
   })
 
-  it("does not stack a toast per failed network call", async () => {
+  it('does not stack a toast per failed network call', async () => {
     const errorService = await loadErrorService()
     const fail = () => new Error('Failed to fetch', { cause: NETWORK_ERROR })
 
@@ -90,7 +92,10 @@ describe('errorService — unreachable server', () => {
     mod.errorService.uninstall()
 
     expect(add).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({ severity: 'warn', summary: 'errorService.serverUnreachableSummary' }),
+      expect.objectContaining({
+        severity: 'warn',
+        summary: 'errorService.serverUnreachableSummary',
+      }),
     )
   })
 

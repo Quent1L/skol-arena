@@ -21,7 +21,11 @@ type NamedRound = Pick<BracketRound, 'roundName' | 'roundNameKey' | 'translation
 export function useServerLabels() {
   const { t, te } = useI18n()
 
-  function render(key: string | null | undefined, fallback: string, params?: Record<string, unknown>): string {
+  function render(
+    key: string | null | undefined,
+    fallback: string,
+    params?: Record<string, unknown>,
+  ): string {
     if (!key || !te(key)) return fallback
     return t(key, params ?? {})
   }

@@ -59,7 +59,12 @@
             />
 
             <UFormField name="displayName" :label="t('settings.profile.displayName')" size="xl">
-              <UInput id="display-name" v-model="profile.displayName" maxlength="50" class="w-full" />
+              <UInput
+                id="display-name"
+                v-model="profile.displayName"
+                maxlength="50"
+                class="w-full"
+              />
             </UFormField>
 
             <UFormField
@@ -193,7 +198,12 @@
               :title="t('settings.account.setPasswordSent')"
             />
 
-            <UAlert v-if="setPasswordError" color="error" variant="subtle" :title="setPasswordError" />
+            <UAlert
+              v-if="setPasswordError"
+              color="error"
+              variant="subtle"
+              :title="setPasswordError"
+            />
 
             <UButton
               v-if="!setPasswordSent"
@@ -230,7 +240,11 @@
         </SettingsSection>
 
         <!-- Mode kiosque -->
-        <SettingsSection v-if="userRole === 'kiosk'" :title="t('settings.kiosk.title')" icon="fas fa-lock">
+        <SettingsSection
+          v-if="userRole === 'kiosk'"
+          :title="t('settings.kiosk.title')"
+          icon="fas fa-lock"
+        >
           <div class="space-y-3">
             <UAlert color="warning" variant="subtle" :title="t('settings.kiosk.warning')" />
             <UButton
@@ -258,7 +272,8 @@
         <div class="space-y-4">
           <UAlert v-if="joinOrgSuccess" color="success" variant="subtle" icon="i-fa7-solid:check">
             <template #title>
-              {{ t('settings.groups.joinedPrefix') }} <strong>{{ joinOrgSuccessName }}</strong>.
+              {{ t('settings.groups.joinedPrefix') }} <strong>{{ joinOrgSuccessName }}</strong
+              >.
             </template>
           </UAlert>
 
@@ -294,7 +309,8 @@
                   icon="i-fa7-solid:circle-check"
                 >
                   <template #title>
-                    {{ t('settings.groups.codeValidPrefix') }} <strong>{{ joinOrgOrganizationName }}</strong>
+                    {{ t('settings.groups.codeValidPrefix') }}
+                    <strong>{{ joinOrgOrganizationName }}</strong>
                   </template>
                 </UAlert>
               </template>
@@ -342,7 +358,8 @@
         <div class="space-y-4">
           <UAlert color="warning" variant="subtle">
             <template #description>
-              <strong>{{ t('settings.kiosk.attention') }}</strong> {{ t('settings.kiosk.dialogWarningBody') }}
+              <strong>{{ t('settings.kiosk.attention') }}</strong>
+              {{ t('settings.kiosk.dialogWarningBody') }}
             </template>
           </UAlert>
           <p class="text-sm opacity-70">
@@ -396,7 +413,11 @@
           </UFormField>
 
           <UFormField name="newPassword" :label="t('settings.password.new')" size="xl">
-            <PasswordInput id="new-password" v-model="passwordForm.newPassword" autocomplete="new-password" />
+            <PasswordInput
+              id="new-password"
+              v-model="passwordForm.newPassword"
+              autocomplete="new-password"
+            />
           </UFormField>
 
           <UFormField name="passwordConfirm" :label="t('settings.password.confirm')" size="xl">

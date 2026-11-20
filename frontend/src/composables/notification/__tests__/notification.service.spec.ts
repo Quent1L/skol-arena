@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 import { notificationApi, type RawNotification } from '../notification.api'
-import {
-  NOTIFICATION_PAGE_SIZE,
-  useNotificationService,
-} from '../notification.service'
+import { NOTIFICATION_PAGE_SIZE, useNotificationService } from '../notification.service'
 
 function makeNotif(id: string, over: Partial<RawNotification> = {}): RawNotification {
   return {
@@ -20,7 +17,10 @@ function makeNotif(id: string, over: Partial<RawNotification> = {}): RawNotifica
   }
 }
 
-function page(data: RawNotification[], over: Partial<Awaited<ReturnType<typeof notificationApi.list>>> = {}) {
+function page(
+  data: RawNotification[],
+  over: Partial<Awaited<ReturnType<typeof notificationApi.list>>> = {},
+) {
   return {
     data,
     hasMore: false,
@@ -44,7 +44,9 @@ describe('notification service pagination', () => {
   it('asks for one page and keeps the cursor the server handed back', async () => {
     const list = vi
       .spyOn(notificationApi, 'list')
-      .mockResolvedValue(page([makeNotif('n-1')], { hasMore: true, nextCursor: 'cur-1', total: 40 }))
+      .mockResolvedValue(
+        page([makeNotif('n-1')], { hasMore: true, nextCursor: 'cur-1', total: 40 }),
+      )
 
     await service.load()
 
@@ -93,7 +95,12 @@ describe('notification service pagination', () => {
 
   it('takes the unread count from the server, not from the loaded page', async () => {
     vi.spyOn(notificationApi, 'list').mockResolvedValue(
-      page([makeNotif('n-1', { isRead: true })], { unreadCount: 137, total: 500, hasMore: true, nextCursor: 'c' }),
+      page([makeNotif('n-1', { isRead: true })], {
+        unreadCount: 137,
+        total: 500,
+        hasMore: true,
+        nextCursor: 'c',
+      }),
     )
 
     await service.load()
@@ -221,7 +228,9 @@ describe('notification service server-side reads', () => {
       page([makeNotif('n-1', { type: 'MATCH_CREATED' })], { unreadCount: 1, total: 1 }),
     )
     await service.load()
-    const markMatchRead = vi.spyOn(notificationApi, 'markMatchRead').mockResolvedValue({ ids: ['n-1'] })
+    const markMatchRead = vi
+      .spyOn(notificationApi, 'markMatchRead')
+      .mockResolvedValue({ ids: ['n-1'] })
 
     await service.markMatchRead('match-1')
 
@@ -231,7 +240,9 @@ describe('notification service server-side reads', () => {
   })
 
   it('counts an unloaded notification down once, though the HTTP answer and the socket echo both name it', async () => {
-    vi.spyOn(notificationApi, 'list').mockResolvedValue(page([makeNotif('n-1')], { unreadCount: 5, total: 30 }))
+    vi.spyOn(notificationApi, 'list').mockResolvedValue(
+      page([makeNotif('n-1')], { unreadCount: 5, total: 30 }),
+    )
     await service.load()
     vi.spyOn(notificationApi, 'markMatchRead').mockResolvedValue({ ids: ['n-beyond-page'] })
 

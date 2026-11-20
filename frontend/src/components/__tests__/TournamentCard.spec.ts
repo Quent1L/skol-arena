@@ -72,7 +72,7 @@ describe('TournamentCard', () => {
     expect(wrapper.classes()).toContain('mode-finished')
   })
 
-  it("marks participation only on the featured variant", () => {
+  it('marks participation only on the featured variant', () => {
     const tournament = makeSummary({ isParticipant: true })
 
     const plain = mount(TournamentCard, { props: { tournament } })

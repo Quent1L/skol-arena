@@ -56,9 +56,7 @@ export function makeTier(over: Partial<ClientRankTier> = {}): ClientRankTier {
   }
 }
 
-export function makeCareerSeason(
-  over: Partial<PlayerCareerSeason> = {},
-): PlayerCareerSeason {
+export function makeCareerSeason(over: Partial<PlayerCareerSeason> = {}): PlayerCareerSeason {
   const id = nextId('season')
   return {
     seasonId: id,

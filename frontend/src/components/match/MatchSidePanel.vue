@@ -61,21 +61,34 @@
 
         <MvpBadge v-if="mvpIds?.includes(player.id)" />
 
-        <template v-if="isFinalized && mode === 'championship' && player.effectivePointsAwarded !== undefined">
+        <template
+          v-if="
+            isFinalized && mode === 'championship' && player.effectivePointsAwarded !== undefined
+          "
+        >
           <span
             v-if="player.exceededMatchLimit"
             class="font-label shrink-0 rounded-full border border-slate-600 bg-slate-700/50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted"
           >
             {{ t('matchDetailView.overLimit') }}
           </span>
-          <span v-else class="font-headline shrink-0 rounded-full border px-1.5 py-0.5 text-xs font-black tabular-nums" :class="deltaPillClass(player.effectivePointsAwarded)">
+          <span
+            v-else
+            class="font-headline shrink-0 rounded-full border px-1.5 py-0.5 text-xs font-black tabular-nums"
+            :class="deltaPillClass(player.effectivePointsAwarded)"
+          >
             <i class="fa fa-star mr-0.5 text-[9px]" aria-hidden="true" />
             +{{ player.effectivePointsAwarded }}
           </span>
         </template>
 
         <span
-          v-if="isFinalized && mode === 'ranked' && player.mmrDelta !== undefined && player.mmrDelta !== null"
+          v-if="
+            isFinalized &&
+            mode === 'ranked' &&
+            player.mmrDelta !== undefined &&
+            player.mmrDelta !== null
+          "
           class="font-headline shrink-0 rounded-full border px-1.5 py-0.5 text-xs font-black tabular-nums"
           :class="deltaPillClass(player.mmrDelta)"
         >

@@ -100,8 +100,7 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
 
   const canJoinTournament = computed(
     () =>
-      tournamentSvc.isTournamentOpenForJoin(tournament.value) &&
-      appUser.value?.role !== 'kiosk',
+      tournamentSvc.isTournamentOpenForJoin(tournament.value) && appUser.value?.role !== 'kiosk',
   )
 
   // Scheduled for later: no result can exist yet, so standings and stats have nothing to show.
@@ -161,17 +160,20 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
         tournament.value?.mode === 'ranked'
           ? `/admin/ranked/${tournamentId.value}/edit`
           : `/admin/tournaments/${tournamentId.value}/edit`
-      items.push({
-        label: i18n.global.t('common.edit'),
-        icon: 'i-fa7-solid:pencil',
-        command: () => router.push(editPath),
-      }, {
-        label: i18n.global.t('tournamentDetailMenu.announcements'),
-        icon: 'i-fa7-solid:bullhorn',
-        command: () => {
-          announcementsOpen.value = true
+      items.push(
+        {
+          label: i18n.global.t('common.edit'),
+          icon: 'i-fa7-solid:pencil',
+          command: () => router.push(editPath),
         },
-      })
+        {
+          label: i18n.global.t('tournamentDetailMenu.announcements'),
+          icon: 'i-fa7-solid:bullhorn',
+          command: () => {
+            announcementsOpen.value = true
+          },
+        },
+      )
       if (tournament.value?.voteConfig?.fairPlayEnabled) {
         items.push({
           label: i18n.global.t('tournamentDetailMenu.fairPlay'),
@@ -311,8 +313,9 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
     try {
       const [chartHistory] = await Promise.all([
         ranked ? rankedSvc.loadPlayerMmr(seasonId, playerId) : Promise.resolve([]),
-        playerApi.getStats(playerId, { tournamentId: seasonId })
-          .then((s) => { playerStats.value = s }),
+        playerApi.getStats(playerId, { tournamentId: seasonId }).then((s) => {
+          playerStats.value = s
+        }),
       ])
       profileChartHistory.value = chartHistory
       // A request started for the previous tournament must not vouch for this one. A
@@ -348,7 +351,9 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
 
   /** The player's all-time record on this discipline's ladder. */
   const playerCareerPeak = computed(() =>
-    currentDisciplineId.value ? careerPeak(playerCareer.value ?? [], currentDisciplineId.value) : null,
+    currentDisciplineId.value
+      ? careerPeak(playerCareer.value ?? [], currentDisciplineId.value)
+      : null,
   )
 
   /**
@@ -393,8 +398,9 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
     const ranked = tournament.value?.mode === 'ranked'
     const [chartHistory] = await Promise.all([
       ranked ? rankedSvc.loadPlayerMmr(tournamentId.value, appUser.value.id) : Promise.resolve([]),
-      playerApi.getStats(appUser.value.id, { tournamentId: tournamentId.value })
-        .then((s) => { playerStats.value = s }),
+      playerApi.getStats(appUser.value.id, { tournamentId: tournamentId.value }).then((s) => {
+        playerStats.value = s
+      }),
       // A rated match can break the all-time record, so the career is refreshed
       // with the profile rather than left on the value fetched at mount.
       !ranked || playerCareer.value === null ? Promise.resolve() : loadPlayerCareer(),
@@ -406,10 +412,7 @@ export const useTournamentDetailStore = defineStore('tournamentDetail', () => {
   async function refreshSilently() {
     if (!tournamentId.value) return
     await backgroundRefresh.run(async () => {
-      const promises: Promise<unknown>[] = [
-        reloadTournament(),
-        reloadParticipants(),
-      ]
+      const promises: Promise<unknown>[] = [reloadTournament(), reloadParticipants()]
       if (tournament.value?.mode === 'ranked' && rankedLeaderboard.value.length) {
         promises.push(reloadLeaderboard())
       }

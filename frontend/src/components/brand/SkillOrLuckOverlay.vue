@@ -297,7 +297,8 @@ function readSourceBox(): Box {
   const host = document.querySelector('[data-brand-logo]')
   const logo = host?.querySelector('svg')
   if (host && logo) {
-    sourceVariant.value = ((host as HTMLElement).dataset.brandVariant as LogoVariant | undefined) ?? 'full'
+    sourceVariant.value =
+      ((host as HTMLElement).dataset.brandVariant as LogoVariant | undefined) ?? 'full'
     const rect = logo.getBoundingClientRect()
     return { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
   }

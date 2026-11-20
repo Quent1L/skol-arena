@@ -217,7 +217,8 @@ export function useNotificationService() {
   // Unloaded pages count too: a first page made only of blocking notifications does not
   // mean the feed has nothing to clear.
   const hasDeletable = computed(
-    () => notifications.value.some((n) => !isBlocking(n)) || total.value > notifications.value.length,
+    () =>
+      notifications.value.some((n) => !isBlocking(n)) || total.value > notifications.value.length,
   )
 
   return {

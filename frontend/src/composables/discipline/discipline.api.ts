@@ -43,7 +43,9 @@ export const disciplineApi = {
 
   /** Non-finished competitions a discipline edit could still be pushed to. */
   async listImpactedCompetitions(id: string): Promise<ImpactedCompetition[]> {
-    const response = await http.get<ImpactedCompetition[]>(`${BASE_URL}/${id}/impacted-competitions`)
+    const response = await http.get<ImpactedCompetition[]>(
+      `${BASE_URL}/${id}/impacted-competitions`,
+    )
     return response.data
   },
 
@@ -69,5 +71,3 @@ export const disciplineApi = {
     return response.data
   },
 }
-
-

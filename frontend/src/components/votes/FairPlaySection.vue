@@ -4,7 +4,11 @@
       <div class="flex items-center justify-between gap-3">
         <SectionHeader icon="fa fa-handshake" :title="t('matchVotes.fairPlay.title')" />
         <span class="shrink-0 text-xs text-muted">
-          {{ votes.isOpen ? t('matchVotes.editableUntil', { date: closesAtLabel }) : t('matchVotes.closed') }}
+          {{
+            votes.isOpen
+              ? t('matchVotes.editableUntil', { date: closesAtLabel })
+              : t('matchVotes.closed')
+          }}
         </span>
       </div>
     </template>
@@ -23,7 +27,12 @@
         data-testid="fair-play-team-up"
         @click="emit('teamUp')"
       />
-      <div v-for="id in fairPlay.opponentIds" :key="id" class="space-y-2" :data-testid="`fair-play-row-${id}`">
+      <div
+        v-for="id in fairPlay.opponentIds"
+        :key="id"
+        class="space-y-2"
+        :data-testid="`fair-play-row-${id}`"
+      >
         <div class="flex items-center gap-3">
           <PlayerAvatar :name="players.get(id)?.displayName ?? '?'" :player-id="id" size="sm" />
           <span class="min-w-0 flex-1 truncate text-sm font-semibold text-white/90">

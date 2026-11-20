@@ -74,7 +74,9 @@
       >
         <template #code-cell="{ row }">
           <div class="flex items-center gap-1">
-            <code class="rounded bg-elevated px-2 py-1 font-mono text-sm">{{ row.original.code }}</code>
+            <code class="rounded bg-elevated px-2 py-1 font-mono text-sm">{{
+              row.original.code
+            }}</code>
             <UTooltip :text="t('adminInvitationsView.copyCode')">
               <UButton
                 icon="i-fa7-solid:copy"

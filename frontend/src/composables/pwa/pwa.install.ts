@@ -23,9 +23,7 @@ export function usePWAInstall() {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
   const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent)
 
-  const canInstall = computed(
-    () => !isInstalled.value && (deferredPrompt.value !== null || isIOS),
-  )
+  const canInstall = computed(() => !isInstalled.value && (deferredPrompt.value !== null || isIOS))
 
   const shouldShowBanner = computed(
     () => isMobile && canInstall.value && !dismissed.value && !showIOSInstructions.value,

@@ -4,7 +4,13 @@ import { createI18n } from 'vue-i18n'
 import { mountWithUi } from '@/test-support/mount'
 import AnnouncementForm from '../AnnouncementForm.vue'
 
-const i18n = createI18n({ legacy: false, locale: 'en', missingWarn: false, fallbackWarn: false, messages: { en: {} } })
+const i18n = createI18n({
+  legacy: false,
+  locale: 'en',
+  missingWarn: false,
+  fallbackWarn: false,
+  messages: { en: {} },
+})
 
 let mounted: ReturnType<typeof mountWithUi> | null = null
 

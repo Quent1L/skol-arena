@@ -5,7 +5,10 @@
       <p v-if="description" class="mt-1 text-sm text-muted">{{ description }}</p>
     </div>
     <!-- Actions go full width on phones, where they would otherwise wrap unevenly. -->
-    <div v-if="$slots.actions" class="flex flex-col gap-2 sm:flex-row sm:shrink-0 [&>*]:justify-center">
+    <div
+      v-if="$slots.actions"
+      class="flex flex-col gap-2 sm:flex-row sm:shrink-0 [&>*]:justify-center"
+    >
       <slot name="actions" />
     </div>
   </div>

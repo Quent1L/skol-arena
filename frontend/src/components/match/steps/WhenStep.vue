@@ -94,11 +94,7 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { DateValue } from '@internationalized/date'
-import {
-  fromCalendarDateTime,
-  toCalendarDate,
-  toCalendarDateTime,
-} from '@/utils/calendar-date'
+import { fromCalendarDateTime, toCalendarDate, toCalendarDateTime } from '@/utils/calendar-date'
 import { dateToStringDDMMYYYY, dateToStringDDMMYYYYHHMM } from '@/utils/DateUtils'
 import { dateRangeIssue } from '@/composables/match/useMatchDateBounds'
 
@@ -176,9 +172,7 @@ const customDay = computed({
   },
 })
 
-const rangeIssue = computed(() =>
-  dateRangeIssue(playedAtModel.value, props.minDate, props.maxDate),
-)
+const rangeIssue = computed(() => dateRangeIssue(playedAtModel.value, props.minDate, props.maxDate))
 
 /** The red field alone said nothing about why, nor which dates would do. */
 const rangeMessage = computed(() => {

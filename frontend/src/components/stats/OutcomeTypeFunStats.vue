@@ -12,7 +12,9 @@
       >
         <!-- Mobile stacks the title on its own row: truncating it hid which outcome type the card is about. -->
         <div class="flex flex-col gap-2 mb-3 sm:flex-row sm:items-baseline sm:justify-between">
-          <h3 class="text-sm font-bold text-gray-200 uppercase tracking-wide text-balance sm:truncate">
+          <h3
+            class="text-sm font-bold text-gray-200 uppercase tracking-wide text-balance sm:truncate"
+          >
             {{ cardTitle(stat) }}
           </h3>
           <div class="flex items-center justify-between gap-2 sm:justify-end sm:shrink-0">
@@ -26,7 +28,9 @@
               {{ toggleLabel(stat) }}
             </button>
             <span class="text-[10px] text-gray-500 tabular-nums">
-              {{ t('tournamentStatsTab.outcomeTypeFunStats.matchCount', { count: stat.totalMatches }) }}
+              {{
+                t('tournamentStatsTab.outcomeTypeFunStats.matchCount', { count: stat.totalMatches })
+              }}
             </span>
           </div>
         </div>

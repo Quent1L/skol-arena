@@ -59,7 +59,10 @@ const router = useRouter()
 
 const menuOpen = ref(false)
 // The drawer only serves to pick a destination: close it once there.
-watch(() => route.path, () => (menuOpen.value = false))
+watch(
+  () => route.path,
+  () => (menuOpen.value = false),
+)
 
 const navItems = computed(() => buildAdminNavItems(t, route.path))
 

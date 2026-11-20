@@ -2,8 +2,16 @@
   <SurfacePanel data-testid="mvp-section">
     <template #header>
       <div class="flex items-center justify-between gap-3">
-        <SectionHeader icon="fa fa-medal" :title="t('matchVotes.mvp.title')" accent-class="bg-amber-400" />
-        <span v-if="mvp.spectatorCount > 0" class="shrink-0 text-xs text-muted" data-testid="mvp-spectators">
+        <SectionHeader
+          icon="fa fa-medal"
+          :title="t('matchVotes.mvp.title')"
+          accent-class="bg-amber-400"
+        />
+        <span
+          v-if="mvp.spectatorCount > 0"
+          class="shrink-0 text-xs text-muted"
+          data-testid="mvp-spectators"
+        >
           👀 {{ t('matchVotes.mvp.spectators', { count: mvp.spectatorCount }) }}
         </span>
       </div>
@@ -13,7 +21,9 @@
       <p class="text-sm text-white/90" data-testid="mvp-result">
         <template v-if="mvp.mvpPlayerIds.length > 0">🏅 {{ mvpNames }}</template>
         <span v-else class="text-muted">{{ t('matchVotes.mvp.none') }}</span>
-        <span v-if="timeLeft" class="text-muted" data-testid="mvp-time-left"> · {{ timeLeft }}</span>
+        <span v-if="timeLeft" class="text-muted" data-testid="mvp-time-left">
+          · {{ timeLeft }}</span
+        >
       </p>
 
       <UButton
@@ -112,7 +122,9 @@ const canVote = computed(() => props.votes.role === 'player' || props.votes.role
 const canDeclare = computed(
   () => props.votes.role === 'member' && props.votes.isOpen && mvp.value.spectatorsEnabled,
 )
-const blockedIds = computed(() => mvp.value.blockedTargetIds.filter((id) => mvp.value.myVote !== id))
+const blockedIds = computed(() =>
+  mvp.value.blockedTargetIds.filter((id) => mvp.value.myVote !== id),
+)
 const isBlocked = (id: string) => blockedIds.value.includes(id)
 const blockedLabel = (id: string) =>
   t('matchVotes.mvp.alreadyVoted', { name: props.players.get(id)?.displayName ?? '?' })

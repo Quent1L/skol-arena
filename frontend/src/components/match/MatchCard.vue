@@ -61,7 +61,10 @@
               :key="player.id"
               class="flex max-w-full items-center justify-center gap-1"
             >
-              <span class="font-label font-semibold tracking-tight truncate  text-center text-highlighted min-w-0">{{ player.displayName }}</span>
+              <span
+                class="font-label font-semibold tracking-tight truncate text-center text-highlighted min-w-0"
+                >{{ player.displayName }}</span
+              >
               <MvpBadge v-if="player.isMvp" />
             </span>
           </div>
@@ -74,7 +77,7 @@
           :class="scoreColorClass"
         >
           <span>{{ leftSide?.score ?? 0 }}</span>
-          <span class=" text-base">-</span>
+          <span class="text-base">-</span>
           <span>{{ rightSide?.score ?? 0 }}</span>
         </div>
         <div
@@ -104,7 +107,10 @@
               :key="player.id"
               class="flex max-w-full items-center justify-center gap-1"
             >
-              <span class="font-label font-semibold  tracking-tight truncate  text-center text-highlighted min-w-0">{{ player.displayName }}</span>
+              <span
+                class="font-label font-semibold tracking-tight truncate text-center text-highlighted min-w-0"
+                >{{ player.displayName }}</span
+              >
               <MvpBadge v-if="player.isMvp" />
             </span>
           </div>
@@ -207,7 +213,6 @@ const resultBadgeClass = computed(() => {
   return 'bg-slate-700/50 border-slate-600 text-muted'
 })
 
-
 const accentBarClass = computed(() => {
   if (props.currentPlayerId) {
     if (outcome.value === 'WIN') return 'bg-match-win'
@@ -258,6 +263,4 @@ function formatDate(date: Date | string | undefined) {
 function navigateToMatch(matchId: string) {
   router.push(`/matches/${matchId}`)
 }
-
-
 </script>

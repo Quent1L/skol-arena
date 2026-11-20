@@ -14,7 +14,9 @@
       >
         <span class="text-gray-600 dark:text-gray-400">
           {{ detail.outcomeTypeName }}
-          <span class="text-xs text-gray-400">({{ detail.points }} {{ t('standingsTable.ptPerResult') }})</span>
+          <span class="text-xs text-gray-400"
+            >({{ detail.points }} {{ t('standingsTable.ptPerResult') }})</span
+          >
         </span>
         <span class="flex gap-2 items-center">
           <span v-if="detail.wins > 0" class="text-green-600 dark:text-green-400"
@@ -46,12 +48,13 @@
               : 'text-red-600 dark:text-red-400'
           "
         >
-          {{ entry.victoryQuality >= 0 ? '+' : ''
-          }}{{ entry.victoryQuality.toFixed(1) }}
+          {{ entry.victoryQuality >= 0 ? '+' : '' }}{{ entry.victoryQuality.toFixed(1) }}
         </span>
       </div>
     </div>
-    <p v-else class="text-sm text-gray-500 dark:text-gray-400">{{ t('standingsTable.noMatchesPlayed') }}</p>
+    <p v-else class="text-sm text-gray-500 dark:text-gray-400">
+      {{ t('standingsTable.noMatchesPlayed') }}
+    </p>
   </div>
 </template>
 

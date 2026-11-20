@@ -41,7 +41,7 @@ beforeEach(() => {
 })
 
 describe('useAuth — transient failures', () => {
-  it("leaves the session in an unknown state when the backend is unreachable", async () => {
+  it('leaves the session in an unknown state when the backend is unreachable', async () => {
     getSession.mockRejectedValue(new Error('Failed to fetch'))
     const auth = await loadUseAuth()
 

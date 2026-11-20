@@ -457,7 +457,9 @@ async function handlePropagate(tournamentIds: string[]) {
 onMounted(async () => {
   const [modes] = await Promise.all([
     disciplineApi.listInteractionModes(),
-    isEditMode.value && route.params.id ? getDiscipline(route.params.id as string) : Promise.resolve(),
+    isEditMode.value && route.params.id
+      ? getDiscipline(route.params.id as string)
+      : Promise.resolve(),
   ])
   interactionModeOptions.value = modes
   if (isEditMode.value && currentDiscipline.value) {

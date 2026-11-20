@@ -31,8 +31,22 @@ beforeEach(() => {
   loadOfficialStandings.mockResolvedValue(undefined)
   loadProvisionalStandings.mockResolvedValue(undefined)
   standings.value = [
-    makeStandingRow({ id: 'p1', name: 'Alice', shortName: 'AL', points: 9, wins: 3, matchesPlayed: 3 }),
-    makeStandingRow({ id: 'p2', name: 'Bob', shortName: 'BO', points: 3, wins: 1, matchesPlayed: 3 }),
+    makeStandingRow({
+      id: 'p1',
+      name: 'Alice',
+      shortName: 'AL',
+      points: 9,
+      wins: 3,
+      matchesPlayed: 3,
+    }),
+    makeStandingRow({
+      id: 'p2',
+      name: 'Bob',
+      shortName: 'BO',
+      points: 3,
+      wins: 1,
+      matchesPlayed: 3,
+    }),
   ]
   vi.mocked(useStandingsService).mockReturnValue({
     standings,
@@ -65,7 +79,14 @@ describe('StandingsTable', () => {
   it('players who left: listed after a separate header, no rank, points kept', async () => {
     standings.value = [
       ...standings.value,
-      makeStandingRow({ id: 'p3', name: 'Carol', shortName: 'CA', points: 12, matchesPlayed: 4, inactive: true }),
+      makeStandingRow({
+        id: 'p3',
+        name: 'Carol',
+        shortName: 'CA',
+        points: 12,
+        matchesPlayed: 4,
+        inactive: true,
+      }),
     ]
     const wrapper = await mountTable()
     expect(wrapper.findAll('[data-testid="standings-row"]')).toHaveLength(2)

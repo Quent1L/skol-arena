@@ -22,7 +22,8 @@
         <span
           class="relative z-10 text-xs font-semibold uppercase tracking-wide transition-all duration-300"
           :class="activeTab === tab.id ? 'text-white' : 'text-gray-500'"
-        >{{ tab.label }}</span>
+          >{{ tab.label }}</span
+        >
       </button>
 
       <button
@@ -30,9 +31,13 @@
         class="flex-none flex flex-col items-center justify-center w-16 mx-2"
         style="transform: translateY(-14px)"
       >
-        <div class="w-16 h-16 rounded-full bg-primary-500 flex flex-col items-center justify-center shadow-lg">
-          <i class="fas fa-plus text-white  text-xl mb-1 font-bold" />
-          <span class="text-white text-[10px] font-bold uppercase tracking-wide">{{ t('common.create') }}</span>
+        <div
+          class="w-16 h-16 rounded-full bg-primary-500 flex flex-col items-center justify-center shadow-lg"
+        >
+          <i class="fas fa-plus text-white text-xl mb-1 font-bold" />
+          <span class="text-white text-[10px] font-bold uppercase tracking-wide">{{
+            t('common.create')
+          }}</span>
         </div>
       </button>
 
@@ -57,7 +62,8 @@
         <span
           class="relative z-10 text-xs font-semibold uppercase tracking-wide transition-all duration-300"
           :class="activeTab === tab.id ? 'text-white' : 'text-gray-500'"
-        >{{ tab.label }}</span>
+          >{{ tab.label }}</span
+        >
       </button>
     </template>
 
@@ -83,7 +89,8 @@
         <span
           class="relative z-10 text-xs font-semibold uppercase tracking-wide transition-all duration-300"
           :class="activeTab === tab.id ? 'text-white' : 'text-gray-500'"
-        >{{ tab.label }}</span>
+          >{{ tab.label }}</span
+        >
       </button>
     </template>
   </div>

@@ -20,8 +20,16 @@ interface TransitionRule {
 
 // Transition rules evaluated in order, first match wins
 const transitionRules: TransitionRule[] = [
-  { match: (n, o) => n.includes('quiz') && !o.includes('quiz'), forward: 'slide-left', back: 'slide-right' },
-  { match: (n, o) => n.includes('quiz') && o.includes('quiz'), forward: 'slide-down', back: 'slide-right' },
+  {
+    match: (n, o) => n.includes('quiz') && !o.includes('quiz'),
+    forward: 'slide-left',
+    back: 'slide-right',
+  },
+  {
+    match: (n, o) => n.includes('quiz') && o.includes('quiz'),
+    forward: 'slide-down',
+    back: 'slide-right',
+  },
   { match: (n) => n === 'profile', forward: 'slide-up', back: 'slide-up' },
   { match: (n) => n === 'stats', forward: 'zoom', back: 'zoom' },
   { match: (n) => n === 'rankings', forward: 'slide-left', back: 'slide-right' },

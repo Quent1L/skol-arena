@@ -138,7 +138,10 @@ describe('requireSettingsAccess', () => {
 describe('redirectIfAuthenticated', () => {
   it('sends a logged-in user to the redirect query', async () => {
     setAuth({ user: { id: 'u1', email: 'a@b.c' } })
-    const login = { fullPath: '/login', query: { redirect: '/foo' } } as unknown as RouteLocationNormalized
+    const login = {
+      fullPath: '/login',
+      query: { redirect: '/foo' },
+    } as unknown as RouteLocationNormalized
     expect(await redirectIfAuthenticated(login)).toEqual({ path: '/foo', replace: true })
   })
 

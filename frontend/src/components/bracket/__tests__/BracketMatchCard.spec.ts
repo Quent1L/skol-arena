@@ -28,7 +28,9 @@ const match = {
 const seeds = [
   seed('e-player', {
     entryType: 'PLAYER',
-    players: [{ playerId: 'p1', player: { id: 'p1', displayName: 'Theo Marchand', shortName: 'TMA' } }],
+    players: [
+      { playerId: 'p1', player: { id: 'p1', displayName: 'Theo Marchand', shortName: 'TMA' } },
+    ],
   }),
   seed('e-team', { entryType: 'TEAM', team: { id: 'team-1', name: 'Blue' } }),
 ]

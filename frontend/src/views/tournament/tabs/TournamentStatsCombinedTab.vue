@@ -56,7 +56,6 @@
           own
           class="mt-4"
         />
-
       </div>
       <TournamentStatsTab v-else />
     </div>
@@ -102,7 +101,8 @@ const hasOwnProfile = computed(
 
 const isRanked = computed(() => store.tournament?.mode === 'ranked')
 const votesEnabled = computed(
-  () => !!store.tournament?.voteConfig?.fairPlayEnabled || !!store.tournament?.voteConfig?.mvpEnabled,
+  () =>
+    !!store.tournament?.voteConfig?.fairPlayEnabled || !!store.tournament?.voteConfig?.mvpEnabled,
 )
 
 onMounted(async () => {

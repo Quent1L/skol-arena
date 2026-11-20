@@ -32,7 +32,9 @@
       <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/40 rounded-lg">
         <i class="fa fa-star text-violet-500 w-4 shrink-0 text-sm text-center" />
         <div>
-          <span class="font-medium text-gray-700 dark:text-gray-300 text-sm">{{ t('mmrExplainerCard.startingMmr') }}</span>
+          <span class="font-medium text-gray-700 dark:text-gray-300 text-sm">{{
+            t('mmrExplainerCard.startingMmr')
+          }}</span>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             {{ t('mmrExplainerCard.startingMmrPre') }}
             <span class="font-semibold text-gray-700 dark:text-gray-300"
@@ -49,13 +51,14 @@
       >
         <i class="fa fa-flag-checkered text-violet-500 w-4 shrink-0 text-sm text-center" />
         <div>
-          <span class="font-medium text-gray-700 dark:text-gray-300 text-sm"
-            >{{ t('mmrExplainerCard.placementMatches') }}</span
-          >
+          <span class="font-medium text-gray-700 dark:text-gray-300 text-sm">{{
+            t('mmrExplainerCard.placementMatches')
+          }}</span>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             {{ t('mmrExplainerCard.placementMatchesPre') }}
             <span class="font-semibold text-gray-700 dark:text-gray-300"
-              >{{ rankedConfig?.placementMatches ?? '—' }} {{ t('mmrExplainerCard.placementMatchesMid') }}</span
+              >{{ rankedConfig?.placementMatches ?? '—' }}
+              {{ t('mmrExplainerCard.placementMatchesMid') }}</span
             >
             {{ t('mmrExplainerCard.placementMatchesPost') }}
           </p>
@@ -66,7 +69,9 @@
       <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/40 rounded-lg">
         <i class="fa fa-arrows-up-down text-violet-500 w-4 shrink-0 text-sm text-center" />
         <div>
-          <span class="font-medium text-gray-700 dark:text-gray-300 text-sm">{{ t('mmrExplainerCard.gainLoss') }}</span>
+          <span class="font-medium text-gray-700 dark:text-gray-300 text-sm">{{
+            t('mmrExplainerCard.gainLoss')
+          }}</span>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             {{ t('mmrExplainerCard.gainLossDesc') }}
           </p>
@@ -77,9 +82,9 @@
       <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/40 rounded-lg">
         <i class="fa fa-scale-balanced text-violet-500 w-4 shrink-0 text-sm text-center" />
         <div>
-          <span class="font-medium text-gray-700 dark:text-gray-300 text-sm"
-            >{{ t('mmrExplainerCard.opponentFactor') }}</span
-          >
+          <span class="font-medium text-gray-700 dark:text-gray-300 text-sm">{{
+            t('mmrExplainerCard.opponentFactor')
+          }}</span>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             {{ t('mmrExplainerCard.opponentFactorDesc') }}
           </p>
@@ -116,14 +121,18 @@
 
         <div class="px-4 py-4 space-y-3 text-sm text-gray-600 dark:text-gray-400">
           <div class="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
-            <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('mmrExplainerCard.expectedScore') }}</p>
+            <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ t('mmrExplainerCard.expectedScore') }}
+            </p>
             <p class="text-xs leading-relaxed">
               {{ t('mmrExplainerCard.expectedScoreDesc') }}
             </p>
           </div>
 
           <div class="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
-            <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('mmrExplainerCard.baseGainLoss') }}</p>
+            <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ t('mmrExplainerCard.baseGainLoss') }}
+            </p>
             <p class="text-xs leading-relaxed">
               {{ t('mmrExplainerCard.baseGainLossDescPre') }}
               <span class="font-semibold text-gray-700 dark:text-gray-300"
@@ -137,11 +146,14 @@
             v-if="(rankedConfig?.placementMatches ?? 0) > 0"
             class="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3"
           >
-            <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('mmrExplainerCard.placementMatches') }}</p>
+            <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ t('mmrExplainerCard.placementMatches') }}
+            </p>
             <p class="text-xs leading-relaxed">
               {{ t('mmrExplainerCard.placementDetailPre') }}
               <span class="font-semibold text-gray-700 dark:text-gray-300"
-                >{{ rankedConfig?.placementMatches ?? '?' }} {{ t('mmrExplainerCard.placementDetailMid') }}</span
+                >{{ rankedConfig?.placementMatches ?? '?' }}
+                {{ t('mmrExplainerCard.placementDetailMid') }}</span
               >{{ t('mmrExplainerCard.placementDetailPost') }}
             </p>
           </div>
@@ -199,28 +211,40 @@ const hasTeamMode = computed(() => !!teamInteractionMode.value)
 
 const teamModeLabel = computed(() => {
   switch (teamInteractionMode.value) {
-    case 'INDIVIDUAL': return t('mmrExplainerCard.teamMode.individual')
-    case 'SHARED_RESOURCE': return t('mmrExplainerCard.teamMode.sharedResource')
-    case 'COLLABORATIVE': return t('mmrExplainerCard.teamMode.collaborative')
-    default: return ''
+    case 'INDIVIDUAL':
+      return t('mmrExplainerCard.teamMode.individual')
+    case 'SHARED_RESOURCE':
+      return t('mmrExplainerCard.teamMode.sharedResource')
+    case 'COLLABORATIVE':
+      return t('mmrExplainerCard.teamMode.collaborative')
+    default:
+      return ''
   }
 })
 
 const teamModeDescription = computed(() => {
   switch (teamInteractionMode.value) {
-    case 'INDIVIDUAL': return t('mmrExplainerCard.teamModeDesc.individual')
-    case 'SHARED_RESOURCE': return t('mmrExplainerCard.teamModeDesc.sharedResource')
-    case 'COLLABORATIVE': return t('mmrExplainerCard.teamModeDesc.collaborative')
-    default: return ''
+    case 'INDIVIDUAL':
+      return t('mmrExplainerCard.teamModeDesc.individual')
+    case 'SHARED_RESOURCE':
+      return t('mmrExplainerCard.teamModeDesc.sharedResource')
+    case 'COLLABORATIVE':
+      return t('mmrExplainerCard.teamModeDesc.collaborative')
+    default:
+      return ''
   }
 })
 
 const teamModeDetailDescription = computed(() => {
   switch (teamInteractionMode.value) {
-    case 'INDIVIDUAL': return t('mmrExplainerCard.teamModeDetail.individual')
-    case 'SHARED_RESOURCE': return t('mmrExplainerCard.teamModeDetail.sharedResource')
-    case 'COLLABORATIVE': return t('mmrExplainerCard.teamModeDetail.collaborative')
-    default: return ''
+    case 'INDIVIDUAL':
+      return t('mmrExplainerCard.teamModeDetail.individual')
+    case 'SHARED_RESOURCE':
+      return t('mmrExplainerCard.teamModeDetail.sharedResource')
+    case 'COLLABORATIVE':
+      return t('mmrExplainerCard.teamModeDetail.collaborative')
+    default:
+      return ''
   }
 })
 </script>

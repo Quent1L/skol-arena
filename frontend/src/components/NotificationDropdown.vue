@@ -72,7 +72,6 @@ async function handleDeleteAll() {
     })
   }
 }
-
 </script>
 
 <template>
@@ -85,7 +84,11 @@ async function handleDeleteAll() {
           <h3 class="font-semibold">{{ t('notificationDropdown.title') }}</h3>
           <div v-if="hasNotifications" class="flex items-center gap-1">
             <UTooltip
-              :text="hasUnreadNotifs ? t('notificationDropdown.markAllAsRead') : t('notificationDropdown.allAlreadyRead')"
+              :text="
+                hasUnreadNotifs
+                  ? t('notificationDropdown.markAllAsRead')
+                  : t('notificationDropdown.allAlreadyRead')
+              "
             >
               <UButton
                 icon="i-fa7-solid:check-double"
@@ -99,7 +102,11 @@ async function handleDeleteAll() {
               />
             </UTooltip>
             <UTooltip
-              :text="hasDeletableNotifs ? t('notificationDropdown.deleteAll') : t('notificationDropdown.actionNotifsCantDelete')"
+              :text="
+                hasDeletableNotifs
+                  ? t('notificationDropdown.deleteAll')
+                  : t('notificationDropdown.actionNotifsCantDelete')
+              "
             >
               <UButton
                 icon="i-fa7-solid:trash"

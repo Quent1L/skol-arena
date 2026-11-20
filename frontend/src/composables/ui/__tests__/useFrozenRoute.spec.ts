@@ -31,16 +31,28 @@ function setup() {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: '/tournaments/:id', component: Tournament, children: [{ path: ':tab', component: Tab }] },
+      {
+        path: '/tournaments/:id',
+        component: Tournament,
+        children: [{ path: ':tab', component: Tab }],
+      },
       { path: '/matches/:id', component: Match },
     ],
   })
   const App = defineComponent({
     setup: () => () =>
       h(RouterView, null, {
-        default: ({ Component, route }: { Component: unknown; route: { path: string; params: { id?: string } } }) =>
+        default: ({
+          Component,
+          route,
+        }: {
+          Component: unknown
+          route: { path: string; params: { id?: string } }
+        }) =>
           h(KeepAlive, { include: 'TournamentDetailView' }, [
-            h(Component as never, { key: route.path.startsWith('/tournaments/') ? `t-${route.params.id}` : route.path }),
+            h(Component as never, {
+              key: route.path.startsWith('/tournaments/') ? `t-${route.params.id}` : route.path,
+            }),
           ]),
       }),
   })

@@ -229,7 +229,8 @@ const rankChangeTextClass = computed(() =>
 
 const mmrCounterClass = computed(() => {
   if (isProvisional.value) return 'text-gray-300'
-  if (phase.value === 'counting') return props.event.mmrDelta >= 0 ? 'text-emerald-400' : 'text-red-400'
+  if (phase.value === 'counting')
+    return props.event.mmrDelta >= 0 ? 'text-emerald-400' : 'text-red-400'
   return 'text-white'
 })
 
@@ -370,7 +371,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   animation: delta-bounce 0.5s ease-out;
 }
 
-
 .tier-icon-glow {
   animation: icon-glow 1.4s ease-in-out infinite;
 }
@@ -464,7 +464,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     opacity: 1;
   }
 }
-
 
 @keyframes icon-glow {
   0%,

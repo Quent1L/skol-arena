@@ -7,13 +7,27 @@
       <div class="space-y-4">
         <USwitch v-model="config.fairPlayEnabled" :label="t('voteConfigSection.fairPlayEnabled')" />
         <template v-if="config.fairPlayEnabled">
-          <UFormField :label="t('voteConfigSection.fairPlayMinVotes')" :help="t('voteConfigSection.fairPlayMinVotesHelp')">
+          <UFormField
+            :label="t('voteConfigSection.fairPlayMinVotes')"
+            :help="t('voteConfigSection.fairPlayMinVotesHelp')"
+          >
             <UInputNumber v-model="config.fairPlayMinVotes" :min="1" :max="100" class="w-40" />
           </UFormField>
-          <UFormField :label="t('voteConfigSection.fairPlayAlertThreshold')" :help="t('voteConfigSection.fairPlayAlertThresholdHelp')">
-            <UInputNumber v-model="config.fairPlayAlertThreshold" :min="1" :max="100" class="w-40" />
+          <UFormField
+            :label="t('voteConfigSection.fairPlayAlertThreshold')"
+            :help="t('voteConfigSection.fairPlayAlertThresholdHelp')"
+          >
+            <UInputNumber
+              v-model="config.fairPlayAlertThreshold"
+              :min="1"
+              :max="100"
+              class="w-40"
+            />
           </UFormField>
-          <USwitch v-model="config.fairPlayPublicNegativeAward" :label="t('voteConfigSection.publicNegativeAward')" />
+          <USwitch
+            v-model="config.fairPlayPublicNegativeAward"
+            :label="t('voteConfigSection.publicNegativeAward')"
+          />
           <p class="text-xs text-muted">{{ t('voteConfigSection.transparency') }}</p>
         </template>
       </div>
@@ -21,7 +35,10 @@
       <div class="space-y-4">
         <USwitch v-model="config.mvpEnabled" :label="t('voteConfigSection.mvpEnabled')" />
         <template v-if="config.mvpEnabled">
-          <USwitch v-model="config.mvpSpectatorsEnabled" :label="t('voteConfigSection.mvpSpectatorsEnabled')" />
+          <USwitch
+            v-model="config.mvpSpectatorsEnabled"
+            :label="t('voteConfigSection.mvpSpectatorsEnabled')"
+          />
           <UFormField :label="t('voteConfigSection.mvpMinVotes')">
             <UInputNumber v-model="config.mvpMinVotes" :min="1" :max="100" class="w-40" />
           </UFormField>
@@ -29,17 +46,30 @@
             <USelect v-model="config.mvpTieRule" :items="tieRuleItems" class="w-full sm:w-64" />
           </UFormField>
           <UFormField :label="t('voteConfigSection.mvpSameTargetLimit')">
-            <USelect v-model="config.mvpSameTargetLimit" :items="limitItems" class="w-full sm:w-64" />
+            <USelect
+              v-model="config.mvpSameTargetLimit"
+              :items="limitItems"
+              class="w-full sm:w-64"
+            />
           </UFormField>
         </template>
       </div>
     </div>
 
-    <div v-if="config.fairPlayEnabled || config.mvpEnabled" class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <UFormField :label="t('voteConfigSection.promptMaxMatchAge')" :help="t('voteConfigSection.promptMaxMatchAgeHelp')">
+    <div
+      v-if="config.fairPlayEnabled || config.mvpEnabled"
+      class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2"
+    >
+      <UFormField
+        :label="t('voteConfigSection.promptMaxMatchAge')"
+        :help="t('voteConfigSection.promptMaxMatchAgeHelp')"
+      >
         <UInputNumber v-model="config.promptMaxMatchAgeMinutes" :min="1" :max="1440" class="w-40" />
       </UFormField>
-      <USwitch v-model="config.rewindVoterAwards" :label="t('voteConfigSection.rewindVoterAwards')" />
+      <USwitch
+        v-model="config.rewindVoterAwards"
+        :label="t('voteConfigSection.rewindVoterAwards')"
+      />
     </div>
   </section>
 </template>

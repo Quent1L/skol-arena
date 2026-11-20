@@ -9,8 +9,11 @@
             v-if="showTierName && segment.tier"
             class="uppercase tracking-widest"
             :style="{ color: tierHex }"
-          >{{ tierName(segment.tier) }}</span>
-          <span class="font-mono text-gray-500">{{ segment.isOpenEnded ? '∞' : segment.maxMmr }}</span>
+            >{{ tierName(segment.tier) }}</span
+          >
+          <span class="font-mono text-gray-500">{{
+            segment.isOpenEnded ? '∞' : segment.maxMmr
+          }}</span>
         </div>
       </Transition>
     </div>
@@ -120,7 +123,11 @@ const tickPositions = computed(() => {
 // loss the base recedes and the delta marks the ground given up behind it.
 const baseStyle = computed((): CSSProperties => {
   if (props.provisional) {
-    return { width: `${currentPct.value}%`, background: PROVISIONAL_STRIPES, transition: transition.value }
+    return {
+      width: `${currentPct.value}%`,
+      background: PROVISIONAL_STRIPES,
+      transition: transition.value,
+    }
   }
   const width = isGain.value ? (segment.value?.fromPct ?? 0) : currentPct.value
   return {

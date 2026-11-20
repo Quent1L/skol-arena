@@ -151,7 +151,10 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
     console.log('[SW] Opening URL:', url)
     event.waitUntil(
       (async () => {
-        const allClients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' })
+        const allClients = await self.clients.matchAll({
+          includeUncontrolled: true,
+          type: 'window',
+        })
         const client = allClients.find((c: WindowClient) => c.url === url)
         if (client) {
           console.log('[SW] Focusing existing client')
@@ -160,7 +163,7 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
           console.log('[SW] Opening new window')
           await self.clients.openWindow(url)
         }
-      })()
+      })(),
     )
   }
 })

@@ -38,7 +38,11 @@ export function getAvatarBg(name: string): string {
  * letter into its base plus a combining mark, which the regex then drops.
  */
 export function normalizeForSearch(value: string): string {
-  return value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
+  return value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .trim()
 }
 
 export function matchesSearch(text: string | null | undefined, query: string): boolean {

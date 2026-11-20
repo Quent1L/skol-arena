@@ -27,6 +27,9 @@ export function useFrozenRoute(): RouteLocationNormalizedLoaded {
     },
   )
   provide(routeLocationKey, route)
-  provide(routerViewLocationKey, computed(() => route))
+  provide(
+    routerViewLocationKey,
+    computed(() => route),
+  )
   return route
 }

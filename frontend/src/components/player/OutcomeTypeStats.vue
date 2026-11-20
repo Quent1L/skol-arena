@@ -12,7 +12,9 @@
         <span class="text-sm text-gray-200">{{ s.outcomeTypeName }}</span>
         <div class="flex items-center gap-2 text-xs shrink-0">
           <span class="text-green-400">{{ s.wins }}{{ t('outcomeTypeStats.winSuffix') }}</span>
-          <span v-if="s.draws" class="text-gray-400">{{ s.draws }}{{ t('outcomeTypeStats.drawSuffix') }}</span>
+          <span v-if="s.draws" class="text-gray-400"
+            >{{ s.draws }}{{ t('outcomeTypeStats.drawSuffix') }}</span
+          >
           <span class="text-red-400">{{ s.losses }}{{ t('outcomeTypeStats.lossSuffix') }}</span>
           <span class="text-gray-500 tabular-nums w-10 text-right">{{ s.winRate }}%</span>
         </div>

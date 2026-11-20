@@ -4,7 +4,9 @@
     <span class="text-3xl font-black tabular-nums leading-tight" :class="valueClass">
       {{ prefix }}{{ display }}{{ suffix }}
     </span>
-    <span class="text-balance text-center text-xs uppercase leading-tight tracking-wide text-gray-300">
+    <span
+      class="text-balance text-center text-xs uppercase leading-tight tracking-wide text-gray-300"
+    >
       {{ label }}
     </span>
   </div>

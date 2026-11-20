@@ -170,9 +170,7 @@ const isFull = computed(() => props.variant === 'full')
 const hasWord = computed(() => props.variant !== 'mark')
 
 const renderedWidth = computed(() => Number(props.width) || 360)
-const renderedHeight = computed(() =>
-  Math.round(renderedWidth.value / lockup.value.aspectRatio),
-)
+const renderedHeight = computed(() => Math.round(renderedWidth.value / lockup.value.aspectRatio))
 
 function stopsFor(gradient: LinearGradientDef): GradientStop[] {
   return gradient.key === 'mark' ? MARK_STOPS : gradient.stops

@@ -1,6 +1,10 @@
 <template>
   <div>
-    <RewindEntryCard v-if="isRanked" :season-id="store.tournamentId" :season-status="store.tournament?.status" />
+    <RewindEntryCard
+      v-if="isRanked"
+      :season-id="store.tournamentId"
+      :season-status="store.tournament?.status"
+    />
     <PlayerMmrProfile
       v-if="store.playerMmr"
       :mmr="store.playerMmr"
@@ -59,7 +63,6 @@
       own
       class="my-4"
     />
-
   </div>
 </template>
 
@@ -78,6 +81,7 @@ const store = useTournamentDetailStore()
 
 const isRanked = computed(() => store.tournament?.mode === 'ranked')
 const votesEnabled = computed(
-  () => !!store.tournament?.voteConfig?.fairPlayEnabled || !!store.tournament?.voteConfig?.mvpEnabled,
+  () =>
+    !!store.tournament?.voteConfig?.fairPlayEnabled || !!store.tournament?.voteConfig?.mvpEnabled,
 )
 </script>

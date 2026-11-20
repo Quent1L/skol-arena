@@ -32,10 +32,12 @@ vi.mock('vue-router', async (importOriginal) => {
       const router = actual.createRouter(options)
       const { beforeEach, onError } = router
       router.beforeEach = ((fn) => (
-        captured.beforeEach.push(fn as (to: unknown) => unknown), beforeEach(fn)
+        captured.beforeEach.push(fn as (to: unknown) => unknown),
+        beforeEach(fn)
       )) as typeof beforeEach
       router.onError = ((fn) => (
-        captured.onError.push(fn as (error: unknown, to: { fullPath: string }) => void), onError(fn)
+        captured.onError.push(fn as (error: unknown, to: { fullPath: string }) => void),
+        onError(fn)
       )) as typeof onError
       return router
     },
@@ -102,9 +104,7 @@ describe('route table', () => {
   })
 
   it('declares only lazily imported views', () => {
-    const eager = allRoutes().filter(
-      (r) => r.component && typeof r.component !== 'function',
-    )
+    const eager = allRoutes().filter((r) => r.component && typeof r.component !== 'function')
     expect(eager).toEqual([])
   })
 

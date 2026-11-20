@@ -2,7 +2,7 @@
   <MatchList
     :tournament-id="store.tournamentId"
     :bracket-mode="store.tournament!.mode === 'bracket'"
-    :players="store.participants.map(p => ({ id: p.userId, displayName: p.user.displayName }))"
+    :players="store.participants.map((p) => ({ id: p.userId, displayName: p.user.displayName }))"
     :current-player-id="store.appUser?.id"
     :allow-draw="store.tournament!.allowDraw"
     :show-disputed-filter="store.canManageTournament"

@@ -89,7 +89,9 @@
           />
 
           <div class="text-center">
-            <ULink to="/login" class="text-sm text-primary">{{ t('signupView.backToLogin') }}</ULink>
+            <ULink to="/login" class="text-sm text-primary">{{
+              t('signupView.backToLogin')
+            }}</ULink>
           </div>
         </div>
       </UCard>
@@ -126,7 +128,7 @@ const emailPasswordEnabled = computed(() => config.value?.auth?.emailPassword?.e
 const keycloakEnabled = computed(() => config.value?.auth?.keycloak?.enabled ?? false)
 const noAuthMethodAvailable = computed(() => !emailPasswordEnabled.value && !keycloakEnabled.value)
 const keycloakLoginLabel = computed(
-  () => config.value?.auth?.keycloak?.loginLabel ?? t('signupView.keycloakLabel')
+  () => config.value?.auth?.keycloak?.loginLabel ?? t('signupView.keycloakLabel'),
 )
 
 onMounted(() => {

@@ -56,7 +56,11 @@ function showNetworkError() {
  */
 function showError(error: Error | string, detail?: string) {
   const errorMessage = typeof error === 'string' ? error : error.message
-  const errorDetail = detail || (typeof error === 'object' && error.stack ? i18n.global.t('errorService.checkConsole') : undefined)
+  const errorDetail =
+    detail ||
+    (typeof error === 'object' && error.stack
+      ? i18n.global.t('errorService.checkConsole')
+      : undefined)
 
   console.error('[Global Error Handler]', error)
 
@@ -93,7 +97,9 @@ function handleError(event: ErrorEvent) {
   event.preventDefault()
 
   const errorMessage = event.message || i18n.global.t('errorService.uncaughtJs')
-  const location = event.filename ? `${event.filename}:${event.lineno}:${event.colno}` : i18n.global.t('errorService.unknownLocation')
+  const location = event.filename
+    ? `${event.filename}:${event.lineno}:${event.colno}`
+    : i18n.global.t('errorService.unknownLocation')
 
   console.error('[Uncaught Error]', {
     message: event.message,
@@ -103,10 +109,7 @@ function handleError(event: ErrorEvent) {
     error: event.error,
   })
 
-  showError(
-    errorMessage,
-    i18n.global.t('errorService.locationPrefix', { location })
-  )
+  showError(errorMessage, i18n.global.t('errorService.locationPrefix', { location }))
 }
 
 /**

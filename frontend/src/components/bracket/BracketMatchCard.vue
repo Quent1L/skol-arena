@@ -72,7 +72,9 @@
           {{ match.status === 'scheduled' ? '-' : (sideB?.score ?? '-') }}
         </span>
       </div>
-      <div v-else class="font-headline font-black text-xs shrink-0">{{ t('bracketMatchCard.vs') }}</div>
+      <div v-else class="font-headline font-black text-xs shrink-0">
+        {{ t('bracketMatchCard.vs') }}
+      </div>
 
       <!-- Side B -->
       <div class="flex-1 flex flex-col items-center gap-1 relative">
@@ -163,7 +165,6 @@ function isWinner(match: ClientMatchModel, side: MatchSideModel | null): boolean
   }
   return null
 }
-
 </script>
 
 <style scoped>

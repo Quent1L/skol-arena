@@ -14,12 +14,20 @@
           :to="playerLink(h.opponentId, tournamentId)"
           class="flex items-center gap-2 text-sm font-medium text-indigo-400 hover:text-indigo-300 min-w-0"
         >
-          <PlayerAvatar :name="h.displayName" :player-id="h.opponentId" size="xs" shape="square" class="shrink-0" />
+          <PlayerAvatar
+            :name="h.displayName"
+            :player-id="h.opponentId"
+            size="xs"
+            shape="square"
+            class="shrink-0"
+          />
           <span class="truncate">{{ h.displayName }}</span>
         </RouterLink>
         <div class="flex items-center gap-2 text-xs shrink-0">
           <span class="text-green-400">{{ h.wins }}{{ t('h2hRivalries.winSuffix') }}</span>
-          <span v-if="h.draws" class="text-gray-400">{{ h.draws }}{{ t('h2hRivalries.drawSuffix') }}</span>
+          <span v-if="h.draws" class="text-gray-400"
+            >{{ h.draws }}{{ t('h2hRivalries.drawSuffix') }}</span
+          >
           <span class="text-red-400">{{ h.losses }}{{ t('h2hRivalries.lossSuffix') }}</span>
           <span
             class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold"

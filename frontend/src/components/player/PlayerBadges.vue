@@ -1,7 +1,9 @@
 <template>
   <div v-if="visible" class="rounded-2xl p-4">
     <div class="flex items-center justify-between gap-2 mb-3">
-      <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">{{ t('playerBadges.title') }}</div>
+      <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">
+        {{ t('playerBadges.title') }}
+      </div>
       <UButton
         v-if="tournamentId"
         :to="`/tournaments/${tournamentId}/badges`"
@@ -34,12 +36,17 @@
             <div class="flex items-center gap-2">
               <i :class="group.icon || 'fa fa-medal'" class="text-xl text-purple-600" />
               <div class="font-semibold text-sm">{{ group.label }}</div>
-              <span v-if="group.awards.length > 1" class="text-xs font-bold text-purple-600 dark:text-purple-400">
+              <span
+                v-if="group.awards.length > 1"
+                class="text-xs font-bold text-purple-600 dark:text-purple-400"
+              >
                 ×{{ group.awards.length }}
               </span>
             </div>
             <div class="text-xs text-slate-500">{{ group.description }}</div>
-            <div class="flex flex-col gap-1 text-xs text-purple-500 dark:text-purple-400 font-medium">
+            <div
+              class="flex flex-col gap-1 text-xs text-purple-500 dark:text-purple-400 font-medium"
+            >
               <div v-for="award in group.awards" :key="award.id" class="flex items-center gap-1">
                 <i class="fa fa-calendar" />
                 <span>{{ award.seasonName ?? t('playerBadges.unknownSeason') }}</span>

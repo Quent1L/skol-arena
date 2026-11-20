@@ -168,10 +168,9 @@ beforeEach(() => {
     loadTeams: loadTeamsMock,
   } as unknown as ReturnType<typeof useTeamService>)
 
-  getParticipantsMock = vi.fn().mockResolvedValue([
-    makeParticipant('u1', 'Alice'),
-    makeParticipant('u2', 'Bob'),
-  ])
+  getParticipantsMock = vi
+    .fn()
+    .mockResolvedValue([makeParticipant('u1', 'Alice'), makeParticipant('u2', 'Bob')])
   participantsErrorRef = ref<string | null>(null)
   vi.mocked(useParticipantService).mockReturnValue({
     getTournamentParticipants: getParticipantsMock,
@@ -331,7 +330,10 @@ describe('CreateMatchView', () => {
   })
 
   it('non-participant user: not auto-added to allPlayerIds', async () => {
-    const wrapper = await mountView({}, { user: { id: 'u9', email: 'u9@test.dev' }, role: 'player' })
+    const wrapper = await mountView(
+      {},
+      { user: { id: 'u9', email: 'u9@test.dev' }, role: 'player' },
+    )
     expect(getProbe(wrapper).vm.formState.allPlayerIds).toEqual([])
   })
 

@@ -27,7 +27,8 @@ export function useOrganizationService() {
     try {
       return await organizationApi.create(name)
     } catch (err: unknown) {
-      error.value = err instanceof Error ? err.message : t('organizationService.errors.createFailed')
+      error.value =
+        err instanceof Error ? err.message : t('organizationService.errors.createFailed')
       throw err
     } finally {
       loading.value = false
@@ -40,7 +41,8 @@ export function useOrganizationService() {
     try {
       return await organizationApi.getMembers(orgId)
     } catch (err: unknown) {
-      error.value = err instanceof Error ? err.message : t('organizationService.errors.getMembersFailed')
+      error.value =
+        err instanceof Error ? err.message : t('organizationService.errors.getMembersFailed')
       throw err
     } finally {
       loading.value = false
@@ -53,7 +55,8 @@ export function useOrganizationService() {
     try {
       await organizationApi.addMember(orgId, userId)
     } catch (err: unknown) {
-      error.value = err instanceof Error ? err.message : t('organizationService.errors.addMemberFailed')
+      error.value =
+        err instanceof Error ? err.message : t('organizationService.errors.addMemberFailed')
       throw err
     } finally {
       loading.value = false
@@ -66,7 +69,8 @@ export function useOrganizationService() {
     try {
       await organizationApi.removeMember(orgId, userId)
     } catch (err: unknown) {
-      error.value = err instanceof Error ? err.message : t('organizationService.errors.removeMemberFailed')
+      error.value =
+        err instanceof Error ? err.message : t('organizationService.errors.removeMemberFailed')
       throw err
     } finally {
       loading.value = false
@@ -79,12 +83,22 @@ export function useOrganizationService() {
     try {
       return await organizationApi.rename(orgId, name)
     } catch (err: unknown) {
-      error.value = err instanceof Error ? err.message : t('organizationService.errors.renameFailed')
+      error.value =
+        err instanceof Error ? err.message : t('organizationService.errors.renameFailed')
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  return { loading, error, listOrganizations, createOrganization, getMembers, addMember, removeMember, renameOrganization }
+  return {
+    loading,
+    error,
+    listOrganizations,
+    createOrganization,
+    getMembers,
+    addMember,
+    removeMember,
+    renameOrganization,
+  }
 }

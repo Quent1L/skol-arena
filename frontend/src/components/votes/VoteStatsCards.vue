@@ -1,6 +1,10 @@
 <template>
   <template v-if="stats">
-    <div v-if="stats.fairPlayRanking.length || (showWeekly && stats.fairPlayOfTheWeek)" class="rounded-xl border border-gray-800 bg-gray-800 p-6" data-testid="fair-play-ranking">
+    <div
+      v-if="stats.fairPlayRanking.length || (showWeekly && stats.fairPlayOfTheWeek)"
+      class="rounded-xl border border-gray-800 bg-gray-800 p-6"
+      data-testid="fair-play-ranking"
+    >
       <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-white">
         <i class="fa fa-handshake text-primary" />{{ t('voteStats.fairPlay.title') }}
         <InfoTooltip :text="t('voteStats.fairPlay.tooltip', { count: minVotes })" />
@@ -28,11 +32,20 @@
         :tournament-id="tournamentId"
       />
       <p class="mt-3 text-xs text-muted">
-        {{ t('voteStats.totals', { count: stats.totals.votes, rate: percent(stats.totals.positiveRate) }) }}
+        {{
+          t('voteStats.totals', {
+            count: stats.totals.votes,
+            rate: percent(stats.totals.positiveRate),
+          })
+        }}
       </p>
     </div>
 
-    <div v-if="stats.mvpRanking.length || (showWeekly && stats.mvpOfTheWeek)" class="rounded-xl border border-gray-800 bg-gray-800 p-6" data-testid="mvp-ranking">
+    <div
+      v-if="stats.mvpRanking.length || (showWeekly && stats.mvpOfTheWeek)"
+      class="rounded-xl border border-gray-800 bg-gray-800 p-6"
+      data-testid="mvp-ranking"
+    >
       <h2 class="mb-4 text-base font-semibold text-white">
         <i class="fa fa-medal mr-2 text-amber-400" />{{ t('voteStats.mvp.title') }}
       </h2>
@@ -44,7 +57,9 @@
         :count="stats.mvpOfTheWeek.titles"
         :tournament-id="tournamentId"
       />
-      <div v-if="stats.mvpRanking.length" :class="subheadingClass">{{ t('voteStats.rankingTitle') }}</div>
+      <div v-if="stats.mvpRanking.length" :class="subheadingClass">
+        {{ t('voteStats.rankingTitle') }}
+      </div>
       <StatLeaderRow
         v-for="row in stats.mvpRanking"
         :key="row.player.id"
@@ -85,7 +100,8 @@ const { t } = useI18n()
 
 const showWeekly = computed(() => !props.hideWeekly)
 
-const subheadingClass = 'mb-2 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400'
+const subheadingClass =
+  'mb-2 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400'
 
 // Votes always target players, even in a fixed-team tournament whose other boards rank teams.
 provide(STAT_ROWS_ARE_PLAYERS, ref(true))

@@ -102,7 +102,10 @@ export const rankedApi = {
     return response.data
   },
 
-  async listSeasons(filters?: { disciplineId?: string; status?: string }): Promise<RankedSeasonListItem[]> {
+  async listSeasons(filters?: {
+    disciplineId?: string
+    status?: string
+  }): Promise<RankedSeasonListItem[]> {
     const params = new URLSearchParams()
     if (filters?.disciplineId) params.set('disciplineId', filters.disciplineId)
     if (filters?.status) params.set('status', filters.status)
@@ -137,12 +140,16 @@ export const rankedApi = {
   },
 
   async getProvisionalLeaderboard(id: string): Promise<LeaderboardResponse> {
-    const response = await http.get<LeaderboardResponse>(`${BASE_URL}/seasons/${id}/leaderboard/provisional`)
+    const response = await http.get<LeaderboardResponse>(
+      `${BASE_URL}/seasons/${id}/leaderboard/provisional`,
+    )
     return response.data
   },
 
   async getSeasonMmrLeaderboard(id: string): Promise<SeasonMmrLeaderboardResponse> {
-    const response = await http.get<SeasonMmrLeaderboardResponse>(`${BASE_URL}/seasons/${id}/leaderboard/season-stats`)
+    const response = await http.get<SeasonMmrLeaderboardResponse>(
+      `${BASE_URL}/seasons/${id}/leaderboard/season-stats`,
+    )
     return response.data
   },
 
@@ -171,22 +178,36 @@ export const rankedApi = {
   },
 
   async createTier(seasonId: string, data: CreateRankTierInput): Promise<ClientRankTier[]> {
-    const response = await http.post<ClientRankTier[]>(`${BASE_URL}/seasons/${seasonId}/tiers`, data)
+    const response = await http.post<ClientRankTier[]>(
+      `${BASE_URL}/seasons/${seasonId}/tiers`,
+      data,
+    )
     return response.data
   },
 
-  async updateTier(seasonId: string, level: number, data: UpdateRankTierInput): Promise<ClientRankTier> {
-    const response = await http.patch<ClientRankTier>(`${BASE_URL}/seasons/${seasonId}/tiers/${level}`, data)
+  async updateTier(
+    seasonId: string,
+    level: number,
+    data: UpdateRankTierInput,
+  ): Promise<ClientRankTier> {
+    const response = await http.patch<ClientRankTier>(
+      `${BASE_URL}/seasons/${seasonId}/tiers/${level}`,
+      data,
+    )
     return response.data
   },
 
   async deleteTier(seasonId: string, level: number): Promise<ClientRankTier[]> {
-    const response = await http.delete<ClientRankTier[]>(`${BASE_URL}/seasons/${seasonId}/tiers/${level}`)
+    const response = await http.delete<ClientRankTier[]>(
+      `${BASE_URL}/seasons/${seasonId}/tiers/${level}`,
+    )
     return response.data
   },
 
   async recalculateTiers(seasonId: string): Promise<ClientRankTier[]> {
-    const response = await http.post<ClientRankTier[]>(`${BASE_URL}/seasons/${seasonId}/tiers/recalculate`)
+    const response = await http.post<ClientRankTier[]>(
+      `${BASE_URL}/seasons/${seasonId}/tiers/recalculate`,
+    )
     return response.data
   },
 

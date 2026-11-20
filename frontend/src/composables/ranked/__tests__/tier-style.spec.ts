@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { makeTier } from '@/test-support/factories'
-import { tierStyleIdx, getTierIconClass, getTierTextHex, TIER_ICON, TIER_TEXT_HEX } from '../tier-style'
+import {
+  tierStyleIdx,
+  getTierIconClass,
+  getTierTextHex,
+  TIER_ICON,
+  TIER_TEXT_HEX,
+} from '../tier-style'
 
 describe('tierStyleIdx', () => {
   it('0 for a null tier', () => {

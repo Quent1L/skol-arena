@@ -36,7 +36,9 @@ describe('AvatarLightbox', () => {
   })
 
   it('renders nothing while hidden', async () => {
-    expect((await mountLightbox(false)).find('[data-testid="avatar-lightbox-image"]').exists()).toBe(false)
+    expect(
+      (await mountLightbox(false)).find('[data-testid="avatar-lightbox-image"]').exists(),
+    ).toBe(false)
   })
 
   it('closes from its button', async () => {
@@ -79,7 +81,9 @@ describe('AvatarLightbox', () => {
 
       await wrapper.find('[data-testid="avatar-lightbox-image"]').trigger('load')
       expect(loading()).toBe(false)
-      expect(wrapper.find('[data-testid="avatar-lightbox-image"]').classes()).toContain('opacity-100')
+      expect(wrapper.find('[data-testid="avatar-lightbox-image"]').classes()).toContain(
+        'opacity-100',
+      )
     } finally {
       vi.useRealTimers()
     }
@@ -116,6 +120,8 @@ describe('AvatarLightbox', () => {
 
   it('shows no image for a player without a photo', async () => {
     useAvatarService().remember(ID, null)
-    expect((await mountLightbox()).find('[data-testid="avatar-lightbox-image"]').exists()).toBe(false)
+    expect((await mountLightbox()).find('[data-testid="avatar-lightbox-image"]').exists()).toBe(
+      false,
+    )
   })
 })

@@ -7,16 +7,16 @@
     <UAlert v-else-if="error" color="error" variant="subtle" :title="error" />
 
     <UCard v-else-if="rule" variant="soft">
-        <article
-          class="prose prose-gray dark:prose-invert max-w-none"
-          v-html="sanitizeHtml(rule.content)"
-        />
+      <article
+        class="prose prose-gray dark:prose-invert max-w-none"
+        v-html="sanitizeHtml(rule.content)"
+      />
     </UCard>
 
     <UCard v-else variant="soft">
-        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-          {{ t('rulesContent.noRules') }}
-        </div>
+      <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+        {{ t('rulesContent.noRules') }}
+      </div>
     </UCard>
   </div>
 </template>

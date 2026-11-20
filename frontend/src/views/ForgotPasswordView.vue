@@ -45,7 +45,9 @@
               />
 
               <div class="text-center text-sm">
-                <ULink to="/login" class="text-primary">{{ t('forgotPasswordView.backToLoginLink') }}</ULink>
+                <ULink to="/login" class="text-primary">{{
+                  t('forgotPasswordView.backToLoginLink')
+                }}</ULink>
               </div>
             </div>
           </UForm>

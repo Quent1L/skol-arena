@@ -14,7 +14,12 @@
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
-        <UButton size="sm" :label="t('pwaInstallBanner.installButton')" icon="i-fa7-solid:download" @click="triggerInstall" />
+        <UButton
+          size="sm"
+          :label="t('pwaInstallBanner.installButton')"
+          icon="i-fa7-solid:download"
+          @click="triggerInstall"
+        />
         <UButton
           size="sm"
           icon="i-fa7-solid:xmark"
@@ -28,16 +33,13 @@
   </Transition>
 
   <Transition name="fade">
-    <div
-      v-if="showIOSInstructions"
-      class="install-banner"
-      :class="{ 'above-nav': hasBottomNav }"
-    >
+    <div v-if="showIOSInstructions" class="install-banner" :class="{ 'above-nav': hasBottomNav }">
       <div class="flex items-start justify-between gap-2">
         <p class="text-sm">
           {{ t('pwaInstallBanner.iosInstruction.tapOn') }}
           <i class="fas fa-share-from-square mx-1"></i>
-          {{ t('pwaInstallBanner.iosInstruction.then') }} <strong>{{ t('pwaInstallBanner.iosInstruction.addToHomeScreen') }}</strong>
+          {{ t('pwaInstallBanner.iosInstruction.then') }}
+          <strong>{{ t('pwaInstallBanner.iosInstruction.addToHomeScreen') }}</strong>
         </p>
         <UButton
           size="sm"

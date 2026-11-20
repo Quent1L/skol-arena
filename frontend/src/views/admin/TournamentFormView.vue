@@ -66,65 +66,82 @@
             {{ t('tournamentFormView.championshipRulesTitle') }}
           </h2>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <UFormField name="maxMatchesPerPlayer" :label="t('tournamentFormView.labelMaxMatchesPerPlayer')">
-            <UInputNumber
-              v-model="state.maxMatchesPerPlayer"
-              :min="CHAMPIONSHIP_LIMITS.maxMatchesPerPlayer.min"
-              :max="CHAMPIONSHIP_LIMITS.maxMatchesPerPlayer.max"
-              :disabled="!isFieldEditable('maxMatchesPerPlayer')"
-              class="w-full"
-            />
-            <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('maxMatchesPerPlayer')" />
-          </UFormField>
-          <UFormField
-            name="maxTimesWithSamePartner"
-            :label="t('tournamentFormView.labelMaxTimesWithSamePartner')"
-            :help="state.teamMode === 'static' ? t('tournamentFormView.samePartnerIgnoredStatic') : undefined"
-          >
-            <UInputNumber
-              v-model="state.maxTimesWithSamePartner"
-              :min="CHAMPIONSHIP_LIMITS.maxTimesWithSamePartner.min"
-              :max="CHAMPIONSHIP_LIMITS.maxTimesWithSamePartner.max"
-              :disabled="state.teamMode === 'static' || !isFieldEditable('maxTimesWithSamePartner')"
-              class="w-full"
-            />
-          </UFormField>
-          <UFormField name="maxTimesWithSameOpponent" :label="t('tournamentFormView.labelMaxTimesWithSameOpponent')">
-            <UInputNumber
-              v-model="state.maxTimesWithSameOpponent"
-              :min="CHAMPIONSHIP_LIMITS.maxTimesWithSameOpponent.min"
-              :max="CHAMPIONSHIP_LIMITS.maxTimesWithSameOpponent.max"
-              :disabled="!isFieldEditable('maxTimesWithSameOpponent')"
-              class="w-full"
-            />
-          </UFormField>
-          <UFormField name="pointPerVictory" :label="t('tournamentFormView.labelPointPerVictory')">
-            <UInputNumber
-              v-model="state.pointPerVictory"
-              :min="0"
-              :disabled="!isFieldEditable('pointPerVictory')"
-              class="w-full"
-            />
-            <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('pointPerVictory')" />
-          </UFormField>
-          <UFormField name="pointPerDraw" :label="t('tournamentFormView.labelPointPerDraw')">
-            <UInputNumber
-              v-model="state.pointPerDraw"
-              :min="0"
-              :disabled="!isFieldEditable('pointPerDraw')"
-              class="w-full"
-            />
-            <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('pointPerDraw')" />
-          </UFormField>
-          <UFormField name="pointPerLoss" :label="t('tournamentFormView.labelPointPerLoss')">
-            <UInputNumber
-              v-model="state.pointPerLoss"
-              :min="0"
-              :disabled="!isFieldEditable('pointPerLoss')"
-              class="w-full"
-            />
-            <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('pointPerLoss')" />
-          </UFormField>
+            <UFormField
+              name="maxMatchesPerPlayer"
+              :label="t('tournamentFormView.labelMaxMatchesPerPlayer')"
+            >
+              <UInputNumber
+                v-model="state.maxMatchesPerPlayer"
+                :min="CHAMPIONSHIP_LIMITS.maxMatchesPerPlayer.min"
+                :max="CHAMPIONSHIP_LIMITS.maxMatchesPerPlayer.max"
+                :disabled="!isFieldEditable('maxMatchesPerPlayer')"
+                class="w-full"
+              />
+              <FieldEditabilityNote
+                :recalculates="fieldTriggersRecalculation('maxMatchesPerPlayer')"
+              />
+            </UFormField>
+            <UFormField
+              name="maxTimesWithSamePartner"
+              :label="t('tournamentFormView.labelMaxTimesWithSamePartner')"
+              :help="
+                state.teamMode === 'static'
+                  ? t('tournamentFormView.samePartnerIgnoredStatic')
+                  : undefined
+              "
+            >
+              <UInputNumber
+                v-model="state.maxTimesWithSamePartner"
+                :min="CHAMPIONSHIP_LIMITS.maxTimesWithSamePartner.min"
+                :max="CHAMPIONSHIP_LIMITS.maxTimesWithSamePartner.max"
+                :disabled="
+                  state.teamMode === 'static' || !isFieldEditable('maxTimesWithSamePartner')
+                "
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField
+              name="maxTimesWithSameOpponent"
+              :label="t('tournamentFormView.labelMaxTimesWithSameOpponent')"
+            >
+              <UInputNumber
+                v-model="state.maxTimesWithSameOpponent"
+                :min="CHAMPIONSHIP_LIMITS.maxTimesWithSameOpponent.min"
+                :max="CHAMPIONSHIP_LIMITS.maxTimesWithSameOpponent.max"
+                :disabled="!isFieldEditable('maxTimesWithSameOpponent')"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField
+              name="pointPerVictory"
+              :label="t('tournamentFormView.labelPointPerVictory')"
+            >
+              <UInputNumber
+                v-model="state.pointPerVictory"
+                :min="0"
+                :disabled="!isFieldEditable('pointPerVictory')"
+                class="w-full"
+              />
+              <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('pointPerVictory')" />
+            </UFormField>
+            <UFormField name="pointPerDraw" :label="t('tournamentFormView.labelPointPerDraw')">
+              <UInputNumber
+                v-model="state.pointPerDraw"
+                :min="0"
+                :disabled="!isFieldEditable('pointPerDraw')"
+                class="w-full"
+              />
+              <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('pointPerDraw')" />
+            </UFormField>
+            <UFormField name="pointPerLoss" :label="t('tournamentFormView.labelPointPerLoss')">
+              <UInputNumber
+                v-model="state.pointPerLoss"
+                :min="0"
+                :disabled="!isFieldEditable('pointPerLoss')"
+                class="w-full"
+              />
+              <FieldEditabilityNote :recalculates="fieldTriggersRecalculation('pointPerLoss')" />
+            </UFormField>
           </div>
         </section>
 
@@ -252,7 +269,8 @@ const state = ref<TournamentFormState>({})
 
 // Fixed teams always play with the same partners: the cap is ignored, so put it back to default.
 function onTeamModeChange(mode: string) {
-  if (mode === 'static') state.value.maxTimesWithSamePartner = CHAMPIONSHIP_DEFAULTS.maxTimesWithSamePartner
+  if (mode === 'static')
+    state.value.maxTimesWithSamePartner = CHAMPIONSHIP_DEFAULTS.maxTimesWithSamePartner
 }
 
 /**

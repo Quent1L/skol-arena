@@ -35,9 +35,7 @@ export const participantApi: ParticipantAPI = {
   },
 
   async adminRemoveParticipant(tournamentId: string, userId: string) {
-    const response = await http.delete(
-      `/api/tournaments/${tournamentId}/participants/${userId}`,
-    )
+    const response = await http.delete(`/api/tournaments/${tournamentId}/participants/${userId}`)
     return response.data
   },
 }

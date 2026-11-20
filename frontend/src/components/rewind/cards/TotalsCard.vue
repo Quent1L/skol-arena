@@ -56,10 +56,9 @@ import type { PlayerRewindPayload } from '@skol-arena/shared/types/index'
 import RewindCardShell from '../RewindCardShell.vue'
 import RewindStat from '../RewindStat.vue'
 
-const props = withDefaults(
-  defineProps<{ player: PlayerRewindPayload; allowDraw?: boolean }>(),
-  { allowDraw: true },
-)
+const props = withDefaults(defineProps<{ player: PlayerRewindPayload; allowDraw?: boolean }>(), {
+  allowDraw: true,
+})
 
 const { t } = useI18n()
 

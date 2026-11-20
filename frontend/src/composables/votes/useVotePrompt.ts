@@ -78,5 +78,12 @@ function close(): void {
  * loaded is simply not shown, and nothing ever reminds the player about it.
  */
 export function useVotePrompt() {
-  return { current: computed(() => current.value), offerForMatch, offerPending, markShown, finish, close }
+  return {
+    current: computed(() => current.value),
+    offerForMatch,
+    offerPending,
+    markShown,
+    finish,
+    close,
+  }
 }

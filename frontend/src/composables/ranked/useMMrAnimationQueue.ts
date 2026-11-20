@@ -29,7 +29,9 @@ export function useMMrAnimationQueue() {
       ),
   )
   // Badges are revealed only once all MMR animations have been acknowledged.
-  const currentBadge = computed(() => (queue.value.length === 0 ? badgeQueue.value[0] ?? null : null))
+  const currentBadge = computed(() =>
+    queue.value.length === 0 ? (badgeQueue.value[0] ?? null) : null,
+  )
 
   async function loadPending(seasonId: string) {
     seasonIdRef.value = seasonId
@@ -128,7 +130,9 @@ export function useMMrAnimationQueue() {
 function dedupeBadges(badges: BadgeAnimationResponse[]): BadgeAnimationResponse[] {
   const byId = new Map<string, BadgeAnimationResponse>()
   for (const b of badges) byId.set(b.id, b)
-  return [...byId.values()].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  return [...byId.values()].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  )
 }
 
 function deduplicateEvents(events: MmrAnimationEventResponse[]): MmrAnimationEventResponse[] {
@@ -140,6 +144,7 @@ function deduplicateEvents(events: MmrAnimationEventResponse[]): MmrAnimationEve
     }
   }
   return [...byMatch.values()].sort(
-    (a, b) => new Date(a.playedAt ?? a.createdAt).getTime() - new Date(b.playedAt ?? b.createdAt).getTime(),
+    (a, b) =>
+      new Date(a.playedAt ?? a.createdAt).getTime() - new Date(b.playedAt ?? b.createdAt).getTime(),
   )
 }

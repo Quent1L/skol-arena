@@ -83,11 +83,16 @@ export const rulesApi = {
   },
 
   async getPlayerBadges(playerId: string): Promise<ClientPlayerBadge[]> {
-    const response = await http.get<{ badges: ClientPlayerBadge[] }>(`/api/users/${playerId}/badges`)
+    const response = await http.get<{ badges: ClientPlayerBadge[] }>(
+      `/api/users/${playerId}/badges`,
+    )
     return response.data.badges
   },
 
-  async getAvailableBadges(tournamentId: string, options: { withHolders?: boolean } = {}): Promise<AvailableBadge[]> {
+  async getAvailableBadges(
+    tournamentId: string,
+    options: { withHolders?: boolean } = {},
+  ): Promise<AvailableBadge[]> {
     const response = await http.get<{ badges: AvailableBadge[] }>(
       `/api/tournaments/${tournamentId}/available-badges`,
       { params: options },
@@ -137,7 +142,9 @@ export const rulesApi = {
   },
 
   async getReconciliationStatus(): Promise<BadgeReconciliationStatus> {
-    const response = await http.get<BadgeReconciliationStatus>(`${BASE_URL}/reconcile-badges/status`)
+    const response = await http.get<BadgeReconciliationStatus>(
+      `${BASE_URL}/reconcile-badges/status`,
+    )
     return response.data
   },
 

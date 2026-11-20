@@ -148,7 +148,9 @@
           <UIcon name="i-fa7-solid:triangle-exclamation" class="size-6 shrink-0 text-error" />
           <div class="text-sm">
             <i18n-t keypath="adminUsersList.deleteConfirmMessage" tag="p" scope="global">
-              <template #name><strong>{{ targetUser?.displayName }}</strong></template>
+              <template #name
+                ><strong>{{ targetUser?.displayName }}</strong></template
+              >
             </i18n-t>
             <p class="mt-2 text-muted">{{ t('adminUsersList.deleteIrreversibleNotice') }}</p>
           </div>
@@ -206,7 +208,9 @@
           <UIcon name="i-fa7-solid:triangle-exclamation" class="size-6 shrink-0 text-warning" />
           <div class="text-sm">
             <i18n-t keypath="adminUsersList.archiveConfirmMessage" tag="p" scope="global">
-              <template #name><strong>{{ targetUser?.displayName }}</strong></template>
+              <template #name
+                ><strong>{{ targetUser?.displayName }}</strong></template
+              >
             </i18n-t>
             <p class="mt-2 text-muted">{{ t('adminUsersList.archiveExplanation') }}</p>
           </div>
@@ -301,7 +305,11 @@ const columns: TableColumn<AdminUserListItem>[] = [
   { accessorKey: 'displayName', header: sortableHeader(t('adminUsersList.columnName')) },
   { accessorKey: 'email', header: t('adminUsersList.columnEmail'), meta: hiddenBelow('md') },
   // Aggregated from the `account` rows, so not a sortable SQL column.
-  { accessorKey: 'authProviders', header: t('adminUsersList.columnAuth'), meta: hiddenBelow('2xl') },
+  {
+    accessorKey: 'authProviders',
+    header: t('adminUsersList.columnAuth'),
+    meta: hiddenBelow('2xl'),
+  },
   {
     accessorKey: 'role',
     header: sortableHeader(t('adminUsersList.columnRole')),
@@ -317,7 +325,11 @@ const columns: TableColumn<AdminUserListItem>[] = [
     header: sortableHeader(t('adminUsersList.columnLastLogin')),
     meta: hiddenBelow('md'),
   },
-  { accessorKey: 'matchCount', header: t('adminUsersList.columnMatches'), meta: hiddenBelow('2xl') },
+  {
+    accessorKey: 'matchCount',
+    header: t('adminUsersList.columnMatches'),
+    meta: hiddenBelow('2xl'),
+  },
   {
     accessorKey: 'tournamentCount',
     header: t('adminUsersList.columnTournaments'),

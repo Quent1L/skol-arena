@@ -10,7 +10,9 @@
           {{ t('playerRankedCareer.title') }}
         </div>
         <div class="text-xs text-gray-500 mt-0.5">
-          {{ detailed ? t('playerRankedCareer.subtitle') : t('playerRankedCareer.subtitleCompact') }}
+          {{
+            detailed ? t('playerRankedCareer.subtitle') : t('playerRankedCareer.subtitleCompact')
+          }}
         </div>
       </div>
       <button
@@ -50,13 +52,17 @@
         </div>
         <div class="rounded-xl bg-gray-800 p-2.5 text-center">
           <div class="text-base font-black">
-            <span class="text-green-400">{{ group.totals.wins }}{{ t('playerRankedCareer.winsShort') }}</span>
+            <span class="text-green-400"
+              >{{ group.totals.wins }}{{ t('playerRankedCareer.winsShort') }}</span
+            >
             <span v-if="group.totals.draws > 0" class="text-gray-600 text-sm mx-0.5">/</span>
             <span v-if="group.totals.draws > 0" class="text-amber-400">
               {{ group.totals.draws }}{{ t('playerRankedCareer.drawsShort') }}
             </span>
             <span class="text-gray-600 text-sm mx-0.5">/</span>
-            <span class="text-red-400">{{ group.totals.losses }}{{ t('playerRankedCareer.lossesShort') }}</span>
+            <span class="text-red-400"
+              >{{ group.totals.losses }}{{ t('playerRankedCareer.lossesShort') }}</span
+            >
           </div>
           <div class="text-xs text-gray-400 mt-0.5">{{ t('playerRankedCareer.wdLabel') }}</div>
         </div>
@@ -90,7 +96,10 @@
                 data-test="career-record"
               />
             </div>
-            <div class="text-[11px] text-gray-500 truncate leading-tight" :title="season.seasonName">
+            <div
+              class="text-[11px] text-gray-500 truncate leading-tight"
+              :title="season.seasonName"
+            >
               {{ season.seasonName }}
             </div>
           </div>

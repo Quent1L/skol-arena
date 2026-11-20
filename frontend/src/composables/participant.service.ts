@@ -62,7 +62,8 @@ export function useParticipantService() {
 
       return true
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('participantService.errors.leaveFailed')
+      const message =
+        err instanceof Error ? err.message : t('participantService.errors.leaveFailed')
       error.value = message
 
       toast.add({
@@ -88,8 +89,7 @@ export function useParticipantService() {
 
       return result
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : t('participantService.errors.listFailed')
+      const message = err instanceof Error ? err.message : t('participantService.errors.listFailed')
       error.value = message
 
       console.error('Erreur lors du chargement des participants:', err)
@@ -254,7 +254,8 @@ export function useParticipantService() {
       await getTournamentParticipants(tournamentId)
       return true
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('participantService.errors.batchAddFailed')
+      const message =
+        err instanceof Error ? err.message : t('participantService.errors.batchAddFailed')
       error.value = message
 
       toast.add({

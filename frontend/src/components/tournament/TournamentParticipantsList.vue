@@ -22,7 +22,10 @@
         class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
       >
         <RouterLink
-          :to="{ path: `/players/${participant.userId}`, query: { tournamentId: props.tournamentId } }"
+          :to="{
+            path: `/players/${participant.userId}`,
+            query: { tournamentId: props.tournamentId },
+          }"
           class="flex items-center gap-3 flex-1 min-w-0 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors no-underline rounded-lg"
         >
           <PlayerAvatar
@@ -36,7 +39,11 @@
               {{ participant.user.displayName }}
             </div>
             <div class="text-sm text-gray-500 dark:text-gray-400">
-              {{ t('tournamentParticipantsList.registeredOn', { date: formatDate(participant.joinedAt) }) }}
+              {{
+                t('tournamentParticipantsList.registeredOn', {
+                  date: formatDate(participant.joinedAt),
+                })
+              }}
             </div>
           </div>
           <div v-if="participant.matchesPlayed > 0" class="text-sm text-gray-500 shrink-0">

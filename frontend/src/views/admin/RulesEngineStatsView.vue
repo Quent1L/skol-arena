@@ -76,7 +76,9 @@
       </template>
       <AdminTable :data="detail.variants" :columns="variantColumns" :page-size="0">
         <template #position-cell="{ row }">
-          <span v-if="row.original.current && row.original.position !== null">#{{ row.original.position + 1 }}</span>
+          <span v-if="row.original.current && row.original.position !== null"
+            >#{{ row.original.position + 1 }}</span
+          >
           <UBadge
             v-else
             color="neutral"

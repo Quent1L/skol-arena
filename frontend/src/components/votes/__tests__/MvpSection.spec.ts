@@ -25,14 +25,19 @@ function mountSection(closesAt: Date, isOpen = true) {
       blockedTargetIds: [],
     },
   } satisfies MatchVotes
-  return mountWithUi(MvpSection, { props: { votes, players, saving: false }, global: { plugins: [i18n] } })
+  return mountWithUi(MvpSection, {
+    props: { votes, players, saving: false },
+    global: { plugins: [i18n] },
+  })
 }
 
 const inMinutes = (m: number) => new Date(Date.now() + m * 60_000 + 30_000)
 
 describe('MvpSection', () => {
   it('names the MVP with the time left to vote', () => {
-    const text = mountSection(inMinutes(28 * 60 + 5)).get('[data-testid="mvp-result"]').text()
+    const text = mountSection(inMinutes(28 * 60 + 5))
+      .get('[data-testid="mvp-result"]')
+      .text()
     expect(text).toContain('🏅 Paul')
     expect(text).toContain('vote ouvert encore 1 j 4 h')
     expect(mountSection(inMinutes(65)).text()).toContain('1 h 5 min')

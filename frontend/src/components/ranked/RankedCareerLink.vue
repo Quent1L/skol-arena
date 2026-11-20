@@ -5,7 +5,9 @@
     data-test="career-link"
   >
     <i class="fa fa-clock-rotate-left text-gray-400" />
-    <span>{{ t(own ? 'playerRankedCareer.viewHistoryOwn' : 'playerRankedCareer.viewHistory') }}</span>
+    <span>{{
+      t(own ? 'playerRankedCareer.viewHistoryOwn' : 'playerRankedCareer.viewHistory')
+    }}</span>
     <i class="fa fa-chevron-right text-xs text-gray-500 ml-auto" />
   </RouterLink>
 </template>

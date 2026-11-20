@@ -7,7 +7,12 @@ import FairPlaySection from '../FairPlaySection.vue'
 import { playersById } from '../vote-players'
 
 const players = playersById([
-  { players: [{ id: 'p1', displayName: 'Paul', shortName: 'PA' }, { id: 'p2', displayName: 'Julie', shortName: 'JU' }] },
+  {
+    players: [
+      { id: 'p1', displayName: 'Paul', shortName: 'PA' },
+      { id: 'p2', displayName: 'Julie', shortName: 'JU' },
+    ],
+  },
 ])
 
 function votes(over: Partial<NonNullable<MatchVotes['fairPlay']>> = {}, isOpen = true) {
@@ -33,13 +38,17 @@ function mountSection(props: { votes: ReturnType<typeof votes> }) {
 describe('FairPlaySection', () => {
   it('casts on tap and withdraws on a second tap', async () => {
     const { wrapper, section } = mountSection({ votes: votes() })
-    await wrapper.get('[data-testid="fair-play-row-p1"] [data-testid="fair-play-up"]').trigger('click')
+    await wrapper
+      .get('[data-testid="fair-play-row-p1"] [data-testid="fair-play-up"]')
+      .trigger('click')
     expect(section().emitted('cast')?.[0]).toEqual(['p1', 'up', []])
 
     const { wrapper: voted, section: votedSection } = mountSection({
       votes: votes({ myVotes: [{ targetId: 'p1', value: 'up', tags: [] }] }),
     })
-    await voted.get('[data-testid="fair-play-row-p1"] [data-testid="fair-play-up"]').trigger('click')
+    await voted
+      .get('[data-testid="fair-play-row-p1"] [data-testid="fair-play-up"]')
+      .trigger('click')
     expect(votedSection().emitted('remove')?.[0]).toEqual(['p1'])
   })
 
@@ -48,7 +57,9 @@ describe('FairPlaySection', () => {
       votes: votes({ myVotes: [{ targetId: 'p1', value: 'down', tags: ['attitude'] }] }),
     })
     const row = wrapper.get('[data-testid="fair-play-row-p1"]')
-    expect(wrapper.find('[data-testid="fair-play-row-p2"] [data-testid="fair-play-tag-other"]').exists()).toBe(false)
+    expect(
+      wrapper.find('[data-testid="fair-play-row-p2"] [data-testid="fair-play-tag-other"]').exists(),
+    ).toBe(false)
     await row.get('[data-testid="fair-play-tag-other"]').trigger('click')
     expect(section().emitted('cast')?.[0]).toEqual(['p1', 'down', ['attitude', 'other']])
     await row.get('[data-testid="fair-play-tag-attitude"]').trigger('click')

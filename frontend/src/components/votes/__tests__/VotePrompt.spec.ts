@@ -35,8 +35,20 @@ const prompt = (over: Partial<VotePromptData> = {}): VotePromptData => ({
   tournamentId: 't1',
   expiresAt: new Date(Date.now() + 60 * 60_000),
   sides: [
-    { position: 1, players: [{ id: 'me', displayName: 'Moi' }, { id: 'julie', displayName: 'Julie' }] },
-    { position: 2, players: [{ id: 'paul', displayName: 'Paul' }, { id: 'marc', displayName: 'Marc' }] },
+    {
+      position: 1,
+      players: [
+        { id: 'me', displayName: 'Moi' },
+        { id: 'julie', displayName: 'Julie' },
+      ],
+    },
+    {
+      position: 2,
+      players: [
+        { id: 'paul', displayName: 'Paul' },
+        { id: 'marc', displayName: 'Marc' },
+      ],
+    },
   ],
   mvpCandidateIds: ['julie', 'paul', 'marc'],
   fairPlayTargetIds: ['paul', 'marc'],
@@ -182,7 +194,12 @@ describe('VotePrompt', () => {
 
   it('drains its progress bar as the countdown runs', async () => {
     const wrapper = await mountPrompt(prompt())
-    const value = () => Number(wrapper.get('[data-testid="vote-prompt-progress"] [role="progressbar"]').attributes('aria-valuenow'))
+    const value = () =>
+      Number(
+        wrapper
+          .get('[data-testid="vote-prompt-progress"] [role="progressbar"]')
+          .attributes('aria-valuenow'),
+      )
     const start = value()
     await vi.advanceTimersByTimeAsync(3500)
     expect(value()).toBeLessThan(start)
@@ -300,7 +317,11 @@ describe('VotePrompt', () => {
   })
 
   it('drops a waiting prompt once the match is too old', async () => {
-    const wrapper = await mountPrompt(prompt({ expiresAt: new Date(Date.now() + 60_000) }), { idleMs: 7000 }, '/')
+    const wrapper = await mountPrompt(
+      prompt({ expiresAt: new Date(Date.now() + 60_000) }),
+      { idleMs: 7000 },
+      '/',
+    )
     await vi.advanceTimersByTimeAsync(90_000)
     await router.push('/tournaments/t1')
     await flushPromises()

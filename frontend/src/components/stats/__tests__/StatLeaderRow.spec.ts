@@ -43,7 +43,10 @@ describe('StatLeaderRow', () => {
     const wrapper = mountRow({ players: [THOMAS, REMI] })
 
     const links = wrapper.findAllComponents(RouterLinkStub)
-    expect(links.map((link) => (link.props('to') as { path: string }).path)).toEqual(['/players/p1', '/players/p2'])
+    expect(links.map((link) => (link.props('to') as { path: string }).path)).toEqual([
+      '/players/p1',
+      '/players/p2',
+    ])
     expect(wrapper.text()).toContain('/')
   })
 

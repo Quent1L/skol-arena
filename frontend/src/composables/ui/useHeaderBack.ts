@@ -1,5 +1,10 @@
 import { computed, onMounted, onUnmounted, shallowRef } from 'vue'
-import { useRoute, useRouter, type RouteLocationNormalizedLoaded, type RouteLocationRaw } from 'vue-router'
+import {
+  useRoute,
+  useRouter,
+  type RouteLocationNormalizedLoaded,
+  type RouteLocationRaw,
+} from 'vue-router'
 
 /**
  * Tournament screens opened from a card on the infos tab rather than from the bottom

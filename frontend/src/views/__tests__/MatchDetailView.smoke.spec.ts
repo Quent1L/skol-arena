@@ -306,13 +306,15 @@ describe('MatchDetailView (finalized result correction)', () => {
     expect(labels).not.toContain(fr.matchDetailView.cancelMatch)
   })
 
-  it("stays open past 48h while the opponent contests, not when the author contests themselves", async () => {
+  it('stays open past 48h while the opponent contests, not when the author contests themselves', async () => {
     const contested = (playerId: string) => {
       const m = selfValidated(60)
       m.confirmations = [{ playerId, isContested: true, isPostFinalization: true } as never]
       return m
     }
-    expect(actionLabels(await mountView(contested('p2')))).toContain(fr.matchDetailView.correctResult)
+    expect(actionLabels(await mountView(contested('p2')))).toContain(
+      fr.matchDetailView.correctResult,
+    )
     expect(actionLabels(await mountView(contested('p1')))).not.toContain(
       fr.matchDetailView.correctResult,
     )

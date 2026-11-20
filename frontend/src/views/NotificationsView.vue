@@ -20,9 +20,18 @@ onMounted(() => {
 async function handleMarkAllAsRead() {
   try {
     await markAllAsRead()
-    toast.add({ severity: 'success', summary: t('notificationsView.markAllReadSuccess'), life: 2000 })
+    toast.add({
+      severity: 'success',
+      summary: t('notificationsView.markAllReadSuccess'),
+      life: 2000,
+    })
   } catch {
-    toast.add({ severity: 'error', summary: t('notificationsView.errorSummary'), detail: t('notificationsView.markAllReadError'), life: 3000 })
+    toast.add({
+      severity: 'error',
+      summary: t('notificationsView.errorSummary'),
+      detail: t('notificationsView.markAllReadError'),
+      life: 3000,
+    })
   }
 }
 
@@ -36,7 +45,12 @@ async function handleDeleteAll() {
       life: kept > 0 ? 3500 : 2000,
     })
   } catch {
-    toast.add({ severity: 'error', summary: t('notificationsView.errorSummary'), detail: t('notificationsView.deleteAllError'), life: 3000 })
+    toast.add({
+      severity: 'error',
+      summary: t('notificationsView.errorSummary'),
+      detail: t('notificationsView.deleteAllError'),
+      life: 3000,
+    })
   }
 }
 </script>

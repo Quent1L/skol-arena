@@ -2,7 +2,10 @@
   <div>
     <!-- Loading. A background refresh reuses this same flag, so the guard keeps the
          stats already on screen instead of blanking them mid-read. -->
-    <div v-if="store.tournamentStatsLoading && !store.tournamentStats" class="flex justify-center py-16">
+    <div
+      v-if="store.tournamentStatsLoading && !store.tournamentStats"
+      class="flex justify-center py-16"
+    >
       <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin text-muted" />
     </div>
 
@@ -166,7 +169,13 @@
         <!-- Best 1v1 player; with fixed teams, the same board ranks the teams -->
         <TopPlayersCard
           v-if="bestSoloItems.length"
-          :title="t(teamBoards ? 'tournamentStatsTab.bestTeams.title' : 'tournamentStatsTab.bestSolo.title')"
+          :title="
+            t(
+              teamBoards
+                ? 'tournamentStatsTab.bestTeams.title'
+                : 'tournamentStatsTab.bestSolo.title',
+            )
+          "
           :icon="teamBoards ? 'fa fa-users' : 'fa fa-user'"
           icon-class="text-green-500"
           :tooltip="weightedTooltip(teamBoards ? 'bestTeams' : 'bestSolo')"
@@ -248,16 +257,22 @@ const store = useTournamentDetailStore()
 
 // Fixed teams: every board ranks teams, whose ids lead to no player page.
 const teamBoards = computed(() => store.tournamentStats?.subject === 'team')
-provide(STAT_ROWS_ARE_PLAYERS, computed(() => !teamBoards.value))
+provide(
+  STAT_ROWS_ARE_PLAYERS,
+  computed(() => !teamBoards.value),
+)
 
 const votesEnabled = computed(
-  () => !!store.tournament?.voteConfig?.fairPlayEnabled || !!store.tournament?.voteConfig?.mvpEnabled,
+  () =>
+    !!store.tournament?.voteConfig?.fairPlayEnabled || !!store.tournament?.voteConfig?.mvpEnabled,
 )
 const { t } = useI18n()
 
 // Shared by the "This week" card (players of the week) and the vote rankings.
 const voteStats = ref<TournamentVoteStats | null>(null)
-const voteStatsTournamentId = computed(() => (votesEnabled.value ? store.tournament?.id : undefined))
+const voteStatsTournamentId = computed(() =>
+  votesEnabled.value ? store.tournament?.id : undefined,
+)
 let voteStatsRequest = 0
 
 async function loadVoteStats() {
