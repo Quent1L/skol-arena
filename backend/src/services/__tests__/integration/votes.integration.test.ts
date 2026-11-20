@@ -422,6 +422,18 @@ describe("Fair-play & MVP votes (integration)", () => {
       expect(await voteService.getPendingPrompt(alice)).toBeNull();
     });
 
+    it("offers only the latest played match, skipping a cancelled one", async () => {
+      // A player of their own: matches of the other tests would be more recent.
+      const eve = await createUser("Eve");
+      await match2v2(0.5, [carol, eve]);
+      const latest = await match2v2(0.25, [carol, eve]);
+      expect((await voteService.getPendingPrompt(eve))?.matchId).toBe(latest);
+
+      const cancelled = await match2v2(0.1, [carol, eve]);
+      await testDb.update(matches).set({ status: "cancelled" }).where(eq(matches.id, cancelled));
+      expect((await voteService.getPendingPrompt(eve))?.matchId).toBe(latest);
+    });
+
     it("snoozes prompts for a week after three ignored in a row", async () => {
       for (let i = 0; i < 3; i++) {
         const id = await match2v2();

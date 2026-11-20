@@ -131,6 +131,8 @@ describe('VotePrompt', () => {
     await flushPromises()
     expect(api.castFairPlayTeamUp).toHaveBeenCalledWith('m1')
     expect(wrapper.text()).toContain('Merci ✓')
+    // Nothing left to close: the thanks step goes away on its own.
+    expect(wrapper.find('[data-testid="vote-prompt-close"]').exists()).toBe(false)
     await vi.advanceTimersByTimeAsync(20)
     expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
   })
@@ -148,7 +150,7 @@ describe('VotePrompt', () => {
   it('links to the match page for 👎 and tags, and closes', async () => {
     const wrapper = await mountPrompt(prompt({ mvpCandidateIds: [] }))
     const more = wrapper.get('[data-testid="vote-prompt-more"]')
-    expect(more.attributes('href')).toBe('/matches/m1')
+    expect(more.attributes('href')).toBe('/matches/m1#fair-play')
     await more.trigger('click')
     expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
   })
@@ -327,6 +329,45 @@ describe('VotePrompt', () => {
     await flushPromises()
     expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
     expect(useVotePrompt().current.value).toBeNull()
+  })
+
+  it('swaps a waiting prompt for a newer match, so only the latest one is offered', async () => {
+    const wrapper = await mountPrompt(prompt(), { idleMs: 7000 }, '/')
+    api.pendingPrompt.mockResolvedValue(prompt({ matchId: 'm2', tournamentId: 't2' }))
+    ws.handlers.get('new_notification')?.({ type: 'MATCH_CREATED' })
+    await vi.advanceTimersByTimeAsync(2000)
+    await flushPromises()
+    expect(useVotePrompt().current.value?.prompt.matchId).toBe('m2')
+
+    await router.push('/tournaments/t1')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(false)
+    await router.push('/tournaments/t2')
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(1)
+    await flushPromises()
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(true)
+    expect(api.recordPrompt).toHaveBeenCalledWith('m2', 'expired')
+    expect(api.recordPrompt).not.toHaveBeenCalledWith('m1', expect.anything())
+  })
+
+  it('drops a waiting prompt whose match is no longer the latest one', async () => {
+    await mountPrompt(prompt(), { idleMs: 7000 }, '/')
+    // The latest match is now one the player cannot be asked about (e.g. entered it).
+    api.pendingPrompt.mockResolvedValue(null)
+    document.dispatchEvent(new Event('visibilitychange'))
+    await flushPromises()
+    expect(useVotePrompt().current.value).toBeNull()
+  })
+
+  it('keeps the prompt on screen when a newer match lands', async () => {
+    const wrapper = await mountPrompt(prompt())
+    api.pendingPrompt.mockResolvedValue(prompt({ matchId: 'm2' }))
+    ws.handlers.get('new_notification')?.({ type: 'MATCH_CREATED' })
+    await vi.advanceTimersByTimeAsync(2000)
+    await flushPromises()
+    expect(useVotePrompt().current.value?.prompt.matchId).toBe('m1')
+    expect(wrapper.find('[data-testid="vote-prompt"]').exists()).toBe(true)
   })
 
   it('sits above a mobile bottom nav so the player can keep navigating', async () => {

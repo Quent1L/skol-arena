@@ -32,13 +32,21 @@ async function offerForMatch(matchId: string): Promise<boolean> {
  * reveal, recap…) to end rather than compete with it.
  */
 async function offerPending(): Promise<void> {
-  if (current.value) return
+  if (current.value && !isWaiting()) return
   try {
     const prompt = await votesApi.pendingPrompt()
-    if (prompt && !current.value) current.value = { prompt, source: 'open' }
+    if (current.value && !isWaiting()) return
+    // Only ever the latest match: a newer one replaces a prompt still waiting for its
+    // tournament page, and a waiting one that no longer is the latest is dropped.
+    current.value = prompt ? { prompt, source: 'open' } : null
   } catch {
     // Not shown this time.
   }
+}
+
+/** Loaded on opening the app but not on screen yet, so nothing recorded server-side. */
+function isWaiting(): boolean {
+  return current.value?.source === 'open' && !shownRecord
 }
 
 /**

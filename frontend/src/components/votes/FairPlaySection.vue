@@ -1,5 +1,6 @@
 <template>
-  <SurfacePanel data-testid="fair-play-section">
+  <!-- Anchor of the vote card's "More options"; clear of the sticky header. -->
+  <SurfacePanel id="fair-play" class="scroll-mt-24" data-testid="fair-play-section">
     <template #header>
       <div class="flex items-center justify-between gap-3">
         <SectionHeader icon="fa fa-handshake" :title="t('matchVotes.fairPlay.title')" />

@@ -26,7 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { MatchVotes } from '@skol-arena/shared/types/index'
 import { useMatchVotes } from '@/composables/votes/votes.service'
@@ -76,6 +77,17 @@ type WithFairPlay = MatchVotes & { fairPlay: NonNullable<MatchVotes['fairPlay']>
 type WithMvp = MatchVotes & { mvp: NonNullable<MatchVotes['mvp']> }
 const fairPlayVotes = computed(() => (votes.value?.fairPlay ? (votes.value as WithFairPlay) : null))
 const mvpVotes = computed(() => (votes.value?.mvp ? (votes.value as WithMvp) : null))
+
+// "More options" on the vote card links to `#fair-play`: the panel only exists once the
+// votes are loaded, after the router's own scroll, so bring it into view here, once.
+const route = useRoute()
+let scrolledToFairPlay = false
+watch(fairPlayVotes, async (fairPlay) => {
+  if (!fairPlay || scrolledToFairPlay || route.hash !== '#fair-play') return
+  scrolledToFairPlay = true
+  await nextTick()
+  document.getElementById('fair-play')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+})
 // The page flags the MVP on the scoreboard too, live with every vote.
 watch(
   () => votes.value?.mvp?.mvpPlayerIds ?? [],

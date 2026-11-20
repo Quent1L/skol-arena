@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, ne, notInArray, sql } from "drizzle-orm";
 import { db } from "../config/database";
 import {
   appUsers,
@@ -258,7 +258,8 @@ export class VoteRepository {
       .from(matches)
       .innerJoin(matchSides, eq(matchSides.matchId, matches.id))
       .innerJoin(tournamentEntryPlayers, eq(tournamentEntryPlayers.entryId, matchSides.entryId))
-      .where(and(eq(tournamentEntryPlayers.playerId, userId), ne(matches.status, "scheduled")))
+      // A cancelled match was never played: it must not hide the real latest one.
+      .where(and(eq(tournamentEntryPlayers.playerId, userId), notInArray(matches.status, ["scheduled", "cancelled"])))
       .orderBy(desc(matches.playedAt), desc(matches.createdAt))
       .limit(1);
     return row?.id ?? null;

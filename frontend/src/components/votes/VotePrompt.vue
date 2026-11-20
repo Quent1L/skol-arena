@@ -1,19 +1,24 @@
 <template>
   <Transition
-    enter-active-class="transition duration-200 ease-out"
-    enter-from-class="translate-y-4 opacity-0"
-    leave-active-class="transition duration-150 ease-in"
-    leave-to-class="translate-y-4 opacity-0"
+    enter-active-class="transition duration-[420ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-opacity motion-reduce:duration-150"
+    enter-from-class="translate-y-6 scale-95 opacity-0 blur-sm motion-reduce:translate-y-0 motion-reduce:scale-100 motion-reduce:blur-none"
+    leave-active-class="transition duration-200 ease-in motion-reduce:transition-opacity"
+    leave-to-class="translate-y-2 scale-[0.97] opacity-0 motion-reduce:translate-y-0 motion-reduce:scale-100"
   >
-    <!-- Same structure and gauge as a Nuxt UI toast, but a violet accent ring sets it
-         apart from the neutral system toasts — it asks something, it does not inform.
+    <!-- Same surface as the app's cards (slate, no visible border); the violet icon chip
+         sets it apart from the neutral system toasts — it asks, it does not inform.
          Bottom-right and able to hold buttons: the app toaster is top-right and
          useAppToast drops non-error toasts on phones. -->
     <div
       v-if="visible && current"
       ref="cardRef"
-      class="vote-prompt fixed inset-x-4 touch-none z-50 flex gap-2.5 overflow-hidden rounded-lg bg-default p-4 shadow-lg ring ring-primary/50 sm:left-auto sm:right-4 sm:w-96"
-      :class="{ 'above-nav': hasBottomNav }"
+      class="vote-prompt fixed inset-x-4 touch-none z-50 flex origin-bottom gap-3 overflow-hidden rounded-xl border border-gray-800 bg-gray-800 p-4 shadow-xl shadow-black/40 sm:left-auto sm:right-4 sm:w-96 sm:origin-bottom-right"
+      :class="{
+        'above-nav': hasBottomNav,
+        // Room for the countdown bar; the one-line thanks sits level with the icon.
+        'pb-5': step !== 'thanks',
+        'items-center': step === 'thanks',
+      }"
       :style="swipeStyle"
       role="dialog"
       :aria-label="t('votePrompt.label')"
@@ -23,16 +28,18 @@
       @mouseenter="hovered = true"
       @mouseleave="hovered = false"
     >
-      <UIcon
-        :name="step === 'thanks' ? 'i-fa7-solid:circle-check' : 'i-fa7-solid:check-to-slot'"
-        class="size-5 shrink-0 text-primary"
-      />
+      <div class="grid size-9 shrink-0 place-items-center rounded-lg bg-violet-900/30">
+        <UIcon
+          :name="step === 'thanks' ? 'i-fa7-solid:circle-check' : 'i-fa7-solid:check-to-slot'"
+          class="size-4 text-violet-400"
+        />
+      </div>
 
       <div class="flex w-0 flex-1 flex-col gap-2">
         <!-- Right after entering a match, this card replaces the "match saved" toast. -->
         <p
           v-if="current.source === 'entry' && step !== 'thanks'"
-          class="flex items-center gap-1.5 text-sm text-muted"
+          class="flex items-center gap-1.5 pr-6 text-sm text-muted"
           data-testid="vote-prompt-saved"
         >
           <UIcon name="i-fa7-solid:check" class="size-3.5 text-success" />
@@ -40,7 +47,7 @@
         </p>
 
         <template v-if="step === 'mvp'">
-          <p class="text-sm font-medium text-highlighted">{{ t('votePrompt.mvpQuestion') }}</p>
+          <p class="pr-6 text-sm font-medium text-highlighted">{{ t('votePrompt.mvpQuestion') }}</p>
           <div class="flex flex-wrap items-center gap-1.5">
             <UButton
               v-for="id in prompt.mvpCandidateIds"
@@ -69,8 +76,9 @@
         </template>
 
         <template v-else-if="step === 'fairPlay'">
-          <p class="text-sm font-medium text-highlighted">{{ fairPlayQuestion }}</p>
-          <div class="flex flex-wrap items-center gap-1.5">
+          <p class="pr-6 text-sm font-medium text-highlighted">{{ fairPlayQuestion }}</p>
+          <!-- One line: the 👍 and the way to the full vote are the same choice. -->
+          <div class="flex items-center gap-1.5">
             <UButton
               icon="i-fa7-solid:thumbs-up"
               :label="t('matchVotes.fairPlay.up')"
@@ -85,7 +93,8 @@
               variant="link"
               color="neutral"
               size="sm"
-              :to="`/matches/${prompt.matchId}`"
+              class="shrink-0 whitespace-nowrap"
+              :to="`/matches/${prompt.matchId}#fair-play`"
               data-testid="vote-prompt-more"
               @click="end('skipped')"
             />
@@ -97,12 +106,14 @@
         }}</output>
       </div>
 
+      <!-- The thanks step closes on its own within a second or two. -->
       <UButton
+        v-if="step !== 'thanks'"
         icon="i-fa7-solid:xmark"
         color="neutral"
         variant="link"
         size="md"
-        class="-mr-2 -mt-2 self-start"
+        class="absolute right-2 top-2"
         :aria-label="t('common.close')"
         data-testid="vote-prompt-close"
         @click="end('dismissed')"
@@ -111,9 +122,9 @@
       <UProgress
         v-if="step !== 'thanks' && !engaged"
         :model-value="(remaining / duration) * 100"
-        size="sm"
-        class="absolute inset-x-0 bottom-0 motion-reduce:opacity-40"
-        :ui="{ indicator: 'motion-reduce:transition-none' }"
+        size="2xs"
+        class="absolute inset-x-4 bottom-1.5 motion-reduce:opacity-40"
+        :ui="{ base: 'bg-gray-700/60', indicator: 'motion-reduce:transition-none' }"
         data-testid="vote-prompt-progress"
       />
     </div>
