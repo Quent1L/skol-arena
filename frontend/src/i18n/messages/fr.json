@@ -396,7 +396,8 @@
     "randomOnly": "Composer au hasard",
     "teamA": "Équipe 1",
     "teamB": "Équipe 2",
-    "title": "Composition"
+    "title": "Composition",
+    "sideSizeError": "{side} : {count} joueur(s), il en faut entre {min} et {max}"
   },
   "conditionCount": {
     "comparison": "Ce nombre doit être",
@@ -1164,7 +1165,15 @@
     "previous": "Précédent",
     "searchPlaceholder": "Rechercher un joueur...",
     "selectedParticipants": "Participants sélectionnés",
-    "title": "Participants"
+    "title": "Participants",
+    "formatHint": {
+      "exact": "Format : {format} · {total} joueurs",
+      "range": "Format : de {format} · {min} à {max} joueurs"
+    },
+    "tooMany": {
+      "exact": "Ce tournoi se joue en {format} : il faut exactement {total} joueurs (sélection actuelle : {count})",
+      "range": "Ce tournoi se joue de {format} : {max} joueurs maximum (sélection actuelle : {count})"
+    }
   },
   "playerTournamentProfile": {
     "myTeam": "Mon équipe · {name}",
@@ -3040,5 +3049,9 @@
     "log": "Journal des consultations",
     "noLog": "Personne n'a encore consulté de votant.",
     "logEntry": "{admin} a consulté les votants de {target}"
+  },
+  "matchFormat": {
+    "exact": "{size} contre {size}",
+    "range": "{min} contre {min} à {max} contre {max}"
   }
 }

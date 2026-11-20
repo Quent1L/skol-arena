@@ -588,6 +588,11 @@ describe("Static Team Rule Validation", () => {
     } catch (error) {
       expect(error).toBeInstanceOf(ConflictError);
       expect((error as ConflictError).code).toBe(ErrorCode.MAX_OPPONENT_MATCHES_EXCEEDED);
+      // Fixed teams are named, not listed player by player.
+      expect((error as ConflictError).details).toMatchObject({
+        teamName: "Team Alpha",
+        opponentTeamName: "Team Beta",
+      });
     }
   });
 

@@ -208,8 +208,10 @@ export class MatchInputValidator {
     const min = tournament.minTeamSize * 2;
     const max = tournament.maxTeamSize * 2;
     if (allPlayerIds.length < min || allPlayerIds.length > max) {
+      // A fixed format (1v1) reads better as "exactly 2" than "between 2 and 2".
+      const key = min === max ? `${ErrorCode.MATCH_PLAYER_COUNT_INVALID}_EXACT` : ErrorCode.MATCH_PLAYER_COUNT_INVALID;
       errors.push(
-        t(`errors.${ErrorCode.MATCH_PLAYER_COUNT_INVALID}`, {
+        t(`errors.${key}`, {
           min,
           max,
           minTeamSize: tournament.minTeamSize,
@@ -242,7 +244,7 @@ export class MatchInputValidator {
     }
 
     if (teamIds.length >= 2 && new Set(teamIds).size !== teamIds.length) {
-      errors.push("Les équipes ne peuvent pas être identiques");
+      errors.push(t(`errors.${ErrorCode.MATCH_DUPLICATE_TEAMS}`));
     }
 
     if (teamIds.length >= 2) {
@@ -256,12 +258,20 @@ export class MatchInputValidator {
     maxTeamSize: number,
     errors: string[],
   ): Promise<void> {
-    const sizes = await Promise.all(teamIds.map((id) => teamRepository.getMemberCount(id)));
-    sizes.forEach((size, i) => {
+    const teams = await Promise.all(teamIds.map((id) => teamRepository.getById(id)));
+    for (const team of teams) {
+      const size = team?.members.length ?? 0;
       if (size < minTeamSize || size > maxTeamSize) {
-        errors.push(`L'équipe ${i + 1} a ${size} membre(s), attendu entre ${minTeamSize} et ${maxTeamSize}`);
+        errors.push(
+          t("errors.MATCH_TEAM_MEMBER_COUNT_INVALID", {
+            teamName: team?.name ?? "",
+            size,
+            min: minTeamSize,
+            max: maxTeamSize,
+          }),
+        );
       }
-    });
+    }
   }
 
   private async validateFlexSidesForValidation(

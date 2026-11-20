@@ -1,6 +1,11 @@
 <template>
   <div class="flex flex-col gap-6 pt-4">
-    <h3 class="text-base font-semibold">{{ t('participantsStep.title') }}</h3>
+    <div>
+      <h3 class="text-base font-semibold">{{ t('participantsStep.title') }}</h3>
+      <p v-if="formatHint" class="mt-1 text-sm text-muted" data-testid="format-hint">
+        {{ formatHint }}
+      </p>
+    </div>
 
     <div>
       <!-- Desktop: AutoComplete -->
@@ -53,6 +58,14 @@
       </div>
     </div>
 
+    <UAlert
+      v-if="tooManyError"
+      color="error"
+      variant="subtle"
+      :title="tooManyError"
+      data-testid="too-many-players"
+    />
+
     <div v-if="errors.length > 0" class="flex flex-col gap-2">
       <UAlert v-for="err in errors" :key="err" color="error" variant="subtle" :title="err" />
     </div>
@@ -76,7 +89,7 @@
         :trailing-icon="props.nextLabel ? undefined : 'i-fa7-solid:arrow-right'"
         size="lg"
         :loading="validating"
-        :disabled="allPlayerIdsModel.length < 2 || errors.length > 0"
+        :disabled="allPlayerIdsModel.length < 2 || errors.length > 0 || !!tooManyError"
         @click="onNext"
       />
     </div>
@@ -113,6 +126,9 @@ interface Props {
   hideNavigation?: boolean
   nextLabel?: string
   players?: Player[]
+  /** Players per side allowed by the tournament; absent = no live check. */
+  minTeamSize?: number
+  maxTeamSize?: number
 }
 
 interface Emits {
@@ -187,6 +203,40 @@ function getPlayerName(id: string): string {
   return allPlayers.value.find((p) => p.id === id)?.displayName ?? id
 }
 
+const fixedFormat = computed(() => props.minTeamSize === props.maxTeamSize)
+const formatLabel = computed(() =>
+  fixedFormat.value
+    ? t('matchFormat.exact', { size: props.minTeamSize })
+    : t('matchFormat.range', { min: props.minTeamSize, max: props.maxTeamSize }),
+)
+
+/** "Format: 1 vs 1 · 2 players", told upfront rather than after Next. */
+const formatHint = computed(() => {
+  if (!props.minTeamSize || !props.maxTeamSize) return null
+  return fixedFormat.value
+    ? t('participantsStep.formatHint.exact', {
+        format: formatLabel.value,
+        total: props.minTeamSize * 2,
+      })
+    : t('participantsStep.formatHint.range', {
+        format: formatLabel.value,
+        min: props.minTeamSize * 2,
+        max: props.maxTeamSize * 2,
+      })
+})
+
+/** Live: too many players is known as soon as one too many is picked. */
+const tooManyError = computed(() => {
+  if (!props.minTeamSize || !props.maxTeamSize) return null
+  const count = allPlayerIdsModel.value.length
+  const max = props.maxTeamSize * 2
+  if (count <= max) return null
+  const key = fixedFormat.value
+    ? 'participantsStep.tooMany.exact'
+    : 'participantsStep.tooMany.range'
+  return t(key, { format: formatLabel.value, total: max, max, count })
+})
+
 async function runValidation() {
   validating.value = true
   try {
@@ -210,6 +260,7 @@ watch([allPlayerIdsModel, () => props.playedAt], () => {
 })
 
 async function onNext() {
+  if (tooManyError.value) return
   const result = await runValidation()
   if (!result?.valid) return
   emit('next')

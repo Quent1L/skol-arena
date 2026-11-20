@@ -52,11 +52,13 @@ export class MatchRuleValidator {
     const excludeMatchId = input.matchId;
 
     const sidePlayerIds: string[][] = [];
+    const teamNames: string[] = [];
     for (const side of sides) {
       if (!side.teamId) continue;
       const team = await teamRepository.getById(side.teamId);
       if (team && team.members.length > 0) {
         sidePlayerIds.push(team.members.map((m) => m.userId));
+        teamNames.push(team.name);
       }
     }
 
@@ -72,6 +74,7 @@ export class MatchRuleValidator {
       sidePlayerIds[1],
       tournament,
       excludeMatchId,
+      [teamNames[0], teamNames[1]],
     );
   }
 
@@ -135,10 +138,9 @@ export class MatchRuleValidator {
     const count = await matchRepository.countMatchesForTeam(tournament.id, teamPlayerIds, excludeMatchId);
 
     if (count >= tournament.championshipConfig.maxTimesWithSamePartner) {
-      const names = await Promise.all(teamPlayerIds.map((id) => this.getPlayerName(id)));
       throw new ConflictError(ErrorCode.MAX_PARTNER_MATCHES_EXCEEDED, {
         max: tournament.championshipConfig.maxTimesWithSamePartner,
-        teamName: names.join(", "),
+        teamName: await this.joinPlayerNames(teamPlayerIds),
       });
     }
   }
@@ -149,20 +151,25 @@ export class MatchRuleValidator {
     playerIdsB: string[],
     tournament: CappedTournament,
     excludeMatchId?: string,
+    /** Fixed teams have a name; flex sides are named after their players. */
+    teamNames?: [string, string],
   ): Promise<void> {
     const count = await matchRepository.countMatchesTeamsVsTeam(tournamentId, playerIdsA, playerIdsB, excludeMatchId);
 
     if (count >= tournament.championshipConfig.maxTimesWithSameOpponent) {
-      const [namesA, namesB] = await Promise.all([
-        Promise.all(playerIdsA.map((id) => this.getPlayerName(id))),
-        Promise.all(playerIdsB.map((id) => this.getPlayerName(id))),
-      ]);
+      const [teamName, opponentTeamName] =
+        teamNames ?? (await Promise.all([this.joinPlayerNames(playerIdsA), this.joinPlayerNames(playerIdsB)]));
       throw new ConflictError(ErrorCode.MAX_OPPONENT_MATCHES_EXCEEDED, {
         max: tournament.championshipConfig.maxTimesWithSameOpponent,
-        teamName: namesA.join(", "),
-        opponentTeamName: namesB.join(", "),
+        teamName,
+        opponentTeamName,
       });
     }
+  }
+
+  private async joinPlayerNames(playerIds: string[]): Promise<string> {
+    const names = await Promise.all(playerIds.map((id) => this.getPlayerName(id)));
+    return names.join(", ");
   }
 
   private async getPlayerName(playerId: string): Promise<string> {

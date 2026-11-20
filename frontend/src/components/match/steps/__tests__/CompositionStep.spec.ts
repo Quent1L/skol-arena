@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
+import { nextTick } from 'vue'
 import type { MatchSideInput } from '@skol-arena/shared/types/index'
 import { mountWithUi } from '@/test-support/mount'
 import CompositionStep from '../CompositionStep.vue'
@@ -122,5 +123,20 @@ describe('CompositionStep settled balance', () => {
     await wrapper.find('[data-testid="compose-balanced"]').trigger('click')
 
     expect(wrapper.find(settled).exists()).toBe(false)
+  })
+})
+
+describe('CompositionStep side sizes', () => {
+  it('flags each side above the per-side maximum', async () => {
+    // Four players split 2/2 in a strictly 1v1 tournament.
+    const wrapper = mountStep({ minTeamSize: 1, maxTeamSize: 1 })
+    await nextTick()
+    expect(wrapper.findAll('[data-testid="side-size-error"]')).toHaveLength(2)
+  })
+
+  it('says nothing when both sides fit', async () => {
+    const wrapper = mountStep({ minTeamSize: 1, maxTeamSize: 2 })
+    await nextTick()
+    expect(wrapper.find('[data-testid="side-size-error"]').exists()).toBe(false)
   })
 })

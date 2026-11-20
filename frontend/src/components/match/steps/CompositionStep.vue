@@ -119,6 +119,17 @@
       <UAlert color="error" variant="subtle" :title="t('compositionStep.emptySideError')" />
     </div>
 
+    <div v-if="sideSizeErrors.length > 0" class="flex flex-col gap-2">
+      <UAlert
+        v-for="err in sideSizeErrors"
+        :key="err"
+        color="error"
+        variant="subtle"
+        :title="err"
+        data-testid="side-size-error"
+      />
+    </div>
+
     <div v-if="errors.length > 0" class="flex flex-col gap-2">
       <UAlert v-for="err in errors" :key="err" color="error" variant="subtle" :title="err" />
     </div>
@@ -138,7 +149,7 @@
         :trailing-icon="props.nextLabel ? undefined : 'i-fa7-solid:arrow-right'"
         size="lg"
         :loading="validating"
-        :disabled="emptySide || errors.length > 0"
+        :disabled="emptySide || errors.length > 0 || sideSizeErrors.length > 0"
         @click="onNext"
       />
     </div>
@@ -179,6 +190,9 @@ interface Props {
   allowDraw?: boolean
   /** Offers the MMR-balanced line-up next to the random one. */
   isRanked?: boolean
+  /** Players per side allowed by the tournament; absent = no live check. */
+  minTeamSize?: number
+  maxTeamSize?: number
 }
 
 interface Emits {
@@ -227,6 +241,18 @@ function syncSidesToModel() {
 }
 
 const emptySide = computed(() => playersA.value.length === 0 || playersB.value.length === 0)
+
+/** A side outside the tournament's per-side limits, flagged while dragging. */
+const sideSizeErrors = computed(() => {
+  const { minTeamSize: min, maxTeamSize: max } = props
+  if (!min || !max || emptySide.value) return []
+  return [
+    { side: t('compositionStep.teamA'), count: playersA.value.length },
+    { side: t('compositionStep.teamB'), count: playersB.value.length },
+  ]
+    .filter(({ count }) => count < min || count > max)
+    .map(({ side, count }) => t('compositionStep.sideSizeError', { side, count, min, max }))
+})
 
 // `sidesModel` is kept in sync by the watchEffect below, so the balance follows
 // every drag & drop without a watcher or a request of its own.

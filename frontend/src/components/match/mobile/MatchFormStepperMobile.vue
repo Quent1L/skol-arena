@@ -63,6 +63,8 @@
           :played-at="formState.playedAt"
           :match-id="matchId"
           :players="participants"
+          :min-team-size="tournament?.minTeamSize"
+          :max-team-size="tournament?.maxTeamSize"
           hide-navigation
           @previous="activeStep = 'when'"
           @next="goToStepFromParticipants"
@@ -96,6 +98,8 @@
           :standings="standings"
           :allow-draw="tournament?.allowDraw ?? false"
           :is-ranked="tournament?.mode === 'ranked'"
+          :min-team-size="tournament?.minTeamSize"
+          :max-team-size="tournament?.maxTeamSize"
           @previous="activeStep = 'participants'"
           @next="goToStepAfterComposition"
         />
@@ -299,8 +303,10 @@ const canProceedStep = computed(() => {
         !!formState.value.playedAt &&
         !dateRangeIssue(formState.value.playedAt, tournamentMinDate.value, tournamentMaxDate.value)
       )
-    case 'participants':
-      return formState.value.allPlayerIds.length >= 2
+    case 'participants': {
+      const count = formState.value.allPlayerIds.length
+      return count >= 2 && count <= (tournament.value?.maxTeamSize ?? Infinity) * 2
+    }
     case 'teams':
       return formState.value.sides.every((s) => !!s.teamId)
     case 'composition':

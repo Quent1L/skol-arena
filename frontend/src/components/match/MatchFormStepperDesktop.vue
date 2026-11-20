@@ -61,6 +61,8 @@
             :played-at="formState.playedAt"
             :match-id="props.matchId"
             :players="participants"
+            :min-team-size="tournament?.minTeamSize"
+            :max-team-size="tournament?.maxTeamSize"
             :next-label="
               isFutureDate && isLastStepBeforeResult
                 ? t('matchFormStepperMobile.scheduleMatch')
@@ -101,6 +103,8 @@
             :standings="standings"
             :allow-draw="tournament?.allowDraw ?? false"
             :is-ranked="tournament?.mode === 'ranked'"
+            :min-team-size="tournament?.minTeamSize"
+            :max-team-size="tournament?.maxTeamSize"
             @previous="activeStep = 'participants'"
             @next="goToStepAfterComposition"
           />

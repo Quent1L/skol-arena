@@ -168,3 +168,36 @@ describe('ParticipantsStep — validation', () => {
     expect(vm.validating).toBe(false)
   })
 })
+
+describe('ParticipantsStep — tournament format', () => {
+  it('states the format upfront', () => {
+    const { wrapper } = mountStep({ players: [], minTeamSize: 1, maxTeamSize: 1 })
+    expect(wrapper.find('[data-testid="format-hint"]').text()).toBe(
+      'participantsStep.formatHint.exact',
+    )
+  })
+
+  it('flags one player too many at once and blocks Next without asking the server', async () => {
+    const { wrapper, vm } = mountStep({
+      players: [],
+      allPlayerIds: ['a', 'b', 'c'],
+      minTeamSize: 1,
+      maxTeamSize: 1,
+    })
+    expect(wrapper.find('[data-testid="too-many-players"]').text()).toContain(
+      'participantsStep.tooMany.exact#3',
+    )
+    await vm.onNext()
+    expect(validateParticipants).not.toHaveBeenCalled()
+  })
+
+  it('accepts a selection within a range of formats', () => {
+    const { wrapper } = mountStep({
+      players: [],
+      allPlayerIds: ['a', 'b', 'c'],
+      minTeamSize: 1,
+      maxTeamSize: 2,
+    })
+    expect(wrapper.find('[data-testid="too-many-players"]').exists()).toBe(false)
+  })
+})

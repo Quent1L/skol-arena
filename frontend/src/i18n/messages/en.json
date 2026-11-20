@@ -396,7 +396,8 @@
     "randomOnly": "Shuffle teams",
     "teamA": "Team A",
     "teamB": "Team B",
-    "title": "Composition"
+    "title": "Composition",
+    "sideSizeError": "{side}: {count} player(s), it needs between {min} and {max}"
   },
   "conditionCount": {
     "comparison": "This number must be",
@@ -1164,7 +1165,15 @@
     "previous": "Previous",
     "searchPlaceholder": "Search a player...",
     "selectedParticipants": "Selected participants",
-    "title": "Participants"
+    "title": "Participants",
+    "formatHint": {
+      "exact": "Format: {format} · {total} players",
+      "range": "Format: {format} · {min} to {max} players"
+    },
+    "tooMany": {
+      "exact": "This tournament is played {format}: select exactly {total} players ({count} selected)",
+      "range": "This tournament is played from {format}: {max} players at most ({count} selected)"
+    }
   },
   "playerTournamentProfile": {
     "myTeam": "My team · {name}",
@@ -3040,5 +3049,9 @@
     "log": "Reveal log",
     "noLog": "Nobody revealed any voter yet.",
     "logEntry": "{admin} revealed the voters of {target}"
+  },
+  "matchFormat": {
+    "exact": "{size} vs {size}",
+    "range": "{min} vs {min} to {max} vs {max}"
   }
 }
