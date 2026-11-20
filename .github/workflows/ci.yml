@@ -27,6 +27,9 @@ jobs:
 
       - run: bun run type-check
 
+      # vue-tsc accepts templates the Vue compiler rejects: only the real build catches them.
+      - run: bun run --cwd frontend build-only
+
       # The lint scripts pass --fix: anything they rewrote was not committed clean.
       - run: bun run lint
       - run: git diff --exit-code
