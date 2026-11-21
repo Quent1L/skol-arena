@@ -42,4 +42,20 @@ describe('VoteStatsCards', () => {
     await button.trigger('click')
     expect(rowCount(wrapper, card)).toBe(10)
   })
+
+  it('sizes the fair-play bars on rate × √votes, not the raw rate', () => {
+    const fairPlayRanking = [
+      { player: player(1), rate: 0.9, votes: 20, rank: 1 }, // 4.02
+      { player: player(2), rate: 1, votes: 5, rank: 2 }, // 2.24
+    ]
+    const wrapper = mountWithUi(VoteStatsCards, {
+      props: { stats: { ...stats, fairPlayRanking }, minVotes: 3 },
+      global: { plugins: [i18n], stubs: { RouterLink: RouterLinkStub } },
+    })
+    const widths = wrapper
+      .get('[data-testid="fair-play-ranking"]')
+      .findAll('[style*="width"]')
+      .map((el) => el.attributes('style'))
+    expect(widths).toEqual(['width: 100%;', 'width: 56%;'])
+  })
 })

@@ -214,14 +214,6 @@ export function designateMvp(ballots: MvpBallot[], config: Pick<VoteConfig, "mvp
   return leaders;
 }
 
-/**
- * Fair-play rate smoothed towards the tournament average `p` with a weight of `m`
- * votes, so one 👍 out of one vote does not top the ranking.
- */
-export function smoothedFairPlayRate(up: number, down: number, m: number, p: number): number {
-  return (up + m * p) / (up + down + m);
-}
-
 // ============================================
 // Stats
 // ============================================

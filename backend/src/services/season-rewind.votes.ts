@@ -1,7 +1,6 @@
 import {
   REWIND_MIN_MATCHES_RIVALRY,
   resolveVoteConfig,
-  smoothedFairPlayRate,
   type FairPlayTag,
   type PlayerRewindPayload,
   type RewindAward,
@@ -12,6 +11,7 @@ import {
 import { voteStatsRepository } from "../repository/vote-stats.repository";
 import { voteStatsService } from "./vote-stats.service";
 import { tournamentRepository } from "../repository/tournament.repository";
+import { weightedScore } from "./stats-ranking";
 
 type Directory = Map<string, RewindPlayerRef>;
 type PlayerVotes = NonNullable<PlayerRewindPayload["votes"]>;
@@ -24,14 +24,17 @@ interface Row {
   playerId: string;
   value: number;
   detail: number;
+  /** What the row is ranked on when it is not the displayed value. */
+  score?: number;
 }
 
-/** Rows best first: value, then the sample behind it, then id for a stable order. */
+/** Rows best first: score (else value), then the sample behind it, then id for a stable order. */
 function ranked(rows: Row[], directory: Directory, order: "desc" | "asc" = "desc"): RewindAward[] {
   const sign = order === "desc" ? -1 : 1;
+  const key = (r: Row) => r.score ?? r.value;
   return rows
     .filter((r) => directory.has(r.playerId))
-    .sort((a, b) => sign * (a.value - b.value) || b.detail - a.detail || a.playerId.localeCompare(b.playerId))
+    .sort((a, b) => sign * (key(a) - key(b)) || b.detail - a.detail || a.playerId.localeCompare(b.playerId))
     .map((r) => ({ player: directory.get(r.playerId)!, value: r.value, detail: r.detail }));
 }
 
@@ -47,17 +50,19 @@ interface VoteData {
   tags: { playerId: string; tag: FairPlayTag; count: number }[];
 }
 
-function fairPlayRows(data: VoteData, config: VoteConfig): Row[] {
-  const up = data.received.reduce((n, r) => n + r.up, 0);
-  const total = data.received.reduce((n, r) => n + r.up + r.down, 0);
-  const p = total > 0 ? up / total : 1;
+/** Real 👍 rate shown, ranked on rate × √votes like the other rate rankings; `pick: "down"` ranks the 👎 side. */
+function fairPlayRows(data: VoteData, config: VoteConfig, pick: "up" | "down" = "up"): Required<Row>[] {
   return data.received
     .filter((r) => r.up + r.down >= config.fairPlayMinVotes)
-    .map((r) => ({
-      playerId: r.playerId,
-      value: pct(smoothedFairPlayRate(r.up, r.down, config.fairPlayMinVotes, p)),
-      detail: r.up + r.down,
-    }));
+    .map((r) => {
+      const votes = r.up + r.down;
+      return {
+        playerId: r.playerId,
+        value: pct(r.up / votes),
+        detail: votes,
+        score: weightedScore(r[pick] / votes, votes),
+      };
+    });
 }
 
 function voterRows(data: VoteData) {
@@ -109,7 +114,12 @@ export function buildAwards(data: VoteData, config: VoteConfig, directory: Direc
         )
       : null,
     topSupporter: first(count(data.spectated), directory),
-    fairPlayWorst: config.fairPlayPublicNegativeAward ? first(fairPlay, directory, "asc") : null,
+    fairPlayWorst: config.fairPlayPublicNegativeAward
+      ? first(
+          fairPlayRows(data, config, "down").filter((r) => r.score > 0),
+          directory,
+        )
+      : null,
     totals: totals(data),
   };
 }
@@ -119,8 +129,9 @@ function playerVotes(data: VoteData, config: VoteConfig, directory: Directory) {
   return (playerId: string): PlayerVotes => {
     const mine = data.received.find((r) => r.playerId === playerId);
     const index = rows.findIndex((r) => r.player.playerId === playerId);
-    // Competition rank: a tie shares the best position.
-    const firstTied = index >= 0 ? rows.findIndex((r) => r.value === rows[index]!.value) : -1;
+    // Competition rank: a tie (same rate, same votes) shares the best position.
+    const tied = (r: RewindAward) => r.value === rows[index]!.value && r.detail === rows[index]!.detail;
+    const firstTied = index >= 0 ? rows.findIndex(tied) : -1;
     return {
       fairPlayRate: index >= 0 ? rows[index]!.value : null,
       fairPlayRank: firstTied >= 0 ? firstTied + 1 : null,

@@ -27,7 +27,7 @@
         :rank="row.rank"
         :value="percent(row.rate)"
         :sub-label="t('voteStats.fairPlay.votes', row.votes)"
-        :bar-pct="barPct(row.rate ?? 0, stats.fairPlayRanking[0].rate ?? 0)"
+        :bar-pct="barPct(weighted(row), weighted(stats.fairPlayRanking[0]))"
         bar-class="bg-primary"
         :tournament-id="tournamentId"
       />
@@ -123,7 +123,7 @@ const props = defineProps<{
   stats: TournamentVoteStats | null
   hideWeekly?: boolean
   tournamentId?: string | null
-  /** Votes a player needs before being ranked, the smoothing weight too. */
+  /** Votes a player needs before being ranked. */
   minVotes: number
 }>()
 const { t } = useI18n()
@@ -145,6 +145,10 @@ provide(STAT_ROWS_ARE_PLAYERS, ref(true))
 
 /** Bar width relative to the board leader, as on the other stat cards. */
 const barPct = (value: number, leader: number) => (leader > 0 ? (value / leader) * 100 : 0)
+
+/** The score the server ranks on (rate × √votes, `weightedScore`), so the bars follow the order. */
+const weighted = (row: { rate: number | null; votes: number }) =>
+  (row.rate ?? 0) * Math.sqrt(row.votes)
 
 const percent = (rate: number | null) => (rate == null ? '—' : `${Math.round(rate * 100)} %`)
 </script>

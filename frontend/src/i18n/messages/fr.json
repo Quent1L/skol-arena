@@ -3047,7 +3047,7 @@
     },
     "fairPlay": {
       "title": "Fair-play",
-      "tooltip": "Classement sur les 30 derniers jours, à partir de {count} votes reçus. Chaque joueur part avec {count} votes fictifs au taux moyen du tournoi : il faut beaucoup de votes pour s'en écarter, et un 100 % de 👍 s'affiche donc un peu en dessous. Chaque 👎 compte comme un vote négatif, quel que soit son motif. À taux égal, le plus de votes passe devant.",
+      "tooltip": "Classement sur les 30 derniers jours, à partir de {count} votes reçus. Le taux affiché est le vrai taux de 👍. L'ordre tient aussi compte du nombre de votes (taux × √votes) : 90 % sur 50 votes passe devant 100 % sur 5. Chaque 👎 compte comme un vote négatif, quel que soit son motif. À score égal, le plus de votes passe devant.",
       "weekTitle": "Fair-play de la semaine",
       "votes": "{count} vote | {count} votes"
     },

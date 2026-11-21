@@ -1,7 +1,6 @@
 import {
   designateMvp,
   resolveVoteConfig,
-  smoothedFairPlayRate,
   type AdminVoteStats,
   type FairPlayTag,
   type MyVoteStats,
@@ -13,7 +12,7 @@ import { voteStatsRepository } from "../repository/vote-stats.repository";
 import { tournamentRepository } from "../repository/tournament.repository";
 import { tournamentService } from "./tournament.service";
 import { ErrorCode, ForbiddenError } from "../types/errors";
-import { assignCompetitionRanks } from "./stats-ranking";
+import { assignCompetitionRanks, weightedRateTie, weightedScore } from "./stats-ranking";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RANKING_LIMIT = 10;
@@ -29,21 +28,30 @@ interface Tally {
 
 const unknownPlayer = (id: string): VoteStatPlayer => ({ id, displayName: "?", shortName: "?" });
 
-/** Share of 👍 among every fair-play vote of the tournament, the smoothing prior. */
+/** Share of 👍 among every fair-play vote of the tournament. */
 function averageUpRate(rows: Tally[]): number {
   const up = rows.reduce((n, r) => n + r.up, 0);
   const total = rows.reduce((n, r) => n + r.up + r.down, 0);
   return total > 0 ? up / total : 1;
 }
 
-/** Smoothed fair-play ranking of the players past the vote threshold, best first. */
+/**
+ * Fair-play ranking of the players past the vote threshold, best first. The rate shown
+ * is the real share of 👍; the order is rate × √votes, like every other rate ranking.
+ */
 function rankFairPlay(rows: Tally[], minVotes: number) {
-  const p = averageUpRate(rows);
+  const score = (r: { rate: number; votes: number }) => weightedScore(r.rate, r.votes);
   const eligible = rows
     .filter((r) => r.up + r.down >= minVotes)
-    .map((r) => ({ playerId: r.playerId, votes: r.up + r.down, rate: smoothedFairPlayRate(r.up, r.down, minVotes, p) }))
-    .sort((a, b) => b.rate - a.rate || b.votes - a.votes);
-  return assignCompetitionRanks(eligible, (a, b) => Math.abs(a.rate - b.rate) < 1e-9 && a.votes === b.votes);
+    .map((r) => ({ playerId: r.playerId, votes: r.up + r.down, rate: r.up / (r.up + r.down) }))
+    .sort((a, b) => score(b) - score(a) || b.votes - a.votes);
+  return assignCompetitionRanks(
+    eligible,
+    weightedRateTie(
+      (r) => r.rate,
+      (r) => r.votes,
+    ),
+  );
 }
 
 /** Every player tied on the best positive score, so ex aequo share the spotlight. */

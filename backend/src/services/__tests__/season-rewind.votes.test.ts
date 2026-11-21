@@ -46,4 +46,17 @@ describe("season rewind vote awards", () => {
     const noVoters = buildAwards(data, { ...config, rewindVoterAwards: false }, directory);
     expect([noVoters.mostInvolved, noVoters.kindest, noVoters.strictestJudge]).toEqual([null, null, null]);
   });
+
+  it("shows the real rate and ranks on rate × √votes", () => {
+    const received = [
+      { playerId: "a", up: 6, down: 0 }, // 100 % over 6 → 2.45
+      { playerId: "b", up: 18, down: 2 }, // 90 % over 20 → 4.02
+    ];
+    const awards = buildAwards({ ...data, received }, { ...config, fairPlayPublicNegativeAward: true }, directory);
+    expect(awards.fairPlayPodium.map((x) => [x.player.playerId, x.value])).toEqual([
+      ["b", 90],
+      ["a", 100],
+    ]);
+    expect(awards.fairPlayWorst?.player.playerId).toBe("b"); // a has no 👎 to be worst on
+  });
 });

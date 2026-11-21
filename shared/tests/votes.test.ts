@@ -3,7 +3,6 @@ import {
   designateMvp,
   isMvpEligible,
   resolveVoteConfig,
-  smoothedFairPlayRate,
   castFairPlayVoteSchema,
   VOTE_DEFAULTS,
   type MvpBallot,
@@ -42,13 +41,6 @@ describe("isMvpEligible", () => {
   it("needs one side of two or more", () => {
     expect(isMvpEligible([1, 1])).toBe(false);
     expect(isMvpEligible([2, 1])).toBe(true);
-  });
-});
-
-describe("smoothedFairPlayRate", () => {
-  it("pulls a single vote towards the average", () => {
-    expect(smoothedFairPlayRate(1, 0, 5, 0.5)).toBeCloseTo(3.5 / 6);
-    expect(smoothedFairPlayRate(0, 0, 5, 0.8)).toBeCloseTo(0.8);
   });
 });
 
