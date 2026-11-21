@@ -14,12 +14,12 @@
 
     <div
       v-else-if="participants.length > 0"
-      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
     >
       <div
         v-for="participant in participants"
         :key="participant.id"
-        class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+        class="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800"
       >
         <RouterLink
           :to="{
