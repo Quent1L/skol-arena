@@ -1,5 +1,4 @@
 ---
 type: improved
-title: Cleaner notification cards
+title: Notification cards now look like the rest of the app's cards
 ---
-Notification cards lose their grey outline and now look like the rest of the app's cards.
