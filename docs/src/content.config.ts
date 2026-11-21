@@ -1,6 +1,9 @@
 import { defineCollection } from 'astro:content'
 import { glob } from 'astro/loaders'
 import { z } from 'astro/zod'
+import { readNotes, renderNotes } from '../../scripts/apply-release-notes'
+
+const UNRELEASED_DIR = new URL('../release-notes/unreleased/', import.meta.url)
 
 const showcase = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/showcase' }),
@@ -43,4 +46,30 @@ const changelog = defineCollection({
   }),
 })
 
-export const collections = { showcase, blog, changelog }
+// Dev-only preview of the next release: the pending notes, assembled exactly as
+// scripts/apply-release-notes.ts will publish them. Empty in a build, like a draft post.
+const unreleased = defineCollection({
+  loader: {
+    name: 'unreleased-notes',
+    async load({ store, renderMarkdown, watcher }) {
+      const sync = async () => {
+        store.clear()
+        const notes = import.meta.env.DEV ? readNotes(UNRELEASED_DIR.pathname) : []
+        if (notes.length === 0) return
+        // fileURL inside the folder: relative image paths resolve as the note author wrote them.
+        const rendered = await renderMarkdown(renderNotes(notes), {
+          fileURL: new URL('unreleased.md', UNRELEASED_DIR),
+        })
+        store.set({ id: 'unreleased', data: { count: notes.length }, rendered })
+      }
+      watcher?.add(UNRELEASED_DIR.pathname)
+      watcher?.on('all', (_, path) => {
+        if (path.startsWith(UNRELEASED_DIR.pathname)) void sync()
+      })
+      await sync()
+    },
+  },
+  schema: z.object({ count: z.number() }),
+})
+
+export const collections = { showcase, blog, changelog, unreleased }

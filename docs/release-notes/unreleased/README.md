@@ -28,7 +28,8 @@ Tap a player's photo on their profile to open it full size. Tap anywhere to clos
   `tournament-admins`, `super-admins` or `self-hosters`, several separated by commas. It
   shows as "**For tournament admins** ·" in front of the text. Leave it out for everyone.
 - Body — one or two short paragraphs. Several paragraphs, lists and images are fine. Leave
-  it empty when the title says it all: the note then shows as a single bullet.
+  it empty when the title says it all: the note then shows as a single bullet,
+  listed under "Other changes" at the end of its section.
 
 A release with no note here publishes no functional notes, and the app's badge stays off.
 

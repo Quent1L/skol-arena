@@ -88,7 +88,15 @@ describe('renderRelease', () => {
       { file: 'b.md', type: 'fixed', title: 'Long one', body: 'Details.', audience: [] },
     ])
 
-    expect(output).toEndWith('### 🐛 Fixed\n\n#### Long one\n\nDetails.\n\n- Short one\n')
+    expect(output).toEndWith('### 🐛 Fixed\n\n#### Long one\n\nDetails.\n\n#### Other changes\n\n- Short one\n')
+  })
+
+  it("n'ajoute pas de titre aux puces d'une section sans note détaillée", () => {
+    const output = renderRelease('2.1.0', '2026-10-04', [
+      { file: 'a.md', type: 'fixed', title: 'Short one', body: '', audience: [] },
+    ])
+
+    expect(output).toEndWith('### 🐛 Fixed\n\n- Short one\n')
   })
 
   it('ordonne les sections New, Improved, Fixed et omet les vides', () => {

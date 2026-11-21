@@ -113,10 +113,6 @@ export function assertImagesExist(note: Note, fromDir: string): void {
   }
 }
 
-/**
- * Corps d'une section : une note avec un corps prend un titre `####`, une note réduite à
- * son titre devient une puce de la liste finale — un titre sans rien dessous se lit mal.
- */
 /** `**For tournament admins and super admins** · ` devant le texte, rien pour une note qui concerne tout le monde. */
 export function audienceLabel(audience: Audience[]): string {
   if (audience.length === 0) return ''
@@ -125,12 +121,20 @@ export function audienceLabel(audience: Audience[]): string {
   return `**For ${names}** · `
 }
 
+/**
+ * Corps d'une section : une note avec un corps prend un titre `####`, une note réduite à
+ * son titre devient une puce de la liste finale « Other changes » — un titre sans rien
+ * dessous se lit mal.
+ */
 function renderSection(heading: string, entries: Note[]): string {
   const detailed = entries
     .filter((note) => note.body)
     .map((note) => `#### ${note.title}\n\n${audienceLabel(note.audience)}${note.body}`)
   const brief = entries.filter((note) => !note.body).map((note) => `- ${audienceLabel(note.audience)}${note.title}`)
-  const blocks = brief.length > 0 ? [...detailed, brief.join('\n')] : detailed
+  if (brief.length === 0) return `### ${heading}\n\n${detailed.join('\n\n')}`
+  // Sans titre, les puces se liraient comme la suite de la dernière note détaillée.
+  const list = detailed.length > 0 ? `#### Other changes\n\n${brief.join('\n')}` : brief.join('\n')
+  const blocks = [...detailed, list]
   return `### ${heading}\n\n${blocks.join('\n\n')}`
 }
 
@@ -139,11 +143,17 @@ function renderSection(heading: string, entries: Note[]): string {
  * Titres à partir de `###` : la page `/changelog` donne déjà un `h2` à chaque version.
  */
 export function renderRelease(version: string, date: string, notes: Note[]): string {
-  const sections = NOTE_SECTIONS.map(({ type, heading }) => {
+  return `---\nversion: ${version}\ndate: ${date}\n---\n\n${renderNotes(notes)}\n`
+}
+
+/** Corps Markdown d'une version, sans frontmatter — aussi rendu tel quel par l'aperçu `/changelog` en dev. */
+export function renderNotes(notes: Note[]): string {
+  return NOTE_SECTIONS.map(({ type, heading }) => {
     const entries = notes.filter((note) => note.type === type)
     return entries.length > 0 ? renderSection(heading, entries) : null
-  }).filter((section): section is string => section !== null)
-  return `---\nversion: ${version}\ndate: ${date}\n---\n\n${sections.join('\n\n')}\n`
+  })
+    .filter((section): section is string => section !== null)
+    .join('\n\n')
 }
 
 function listFragments(dir: string): string[] {
@@ -151,6 +161,13 @@ function listFragments(dir: string): string[] {
   return readdirSync(dir)
     .filter((name) => name.endsWith('.md') && name !== 'README.md' && !name.startsWith('_'))
     .sort((a, b) => a.localeCompare(b, 'en'))
+}
+
+/** Notes en attente d'un dossier, parsées et dont les images existent. */
+export function readNotes(dir: string): Note[] {
+  const notes = listFragments(dir).map((file) => parseNote(file, readFileSync(join(dir, file), 'utf-8')))
+  for (const note of notes) assertImagesExist(note, dir)
+  return notes
 }
 
 /**
@@ -162,19 +179,17 @@ function listFragments(dir: string): string[] {
  */
 export function applyReleaseNotes(version: string, cwd = process.cwd(), stage = true, today = new Date()): boolean {
   const fromDir = join(cwd, UNRELEASED_DIR)
-  const files = listFragments(fromDir)
-  if (files.length === 0) return false
+  const notes = readNotes(fromDir)
+  if (notes.length === 0) return false
 
   const toDir = join(cwd, CHANGELOG_DIR)
-  const notes = files.map((file) => parseNote(file, readFileSync(join(fromDir, file), 'utf-8')))
-  for (const note of notes) assertImagesExist(note, fromDir)
   const rebased = notes.map((note) => ({ ...note, body: rebaseLinks(note.body, fromDir, toDir) }))
 
   const target = join(toDir, `${version}.md`)
   mkdirSync(dirname(target), { recursive: true })
   writeFileSync(target, renderRelease(version, today.toISOString().slice(0, 10), rebased))
   writeFileSync(join(cwd, NOTES_VERSION_FILE), `${version}\n`)
-  for (const file of files) rmSync(join(fromDir, file))
+  for (const note of notes) rmSync(join(fromDir, note.file))
   // `-A` sur le dossier enregistre aussi la suppression des fragments trackés.
   if (stage) execFileSync('git', ['add', '-A', '--', UNRELEASED_DIR, target, NOTES_VERSION_FILE], { cwd })
   return true

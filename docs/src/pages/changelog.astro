@@ -1,5 +1,5 @@
 ---
-import { render } from 'astro:content'
+import { getEntry, render } from 'astro:content'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import Icon from '../components/Icon.astro'
 import { getReleases, githubReleaseUrl, releaseAnchor } from '../lib/changelog'
@@ -11,6 +11,9 @@ const releases = await Promise.all(
   (await getReleases()).map(async (release) => ({ release, ...(await render(release)) })),
 )
 const latest = releases[0]?.release.data.version
+// Only filled in dev: see the `unreleased` collection.
+const unreleased = await getEntry('unreleased', 'unreleased')
+const Unreleased = unreleased && (await render(unreleased)).Content
 
 const legend = [
   { label: '✨ New', text: 'Something you could not do or see before.' },
@@ -78,6 +81,23 @@ const audiences = [
 
   <section class="relative mx-auto max-w-3xl px-6 pb-24">
     <div class="flex flex-col gap-6">
+      {
+        Unreleased && (
+          <article class="rounded-2xl border border-dashed border-amber-400/40 bg-amber-400/[0.04] p-6">
+            <header class="flex flex-wrap items-center gap-2">
+              <h2 class="text-xl font-bold text-white">Next release</h2>
+              <span class="rounded-full border border-amber-400/30 bg-amber-400/15 px-3 py-1 text-xs font-semibold tracking-wider text-amber-300 uppercase">
+                Unreleased · dev only
+              </span>
+            </header>
+            <div
+              class:list={[articleProse, 'mt-2 prose-h3:mt-6 prose-h4:mt-5 prose-img:rounded-xl']}
+            >
+              <Unreleased />
+            </div>
+          </article>
+        )
+      }
       {
         releases.map(({ release, Content }) => (
           <article
