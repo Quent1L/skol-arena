@@ -46,7 +46,11 @@
                 color="success"
                 variant="subtle"
                 icon="i-fa7-solid:circle-check"
-                :title="t('submitInvitationView.codeValid', { count: remainingUses })"
+                :title="
+                  remainingUses === null
+                    ? t('submitInvitationView.codeValidUnlimited')
+                    : t('submitInvitationView.codeValid', { count: remainingUses })
+                "
               />
             </template>
           </UFormField>
@@ -99,6 +103,7 @@
 </template>
 
 <script setup lang="ts">
+import { INVITATION_CODE_REGEX } from '@skol-arena/shared/schemas/invitation.schema'
 import SkolLogo from '@/components/brand/SkolLogo.vue'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -116,7 +121,7 @@ const invitationCode = ref('')
 const isValidating = ref(false)
 const codeValid = ref(false)
 const codeError = ref<string | null>(null)
-const remainingUses = ref(0)
+const remainingUses = ref<number | null>(0)
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
 
@@ -147,7 +152,7 @@ onMounted(async () => {
 })
 
 const debouncedValidate = useDebounceFn(async () => {
-  if (!/^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/.test(invitationCode.value)) {
+  if (!INVITATION_CODE_REGEX.test(invitationCode.value.trim().toLowerCase())) {
     codeValid.value = false
     codeError.value = null
     return

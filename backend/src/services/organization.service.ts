@@ -1,5 +1,6 @@
 import { organizationRepository } from "../repository/organization.repository";
 import { invitationRepository } from "../repository/invitation.repository";
+import { isInvitationExhausted } from "./invitation.service";
 import { BadRequestError, ConflictError, ErrorCode, NotFoundError } from "../types/errors";
 
 export class OrganizationService {
@@ -24,7 +25,7 @@ export class OrganizationService {
     if (invitation.expiresAt && invitation.expiresAt < new Date()) {
       throw new BadRequestError(ErrorCode.INVITATION_CODE_EXPIRED);
     }
-    if (invitation.usedCount >= invitation.maxUses) {
+    if (isInvitationExhausted(invitation)) {
       throw new BadRequestError(ErrorCode.INVITATION_CODE_EXHAUSTED);
     }
     if (!invitation.organizationId) {

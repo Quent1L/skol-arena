@@ -40,13 +40,15 @@ The variables that switch these on are listed in
 
 ## Invitation codes
 
-There is no open sign-up. Every account starts from an invitation code issued by the instance
-administrator — a four-word passphrase like `frost-otter-ridge-plume`, easy to read out loud
-or drop in a message.
+By default there is no open sign-up. Every account starts from an invitation code issued by
+the instance administrator — a four-word passphrase like `frost-otter-ridge-plume`, easy to
+read out loud or drop in a message — or a code of your own choosing, like `club2026` or
+`summer-league` (lowercase letters, digits and dashes).
 
 Each code carries its own rules:
 
-- **A number of uses** — one by default, or a larger batch for a whole team.
+- **A number of uses** — one by default, a larger batch for a whole team, or unlimited for a
+  link you post on the club's notice board.
 - **An optional expiry** — a code can run out after a set number of days, or never expire.
 - **An optional organization** — bind a code to a group and redeeming it also makes the new
   player a member, so onboarding a private league is a single link.
@@ -63,6 +65,14 @@ There are three ways a code gets used:
 The gate applies to **every** login method: SSO doesn't bypass it. Signing in through
 your identity provider still leaves you on the code screen until a code is redeemed, so an
 open SSO realm can't quietly become an open instance.
+
+### Opening sign-up to everyone
+
+Set `REQUIRE_INVITATION_CODE=false` to drop the gate: anyone can create an account, with
+email and password or through SSO. The code field stays on the sign-up screen, marked
+optional — an organization-bound code still makes the new player a member on the way in.
+Mind what that means with SSO: every account your identity provider can authenticate
+becomes a player.
 
 ## Organizations
 

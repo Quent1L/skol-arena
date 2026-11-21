@@ -4,28 +4,53 @@ import { generatePassphrase } from "../utils/passphrase";
 import { BadRequestError, ErrorCode, NotFoundError, ConflictError } from "../types/errors";
 import { toSafeDisplayName } from "../utils/display-name";
 
+/** Codes are stored lowercase; a code typed or pasted with capitals or spaces still matches. */
+export function normalizeInvitationCode(code: string): string {
+  return code.trim().toLowerCase();
+}
+
+/** A null maxUses never runs out. */
+export function isInvitationExhausted(invitation: { maxUses: number | null; usedCount: number }): boolean {
+  return invitation.maxUses !== null && invitation.usedCount >= invitation.maxUses;
+}
+
 export class InvitationService {
   async generateCode(data: {
     createdBy: string;
-    maxUses?: number;
+    code?: string;
+    maxUses?: number | null;
     expiresInDays?: number;
     notes?: string;
     organizationId?: string;
   }) {
-    let code: string;
-    do {
-      code = generatePassphrase();
-    } while (await invitationRepository.findByCode(code));
+    const code = data.code ? await this.reserveCustomCode(data.code) : await this.freshPassphrase();
     const expiresAt = data.expiresInDays ? new Date(Date.now() + data.expiresInDays * 24 * 60 * 60 * 1000) : null;
 
     return await invitationRepository.create({
       code,
       createdBy: data.createdBy,
-      maxUses: data.maxUses ?? 1,
+      // null = unlimited; only an omitted value falls back to a single use
+      maxUses: data.maxUses === undefined ? 1 : data.maxUses,
       expiresAt,
       notes: data.notes ?? null,
       organizationId: data.organizationId ?? null,
     });
+  }
+
+  private async freshPassphrase(): Promise<string> {
+    let code: string;
+    do {
+      code = generatePassphrase();
+    } while (await invitationRepository.findByCode(code));
+    return code;
+  }
+
+  private async reserveCustomCode(code: string): Promise<string> {
+    const normalized = normalizeInvitationCode(code);
+    if (await invitationRepository.findByCode(normalized)) {
+      throw new ConflictError(ErrorCode.INVITATION_CODE_TAKEN);
+    }
+    return normalized;
   }
 
   async validateCode(code: string) {
@@ -33,7 +58,7 @@ export class InvitationService {
       throw new BadRequestError(ErrorCode.INVITATION_CODE_REQUIRED);
     }
 
-    const invitation = await invitationRepository.findByCode(code);
+    const invitation = await invitationRepository.findByCode(normalizeInvitationCode(code));
     if (!invitation) {
       throw new NotFoundError(ErrorCode.INVITATION_CODE_INVALID);
     }
@@ -43,7 +68,7 @@ export class InvitationService {
     if (invitation.expiresAt && invitation.expiresAt < new Date()) {
       throw new BadRequestError(ErrorCode.INVITATION_CODE_EXPIRED);
     }
-    if (invitation.usedCount >= invitation.maxUses) {
+    if (isInvitationExhausted(invitation)) {
       throw new BadRequestError(ErrorCode.INVITATION_CODE_EXHAUSTED);
     }
 
@@ -55,14 +80,14 @@ export class InvitationService {
 
     return {
       valid: true,
-      remainingUses: invitation.maxUses - invitation.usedCount,
+      remainingUses: invitation.maxUses === null ? null : invitation.maxUses - invitation.usedCount,
       organizationId: invitation.organizationId ?? undefined,
       organizationName,
     };
   }
 
   async consumeCode(code: string, userId: string, email: string, ipAddress?: string) {
-    const invitation = await invitationRepository.findByCode(code);
+    const invitation = await invitationRepository.findByCode(normalizeInvitationCode(code));
     if (!invitation) {
       throw new NotFoundError(ErrorCode.INVITATION_CODE_INVALID);
     }
@@ -72,7 +97,7 @@ export class InvitationService {
     if (invitation.expiresAt && invitation.expiresAt < new Date()) {
       throw new BadRequestError(ErrorCode.INVITATION_CODE_EXPIRED);
     }
-    if (invitation.usedCount >= invitation.maxUses) {
+    if (isInvitationExhausted(invitation)) {
       throw new BadRequestError(ErrorCode.INVITATION_CODE_EXHAUSTED);
     }
 

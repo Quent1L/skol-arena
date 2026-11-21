@@ -25,8 +25,8 @@ describe("Invitation consumption (integration)", () => {
     return authUser!;
   }
 
-  async function createCode(maxUses: number, orgId: string | null = null) {
-    const code = `CODE-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  async function createCode(maxUses: number | null, orgId: string | null = null) {
+    const code = `code-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     await testDb.insert(invitationCodes).values({ code, createdBy: adminId, maxUses, organizationId: orgId });
     return code;
   }
@@ -58,6 +58,43 @@ describe("Invitation consumption (integration)", () => {
     expect(outcomes.filter((o) => o.status === "fulfilled")).toHaveLength(1);
     const row = await testDb.query.invitationCodes.findFirst({ where: eq(invitationCodes.code, code) });
     expect(row!.usedCount).toBe(1);
+  });
+
+  it("never runs out of uses when maxUses is null", async () => {
+    const code = await createCode(null);
+    const users = await Promise.all([1, 2, 3].map((i) => createAuthUser(`U${i}`)));
+
+    for (const u of users) await invitationService.consumeCode(code, u.id, u.email);
+
+    const row = await testDb.query.invitationCodes.findFirst({ where: eq(invitationCodes.code, code) });
+    expect(row!.usedCount).toBe(3);
+    expect((await invitationService.validateCode(code)).remainingUses).toBeNull();
+  });
+
+  it("stores a custom code lowercase, matches it whatever the case, and refuses a duplicate", async () => {
+    const custom = `Club-${Date.now()}`;
+    const created = await invitationService.generateCode({ createdBy: adminId, code: custom, maxUses: null });
+
+    expect(created!.code).toBe(custom.toLowerCase());
+    expect(created!.maxUses).toBeNull();
+    expect((await invitationService.validateCode(` ${custom.toUpperCase()} `)).valid).toBe(true);
+    await expect(invitationService.generateCode({ createdBy: adminId, code: custom })).rejects.toMatchObject({
+      code: "INVITATION_CODE_TAKEN",
+    });
+  });
+
+  it("requires a code to create a profile, unless sign-up is open", async () => {
+    const authUser = await createAuthUser("Open");
+    await expect(userService.getOrCreateAppUser(authUser.id, authUser.name)).rejects.toMatchObject({
+      code: "INVITATION_CODE_REQUIRED",
+    });
+
+    process.env.REQUIRE_INVITATION_CODE = "false";
+    try {
+      expect(await userService.getOrCreateAppUser(authUser.id, authUser.name)).toBeString();
+    } finally {
+      delete process.env.REQUIRE_INVITATION_CODE;
+    }
   });
 
   it("joins the code's organization when the profile is created after a cookie sign-up", async () => {

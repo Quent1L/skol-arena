@@ -120,7 +120,8 @@ export const invitationCodes = pgTable("invitation_codes", {
     .references(() => appUsers.id, { onDelete: "restrict" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   expiresAt: timestamp("expires_at", { withTimezone: true }),
-  maxUses: integer("max_uses").notNull().default(1),
+  // null = unlimited
+  maxUses: integer("max_uses").default(1),
   usedCount: integer("used_count").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
   notes: text("notes"),

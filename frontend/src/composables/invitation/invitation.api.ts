@@ -2,7 +2,8 @@ import http from '@/config/ApiConfig.ts'
 
 export interface ValidateCodeResponse {
   valid: boolean
-  remainingUses: number
+  /** null = unlimited */
+  remainingUses: number | null
   organizationId?: string
   organizationName?: string
 }
@@ -13,7 +14,8 @@ export interface InvitationCode {
   createdBy: string
   createdAt: Date
   expiresAt: Date | null
-  maxUses: number
+  /** null = unlimited */
+  maxUses: number | null
   usedCount: number
   isActive: boolean
   notes: string | null
@@ -29,7 +31,8 @@ export interface InvitationCode {
 }
 
 export interface GenerateCodeInput {
-  maxUses?: number
+  code?: string
+  maxUses?: number | null
   expiresInDays?: number
   notes?: string
   organizationId?: string

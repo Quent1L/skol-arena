@@ -181,11 +181,10 @@ docker compose -f docker-compose.demo.yml up
 
 Then open `http://localhost:3000/login`: on a demo instance, the login page shows the
 super admin's email and password, and a button signs you in with them in one click.
-They are also printed in the logs on every start:
 
-```bash
-docker compose -f docker-compose.demo.yml logs app | grep "DEMO CREDENTIALS"
-```
+The Compose file also carries a commented-out [smtp4dev](https://github.com/rnwood/smtp4dev)
+mail catcher and the matching `SMTP_*` variables. Uncomment both to see the emails the
+app sends (password resets) in a web inbox at `http://localhost:5000`.
 
 The super admin is `alex@skol.demo`. Every other player signs in with their first name
 (`ava@skol.demo`, `noah@skol.demo`…) and the same password, `SkolDemo123!`, so you can

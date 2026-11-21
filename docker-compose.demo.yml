@@ -2,8 +2,11 @@
 #
 #   docker compose -f docker-compose.demo.yml up
 #
-# Then sign in at http://localhost:3000/login — the credentials are in
-# the logs (grep "DEMO CREDENTIALS"). Start over with `down -v`.
+# Then sign in at http://localhost:3000/login — the login page shows the
+# demo credentials. Start over with `down -v`.
+#
+# To see the emails the app sends (password resets), uncomment the smtp4dev
+# service and the SMTP_* variables below: its inbox is at http://localhost:5000.
 #
 # For trying the product only: every demo account shares a published password.
 # See https://skol-arena.com/docs/deployment#demo-data
@@ -34,6 +37,15 @@ services:
       BETTER_AUTH_SECRET: demo-only-secret-do-not-use-in-production
       BETTER_AUTH_URL: http://localhost:3000
       INIT_DEMO_DATA: 'true'
+      # SMTP_HOST: smtp4dev
+      # SMTP_PORT: '25'
+      # SMTP_FROM: noreply@skol.demo
+      # SMTP_FROM_NAME: Skol Arena
+
+  # smtp4dev:
+  #   image: rnwood/smtp4dev
+  #   ports:
+  #     - '5000:80'
 
 volumes:
   skol-demo-db:

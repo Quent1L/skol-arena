@@ -11,13 +11,12 @@ The values in effect on a running instance can be checked from **Admin → Techn
 maintenance** — secrets only report whether they are set. See
 [Technical maintenance](/docs/deployment#technical-maintenance).
 
-## Database & migrations
+## Database
 
-| Variable            | Purpose                                                                                                                           | Required | Default                                  |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------- |
-| `DATABASE_URL`      | PostgreSQL connection string. Used by the app's connection pool, Better Auth, the Drizzle migrator, and the background job queue. | **Yes**  | —                                        |
-| `DATABASE_POOL_MAX` | Maximum connections in the pool.                                                                                                  | No       | `10`                                     |
-| `MIGRATIONS_FOLDER` | Path to the Drizzle migrations directory.                                                                                         | No       | `./drizzle` (preset in the Docker image) |
+| Variable            | Purpose                                                                                                                           | Required | Default |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------- | ------- |
+| `DATABASE_URL`      | PostgreSQL connection string. Used by the app's connection pool, Better Auth, the Drizzle migrator, and the background job queue. | **Yes**  | —       |
+| `DATABASE_POOL_MAX` | Maximum connections in the pool.                                                                                                  | No       | `10`    |
 
 Migrations run automatically, synchronously, at server startup — before any
 traffic is accepted. There is no manual migrate command. If a migration fails,
@@ -28,9 +27,9 @@ bad deploy).
 
 | Variable                     | Purpose                                                                                                                                                                                                                                                                                                                                                              | Required | Default                                           |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------- |
-| `NODE_ENV`                   | Standard Node environment flag; affects CORS origin behavior.                                                                                                                                                                                                                                                                                                        | No       | dev behavior if unset                             |
+| `NODE_ENV`                   | Preset to `production` in the Docker image — leave it. Production switches on rate limiting and turns off the API reference by default (see below). Only set otherwise when running from source.                                                                                                                                                                     | No       | `production` in the image                         |
 | `PORT`                       | Port the server listens on.                                                                                                                                                                                                                                                                                                                                          | No       | `3000`                                            |
-| `FRONTEND_URL`               | Allowed CORS origin and Better Auth trusted origin for the frontend.                                                                                                                                                                                                                                                                                                 | No       | `http://localhost:5173`                           |
+| `FRONTEND_URL`               | Origin of the frontend, for CORS and the Better Auth trusted origins. Only needed when the frontend is served from another origin than the app (see [Single-container frontend serving](/docs/deployment#single-container-frontend-serving)).                                                                                                                        | No       | `BETTER_AUTH_URL`, then `http://localhost:3000`   |
 | `FRONTEND_BUILD_PATH`        | Single-container mode: serves the built frontend (static assets + SPA fallback) from this path. Set to an empty value to serve the API only.                                                                                                                                                                                                                         | No       | unset outside Docker (preset in the image)        |
 | `LOG_LEVEL`                  | Pino log level.                                                                                                                                                                                                                                                                                                                                                      | No       | `info`                                            |
 | `LOG_FORMAT`                 | Log output format: `pretty` (human-readable), `json` or `logfmt`. Pick `json` or `logfmt` if a log collector parses your logs.                                                                                                                                                                                                                                       | No       | `pretty`                                          |
@@ -44,24 +43,25 @@ bad deploy).
 
 ## Authentication (Better Auth)
 
-| Variable                   | Purpose                                                                                                                                         | Required                      | Default                                                |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------ |
-| `BETTER_AUTH_SECRET`       | Signing secret for sessions and cookies.                                                                                                        | **Yes**                       | —                                                      |
-| `BETTER_AUTH_URL`          | Better Auth's own base URL; also added as a trusted origin.                                                                                     | No                            | falls back to `BASE_URL`, then `http://localhost:3000` |
-| `BASE_URL`                 | Secondary fallback for the auth base URL.                                                                                                       | No                            | `http://localhost:3000`                                |
-| `SHOW_EMAIL_PASSWORD_FORM` | Shows/hides the email+password login form on the frontend (set to the literal string `"false"` to hide it). Frontend only — see the note below. | No                            | shown                                                  |
-| `ENABLE_EMAIL_PASSWORD`    | Deprecated name for `SHOW_EMAIL_PASSWORD_FORM`. Still read when the new name is unset, and warns at startup.                                    | No                            | —                                                      |
-| `OIDC_PROVIDERS`           | Comma-separated ids of the OpenID Connect providers to offer, e.g. `keycloak,authentik`. Lowercase letters, digits and dashes.                  | No                            | —                                                      |
-| `OIDC_<ID>_ISSUER`         | Issuer URL of provider `<ID>` (the id upper-cased, dashes turned into underscores). Its `/.well-known/openid-configuration` must answer.        | Yes, for each listed provider | —                                                      |
-| `OIDC_<ID>_CLIENT_ID`      | OAuth client ID registered for Skol Arena on that provider.                                                                                     | Yes, for each listed provider | —                                                      |
-| `OIDC_<ID>_CLIENT_SECRET`  | OAuth client secret.                                                                                                                            | Yes, for each listed provider | —                                                      |
-| `OIDC_<ID>_LABEL`          | Label of that provider's login button.                                                                                                          | No                            | "Sign in with `<id>`"                                  |
-| `OIDC_<ID>_PKCE`           | Set to the literal `"false"` for a provider that rejects PKCE.                                                                                  | No                            | enabled                                                |
-| `KEYCLOAK_CLIENT_ID`       | Deprecated: the three `KEYCLOAK_*` variables declare a provider with the id `keycloak`. Still read, and warns at startup.                       | No                            | —                                                      |
-| `KEYCLOAK_CLIENT_SECRET`   | Deprecated, see above.                                                                                                                          | No                            | —                                                      |
-| `KEYCLOAK_ISSUER`          | Deprecated, see above.                                                                                                                          | No                            | —                                                      |
-| `KEYCLOAK_PKCE`            | Ignored: PKCE is always on for a `KEYCLOAK_*` provider.                                                                                         | No                            | —                                                      |
-| `KEYCLOAK_LOGIN_LABEL`     | Deprecated: label of the `keycloak` provider's button.                                                                                          | No                            | —                                                      |
+| Variable                   | Purpose                                                                                                                                                                              | Required                      | Default                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------ |
+| `BETTER_AUTH_SECRET`       | Signing secret for sessions and cookies.                                                                                                                                             | **Yes**                       | —                                                      |
+| `BETTER_AUTH_URL`          | Better Auth's own base URL; also added as a trusted origin.                                                                                                                          | No                            | falls back to `BASE_URL`, then `http://localhost:3000` |
+| `BASE_URL`                 | Secondary fallback for the auth base URL.                                                                                                                                            | No                            | `http://localhost:3000`                                |
+| `SHOW_EMAIL_PASSWORD_FORM` | Shows/hides the email+password login form on the frontend (set to the literal string `"false"` to hide it). Frontend only — see the note below.                                      | No                            | shown                                                  |
+| `ENABLE_EMAIL_PASSWORD`    | Deprecated name for `SHOW_EMAIL_PASSWORD_FORM`. Still read when the new name is unset, and warns at startup.                                                                         | No                            | —                                                      |
+| `REQUIRE_INVITATION_CODE`  | Set to `"false"` to open sign-up to everyone: an invitation code becomes optional, and still works to join an organization. See [Invitation codes](/docs/accounts#invitation-codes). | No                            | required                                               |
+| `OIDC_PROVIDERS`           | Comma-separated ids of the OpenID Connect providers to offer, e.g. `keycloak,authentik`. Lowercase letters, digits and dashes.                                                       | No                            | —                                                      |
+| `OIDC_<ID>_ISSUER`         | Issuer URL of provider `<ID>` (the id upper-cased, dashes turned into underscores). Its `/.well-known/openid-configuration` must answer.                                             | Yes, for each listed provider | —                                                      |
+| `OIDC_<ID>_CLIENT_ID`      | OAuth client ID registered for Skol Arena on that provider.                                                                                                                          | Yes, for each listed provider | —                                                      |
+| `OIDC_<ID>_CLIENT_SECRET`  | OAuth client secret.                                                                                                                                                                 | Yes, for each listed provider | —                                                      |
+| `OIDC_<ID>_LABEL`          | Label of that provider's login button.                                                                                                                                               | No                            | "Sign in with `<id>`"                                  |
+| `OIDC_<ID>_PKCE`           | Set to the literal `"false"` for a provider that rejects PKCE.                                                                                                                       | No                            | enabled                                                |
+| `KEYCLOAK_CLIENT_ID`       | Deprecated: the three `KEYCLOAK_*` variables declare a provider with the id `keycloak`. Still read, and warns at startup.                                                            | No                            | —                                                      |
+| `KEYCLOAK_CLIENT_SECRET`   | Deprecated, see above.                                                                                                                                                               | No                            | —                                                      |
+| `KEYCLOAK_ISSUER`          | Deprecated, see above.                                                                                                                                                               | No                            | —                                                      |
+| `KEYCLOAK_PKCE`            | Ignored: PKCE is always on for a `KEYCLOAK_*` provider.                                                                                                                              | No                            | —                                                      |
+| `KEYCLOAK_LOGIN_LABEL`     | Deprecated: label of the `keycloak` provider's button.                                                                                                                               | No                            | —                                                      |
 
 At least one authentication method must be active: the app refuses to start if
 `SHOW_EMAIL_PASSWORD_FORM` is disabled and no OpenID Connect provider is configured.
@@ -76,11 +76,15 @@ URI. Keep the id `keycloak` when you do: accounts are linked to the provider id.
 
 > **`SHOW_EMAIL_PASSWORD_FORM=false` hides the form, it does not close the endpoint.**
 > `POST /api/auth/sign-in/email` keeps accepting valid credentials. This is deliberate:
-> it leaves administrators a way in when the SSO provider is unreachable, which is exactly when
-> you need one. If your threat model requires password sign-in to be genuinely
-> unavailable, block the `/api/auth/sign-in/email` path at your reverse proxy — the
-> variable will not do it for you. The old name, `ENABLE_EMAIL_PASSWORD`, claimed
-> otherwise, which is why it was renamed.
+> it leaves administrators a way in when the SSO provider is unreachable, which is exactly
+> when you need one. Two ways bring the form back:
+>
+> - open `/login?native=true` directly;
+> - or click **Sign in** in the top bar five times in a row (within three seconds) —
+>   handy in the installed app, which has no address bar.
+>
+> If your threat model requires password sign-in to be genuinely unavailable, block the
+> `/api/auth/sign-in/email` path at your reverse proxy — the variable will not do it for you.
 
 ## Email (SMTP)
 
@@ -111,6 +115,16 @@ only, which yields `connect ECONNREFUSED ::1:<port>`.
 | `VAPID_PUBLIC_KEY`  | VAPID public key for browser push notifications. | No — push is silently disabled unless both keys are set | —       |
 | `VAPID_PRIVATE_KEY` | VAPID private key.                               | No (see above)                                          | —       |
 
+Generate the pair once, with the `web-push` CLI (any machine with Node or Bun):
+
+```bash
+npx web-push generate-vapid-keys
+# or: bunx web-push generate-vapid-keys
+```
+
+Keep the same pair for the life of the instance: changing it invalidates every existing
+browser subscription, and players have to turn notifications back on.
+
 ## Avatars
 
 | Variable                  | Purpose                                                                                                                   | Required | Default                                         |
@@ -140,3 +154,24 @@ click in **Admin → Technical maintenance** — see
 No dedicated variables. WebSocket connections are mounted on the same server
 and port as the HTTP API, and authenticated using the existing Better Auth
 session — nothing extra to configure.
+
+**Your reverse proxy has to let them through**, on `/api/ws`. Live updates (match
+confirmations, notifications, the activity feed) travel over a long-lived WebSocket; a
+proxy that does not forward the `Upgrade` handshake refuses it, and one that keeps its
+default idle timeout (60 s on nginx) cuts it over and over — the app reconnects, but
+updates stall in between. With nginx:
+
+```nginx
+location /api/ws {
+    proxy_pass http://skol-arena:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_read_timeout 1h;
+    proxy_send_timeout 1h;
+}
+```
+
+Traefik and Caddy forward WebSockets out of the box; check the idle/read timeout of any
+load balancer in front (AWS ALB, Cloudflare…) instead.

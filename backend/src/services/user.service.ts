@@ -1,3 +1,4 @@
+import { isInvitationCodeRequired } from "../config/invitation";
 import { userRepository } from "../repository/user.repository";
 import { invitationRepository } from "../repository/invitation.repository";
 import { organizationRepository } from "../repository/organization.repository";
@@ -36,7 +37,7 @@ import type {
 function resolveFrontendUrl(): string {
   if (process.env.FRONTEND_URL) return process.env.FRONTEND_URL;
   if (process.env.NODE_ENV === "production") {
-    return process.env.BETTER_AUTH_URL || process.env.BASE_URL || "";
+    return process.env.BETTER_AUTH_URL || process.env.BASE_URL || "http://localhost:3000";
   }
   return "http://localhost:5173";
 }
@@ -80,7 +81,7 @@ export class UserService {
     // Otherwise, verify an invitation code has been consumed before creating the appUser
     const hasValidInvitation = await invitationRepository.hasUserUsedCode(betterAuthUserId);
 
-    if (!hasValidInvitation) {
+    if (!hasValidInvitation && isInvitationCodeRequired()) {
       throw new UnauthorizedError(ErrorCode.INVITATION_CODE_REQUIRED, { betterAuthUserId });
     }
 

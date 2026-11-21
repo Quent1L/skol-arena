@@ -477,6 +477,7 @@
 </template>
 
 <script setup lang="ts">
+import { INVITATION_CODE_REGEX } from '@skol-arena/shared/schemas/invitation.schema'
 import { ref, reactive, onMounted, computed } from 'vue'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useI18n } from 'vue-i18n'
@@ -666,7 +667,7 @@ function resetJoinOrgDialog() {
 }
 
 const debouncedValidateOrgCode = useDebounceFn(async () => {
-  if (!/^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/.test(joinOrgCode.value)) {
+  if (!INVITATION_CODE_REGEX.test(joinOrgCode.value.trim().toLowerCase())) {
     joinOrgCodeValid.value = false
     joinOrgCodeError.value = null
     joinOrgOrganizationName.value = null

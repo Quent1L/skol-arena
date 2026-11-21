@@ -19,7 +19,6 @@ type EnvEntry = { name: string; group: EnvGroup; secret: boolean };
 export const ENV_CATALOG: readonly EnvEntry[] = [
   { name: "DATABASE_URL", group: "database", secret: true },
   { name: "DATABASE_POOL_MAX", group: "database", secret: false },
-  { name: "MIGRATIONS_FOLDER", group: "database", secret: false },
   { name: "NODE_ENV", group: "server", secret: false },
   { name: "PORT", group: "server", secret: false },
   { name: "FRONTEND_URL", group: "server", secret: false },
@@ -38,6 +37,7 @@ export const ENV_CATALOG: readonly EnvEntry[] = [
   { name: "BASE_URL", group: "auth", secret: false },
   { name: "SHOW_EMAIL_PASSWORD_FORM", group: "auth", secret: false },
   { name: "ENABLE_EMAIL_PASSWORD", group: "auth", secret: false },
+  { name: "REQUIRE_INVITATION_CODE", group: "auth", secret: false },
   { name: "OIDC_PROVIDERS", group: "auth", secret: false },
   { name: "OIDC_<ID>_ISSUER", group: "auth", secret: false },
   { name: "OIDC_<ID>_CLIENT_ID", group: "auth", secret: false },

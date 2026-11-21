@@ -4,7 +4,13 @@
       <div class="text-center mb-8 text-white">
         <SkolLogo :width="240" class="mx-auto" />
         <p class="mt-2">{{ t('signupView.subtitle') }}</p>
-        <p class="mt-1 text-sm text-gray-300">{{ t('signupView.invitationRequired') }}</p>
+        <p class="mt-1 text-sm text-gray-300">
+          {{
+            invitationRequired
+              ? t('signupView.invitationRequired')
+              : t('signupView.invitationOptional')
+          }}
+        </p>
       </div>
 
       <UCard variant="soft">
@@ -19,7 +25,14 @@
         />
 
         <div v-else class="space-y-6">
-          <UFormField :label="t('signupView.invitationCodeLabel')" size="xl">
+          <UFormField
+            :label="
+              invitationRequired
+                ? t('signupView.invitationCodeLabel')
+                : t('signupView.invitationCodeOptionalLabel')
+            "
+            size="xl"
+          >
             <UInput
               id="code"
               v-model="invitationCode"
@@ -48,12 +61,16 @@
                 color="success"
                 variant="subtle"
                 icon="i-fa7-solid:circle-check"
-                :title="t('signupView.codeValidMessage', { count: remainingUses })"
+                :title="
+                  remainingUses === null
+                    ? t('signupView.codeValidUnlimited')
+                    : t('signupView.codeValidMessage', { count: remainingUses })
+                "
               />
             </template>
           </UFormField>
 
-          <div v-if="codeValid" class="space-y-4">
+          <div v-if="canChooseMethod" class="space-y-4">
             <p class="text-center text-sm text-muted font-medium">
               {{ t('signupView.chooseMethod') }}
             </p>
@@ -96,6 +113,7 @@
 </template>
 
 <script setup lang="ts">
+import { INVITATION_CODE_REGEX } from '@skol-arena/shared/schemas/invitation.schema'
 import SkolLogo from '@/components/brand/SkolLogo.vue'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -117,10 +135,15 @@ const invitationCode = ref('')
 const codeValid = ref(false)
 const codeError = ref('')
 const isValidating = ref(false)
-const remainingUses = ref(0)
+const remainingUses = ref<number | null>(0)
 
 const emailPasswordEnabled = computed(() => config.value?.auth?.emailPassword?.enabled ?? true)
 const ssoProviders = computed(() => config.value?.auth?.oidc ?? [])
+const invitationRequired = computed(() => config.value?.auth?.invitationRequired ?? true)
+// Open sign-up: a code is optional, but a typed code that does not work must not be ignored.
+const canChooseMethod = computed(
+  () => codeValid.value || (!invitationRequired.value && !invitationCode.value.trim()),
+)
 const noAuthMethodAvailable = computed(
   () => !emailPasswordEnabled.value && !ssoProviders.value.length,
 )
@@ -159,7 +182,7 @@ async function validateCode() {
     return
   }
 
-  if (!/^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/.test(invitationCode.value)) {
+  if (!INVITATION_CODE_REGEX.test(invitationCode.value.trim().toLowerCase())) {
     codeValid.value = false
     codeError.value = t('signupView.invalidFormat')
     return
@@ -190,7 +213,8 @@ const debouncedValidate = useDebounceFn(validateCode, 500)
 
 // Read back by the backend once the account exists (config/auth.ts, processInvitationCode).
 function storeInvitationCode() {
-  document.cookie = `invitation_code=${invitationCode.value}; path=/; max-age=600; SameSite=Lax`
+  if (!codeValid.value) return
+  document.cookie = `invitation_code=${invitationCode.value.trim().toLowerCase()}; path=/; max-age=600; SameSite=Lax`
 }
 
 function proceedToEmailPasswordRegistration() {

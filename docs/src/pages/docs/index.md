@@ -17,32 +17,23 @@ curl -O https://raw.githubusercontent.com/Quent1L/skol-arena/main/docker-compose
 docker compose -f docker-compose.demo.yml up
 ```
 
-Open `http://localhost:3000/login`. The super admin is `alex@skol.demo`;
-the password is printed in the logs (`docker compose -f docker-compose.demo.yml logs app | grep "DEMO CREDENTIALS"`).
-Wipe everything with `down -v`. This is for testing only — see
-[Demo data](/docs/deployment#demo-data) for what is loaded and how it works.
+Open `http://localhost:3000/login`: the login page shows the super admin's email and
+password, and a button signs you in with them in one click. Wipe everything with
+`down -v`. This is for testing only — see [Demo data](/docs/deployment#demo-data) for
+what is loaded and how it works.
 
-## Quick start
+## Running your own instance
 
-```bash
-docker run -d \
-  --name skol-arena \
-  -p 3000:3000 \
-  -e DATABASE_URL="postgres://user:password@your-db-host:5432/skol_arena" \
-  -e BETTER_AUTH_SECRET="$(openssl rand -base64 32)" \
-  quent1l/skol-arena:latest
-```
+Start from the [Docker Compose file](/docs/deployment#docker-compose) on the Deployment
+page: the app and its Postgres database, ready to `docker compose up`.
 
-On first boot the app runs its database migrations automatically, then creates an
-initial super-admin account if the database is empty. Watch the container logs for
-the generated password: it is regenerated and logged again on every restart until
-that account logs in for the first time — see [Deployment](/docs/deployment) for
-details.
+Only two variables are truly required: `DATABASE_URL` and `BETTER_AUTH_SECRET`
+(generate one with `openssl rand -base64 32`). Everything else has a usable default,
+and a single container serves both the API and the web app.
 
-Only two variables are truly required to get a working instance: `DATABASE_URL` and
-`BETTER_AUTH_SECRET`. Everything else has a usable default — the image already
-points `FRONTEND_BUILD_PATH` and `MIGRATIONS_FOLDER` at the bundled frontend build
-and migrations, so a single container serves both the API and the web app.
+On first boot the app runs its database migrations, then creates an initial
+super-admin account and prints its password in the container logs — see
+[First boot](/docs/deployment#first-boot).
 
 ## Where to go next
 
@@ -67,7 +58,7 @@ Once the instance is up, these pages cover how it behaves:
 
 ## Prerequisites
 
-- A PostgreSQL database (any recent version) reachable from the container.
+- A PostgreSQL 16+ database reachable from the container.
 - Docker (or a Docker-compatible runtime) able to pull from [Docker Hub](https://hub.docker.com/r/quent1l/skol-arena) .
 
 ## Resource requirements

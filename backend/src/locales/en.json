@@ -123,6 +123,7 @@
     "INVITATION_CODE_EXHAUSTED": "This invitation code has reached its maximum usage limit",
     "INVITATION_CODE_INACTIVE": "This invitation code has been deactivated",
     "INVITATION_CODE_ALREADY_USED": "You have already used an invitation code",
+    "INVITATION_CODE_TAKEN": "This invitation code already exists",
     "INVITATION_CODE_NOT_FOUND": "Invitation code not found",
     "TEAM_FULL": "This team is full",
     "TEAM_NAME_TAKEN": "This team name is already taken in this tournament",

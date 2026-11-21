@@ -36,7 +36,7 @@ export class InvitationRepository {
         and(
           eq(invitationCodes.id, codeId),
           eq(invitationCodes.isActive, true),
-          lt(invitationCodes.usedCount, invitationCodes.maxUses),
+          or(isNull(invitationCodes.maxUses), lt(invitationCodes.usedCount, invitationCodes.maxUses)),
           or(isNull(invitationCodes.expiresAt), gt(invitationCodes.expiresAt, new Date())),
         ),
       )

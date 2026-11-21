@@ -117,13 +117,16 @@ async function requestLogger(c: Context, next: Next) {
   logger.debug(`--> ${method} ${path} ${c.res.status} ${ms}ms`);
 }
 
-// Falling back to the dev origin in production blocks the real frontend on every
-// credentialed request, which surfaces as an app that loads and then does nothing.
-// Say so at boot rather than leaving it to be diagnosed from the browser console.
-if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL) {
+// In production the frontend is normally served by this same process, so its origin
+// is the app's own URL. Only an API-only container (empty FRONTEND_BUILD_PATH) serving
+// a frontend hosted elsewhere needs FRONTEND_URL: say so at boot rather than leaving it
+// to be diagnosed from the browser console.
+const productionFrontendOrigin =
+  process.env.FRONTEND_URL || process.env.BETTER_AUTH_URL || process.env.BASE_URL || "http://localhost:3000";
+if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL && !process.env.FRONTEND_BUILD_PATH) {
   logger.warn(
-    "FRONTEND_URL is not set in production: CORS falls back to http://localhost:5173, " +
-      "so requests from the deployed frontend will be refused.",
+    `FRONTEND_URL is not set while the frontend is served separately: CORS falls back to ${productionFrontendOrigin}, ` +
+      "so requests from another origin will be refused.",
   );
 }
 
@@ -131,10 +134,7 @@ if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL) {
 app.use(
   "*",
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? process.env.FRONTEND_URL || "http://localhost:5173"
-        : "http://localhost:5173",
+    origin: process.env.NODE_ENV === "production" ? productionFrontendOrigin : "http://localhost:5173",
     credentials: true,
     allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", API_VERSION_REQUEST_HEADER],

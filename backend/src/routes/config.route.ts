@@ -4,6 +4,7 @@ import { appConfigSchema } from "@skol-arena/shared/types/index";
 import { createAppHono } from "../types/hono";
 import { rankedMatchMaxAgeHours } from "../config/ranked";
 import { demoCredentials } from "../utils/init-demo-data";
+import { isInvitationCodeRequired } from "../config/invitation";
 
 const configRoute = createAppHono();
 
@@ -39,6 +40,7 @@ configRoute.get(
         },
         oidc: oidcProviders.map(({ id, label }) => ({ id, label })),
         keycloak: keycloakConfig,
+        invitationRequired: isInvitationCodeRequired(),
       },
       ranked: {
         matchMaxAgeHours: rankedMatchMaxAgeHours(),

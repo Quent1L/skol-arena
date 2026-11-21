@@ -13,11 +13,31 @@
         </h2>
       </template>
       <form
-        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5"
         @submit.prevent="handleGenerateCode"
       >
+        <UFormField
+          :label="t('adminInvitationsView.customCode')"
+          :help="t('adminInvitationsView.customCodeHelp')"
+        >
+          <UInput
+            v-model="formData.code"
+            :placeholder="t('adminInvitationsView.customCodePlaceholder')"
+            class="w-full font-mono"
+          />
+        </UFormField>
         <UFormField :label="t('adminInvitationsView.maxUses')">
-          <UInputNumber v-model="formData.maxUses" :min="1" :max="100" class="w-full" />
+          <UInputNumber
+            v-model="formData.maxUses"
+            :min="1"
+            :disabled="formData.unlimited"
+            class="w-full"
+          />
+          <USwitch
+            v-model="formData.unlimited"
+            :label="t('adminInvitationsView.unlimitedUses')"
+            class="mt-2"
+          />
         </UFormField>
         <UFormField :label="t('adminInvitationsView.expirationDays')">
           <UInputNumber
@@ -46,7 +66,7 @@
             class="w-full"
           />
         </UFormField>
-        <div class="sm:col-span-2 lg:col-span-4">
+        <div class="sm:col-span-2 lg:col-span-5">
           <UButton
             type="submit"
             :loading="isGenerating"
@@ -99,9 +119,13 @@
         </template>
         <template #usedCount-cell="{ row }">
           <UBadge
-            :color="row.original.usedCount >= row.original.maxUses ? 'error' : 'success'"
+            :color="
+              row.original.maxUses !== null && row.original.usedCount >= row.original.maxUses
+                ? 'error'
+                : 'success'
+            "
             variant="subtle"
-            :label="`${row.original.usedCount} / ${row.original.maxUses}`"
+            :label="`${row.original.usedCount} / ${row.original.maxUses ?? t('adminInvitationsView.unlimited')}`"
           />
         </template>
         <template #isActive-cell="{ row }">
@@ -200,12 +224,16 @@ function rowActions(code: InvitationCode): RowAction[] {
   ]
 }
 
-const formData = ref({
+const emptyForm = () => ({
+  code: '',
   maxUses: 1,
+  unlimited: false,
   expiresInDays: undefined as number | undefined,
   notes: '',
   organizationId: undefined as string | undefined,
 })
+
+const formData = ref(emptyForm())
 
 onMounted(async () => {
   await Promise.all([loadCodes(), loadOrganizations()])
@@ -239,7 +267,8 @@ async function handleGenerateCode() {
   isGenerating.value = true
   try {
     const newCode = await generateCode({
-      maxUses: formData.value.maxUses,
+      code: formData.value.code.trim() || undefined,
+      maxUses: formData.value.unlimited ? null : formData.value.maxUses,
       expiresInDays: formData.value.expiresInDays,
       notes: formData.value.notes || undefined,
       organizationId: formData.value.organizationId,
@@ -252,12 +281,7 @@ async function handleGenerateCode() {
       life: 5000,
     })
 
-    formData.value = {
-      maxUses: 1,
-      expiresInDays: undefined,
-      notes: '',
-      organizationId: undefined,
-    }
+    formData.value = emptyForm()
 
     await loadCodes()
   } catch (error: unknown) {

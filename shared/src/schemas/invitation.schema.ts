@@ -1,20 +1,33 @@
 import { z } from "zod";
 import { vmsg } from "../types/validation-messages";
 
+/**
+ * Lowercase words or digits joined by dashes: the generated passphrases
+ * (`frost-otter-ridge-plume`) as well as custom codes (`club2026`, `summer-league`).
+ */
+export const INVITATION_CODE_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const invitationCodeValue = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3, vmsg("validation.invalidCodeFormat"))
+  .max(64, vmsg("validation.invalidCodeFormat"))
+  .regex(INVITATION_CODE_REGEX, vmsg("validation.invalidCodeFormat"));
+
 export const generateInvitationCodeSchema = z.object({
-  maxUses: z.number().int().min(1).optional().default(1),
+  /** Custom code; a passphrase is generated when omitted. */
+  code: invitationCodeValue.optional(),
+  /** null = unlimited uses. */
+  maxUses: z.number().int().min(1).nullable().optional().default(1),
   expiresInDays: z.number().int().min(1).optional(),
   notes: z.string().max(500).optional(),
   organizationId: z.uuid().optional(),
 });
 
-export const validateInvitationCodeSchema = z.object({
-  code: z.string().regex(/^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/, vmsg("validation.invalidCodeFormat")),
-});
+export const validateInvitationCodeSchema = z.object({ code: invitationCodeValue });
 
-export const consumeInvitationCodeSchema = z.object({
-  code: z.string().regex(/^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/, vmsg("validation.invalidCodeFormat")),
-});
+export const consumeInvitationCodeSchema = z.object({ code: invitationCodeValue });
 
 export type GenerateInvitationCodeInput = z.infer<typeof generateInvitationCodeSchema>;
 export type ValidateInvitationCodeInput = z.infer<typeof validateInvitationCodeSchema>;
@@ -31,7 +44,8 @@ export const invitationCodeSchema = z
     createdBy: z.string(),
     createdAt: z.iso.datetime(),
     expiresAt: z.iso.datetime().nullable(),
-    maxUses: z.number().int(),
+    /** null = unlimited uses. */
+    maxUses: z.number().int().nullable(),
     usedCount: z.number().int(),
     isActive: z.boolean(),
     notes: z.string().nullable(),
@@ -51,7 +65,8 @@ export const invitationCodeListSchema = z.array(invitationCodeSchema);
 export const invitationValidationSchema = z
   .object({
     valid: z.boolean(),
-    remainingUses: z.number().int(),
+    /** null = unlimited uses. */
+    remainingUses: z.number().int().nullable(),
     organizationId: z.string().optional(),
     organizationName: z.string().optional(),
   })

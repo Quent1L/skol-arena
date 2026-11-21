@@ -39,6 +39,8 @@ export const authConfigSchema = z
     oidc: z.array(oidcProviderSchema),
     /** @deprecated Read `oidc`. Kept so clients built before it still find their provider. */
     keycloak: keycloakConfigSchema,
+    /** False when the operator opened sign-up: an invitation code becomes optional. */
+    invitationRequired: z.boolean(),
   })
   .meta({ id: "AuthConfig" });
 
