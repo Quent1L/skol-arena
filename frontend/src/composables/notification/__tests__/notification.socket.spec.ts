@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest'
 import { ref } from 'vue'
 
 const add = vi.fn()
@@ -48,6 +48,11 @@ async function load() {
   vi.resetModules()
   return await import('../notification.socket')
 }
+
+// The first import transforms the module graph, which takes seconds under a full parallel
+// run: paid here, with real timers and a long timeout, rather than inside a 5s test whose
+// late connect() would then leak a socket into the next one.
+beforeAll(() => import('../notification.socket'), 30_000)
 
 beforeEach(() => {
   FakeSocket.instances = []
