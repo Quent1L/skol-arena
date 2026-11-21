@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, type Mock } from 'vitest'
 import { ref, computed } from 'vue'
 
 /**
@@ -6,14 +6,17 @@ import { ref, computed } from 'vue'
  *   vi.mock('@/config/ApiConfig', async () => (await import('@/test-support/mock-modules')).apiConfigMock())
  */
 
+// Annotated: vitest 5 no longer exports the default `Procedure` that a bare vi.fn() infers (TS2883).
+const fn = (): Mock => vi.fn()
+
 export function apiConfigMock() {
   return {
     default: {
-      get: vi.fn(),
-      post: vi.fn(),
-      patch: vi.fn(),
-      put: vi.fn(),
-      delete: vi.fn(),
+      get: fn(),
+      post: fn(),
+      patch: fn(),
+      put: fn(),
+      delete: fn(),
     },
   }
 }
@@ -69,21 +72,21 @@ export function makeAuthMock(state: AuthMockState) {
     loading: ref(false),
     error: ref<string | null>(null),
     isInitialized: computed(() => state.initialized),
-    login: vi.fn(),
-    register: vi.fn(),
-    logout: vi.fn(),
-    checkSession: vi.fn(),
-    fetchUserData: vi.fn(),
+    login: fn(),
+    register: fn(),
+    logout: fn(),
+    checkSession: fn(),
+    fetchUserData: fn(),
     initialize: vi.fn(async () => {
       state.initialized = true
     }),
     authClient: {},
     token: computed(() => null),
-    requestPasswordReset: vi.fn(),
-    resetPassword: vi.fn(),
-    changePassword: vi.fn(),
+    requestPasswordReset: fn(),
+    resetPassword: fn(),
+    changePassword: fn(),
     listAuthProviders: vi.fn(async () => ['credential']),
     kioskSettingsLocked: ref(false),
-    lockKioskSettings: vi.fn(),
+    lockKioskSettings: fn(),
   }
 }

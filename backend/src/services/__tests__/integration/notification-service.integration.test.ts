@@ -8,7 +8,7 @@ const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
 
 let sendImpl: (sub: unknown, payload: string) => Promise<unknown> = async () => ({});
 const sendNotification = mock((sub: unknown, payload: string) => sendImpl(sub, payload));
-mock.module("web-push", () => ({ default: { setVapidDetails: () => {}, sendNotification } }));
+mock.module("web-push", () => ({ setVapidDetails: () => {}, sendNotification }));
 
 const wsSend = mock((_userId: string, _message: unknown) => true);
 mock.module("../../websocket.service", () => ({ webSocketService: { send: wsSend } }));

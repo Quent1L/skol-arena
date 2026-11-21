@@ -138,104 +138,100 @@ const sections = await Promise.all(
         class="animate-fade-up mt-8 flex flex-wrap justify-center gap-2"
         style="animation-delay: 0.1s"
       >
-        {
-          pillars.map((pillar) => (
-            <a
-              href={`#${pillar.id}`}
-              class="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-brand-mid/50 hover:text-brand-mid"
-            >
-              <Icon name={pillar.icon} class="h-3.5 w-3.5" />
-              {pillar.title}
-            </a>
-          ))
-        }
+        {pillars.map((pillar) => (
+          <a
+            href={`#${pillar.id}`}
+            class="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-brand-mid/50 hover:text-brand-mid"
+          >
+            <Icon name={pillar.icon} class="h-3.5 w-3.5" />
+            {pillar.title}
+          </a>
+        ))}
       </div>
     </div>
   </section>
 
   <div class="mx-auto flex max-w-6xl flex-col gap-20 px-6 pb-24">
-    {
-      sections.map((section) => (
-        <section id={section.id} class="scroll-mt-24">
-          <SectionHeading eyebrow={section.title} title={section.subtitle} align="left" />
-          {section.ModeContent && (
-            <div class="prose prose-invert prose-strong:text-slate-100 mt-5 max-w-3xl text-slate-300">
-              <section.ModeContent />
-            </div>
-          )}
+    {sections.map((section) => (
+      <section id={section.id} class="scroll-mt-24">
+        <SectionHeading eyebrow={section.title} title={section.subtitle} align="left" />
+        {section.ModeContent && (
+          <div class="prose prose-invert prose-strong:text-slate-100 mt-5 max-w-3xl text-slate-300">
+            <section.ModeContent />
+          </div>
+        )}
 
-          {section.id === 'platform' ? (
-            <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {section.entries.map(({ feature, Content }) => (
-                <FeatureCard
-                  id={slug(feature.id)}
-                  title={feature.data.title}
-                  icon={feature.data.icon}
-                  badge={feature.data.badge}
-                  href={feature.data.docs}
-                >
-                  <Content />
-                </FeatureCard>
-              ))}
-            </div>
-          ) : (
-            <div class="mt-8 flex flex-col gap-6">
-              {section.entries.map(({ feature, Content }) => {
-                if (feature.id === RANKED_ID) {
-                  return (
-                    <RankedSpotlight variant="features" feature={feature}>
-                      <Content />
-                    </RankedSpotlight>
-                  )
-                }
-
+        {section.id === 'platform' ? (
+          <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {section.entries.map(({ feature, Content }) => (
+              <FeatureCard
+                id={slug(feature.id)}
+                title={feature.data.title}
+                icon={feature.data.icon}
+                badge={feature.data.badge}
+                href={feature.data.docs}
+              >
+                <Content />
+              </FeatureCard>
+            ))}
+          </div>
+        ) : (
+          <div class="mt-8 flex flex-col gap-6">
+            {section.entries.map(({ feature, Content }) => {
+              if (feature.id === RANKED_ID) {
                 return (
-                  <article
-                    id={slug(feature.id)}
-                    class="grid scroll-mt-24 grid-cols-1 gap-10 rounded-2xl border border-white/10 bg-white/[0.03] p-8 md:grid-cols-5 lg:p-10"
-                  >
-                    <div class={SHOTS[feature.id] ? 'md:col-span-3' : 'md:col-span-5'}>
-                      <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-start/15 text-brand-mid">
-                        <Icon name={feature.data.icon ?? 'bolt'} class="h-6 w-6" />
-                      </div>
-                      <div class="mb-1 flex flex-wrap items-center gap-2">
-                        <h3 class="text-2xl font-bold text-white">{feature.data.title}</h3>
-                        {feature.data.badge && (
-                          <span class="rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-amber-300 uppercase">
-                            {feature.data.badge}
-                          </span>
+                  <RankedSpotlight variant="features" feature={feature}>
+                    <Content />
+                  </RankedSpotlight>
+                )
+              }
+
+              return (
+                <article
+                  id={slug(feature.id)}
+                  class="grid scroll-mt-24 grid-cols-1 gap-10 rounded-2xl border border-white/10 bg-white/[0.03] p-8 md:grid-cols-5 lg:p-10"
+                >
+                  <div class={SHOTS[feature.id] ? 'md:col-span-3' : 'md:col-span-5'}>
+                    <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-start/15 text-brand-mid">
+                      <Icon name={feature.data.icon ?? 'bolt'} class="h-6 w-6" />
+                    </div>
+                    <div class="mb-1 flex flex-wrap items-center gap-2">
+                      <h3 class="text-2xl font-bold text-white">{feature.data.title}</h3>
+                      {feature.data.badge && (
+                        <span class="rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-amber-300 uppercase">
+                          {feature.data.badge}
+                        </span>
+                      )}
+                    </div>
+                    {feature.data.summary && (
+                      <p class="text-sm font-medium text-brand-mid/80">{feature.data.summary}</p>
+                    )}
+                    <div class="prose prose-invert prose-headings:font-semibold prose-headings:text-white prose-a:text-brand-mid prose-a:no-underline hover:prose-a:underline prose-strong:text-slate-100 mt-4 max-w-none text-slate-300 [&_p]:mb-3">
+                      <Content />
+                    </div>
+                  </div>
+                  {SHOTS[feature.id] && (
+                    <div class="md:col-span-2">
+                      <div class="md:sticky md:top-24">
+                        {SHOTS[feature.id].length > 1 ? (
+                          <DeviceCarousel slides={SHOTS[feature.id]} />
+                        ) : (
+                          <DeviceShot
+                            desktop={SHOTS[feature.id][0]!.desktop}
+                            mobile={SHOTS[feature.id][0]!.mobile}
+                            alt={SHOTS[feature.id][0]!.alt}
+                            caption={SHOTS[feature.id][0]!.caption}
+                          />
                         )}
                       </div>
-                      {feature.data.summary && (
-                        <p class="text-sm font-medium text-brand-mid/80">{feature.data.summary}</p>
-                      )}
-                      <div class="prose prose-invert prose-headings:font-semibold prose-headings:text-white prose-a:text-brand-mid prose-a:no-underline hover:prose-a:underline prose-strong:text-slate-100 mt-4 max-w-none text-slate-300 [&_p]:mb-3">
-                        <Content />
-                      </div>
                     </div>
-                    {SHOTS[feature.id] && (
-                      <div class="md:col-span-2">
-                        <div class="md:sticky md:top-24">
-                          {SHOTS[feature.id].length > 1 ? (
-                            <DeviceCarousel slides={SHOTS[feature.id]} />
-                          ) : (
-                            <DeviceShot
-                              desktop={SHOTS[feature.id][0]!.desktop}
-                              mobile={SHOTS[feature.id][0]!.mobile}
-                              alt={SHOTS[feature.id][0]!.alt}
-                              caption={SHOTS[feature.id][0]!.caption}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </article>
-                )
-              })}
-            </div>
-          )}
-        </section>
-      ))
-    }
+                  )}
+                </article>
+              )
+            })}
+          </div>
+        )}
+      </section>
+    ))}
   </div>
 </BaseLayout>

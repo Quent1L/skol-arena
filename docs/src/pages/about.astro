@@ -64,19 +64,17 @@ const stack = [
 
       <h2 class="mt-14 mb-5 text-xl font-semibold text-white">Design principles</h2>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {
-          principles.map((item) => (
-            <div class="card-glow flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-start/15 text-brand-mid">
-                <Icon name={item.icon} class="h-4 w-4" />
-              </div>
-              <div>
-                <p class="text-sm font-semibold text-white">{item.title}</p>
-                <p class="text-sm text-slate-400">{item.desc}</p>
-              </div>
+        {principles.map((item) => (
+          <div class="card-glow flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-start/15 text-brand-mid">
+              <Icon name={item.icon} class="h-4 w-4" />
             </div>
-          ))
-        }
+            <div>
+              <p class="text-sm font-semibold text-white">{item.title}</p>
+              <p class="text-sm text-slate-400">{item.desc}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
       <h2 class="mt-14 mb-5 text-xl font-semibold text-white">What it deliberately isn't</h2>
@@ -85,39 +83,33 @@ const stack = [
         built for them:
       </p>
       <ul class="flex flex-col gap-2">
-        {
-          nonGoals.map((item) => (
-            <li class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
-              <Icon name="cross" class="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-              {item}
-            </li>
-          ))
-        }
+        {nonGoals.map((item) => (
+          <li class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
+            <Icon name="cross" class="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+            {item}
+          </li>
+        ))}
       </ul>
 
       <h2 class="mt-14 mb-5 text-xl font-semibold text-white">Stack</h2>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {
-          stack.map((item) => (
-            <div class="card-glow flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-start/15 text-brand-mid">
-                <Icon name={item.icon} class="h-4 w-4" />
-              </div>
-              <div>
-                <p class="text-sm font-semibold text-white">{item.label}</p>
-                <p class="text-sm text-slate-400">{item.value}</p>
-              </div>
+        {stack.map((item) => (
+          <div class="card-glow flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-start/15 text-brand-mid">
+              <Icon name={item.icon} class="h-4 w-4" />
             </div>
-          ))
-        }
+            <div>
+              <p class="text-sm font-semibold text-white">{item.label}</p>
+              <p class="text-sm text-slate-400">{item.value}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
       <h2 class="mt-14 mb-5 text-xl font-semibold text-white">Open source</h2>
       <div class="card-glow rounded-xl border border-white/10 bg-white/[0.03] p-6">
         <div class="mb-3 flex items-center gap-3">
-          <div
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-start/15 text-brand-mid"
-          >
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-start/15 text-brand-mid">
             <Icon name="scale" class="h-4 w-4" />
           </div>
           <p class="font-semibold text-white">AGPL-3.0</p>

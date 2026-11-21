@@ -13,29 +13,27 @@ const rendered = await Promise.all(
 ---
 
 <div class="flex flex-col gap-3">
-  {
-    rendered.map(({ item, Content }) => (
-      <details class="group rounded-2xl border border-white/10 bg-white/[0.03] transition-colors open:bg-white/[0.05] hover:border-brand-mid/30">
-        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-left font-semibold text-white marker:content-none">
-          {item.data.title}
-          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/15 text-brand-mid transition-transform group-open:rotate-45">
-            <svg
-              viewBox="0 0 24 24"
-              class="h-3.5 w-3.5"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              aria-hidden="true"
-            >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          </span>
-        </summary>
-        <div class="prose prose-invert prose-sm prose-strong:text-slate-200 prose-a:text-brand-mid max-w-none px-5 pb-5 text-slate-400 [&_p]:mb-0">
-          <Content />
-        </div>
-      </details>
-    ))
-  }
+  {rendered.map(({ item, Content }) => (
+    <details class="group rounded-2xl border border-white/10 bg-white/[0.03] transition-colors open:bg-white/[0.05] hover:border-brand-mid/30">
+      <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-left font-semibold text-white marker:content-none">
+        {item.data.title}
+        <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/15 text-brand-mid transition-transform group-open:rotate-45">
+          <svg
+            viewBox="0 0 24 24"
+            class="h-3.5 w-3.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </span>
+      </summary>
+      <div class="prose prose-invert prose-sm prose-strong:text-slate-200 prose-a:text-brand-mid max-w-none px-5 pb-5 text-slate-400 [&_p]:mb-0">
+        <Content />
+      </div>
+    </details>
+  ))}
 </div>

@@ -31,20 +31,16 @@ const { title, description, date, tag, version, jsonLd } = Astro.props
         ← All posts
       </a>
       <div class="mt-6 flex flex-wrap items-center gap-2">
-        {
-          tag && (
-            <span class="rounded-full border border-brand-mid/30 bg-brand-start/15 px-3 py-1 text-xs font-semibold tracking-wider text-brand-mid uppercase">
-              {tag}
-            </span>
-          )
-        }
-        {
-          version && (
-            <span class="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300">
-              v{version}
-            </span>
-          )
-        }
+        {tag && (
+          <span class="rounded-full border border-brand-mid/30 bg-brand-start/15 px-3 py-1 text-xs font-semibold tracking-wider text-brand-mid uppercase">
+            {tag}
+          </span>
+        )}
+        {version && (
+          <span class="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300">
+            v{version}
+          </span>
+        )}
         <time datetime={date.toISOString()} class="text-sm text-slate-400">
           {formatDate(date)}
         </time>

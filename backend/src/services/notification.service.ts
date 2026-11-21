@@ -1,4 +1,4 @@
-import webpush from "web-push";
+import { sendNotification, setVapidDetails } from "web-push";
 import { logger } from "../utils/logger";
 import i18next from "../config/i18n";
 import { notificationRepository } from "../repository/notification.repository";
@@ -11,7 +11,7 @@ import { CreateNotification, RegisterDevice, PaginatedNotifications, pushEndpoin
 
 // Configure web-push
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails("mailto:noreply@skol-arena.com", process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
+  setVapidDetails("mailto:noreply@skol-arena.com", process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
 }
 
 type PushDevice = Awaited<ReturnType<typeof pushDeviceRepository.getActiveForUser>>[number];
@@ -95,7 +95,7 @@ async function sendPushToDevice(device: PushDevice, pushPayload: unknown): Promi
     }
 
     logger.debug(`[Push] Sending push notification to device ${device.id}`);
-    await webpush.sendNotification({ endpoint: device.subscriptionEndpoint, keys }, JSON.stringify(pushPayload));
+    await sendNotification({ endpoint: device.subscriptionEndpoint, keys }, JSON.stringify(pushPayload));
     logger.debug(`[Push] Successfully sent push notification to device ${device.id}`);
   } catch (error) {
     logger.error({ err: error }, `[Push] Error sending push notification to device ${device.id}:`);

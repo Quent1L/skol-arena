@@ -130,16 +130,12 @@ const audiences = [
   <!-- Hero: message on the left, the actual product on the right -->
   <section class="relative overflow-hidden border-b border-white/10">
     <div class="bg-grid pointer-events-none absolute inset-0"></div>
-    <div
-      class="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pt-16 pb-20 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-16 lg:pt-24"
-    >
+    <div class="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pt-16 pb-20 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-16 lg:pt-24">
       <div class="animate-fade-up">
-        {
-          /* The brand tagline, read from SITE so it cannot drift from the footer
+        {/* The brand tagline, read from SITE so it cannot drift from the footer
             and the browser title. A kicker rather than the h1: the h1 is what
             Pagefind shows as this page's search result, so it has to say what
-            the product is. */
-        }
+            the product is. */}
         <p class="mb-4 text-sm font-semibold tracking-[0.2em] text-brand-mid uppercase">
           {SITE.tagline}
         </p>
@@ -183,14 +179,12 @@ const audiences = [
   <!-- Facts: what you are actually getting, before any argument -->
   <section class="border-b border-white/10 bg-black/20">
     <div class="mx-auto grid max-w-6xl grid-cols-2 px-6 lg:grid-cols-4">
-      {
-        facts.map((fact) => (
-          <div class="border-l border-white/10 px-2 py-8 first:border-l-0 lg:px-6">
-            <p class="font-display text-2xl font-bold text-white">{fact.value}</p>
-            <p class="mt-1 text-sm text-slate-400">{fact.label}</p>
-          </div>
-        ))
-      }
+      {facts.map((fact) => (
+        <div class="border-l border-white/10 px-2 py-8 first:border-l-0 lg:px-6">
+          <p class="font-display text-2xl font-bold text-white">{fact.value}</p>
+          <p class="mt-1 text-sm text-slate-400">{fact.label}</p>
+        </div>
+      ))}
     </div>
   </section>
 
@@ -199,9 +193,7 @@ const audiences = [
     <div class="reveal grid items-center gap-12 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)]">
       <div>
         <SectionHeading align="left" title={why.data.title} />
-        <div
-          class="prose prose-invert prose-lg prose-strong:text-slate-100 mt-6 max-w-[62ch] text-slate-300"
-        >
+        <div class="prose prose-invert prose-lg prose-strong:text-slate-100 mt-6 max-w-[62ch] text-slate-300">
           <why.Content />
         </div>
       </div>
@@ -225,29 +217,23 @@ const audiences = [
 
   <!-- Ranked: the flagship mode, given its own section -->
   <section class="border-y border-white/10 bg-black/20">
-    <div
-      class="reveal mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16"
-    >
+    <div class="reveal mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16">
       <DeviceCarousel slides={RANKED_SLIDES} />
       <div>
         <p class="font-display text-3xl font-bold text-white">{ranked.data.title}</p>
         <p class="mt-2 text-brand-mid">{ranked.data.tagline}</p>
-        <div
-          class="prose prose-invert prose-strong:text-slate-100 mt-6 max-w-[58ch] text-slate-300 [&_p]:mb-4"
-        >
+        <div class="prose prose-invert prose-strong:text-slate-100 mt-6 max-w-[58ch] text-slate-300 [&_p]:mb-4">
           <ranked.Content />
         </div>
-        {
-          ranked.data.bestFor && (
-            <ul class="mt-8 flex flex-wrap gap-2">
-              {ranked.data.bestFor.map((item) => (
-                <li class="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-slate-300">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          )
-        }
+        {ranked.data.bestFor && (
+          <ul class="mt-8 flex flex-wrap gap-2">
+            {ranked.data.bestFor.map((item) => (
+              <li class="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-slate-300">
+                {item}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   </section>
@@ -259,40 +245,38 @@ const audiences = [
       ladder.
     </p>
     <div class="reveal mt-10 grid gap-6 lg:grid-cols-2">
-      {
-        [
-          {
-            entry: championship,
-            desktop: standingsDesktop,
-            mobile: standingsMobile,
-            alt: 'Championship standings with points, matches played, wins, losses and score difference',
-          },
-          {
-            entry: bracket,
-            desktop: bracketDesktop,
-            mobile: bracketMobile,
-            alt: 'A single elimination bracket with quarter-finals and semi-finals played',
-          },
-        ].map(({ entry: mode, desktop, mobile, alt }) => (
-          <article class="flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            <DeviceShot desktop={desktop} mobile={mobile} alt={alt} width={260} />
-            <p class="font-display mt-8 text-2xl font-bold text-white">{mode.data.title}</p>
-            <p class="mt-1 text-sm text-brand-mid">{mode.data.tagline}</p>
-            <div class="prose prose-invert prose-sm prose-strong:text-slate-200 mt-4 max-w-none text-slate-400 [&_p]:mb-3">
-              <mode.Content />
-            </div>
-            {mode.data.bestFor && (
-              <ul class="mt-auto flex flex-wrap gap-2 pt-6">
-                {mode.data.bestFor.map((item) => (
-                  <li class="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-400">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </article>
-        ))
-      }
+      {[
+        {
+          entry: championship,
+          desktop: standingsDesktop,
+          mobile: standingsMobile,
+          alt: 'Championship standings with points, matches played, wins, losses and score difference',
+        },
+        {
+          entry: bracket,
+          desktop: bracketDesktop,
+          mobile: bracketMobile,
+          alt: 'A single elimination bracket with quarter-finals and semi-finals played',
+        },
+      ].map(({ entry: mode, desktop, mobile, alt }) => (
+        <article class="flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+          <DeviceShot desktop={desktop} mobile={mobile} alt={alt} width={260} />
+          <p class="font-display mt-8 text-2xl font-bold text-white">{mode.data.title}</p>
+          <p class="mt-1 text-sm text-brand-mid">{mode.data.tagline}</p>
+          <div class="prose prose-invert prose-sm prose-strong:text-slate-200 mt-4 max-w-none text-slate-400 [&_p]:mb-3">
+            <mode.Content />
+          </div>
+          {mode.data.bestFor && (
+            <ul class="mt-auto flex flex-wrap gap-2 pt-6">
+              {mode.data.bestFor.map((item) => (
+                <li class="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-400">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
+        </article>
+      ))}
     </div>
     <p class="mt-8">
       <a href="/features" class="text-sm font-semibold text-brand-mid hover:text-brand-end">
@@ -303,9 +287,7 @@ const audiences = [
 
   <!-- Players run the day to day -->
   <section class="border-y border-white/10 bg-black/20">
-    <div
-      class="reveal mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16"
-    >
+    <div class="reveal mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16">
       <DeviceShot
         class="lg:order-last"
         desktop={matchDesktop}
@@ -315,25 +297,21 @@ const audiences = [
       />
       <div>
         <SectionHeading align="left" title={players.data.title} />
-        <div
-          class="prose prose-invert prose-strong:text-slate-100 mt-6 max-w-[58ch] text-slate-300"
-        >
+        <div class="prose prose-invert prose-strong:text-slate-100 mt-6 max-w-[58ch] text-slate-300">
           <players.Content />
         </div>
         <ul class="mt-8 divide-y divide-white/10 border-t border-white/10">
-          {
-            playerActions.map((action) => (
-              <li class="flex gap-4 py-5">
-                <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-start/15 text-brand-mid">
-                  <Icon name={action.icon} class="h-4 w-4" />
-                </span>
-                <div>
-                  <p class="font-semibold text-white">{action.title}</p>
-                  <p class="mt-1 text-sm leading-relaxed text-slate-400">{action.body}</p>
-                </div>
-              </li>
-            ))
-          }
+          {playerActions.map((action) => (
+            <li class="flex gap-4 py-5">
+              <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-start/15 text-brand-mid">
+                <Icon name={action.icon} class="h-4 w-4" />
+              </span>
+              <div>
+                <p class="font-semibold text-white">{action.title}</p>
+                <p class="mt-1 text-sm leading-relaxed text-slate-400">{action.body}</p>
+              </div>
+            </li>
+          ))}
         </ul>
       </div>
     </div>
@@ -346,19 +324,17 @@ const audiences = [
       title="Built for communities that need more than a standard tournament tool"
     />
     <ol class="reveal mt-12 grid gap-x-16 border-t border-white/10 sm:grid-cols-2">
-      {
-        differentiators.map((item, i) => (
-          <li class="flex gap-5 border-b border-white/10 py-7">
-            <span class="font-display w-6 shrink-0 text-lg font-bold text-brand-mid tabular-nums">
-              {i + 1}
-            </span>
-            <div>
-              <p class="font-semibold text-white">{item.title}</p>
-              <p class="mt-1.5 text-sm leading-relaxed text-slate-400">{item.body}</p>
-            </div>
-          </li>
-        ))
-      }
+      {differentiators.map((item, i) => (
+        <li class="flex gap-5 border-b border-white/10 py-7">
+          <span class="font-display w-6 shrink-0 text-lg font-bold text-brand-mid tabular-nums">
+            {i + 1}
+          </span>
+          <div>
+            <p class="font-semibold text-white">{item.title}</p>
+            <p class="mt-1.5 text-sm leading-relaxed text-slate-400">{item.body}</p>
+          </div>
+        </li>
+      ))}
     </ol>
   </section>
 
@@ -367,17 +343,15 @@ const audiences = [
     <div class="mx-auto max-w-6xl px-6 py-20">
       <SectionHeading align="left" title="Who it is for" />
       <div class="reveal mt-10 grid gap-x-12 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
-        {
-          audiences.map((item) => (
-            <div class="border-t border-white/10 pt-6">
-              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-start/15 text-brand-mid">
-                <Icon name={item.icon} class="h-5 w-5" />
-              </span>
-              <p class="mt-4 font-semibold text-white">{item.title}</p>
-              <p class="mt-1.5 text-sm leading-relaxed text-slate-400">{item.desc}</p>
-            </div>
-          ))
-        }
+        {audiences.map((item) => (
+          <div class="border-t border-white/10 pt-6">
+            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-start/15 text-brand-mid">
+              <Icon name={item.icon} class="h-5 w-5" />
+            </span>
+            <p class="mt-4 font-semibold text-white">{item.title}</p>
+            <p class="mt-1.5 text-sm leading-relaxed text-slate-400">{item.desc}</p>
+          </div>
+        ))}
       </div>
     </div>
   </section>
@@ -399,12 +373,8 @@ const audiences = [
       <p class="mx-auto mt-4 max-w-[52ch] text-slate-400">
         Self-hosted on a single container next to your own PostgreSQL database.
       </p>
-      <div
-        class="mx-auto mt-8 w-fit rounded-2xl border border-white/10 bg-slate-950/70 px-5 py-3 text-left"
-      >
-        <code class="font-mono text-sm text-slate-300">
-          docker pull quent1l/skol-arena:latest
-        </code>
+      <div class="mx-auto mt-8 w-fit rounded-2xl border border-white/10 bg-slate-950/70 px-5 py-3 text-left">
+        <code class="font-mono text-sm text-slate-300">docker pull quent1l/skol-arena:latest</code>
       </div>
       <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
         <a

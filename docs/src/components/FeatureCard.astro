@@ -21,38 +21,30 @@ const Tag = href ? 'a' : 'div'
   class="card-glow group block scroll-mt-24 rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors hover:bg-white/[0.05]"
 >
   <div class="mb-4 flex items-center gap-3">
-    {
-      number !== undefined ? (
-        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-start/15 font-display text-lg font-bold text-brand-mid transition-transform group-hover:scale-110">
-          {number}
-        </span>
-      ) : (
-        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-start/15 text-brand-mid transition-transform group-hover:scale-110">
-          <Icon name={icon ?? 'bolt'} class="h-5 w-5" />
-        </span>
-      )
-    }
+    {number !== undefined ? (
+      <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-start/15 font-display text-lg font-bold text-brand-mid transition-transform group-hover:scale-110">
+        {number}
+      </span>
+    ) : (
+      <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-start/15 text-brand-mid transition-transform group-hover:scale-110">
+        <Icon name={icon ?? 'bolt'} class="h-5 w-5" />
+      </span>
+    )}
   </div>
   <div class="mb-2 flex flex-wrap items-center gap-2">
     <h3 class="text-lg font-semibold text-white">{title}</h3>
-    {
-      badge && (
-        <span class="rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-amber-300 uppercase">
-          {badge}
-        </span>
-      )
-    }
+    {badge && (
+      <span class="rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-amber-300 uppercase">
+        {badge}
+      </span>
+    )}
   </div>
-  <div
-    class="prose prose-invert prose-sm prose-headings:font-semibold prose-headings:text-white prose-strong:text-slate-200 prose-a:text-brand-mid max-w-none text-slate-400 [&_p]:mb-2 [&_ul]:mb-0"
-  >
+  <div class="prose prose-invert prose-sm prose-headings:font-semibold prose-headings:text-white prose-strong:text-slate-200 prose-a:text-brand-mid max-w-none text-slate-400 [&_p]:mb-2 [&_ul]:mb-0">
     <slot />
   </div>
-  {
-    href && (
-      <span class="mt-4 inline-block text-sm font-semibold text-brand-mid transition-colors group-hover:text-brand-end">
-        Read more →
-      </span>
-    )
-  }
+  {href && (
+    <span class="mt-4 inline-block text-sm font-semibold text-brand-mid transition-colors group-hover:text-brand-end">
+      Read more →
+    </span>
+  )}
 </Tag>

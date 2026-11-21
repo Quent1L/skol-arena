@@ -16,9 +16,7 @@ const destinations = [
 <BaseLayout title="Page not found" description="This page does not exist." noindex>
   <section class="relative overflow-hidden" data-pagefind-ignore="all">
     <div class="bg-grid pointer-events-none absolute inset-0"></div>
-    <div
-      class="relative mx-auto flex max-w-3xl flex-col items-center px-6 py-20 text-center sm:py-28"
-    >
+    <div class="relative mx-auto flex max-w-3xl flex-col items-center px-6 py-20 text-center sm:py-28">
       <p
         class="animate-fade-up text-gradient text-8xl font-extrabold tracking-tight select-none sm:text-9xl"
         aria-hidden="true"
@@ -61,24 +59,22 @@ const destinations = [
       </div>
 
       <nav aria-label="Popular pages" class="mt-14 grid w-full gap-3 text-left sm:grid-cols-2">
-        {
-          destinations.map((destination) => (
-            <a
-              href={destination.href}
-              class="card-glow group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.05]"
-            >
-              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-start/15 text-brand-mid">
-                <Icon name={destination.icon} class="h-5 w-5" />
+        {destinations.map((destination) => (
+          <a
+            href={destination.href}
+            class="card-glow group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.05]"
+          >
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-start/15 text-brand-mid">
+              <Icon name={destination.icon} class="h-5 w-5" />
+            </span>
+            <span>
+              <span class="block font-semibold text-white transition-colors group-hover:text-brand-mid">
+                {destination.label}
               </span>
-              <span>
-                <span class="block font-semibold text-white transition-colors group-hover:text-brand-mid">
-                  {destination.label}
-                </span>
-                <span class="block text-sm text-slate-400">{destination.note}</span>
-              </span>
-            </a>
-          ))
-        }
+              <span class="block text-sm text-slate-400">{destination.note}</span>
+            </span>
+          </a>
+        ))}
       </nav>
     </div>
   </section>

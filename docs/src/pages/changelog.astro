@@ -55,87 +55,75 @@ const audiences = [
         class="animate-fade-up mx-auto mt-8 grid max-w-2xl gap-3 text-left text-sm sm:grid-cols-3"
         style="animation-delay: 0.1s"
       >
-        {
-          legend.map((item) => (
-            <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-              <dt class="font-semibold text-white">{item.label}</dt>
-              <dd class="mt-1 text-slate-400">{item.text}</dd>
-            </div>
-          ))
-        }
+        {legend.map((item) => (
+          <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <dt class="font-semibold text-white">{item.label}</dt>
+            <dd class="mt-1 text-slate-400">{item.text}</dd>
+          </div>
+        ))}
       </dl>
       <ul
         class="animate-fade-up mx-auto mt-4 flex max-w-2xl flex-wrap justify-center gap-x-5 gap-y-1 text-xs text-slate-500"
         style="animation-delay: 0.1s"
       >
-        {
-          audiences.map((item) => (
-            <li>
-              <strong class="text-slate-300">{item.label}</strong> · {item.text}
-            </li>
-          ))
-        }
+        {audiences.map((item) => (
+          <li>
+            <strong class="text-slate-300">{item.label}</strong> · {item.text}
+          </li>
+        ))}
       </ul>
     </div>
   </section>
 
   <section class="relative mx-auto max-w-3xl px-6 pb-24">
     <div class="flex flex-col gap-6">
-      {
-        Unreleased && (
-          <article class="rounded-2xl border border-dashed border-amber-400/40 bg-amber-400/[0.04] p-6">
-            <header class="flex flex-wrap items-center gap-2">
-              <h2 class="text-xl font-bold text-white">Next release</h2>
-              <span class="rounded-full border border-amber-400/30 bg-amber-400/15 px-3 py-1 text-xs font-semibold tracking-wider text-amber-300 uppercase">
-                Unreleased · dev only
+      {Unreleased && (
+        <article class="rounded-2xl border border-dashed border-amber-400/40 bg-amber-400/[0.04] p-6">
+          <header class="flex flex-wrap items-center gap-2">
+            <h2 class="text-xl font-bold text-white">Next release</h2>
+            <span class="rounded-full border border-amber-400/30 bg-amber-400/15 px-3 py-1 text-xs font-semibold tracking-wider text-amber-300 uppercase">
+              Unreleased · dev only
+            </span>
+          </header>
+          <div class:list={[articleProse, 'mt-2 prose-h3:mt-6 prose-h4:mt-5 prose-img:rounded-xl']}>
+            <Unreleased />
+          </div>
+        </article>
+      )}
+      {releases.map(({ release, Content }) => (
+        <article
+          id={releaseAnchor(release.data.version)}
+          class="release scroll-mt-24 rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors"
+        >
+          <header class="flex flex-wrap items-center gap-2">
+            <h2 class="text-xl font-bold text-white">Version {release.data.version}</h2>
+            {release.data.version === latest && (
+              <span class="rounded-full border border-brand-mid/30 bg-brand-start/15 px-3 py-1 text-xs font-semibold tracking-wider text-brand-mid uppercase">
+                Latest
               </span>
-            </header>
-            <div
-              class:list={[articleProse, 'mt-2 prose-h3:mt-6 prose-h4:mt-5 prose-img:rounded-xl']}
-            >
-              <Unreleased />
-            </div>
-          </article>
-        )
-      }
-      {
-        releases.map(({ release, Content }) => (
-          <article
-            id={releaseAnchor(release.data.version)}
-            class="release scroll-mt-24 rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors"
-          >
-            <header class="flex flex-wrap items-center gap-2">
-              <h2 class="text-xl font-bold text-white">Version {release.data.version}</h2>
-              {release.data.version === latest && (
-                <span class="rounded-full border border-brand-mid/30 bg-brand-start/15 px-3 py-1 text-xs font-semibold tracking-wider text-brand-mid uppercase">
-                  Latest
-                </span>
-              )}
-              <time datetime={release.data.date.toISOString()} class="text-sm text-slate-400">
-                {formatDate(release.data.date)}
-              </time>
-              <a
-                href={githubReleaseUrl(release.data.version)}
-                target="_blank"
-                rel="noreferrer"
-                class="ml-auto flex items-center gap-1.5 text-sm font-semibold text-brand-mid transition-colors hover:text-brand-end"
-              >
-                <Icon name="github" class="h-4 w-4" />
-                Technical notes
-                <span class="sr-only">for version {release.data.version} on GitHub</span>
-              </a>
-            </header>
-            {release.data.summary && (
-              <p class="mt-3 leading-relaxed text-slate-300">{release.data.summary}</p>
             )}
-            <div
-              class:list={[articleProse, 'mt-2 prose-h3:mt-6 prose-h4:mt-5 prose-img:rounded-xl']}
+            <time datetime={release.data.date.toISOString()} class="text-sm text-slate-400">
+              {formatDate(release.data.date)}
+            </time>
+            <a
+              href={githubReleaseUrl(release.data.version)}
+              target="_blank"
+              rel="noreferrer"
+              class="ml-auto flex items-center gap-1.5 text-sm font-semibold text-brand-mid transition-colors hover:text-brand-end"
             >
-              <Content />
-            </div>
-          </article>
-        ))
-      }
+              <Icon name="github" class="h-4 w-4" />
+              Technical notes
+              <span class="sr-only">for version {release.data.version} on GitHub</span>
+            </a>
+          </header>
+          {release.data.summary && (
+            <p class="mt-3 leading-relaxed text-slate-300">{release.data.summary}</p>
+          )}
+          <div class:list={[articleProse, 'mt-2 prose-h3:mt-6 prose-h4:mt-5 prose-img:rounded-xl']}>
+            <Content />
+          </div>
+        </article>
+      ))}
     </div>
   </section>
 </BaseLayout>

@@ -23,23 +23,21 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
       <Logo width={130} />
     </a>
     <ul class="hidden items-center gap-1 text-sm font-medium sm:flex">
-      {
-        links.map((link) => (
-          <li>
-            <a
-              href={link.href}
-              aria-current={isActive(link.href) ? 'page' : undefined}
-              class={`rounded-full px-4 py-2 transition-colors ${
-                isActive(link.href)
-                  ? 'bg-white/10 text-brand-mid'
-                  : 'text-slate-300 hover:bg-white/5 hover:text-brand-mid'
-              }`}
-            >
-              {link.label}
-            </a>
-          </li>
-        ))
-      }
+      {links.map((link) => (
+        <li>
+          <a
+            href={link.href}
+            aria-current={isActive(link.href) ? 'page' : undefined}
+            class={`rounded-full px-4 py-2 transition-colors ${
+              isActive(link.href)
+                ? 'bg-white/10 text-brand-mid'
+                : 'text-slate-300 hover:bg-white/5 hover:text-brand-mid'
+            }`}
+          >
+            {link.label}
+          </a>
+        </li>
+      ))}
       <li class="ml-2">
         <Search />
       </li>
@@ -59,9 +57,7 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
     <div class="flex items-center gap-2 sm:hidden">
       <Search compact />
       <details class="group relative">
-        <summary
-          class="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg border border-white/15 text-slate-200"
-        >
+        <summary class="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg border border-white/15 text-slate-200">
           <svg
             class="h-5 w-5"
             viewBox="0 0 24 24"
@@ -72,21 +68,17 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
             <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"></path>
           </svg>
         </summary>
-        <ul
-          class="absolute top-11 right-0 flex w-48 flex-col gap-1 rounded-xl border border-white/10 bg-slate-900 p-2 text-sm shadow-xl shadow-black/40"
-        >
-          {
-            links.map((link) => (
-              <li>
-                <a
-                  href={link.href}
-                  class={`block rounded-lg px-3 py-2 ${isActive(link.href) ? 'bg-white/10 text-brand-mid' : 'text-slate-300 hover:bg-white/5'}`}
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))
-          }
+        <ul class="absolute top-11 right-0 flex w-48 flex-col gap-1 rounded-xl border border-white/10 bg-slate-900 p-2 text-sm shadow-xl shadow-black/40">
+          {links.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                class={`block rounded-lg px-3 py-2 ${isActive(link.href) ? 'bg-white/10 text-brand-mid' : 'text-slate-300 hover:bg-white/5'}`}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
           <li>
             <a
               href="https://github.com/Quent1L/skol-arena"

@@ -30,19 +30,17 @@ const uid = `dc-${crypto.randomUUID().slice(0, 8)}`
 
 <div class={`device-carousel ${className}`} data-device-carousel>
   <div class="relative">
-    {
-      slides.map((slide, i) => (
-        <div id={`${uid}-slide-${i}`} data-carousel-slide hidden={i !== 0}>
-          <DeviceShot
-            desktop={slide.desktop}
-            mobile={slide.mobile}
-            alt={slide.alt}
-            caption={slide.caption}
-            width={width}
-          />
-        </div>
-      ))
-    }
+    {slides.map((slide, i) => (
+      <div id={`${uid}-slide-${i}`} data-carousel-slide hidden={i !== 0}>
+        <DeviceShot
+          desktop={slide.desktop}
+          mobile={slide.mobile}
+          alt={slide.alt}
+          caption={slide.caption}
+          width={width}
+        />
+      </div>
+    ))}
   </div>
 
   <div class="mt-5 flex items-center justify-center gap-3">
@@ -56,19 +54,17 @@ const uid = `dc-${crypto.randomUUID().slice(0, 8)}`
     </button>
 
     <div class="flex items-center gap-2" role="tablist" aria-label="Screenshots">
-      {
-        slides.map((slide, i) => (
-          <button
-            type="button"
-            role="tab"
-            data-carousel-dot
-            aria-controls={`${uid}-slide-${i}`}
-            aria-selected={i === 0 ? 'true' : 'false'}
-            aria-label={slide.label}
-            class="h-2 w-2 rounded-full bg-white/20 transition-all aria-selected:w-6 aria-selected:bg-brand-mid"
-          />
-        ))
-      }
+      {slides.map((slide, i) => (
+        <button
+          type="button"
+          role="tab"
+          data-carousel-dot
+          aria-controls={`${uid}-slide-${i}`}
+          aria-selected={i === 0 ? 'true' : 'false'}
+          aria-label={slide.label}
+          class="h-2 w-2 rounded-full bg-white/20 transition-all aria-selected:w-6 aria-selected:bg-brand-mid"
+        />
+      ))}
     </div>
 
     <button

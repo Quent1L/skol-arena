@@ -19,14 +19,12 @@ const { compact = false } = Astro.props
   }`}
 >
   <Icon name="search" class="h-4 w-4" />
-  {
-    !compact && (
-      <>
-        <span>Search</span>
-        <kbd class="rounded border border-white/15 px-1.5 py-0.5 font-sans text-xs text-slate-400">
-          ⌘K
-        </kbd>
-      </>
-    )
-  }
+  {!compact && (
+    <>
+      <span>Search</span>
+      <kbd class="rounded border border-white/15 px-1.5 py-0.5 font-sans text-xs text-slate-400">
+        ⌘K
+      </kbd>
+    </>
+  )}
 </button>

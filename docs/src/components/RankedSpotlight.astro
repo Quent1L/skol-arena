@@ -23,33 +23,25 @@ const stats = [
   class="scroll-mt-24 rounded-2xl border border-brand-mid/30 bg-gradient-to-br from-brand-start/10 via-white/[0.03] to-brand-end/10 p-8"
 >
   <div class="mb-6 flex flex-wrap items-center gap-3">
-    <span
-      class="flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold tracking-wide text-amber-300 uppercase"
-    >
+    <span class="flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold tracking-wide text-amber-300 uppercase">
       <Icon name="trophy" class="h-3.5 w-3.5" />
       Flagship
     </span>
     <h3 class="text-2xl font-bold text-white">{feature.data.title}</h3>
   </div>
-  {
-    feature.data.summary && (
-      <p class="mb-6 max-w-3xl text-lg text-slate-300">{feature.data.summary}</p>
-    )
-  }
+  {feature.data.summary && (
+    <p class="mb-6 max-w-3xl text-lg text-slate-300">{feature.data.summary}</p>
+  )}
   <div class="mb-8 flex flex-wrap gap-3">
-    {
-      stats.map((stat) => (
-        <span class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300">
-          <Icon name={stat.icon} class="h-3.5 w-3.5 text-brand-mid" />
-          {stat.label}
-        </span>
-      ))
-    }
+    {stats.map((stat) => (
+      <span class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300">
+        <Icon name={stat.icon} class="h-3.5 w-3.5 text-brand-mid" />
+        {stat.label}
+      </span>
+    ))}
   </div>
   <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
-    <div
-      class="prose prose-invert prose-headings:text-white prose-headings:font-semibold prose-a:text-brand-mid prose-a:no-underline hover:prose-a:underline prose-strong:text-slate-100 max-w-none text-slate-300 [&_p]:mb-3"
-    >
+    <div class="prose prose-invert prose-headings:text-white prose-headings:font-semibold prose-a:text-brand-mid prose-a:no-underline hover:prose-a:underline prose-strong:text-slate-100 max-w-none text-slate-300 [&_p]:mb-3">
       <slot />
     </div>
     <div>
@@ -64,8 +56,12 @@ const stats = [
       href="/docs/disciplines#disciplines-and-outcome-types"
       class="text-brand-mid hover:text-brand-end"
     >
-      disciplines &amp; scoring</a
-    >, or the full{' '}
-    <a href="/docs/mmr" class="text-brand-mid hover:text-brand-end">MMR reference</a> in the docs.
+      disciplines &amp; scoring
+    </a>
+    , or the full{' '}
+    <a href="/docs/mmr" class="text-brand-mid hover:text-brand-end">
+      MMR reference
+    </a>{' '}
+    in the docs.
   </p>
 </article>
