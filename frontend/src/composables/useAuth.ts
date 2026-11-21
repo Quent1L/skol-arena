@@ -5,7 +5,6 @@
 import { ref, computed } from 'vue'
 import { authClient } from '@/lib/auth-client'
 import { userApi, type UserResponse } from '@/composables/user/user.api'
-import { useConfigService } from '@/composables/config/config.service'
 import { NETWORK_ERROR, isNetworkError, isTransientStatus } from '@/utils/HttpErrors'
 import { translateAuthError } from '@/utils/AuthErrors'
 import { i18n } from '@/i18n'
@@ -45,24 +44,6 @@ async function fetchUserData() {
     appUserData.value = null
     throw err
   }
-}
-
-/**
- * Construit l'URL de logout Keycloak
- */
-function buildKeycloakLogoutUrl(issuer: string, clientId?: string): string {
-  const postLogoutRedirectUri = window.location.origin + '/login'
-  const logoutUrl = `${issuer}/protocol/openid-connect/logout`
-
-  const params = new URLSearchParams({
-    post_logout_redirect_uri: postLogoutRedirectUri,
-  })
-
-  if (clientId) {
-    params.append('client_id', clientId)
-  }
-
-  return `${logoutUrl}?${params.toString()}`
 }
 
 export function useAuth() {
@@ -306,20 +287,12 @@ export function useAuth() {
     error.value = null
 
     try {
-      // Log out of Better Auth
-      await authClient.signOut()
+      // For an account signed in through an OIDC provider, Better Auth answers with the
+      // provider's end-session URL and its client navigates there: the IdP session ends
+      // too, then the provider sends the browser back to /login.
+      await authClient.signOut({ callbackURL: `${window.location.origin}/login` })
       sessionData.value = undefined
       appUserData.value = null
-
-      // If Keycloak is enabled, redirect to Keycloak logout
-      const { config } = useConfigService()
-      if (config.value?.auth?.keycloak?.enabled && config.value?.auth?.keycloak?.issuer) {
-        const keycloakLogoutUrl = buildKeycloakLogoutUrl(
-          config.value.auth.keycloak.issuer,
-          config.value.auth.keycloak.clientId || undefined,
-        )
-        window.location.href = keycloakLogoutUrl
-      }
     } catch (err) {
       const message =
         err instanceof Error ? err.message : i18n.global.t('auth.errors.logoutGeneric')
@@ -364,7 +337,7 @@ export function useAuth() {
 
   /**
    * providerId of every account linked to the session: "credential" for the
-   * native password, "keycloak" for SSO. An SSO-only user has no password,
+   * native password, the OIDC provider id for SSO. An SSO-only user has no password,
    * so the change-password flow cannot apply to them.
    */
   async function listAuthProviders(): Promise<string[]> {

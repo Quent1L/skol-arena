@@ -1,4 +1,5 @@
 import type { EnvironmentVariable } from "@skol-arena/shared";
+import { oidcEnvPrefix } from "./oidc-providers";
 
 export type EnvGroup = "database" | "server" | "auth" | "smtp" | "push" | "avatars";
 
@@ -11,6 +12,9 @@ type EnvEntry = { name: string; group: EnvGroup; secret: boolean };
  * An allowlist on purpose: a variable nobody listed is never exposed, and a secret
  * only ever reports whether it is set. Credentials embedded in a URL count as
  * secrets, hence DATABASE_URL.
+ *
+ * `OIDC_<ID>_…` entries are templates, unfolded once per provider listed in
+ * OIDC_PROVIDERS.
  */
 export const ENV_CATALOG: readonly EnvEntry[] = [
   { name: "DATABASE_URL", group: "database", secret: true },
@@ -34,6 +38,12 @@ export const ENV_CATALOG: readonly EnvEntry[] = [
   { name: "BASE_URL", group: "auth", secret: false },
   { name: "SHOW_EMAIL_PASSWORD_FORM", group: "auth", secret: false },
   { name: "ENABLE_EMAIL_PASSWORD", group: "auth", secret: false },
+  { name: "OIDC_PROVIDERS", group: "auth", secret: false },
+  { name: "OIDC_<ID>_ISSUER", group: "auth", secret: false },
+  { name: "OIDC_<ID>_CLIENT_ID", group: "auth", secret: false },
+  { name: "OIDC_<ID>_CLIENT_SECRET", group: "auth", secret: true },
+  { name: "OIDC_<ID>_LABEL", group: "auth", secret: false },
+  { name: "OIDC_<ID>_PKCE", group: "auth", secret: false },
   { name: "KEYCLOAK_CLIENT_ID", group: "auth", secret: false },
   { name: "KEYCLOAK_CLIENT_SECRET", group: "auth", secret: true },
   { name: "KEYCLOAK_ISSUER", group: "auth", secret: false },
@@ -55,9 +65,20 @@ export const ENV_CATALOG: readonly EnvEntry[] = [
 
 /** The catalog resolved against `env`: values for public entries, a flag for secrets. */
 export function describeEnvironment(env: Record<string, string | undefined> = process.env): EnvironmentVariable[] {
-  return ENV_CATALOG.map(({ name, group, secret }) => {
+  return ENV_CATALOG.flatMap((entry) => unfold(entry, env)).map(({ name, group, secret }) => {
     const raw = env[name];
     const configured = raw != null && raw !== "";
     return { name, group, secret, configured, value: secret || !configured ? null : raw };
   });
+}
+
+const PROVIDER_TEMPLATE = "OIDC_<ID>_";
+
+function unfold(entry: EnvEntry, env: Record<string, string | undefined>): EnvEntry[] {
+  if (!entry.name.startsWith(PROVIDER_TEMPLATE)) return [entry];
+  const ids = (env.OIDC_PROVIDERS ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  return ids.map((id) => ({ ...entry, name: entry.name.replace(PROVIDER_TEMPLATE, oidcEnvPrefix(id)) }));
 }

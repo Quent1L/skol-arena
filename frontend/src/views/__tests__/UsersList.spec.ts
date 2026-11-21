@@ -116,7 +116,7 @@ describe('UsersList', () => {
 
     const text = wrapper.text()
     expect(text).toContain('adminUsersList.authProviders.credential')
-    expect(text).toContain('adminUsersList.authProviders.keycloak')
+    expect(text).toContain('adminUsersList.authProviders.sso')
   })
 
   it('falls back to "none" for accounts created outside Better Auth', async () => {

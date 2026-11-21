@@ -66,7 +66,7 @@ Across every mode:
   with configurable team sizes.
 - **Mobile-first and installable** — purpose-built mobile screens and a PWA, in French and
   English.
-- **Access control** — native login or Keycloak SSO, invite-only registration, and
+- **Access control** — native login or SSO through any OpenID Connect provider, invite-only registration, and
   organizations that scope a tournament to a group.
 
 → **[Full feature tour](https://skol-arena.com/features)**

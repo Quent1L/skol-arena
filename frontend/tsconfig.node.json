@@ -6,6 +6,8 @@
     "cypress.config.*",
     "nightwatch.conf.*",
     "playwright.config.*",
+    "playwright.sso.config.*",
+    "e2e/sso/providers.ts",
     "eslint.config.*"
   ],
   "compilerOptions": {

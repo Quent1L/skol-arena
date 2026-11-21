@@ -96,7 +96,7 @@
     "archived": "Archived",
     "authProviders": {
       "credential": "Password",
-      "keycloak": "Keycloak (SSO)",
+      "sso": "{id} (SSO)",
       "none": "None"
     },
     "blockers": {
@@ -258,6 +258,12 @@
       "registerGeneric": "An error occurred during registration",
       "sessionFetch": "Error fetching session",
       "sessionFetchGeneric": "An error occurred while fetching the session"
+    },
+    "sso": {
+      "signIn": "Sign in with {name}",
+      "signUp": "Sign up with {name}",
+      "redirecting": "Redirecting…",
+      "error": "Single sign-on failed"
     }
   },
   "authSchema": {
@@ -681,9 +687,6 @@
     "emailLabel": "Email",
     "emailPlaceholder": "your{'@'}email.com",
     "forgotPassword": "Forgot password?",
-    "keycloakDefaultLabel": "Sign in with Keycloak",
-    "keycloakError": "Error during Keycloak login",
-    "keycloakLoading": "Loading...",
     "loginButton": "Sign in",
     "noAccount": "No account?",
     "noAuthDescription": "Contact the system administrator. Authentication configuration is missing.",
@@ -1972,11 +1975,9 @@
     "invitationCodeLabel": "Invitation code",
     "invitationCodePlaceholder": "Invitation code",
     "invitationRequired": "Invitation code required",
-    "keycloakLabel": "Sign up with Keycloak (SSO)",
     "noAuthMethodDesc": "Contact the system administrator. Authentication configuration is missing.",
     "noAuthMethodTitle": "No authentication method available",
     "oauthError": "An error occurred during registration",
-    "signingIn": "Signing in...",
     "subtitle": "Create your account",
     "validating": "Validating...",
     "validationError": "Validation error"

@@ -68,16 +68,12 @@
               @click="proceedToEmailPasswordRegistration"
             />
 
-            <UButton
-              v-if="keycloakEnabled"
-              size="xl"
-              block
-              color="neutral"
+            <SsoButtons
+              :providers="ssoProviders"
+              sign-up
               variant="subtle"
-              icon="i-fa7-solid:building"
-              :loading="isSigningIn"
-              :label="isSigningIn ? t('signupView.signingIn') : keycloakLoginLabel"
-              @click="proceedToKeycloakRegistration"
+              :prepare="storeInvitationCode"
+              @error="codeError = $event"
             />
           </div>
 
@@ -105,7 +101,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useDebounceFn } from '@vueuse/core'
-import { authClient } from '@/lib/auth-client'
+import SsoButtons from '@/components/auth/SsoButtons.vue'
 import { useInvitationService } from '@/composables/invitation/invitation.service'
 import { useConfigService } from '@/composables/config/config.service'
 import { useAppToast } from '@/composables/useAppToast'
@@ -122,13 +118,11 @@ const codeValid = ref(false)
 const codeError = ref('')
 const isValidating = ref(false)
 const remainingUses = ref(0)
-const isSigningIn = ref(false)
 
 const emailPasswordEnabled = computed(() => config.value?.auth?.emailPassword?.enabled ?? true)
-const keycloakEnabled = computed(() => config.value?.auth?.keycloak?.enabled ?? false)
-const noAuthMethodAvailable = computed(() => !emailPasswordEnabled.value && !keycloakEnabled.value)
-const keycloakLoginLabel = computed(
-  () => config.value?.auth?.keycloak?.loginLabel ?? t('signupView.keycloakLabel'),
+const ssoProviders = computed(() => config.value?.auth?.oidc ?? [])
+const noAuthMethodAvailable = computed(
+  () => !emailPasswordEnabled.value && !ssoProviders.value.length,
 )
 
 onMounted(() => {
@@ -194,33 +188,13 @@ async function validateCode() {
 
 const debouncedValidate = useDebounceFn(validateCode, 500)
 
-function proceedToEmailPasswordRegistration() {
+// Read back by the backend once the account exists (config/auth.ts, processInvitationCode).
+function storeInvitationCode() {
   document.cookie = `invitation_code=${invitationCode.value}; path=/; max-age=600; SameSite=Lax`
-  router.push('/register')
 }
 
-async function proceedToKeycloakRegistration() {
-  isSigningIn.value = true
-
-  try {
-    document.cookie = `invitation_code=${invitationCode.value}; path=/; max-age=600; SameSite=Lax`
-
-    // In dev, the frontend is on localhost:5173, so the full URL must be specified
-    // In prod (dockerized), the frontend is served by the backend, so '/' is enough
-    // Redirects to the home page. If there's no invitation code, the guard will detect
-    // the INVITATION_CODE_REQUIRED error and automatically redirect to /submit-invitation
-    const callbackURL = import.meta.env.MODE === 'dev' ? 'http://localhost:5173/' : '/'
-
-    // IMPORTANT: requestSignUp: true to force account creation
-    await authClient.signIn.oauth2({
-      providerId: 'keycloak',
-      callbackURL,
-      requestSignUp: true, // Force sign-up (with invitation code)
-    })
-  } catch (error: unknown) {
-    isSigningIn.value = false
-    codeError.value = (error as Error).message || t('signupView.validationError')
-    console.error('Keycloak sign-in error:', error)
-  }
+function proceedToEmailPasswordRegistration() {
+  storeInvitationCode()
+  router.push('/register')
 }
 </script>

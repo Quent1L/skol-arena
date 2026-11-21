@@ -1,0 +1,46 @@
+{
+  "realm": "skol",
+  "enabled": true,
+  "sslRequired": "none",
+  "clients": [
+    {
+      "clientId": "skol-arena",
+      "name": "Skol Arena",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "skol-e2e-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/api/auth/oauth2/callback/keycloak",
+        "http://localhost:3000/api/auth/callback/keycloak"
+      ],
+      "webOrigins": ["http://localhost:5173"],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:5173/login"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "sso-new",
+      "email": "sso-new@skol.test",
+      "emailVerified": true,
+      "firstName": "Sso",
+      "lastName": "Newcomer",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "SsoE2ePass123!", "temporary": false }]
+    },
+    {
+      "username": "sso-link",
+      "email": "e2e-player4@skol.test",
+      "emailVerified": true,
+      "firstName": "E2E",
+      "lastName": "Player Four",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "SsoE2ePass123!", "temporary": false }]
+    }
+  ]
+}

@@ -45,6 +45,14 @@ describe("initializeAdminIfNeeded", () => {
     expect(await getPasswordHash(admin.externalId)).toBeTruthy();
   });
 
+  it("keys the password account on the user id, as Better Auth's sign-in looks it up", async () => {
+    await initializeAdminIfNeeded();
+
+    const admin = await getAdmin();
+    const [credential] = await testDb.select().from(account).where(eq(account.userId, admin.externalId));
+    expect(credential).toMatchObject({ providerId: "credential", accountId: admin.externalId });
+  });
+
   it("rotates the password on every run while the admin is pending", async () => {
     await initializeAdminIfNeeded();
     const admin = await getAdmin();

@@ -12,14 +12,28 @@ gets in and what they can see: authentication, invitation codes, and organizatio
 Accounts are backed by Better Auth, giving every player a secure login and every organizer
 confidence that tournament data is tied to a real, authenticated identity.
 
-Two authentication methods are supported, independently togglable per deployment:
+Two kinds of sign-in are supported, independently togglable per deployment:
 
 - **Native email & password** — built in, no extra setup.
-- **Keycloak SSO** — OIDC-based single sign-on through Keycloak, with optional PKCE.
+- **Single sign-on** — through any OpenID Connect provider: Keycloak, Authentik, Zitadel,
+  Dex, Authelia… Declare as many as you like, each gets its own button.
 
-Both can be enabled at the same time: players choose either method on the same login screen.
-A Keycloak account automatically links to an existing native account that shares the same
+Everything can be enabled at the same time: players pick a method on the same login screen.
+An SSO account automatically links to an existing native account that shares the same
 email, so nobody ends up with duplicate accounts.
+
+> **Only declare providers that verify email addresses.** Linking by email trusts every
+> configured provider: anyone able to register `alice@example.com` on one of them can sign
+> in as the Skol Arena player who owns that address. Your own IdP is fine; a provider where
+> anyone can sign up with an address of their choosing is not.
+
+Signing out of Skol Arena also signs out of the provider when it supports OpenID Connect
+RP-initiated logout (Keycloak, Authentik, Zitadel do; Dex does not, the logout then stays
+local). The provider sends the browser back to `/login`, which must be registered as a
+post-logout redirect URI. On **Authentik**, set the provider's _invalidation flow_ to
+`default-invalidation-flow`: the default `default-provider-invalidation-flow` only signs out
+of the application and leaves the Authentik session open, so the next click on the SSO
+button signs the player straight back in.
 
 The variables that switch these on are listed in
 [Environment Variables](/docs/environment-variables).
@@ -46,7 +60,7 @@ There are three ways a code gets used:
 - **To join another group later** — an established player can redeem an organization-bound
   code from their settings to join an extra organization, without touching their account.
 
-The gate applies to **every** login method: Keycloak SSO doesn't bypass it. Signing in through
+The gate applies to **every** login method: SSO doesn't bypass it. Signing in through
 your identity provider still leaves you on the code screen until a code is redeemed, so an
 open SSO realm can't quietly become an open instance.
 

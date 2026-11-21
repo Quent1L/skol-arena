@@ -157,6 +157,14 @@ app.use("*", i18nMiddleware);
 // Middleware to set user and session from BetterAuth
 app.use("*", addUserContext);
 
+// Better Auth 1.6 called back on /oauth2/callback/:id, the URL KEYCLOAK_* installs
+// registered with their IdP (config/auth.ts keeps it as their redirect_uri). 1.7 answers
+// on /callback/:id only: forward, query string included, so the IdP config stays as is.
+app.get("/api/auth/oauth2/callback/:id", (c) => {
+  const { search } = new URL(c.req.url);
+  return c.redirect(`/api/auth/callback/${encodeURIComponent(c.req.param("id"))}${search}`, 302);
+});
+
 // The request is re-headed with the address this process resolved before Better Auth
 // sees it: its rate limiter would otherwise read x-forwarded-for itself, and a caller
 // who sends one can then decide which window everyone's sign-in attempts land in.

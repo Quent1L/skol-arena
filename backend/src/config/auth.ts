@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { genericOAuth, keycloak } from "better-auth/plugins";
+import { genericOAuth } from "better-auth/plugins";
 import { db } from "./database";
 import * as schema from "../db/schema";
 import { emailService } from "../services/email.service";
@@ -13,6 +13,7 @@ import { clearBootstrapPending } from "../utils/init-admin";
 import { reportEmailDeliveryFailure } from "../utils/email-delivery-context";
 import { isRateLimitEnabled } from "./rate-limit";
 import { CLIENT_IP_HEADER } from "../utils/client-ip";
+import { resolveOidcProviders } from "./oidc-providers";
 
 function extractInvitationCode(cookieHeader: string | null): string | null {
   if (!cookieHeader) return null;
@@ -38,7 +39,7 @@ function resolveShowEmailPasswordForm(): boolean {
     logger.warn(
       "ENABLE_EMAIL_PASSWORD is deprecated: rename it to SHOW_EMAIL_PASSWORD_FORM. " +
         "It only ever hid the sign-in form — the email+password endpoint stays enabled " +
-        "either way, so that administrators keep a way in if Keycloak is unreachable.",
+        "either way, so that administrators keep a way in if the SSO provider is unreachable.",
     );
     return legacy !== "false";
   }
@@ -54,31 +55,32 @@ function resolveShowEmailPasswordForm(): boolean {
 export const showEmailPasswordForm = resolveShowEmailPasswordForm();
 
 const isEmailPasswordEnabled = showEmailPasswordForm;
-const isKeycloakEnabled = !!(
-  process.env.KEYCLOAK_CLIENT_ID &&
-  process.env.KEYCLOAK_CLIENT_SECRET &&
-  process.env.KEYCLOAK_ISSUER
-);
 
-if (!isEmailPasswordEnabled && !isKeycloakEnabled) {
+const resolvedOidc = resolveOidcProviders();
+for (const warning of resolvedOidc.warnings) logger.warn(warning);
+/** Exported for GET /config, for the same reason as showEmailPasswordForm. */
+export const oidcProviders = resolvedOidc.providers;
+const oidcProviderIds = oidcProviders.map((provider) => provider.id);
+
+if (!isEmailPasswordEnabled && oidcProviders.length === 0) {
   logger.fatal(
     {
       emailPassword: isEmailPasswordEnabled,
-      keycloak: isKeycloakEnabled,
+      oidc: oidcProviderIds,
     },
     "CRITICAL CONFIGURATION ERROR: no authentication method is enabled",
   );
 
   throw new Error(
     "AUTHENTICATION_CONFIG_ERROR: At least one authentication method must be enabled. " +
-      "Set SHOW_EMAIL_PASSWORD_FORM=true or configure Keycloak (KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_ISSUER)",
+      "Set SHOW_EMAIL_PASSWORD_FORM=true or configure an OpenID Connect provider (OIDC_PROVIDERS)",
   );
 }
 
 logger.info(
   {
     emailPassword: isEmailPasswordEnabled,
-    keycloak: isKeycloakEnabled,
+    oidc: oidcProviderIds,
   },
   "Authentication configuration",
 );
@@ -117,6 +119,14 @@ async function processInvitationCode(user: any, request: any, source: string): P
   }
 }
 
+/**
+ * The endpoints an SSO sign-in finishes on: the OAuth callback, and the social sign-in
+ * itself when it completes with an id_token. Paths are relative to /api/auth.
+ */
+function isOAuthSignInPath(path: string | undefined): boolean {
+  return !!path && (path.startsWith("/callback/") || path === "/sign-in/social");
+}
+
 // Plugin to stop the startup password rotation once the bootstrap admin connects
 plugins.push(
   {
@@ -125,10 +135,7 @@ plugins.push(
       after: [
         {
           matcher: (context: any) =>
-            context.path === "/sign-in/email" ||
-            context.path === "/change-password" ||
-            context.path?.includes("/oauth2/callback/keycloak") ||
-            context.path?.includes("/sign-in-oauth2"),
+            context.path === "/sign-in/email" || context.path === "/change-password" || isOAuthSignInPath(context.path),
           handler: async (context: any) => {
             try {
               const signedIn =
@@ -161,41 +168,31 @@ plugins.push(
             return {};
           },
         },
-        {
-          // Hook for OAuth sign-up (Keycloak)
-          matcher: (context: any) => {
-            return context.path?.includes("/oauth2/callback/keycloak") || context.path?.includes("/sign-in-oauth2");
-          },
-          handler: async (context: any) => {
-            // Check whether this is a new user
-            const user = context.context?.newSession?.user ?? context.context?.returned?.user;
-            if (!user || !context.isNewUser) {
-              return {};
-            }
-
-            await processInvitationCode(user, context.request, "Keycloak Hook");
-            return {};
-          },
-        },
       ],
     },
   },
 );
 
-if (isKeycloakEnabled) {
+const baseURL = process.env.BETTER_AUTH_URL || process.env.BASE_URL || "http://localhost:3000";
+
+if (oidcProviders.length > 0) {
   plugins.push(
     genericOAuth({
-      config: [
-        keycloak({
-          clientId: process.env.KEYCLOAK_CLIENT_ID!,
-          clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
-          issuer: process.env.KEYCLOAK_ISSUER!,
-          pkce: process.env.KEYCLOAK_PKCE === "true",
-          // Note: disableImplicitSignUp is NOT set (defaults to false)
-          // This allows account creation which will then be validated by the invitation-code-validator hook
-          // The hook will delete the user if no valid invitation code is present
-        }),
-      ],
+      config: oidcProviders.map((provider) => ({
+        providerId: provider.id,
+        name: provider.label ?? provider.id,
+        discoveryUrl: `${provider.issuer}/.well-known/openid-configuration`,
+        clientId: provider.clientId,
+        clientSecret: provider.clientSecret,
+        scopes: ["openid", "profile", "email"],
+        pkce: provider.pkce,
+        // KEYCLOAK_* installs registered the Better Auth 1.6 callback with their IdP. It
+        // stays the redirect_uri, and index.ts forwards it to /callback/:id, so upgrading
+        // needs no change on the IdP side.
+        redirectURI: provider.legacy ? `${baseURL}/api/auth/oauth2/callback/${provider.id}` : undefined,
+        // Implicit sign-up stays on: the account gets created, and the app user behind it
+        // only once an invitation code has been consumed (userService.getOrCreateAppUser).
+      })),
     }),
   );
 }
@@ -218,6 +215,18 @@ const authConfig: any = {
   // Records the last login on app_users so it survives session expiry.
   // Runs on session creation only (i.e. at login), not on every request.
   databaseHooks: {
+    user: {
+      create: {
+        // An SSO sign-up consumes the invitation code /signup left in a cookie. Run here
+        // rather than in an after-hook on the callback: this fires only when the account
+        // is really created, and after the transaction commits.
+        after: async (user: { id: string; email: string }, context: any) => {
+          if (isOAuthSignInPath(context?.path)) {
+            await processInvitationCode(user, context.request, "SSO Registration Hook");
+          }
+        },
+      },
+    },
     session: {
       create: {
         after: async (createdSession: { userId: string }) => {
@@ -243,7 +252,9 @@ const authConfig: any = {
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ["keycloak"],
+      // Every configured IdP may link to the native account sharing its email: only
+      // declare providers that verify the addresses they hand out.
+      trustedProviders: oidcProviderIds,
     },
   },
   // The dev origins are dropped in production: leaving them trusted there means a
@@ -254,7 +265,7 @@ const authConfig: any = {
     ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
     ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
   ],
-  baseURL: process.env.BETTER_AUTH_URL || process.env.BASE_URL || "http://localhost:3000",
+  baseURL,
   secret: process.env.BETTER_AUTH_SECRET,
   // Declared rather than left to the default: reading this file was previously no
   // way of telling what, if anything, protected the login. Stored in the database so
@@ -290,7 +301,7 @@ const authConfig: any = {
 // Email/password is always enabled in Better Auth to allow admin login.
 // SHOW_EMAIL_PASSWORD_FORM=false only hides the form on the frontend side: the
 // endpoint below stays reachable on purpose, so an administrator is not locked out
-// when Keycloak is down. Anyone who needs it genuinely closed has to put the auth
+// when the SSO provider is down. Anyone who needs it genuinely closed has to put the auth
 // subtree behind their reverse proxy — the flag will not do it.
 authConfig.emailAndPassword = {
   enabled: true,

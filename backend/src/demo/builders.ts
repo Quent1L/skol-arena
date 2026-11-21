@@ -67,7 +67,7 @@ export async function createAccount(def: AccountDef): Promise<string> {
   await db.insert(account).values({
     id: newId(),
     providerId: "credential",
-    accountId: def.email,
+    accountId: def.authId,
     userId: def.authId,
     password: def.passwordHash,
   });

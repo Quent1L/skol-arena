@@ -1,0 +1,32 @@
+# Dex for the SSO e2e suite: the plainest OpenID Connect provider there is.
+# Dex publishes no end_session_endpoint, so a logout stays local to Skol Arena.
+issuer: http://localhost:5556/dex
+
+storage:
+  type: memory
+
+web:
+  http: 0.0.0.0:5556
+
+oauth2:
+  skipApprovalScreen: true
+
+enablePasswordDB: true
+
+staticClients:
+  - id: skol-arena
+    secret: skol-e2e-secret
+    name: Skol Arena
+    redirectURIs:
+      - http://localhost:3000/api/auth/callback/dex
+
+# Password for both: SsoE2ePass123!
+staticPasswords:
+  - email: sso-new@skol.test
+    username: sso-new
+    userID: 7f1c2a40-0000-4000-8000-000000000001
+    hash: $2b$10$KSKPjG7bwaSvW205BUX7b.T4kuM7DkIOxxvXcpeYdcz6Wzjcla/xm
+  - email: e2e-player4@skol.test
+    username: sso-link
+    userID: 7f1c2a40-0000-4000-8000-000000000002
+    hash: $2b$10$KSKPjG7bwaSvW205BUX7b.T4kuM7DkIOxxvXcpeYdcz6Wzjcla/xm

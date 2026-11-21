@@ -6,12 +6,17 @@ import { defineConfig, devices } from '@playwright/test'
 // root, so frontend/node_modules/.bin/vite may not exist.
 // `bin/vite.js` is not in vite's exports, its package.json is.
 const E2E_DIST = 'dist-e2e'
-const VITE_BIN = join(dirname(createRequire(import.meta.url).resolve('vite/package.json')), 'bin/vite.js')
+const VITE_BIN = join(
+  dirname(createRequire(import.meta.url).resolve('vite/package.json')),
+  'bin/vite.js',
+)
 
 const E2E_DATABASE_URL = 'postgres://skolarena:skolarena@localhost:5435/skolarena_e2e'
 
 export default defineConfig({
   testDir: './e2e',
+  // Needs a running identity provider: playwright.sso.config.ts (bun run test:e2e:sso)
+  testIgnore: ['sso/**'],
   globalSetup: './e2e/global-setup.ts',
   // Shared DB + specs that mutate state: sequential execution
   workers: 1,
@@ -58,8 +63,9 @@ export default defineConfig({
         NODE_ENV: 'development',
         SHOW_EMAIL_PASSWORD_FORM: 'true',
         LOG_LEVEL: 'warn',
-        // Disables Keycloak SSO which backend/.env might enable
+        // Disables the SSO providers backend/.env might enable
         // (dotenv doesn't override variables that are already set)
+        OIDC_PROVIDERS: '',
         KEYCLOAK_CLIENT_ID: '',
         KEYCLOAK_CLIENT_SECRET: '',
         KEYCLOAK_ISSUER: '',

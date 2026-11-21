@@ -42,7 +42,7 @@ async function ensureAuthUser(email: string): Promise<string> {
 }
 
 /** Writes the password hash on the credential account, creating it if missing. */
-async function setCredentialPassword(userId: string, email: string, password: string): Promise<void> {
+async function setCredentialPassword(userId: string, password: string): Promise<void> {
   const hashedPassword = await hashPassword(password);
   const updated = await db
     .update(account)
@@ -55,7 +55,8 @@ async function setCredentialPassword(userId: string, email: string, password: st
   await db.insert(account).values({
     id: newId(),
     providerId: "credential",
-    accountId: email,
+    // Better Auth looks a password account up by accountId === userId.
+    accountId: userId,
     userId,
     password: hashedPassword,
   });
@@ -66,7 +67,7 @@ async function createBootstrapAdmin(): Promise<void> {
   const password = generatePassword();
   const userId = await ensureAuthUser(email);
 
-  await setCredentialPassword(userId, email, password);
+  await setCredentialPassword(userId, password);
 
   await db.insert(appUsers).values({
     externalId: userId,
@@ -87,7 +88,7 @@ async function rotateBootstrapPassword(externalId: string): Promise<void> {
   const email = getAdminEmail();
   const password = generatePassword();
 
-  await setCredentialPassword(externalId, email, password);
+  await setCredentialPassword(externalId, password);
 
   logCredentials(
     email,

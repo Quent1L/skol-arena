@@ -1,0 +1,68 @@
+# Identity providers for the SSO e2e suite, one profile each: run one at a time
+# (bun run test:e2e:sso <provider>), Authentik alone needs about 1 GB.
+name: skol-sso-e2e
+
+services:
+  keycloak:
+    profiles: [keycloak]
+    image: quay.io/keycloak/keycloak:26.8.2
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+    ports:
+      - '8080:8080'
+
+  dex:
+    profiles: [dex]
+    image: ghcr.io/dexidp/dex:v2.46.1
+    command: dex serve /etc/dex/config.yaml
+    volumes:
+      - ./dex/config.yaml:/etc/dex/config.yaml:ro
+    ports:
+      - '5556:5556'
+
+  authentik-db:
+    profiles: [authentik]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: authentik
+      POSTGRES_PASSWORD: authentik
+      POSTGRES_DB: authentik
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U authentik -d authentik']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  authentik-server:
+    profiles: [authentik]
+    image: ghcr.io/goauthentik/server:2026.8.6
+    command: server
+    environment: &authentik-env
+      AUTHENTIK_SECRET_KEY: skol-e2e-authentik-secret-key-not-for-production
+      AUTHENTIK_POSTGRESQL__HOST: authentik-db
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_ERROR_REPORTING__ENABLED: 'false'
+      AUTHENTIK_DISABLE_UPDATE_CHECK: 'true'
+      AUTHENTIK_DISABLE_STARTUP_ANALYTICS: 'true'
+    depends_on:
+      authentik-db:
+        condition: service_healthy
+    ports:
+      - '9100:9000' # host 9000 is often taken (SonarQube)
+
+  authentik-worker:
+    profiles: [authentik]
+    image: ghcr.io/goauthentik/server:2026.8.6
+    command: worker
+    environment: *authentik-env
+    volumes:
+      - ./authentik:/blueprints/custom:ro
+    depends_on:
+      authentik-db:
+        condition: service_healthy

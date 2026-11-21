@@ -96,7 +96,7 @@ test.describe('announcements', () => {
     await page.getByLabel('Message').fill(body)
     await page.getByRole('button', { name: 'Envoyer' }).click()
 
-    await expect(page.getByText('Annonce envoyée')).toBeVisible()
+    await expect(page.getByText('Annonce envoyée', { exact: true })).toBeVisible()
     await expect(page.getByTestId('announcement-row').filter({ hasText: title })).toBeVisible()
 
     const playerPage = await openAs(browser, PLAYER_STATE)

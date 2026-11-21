@@ -4,6 +4,19 @@ import { z } from "zod";
 // Runtime configuration served to the client
 // ============================================
 
+/** An OpenID Connect provider the login screen offers a button for. */
+export const oidcProviderSchema = z
+  .object({
+    /** Better Auth provider id, passed to `signIn.social({ provider })`. */
+    id: z.string(),
+    /** Button label set by the operator; null means the client's default wording. */
+    label: z.string().nullable(),
+  })
+  .meta({ id: "OidcProvider" });
+
+export type OidcProvider = z.infer<typeof oidcProviderSchema>;
+
+/** @deprecated Superseded by `AuthConfig.oidc`; describes the provider with the id `keycloak`. */
 export const keycloakConfigSchema = z
   .object({
     enabled: z.boolean(),
@@ -23,6 +36,8 @@ export type EmailPasswordConfig = z.infer<typeof emailPasswordConfigSchema>;
 export const authConfigSchema = z
   .object({
     emailPassword: emailPasswordConfigSchema,
+    oidc: z.array(oidcProviderSchema),
+    /** @deprecated Read `oidc`. Kept so clients built before it still find their provider. */
     keycloak: keycloakConfigSchema,
   })
   .meta({ id: "AuthConfig" });

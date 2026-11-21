@@ -93,23 +93,10 @@
             />
 
             <!-- "Or" separator only if both methods are shown -->
-            <USeparator v-if="keycloakEnabled" :label="t('loginView.or')" />
+            <USeparator v-if="ssoProviders.length" :label="t('loginView.or')" />
           </template>
 
-          <!-- Keycloak button (shown if enabled) -->
-          <UButton
-            v-if="keycloakEnabled"
-            type="button"
-            size="xl"
-            block
-            color="neutral"
-            variant="outline"
-            icon="i-fa7-solid:building"
-            :loading="isKeycloakLoading"
-            :disabled="isKeycloakLoading || loading"
-            :label="isKeycloakLoading ? t('loginView.keycloakLoading') : keycloakLoginLabel"
-            @click="loginWithKeycloak"
-          />
+          <SsoButtons :providers="ssoProviders" :disabled="loading" @error="error = $event" />
 
           <!-- Sign-up link -->
           <div class="text-center text-sm">
@@ -130,14 +117,14 @@
 <script setup lang="ts">
 import SkolLogo from '@/components/brand/SkolLogo.vue'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
-import { ref, reactive, computed } from 'vue'
+import { reactive, computed } from 'vue'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import PasswordInput from '@/components/forms/PasswordInput.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { useConfigService } from '@/composables/config/config.service'
-import { authClient } from '@/lib/auth-client'
+import SsoButtons from '@/components/auth/SsoButtons.vue'
 import { loginSchema, type LoginFormData } from '@/schemas/auth.schema'
 
 const { t } = useI18n()
@@ -146,16 +133,12 @@ const route = useRoute()
 const { login, loading, error } = useAuth()
 const { config } = useConfigService()
 
-const isKeycloakLoading = ref(false)
 const emailPasswordEnabled = computed(() => config.value?.auth?.emailPassword?.enabled ?? true)
-const keycloakEnabled = computed(() => config.value?.auth?.keycloak?.enabled ?? false)
-const keycloakLoginLabel = computed(
-  () => config.value?.auth?.keycloak?.loginLabel ?? t('loginView.keycloakDefaultLabel'),
-)
+const ssoProviders = computed(() => config.value?.auth?.oidc ?? [])
 const demo = computed(() => config.value?.demo ?? null)
 const forceNative = computed(() => route.query.native === 'true')
 const showEmailPassword = computed(() => emailPasswordEnabled.value || forceNative.value)
-const noAuthMethodAvailable = computed(() => !showEmailPassword.value && !keycloakEnabled.value)
+const noAuthMethodAvailable = computed(() => !showEmailPassword.value && !ssoProviders.value.length)
 
 // Detect OAuth errors in the URL (redirect from Better Auth)
 if (route.query.error) {
@@ -189,23 +172,6 @@ async function onSubmit({ data: values }: FormSubmitEvent<LoginFormData>) {
       return
     }
     console.error('Erreur de connexion:', err)
-  }
-}
-
-async function loginWithKeycloak() {
-  isKeycloakLoading.value = true
-
-  try {
-    const callbackURL = import.meta.env.MODE === 'dev' ? 'http://localhost:5173/' : '/'
-
-    await authClient.signIn.oauth2({
-      providerId: 'keycloak',
-      callbackURL,
-    })
-  } catch (err: unknown) {
-    isKeycloakLoading.value = false
-    error.value = err instanceof Error ? err.message : t('loginView.keycloakError')
-    console.error('Keycloak sign-in error:', err)
   }
 }
 </script>

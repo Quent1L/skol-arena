@@ -96,7 +96,7 @@
     "archived": "Archivé",
     "authProviders": {
       "credential": "Mot de passe",
-      "keycloak": "Keycloak (SSO)",
+      "sso": "{id} (SSO)",
       "none": "Aucune"
     },
     "blockers": {
@@ -258,6 +258,12 @@
       "registerGeneric": "Une erreur est survenue lors de l'inscription",
       "sessionFetch": "Erreur lors de la récupération de la session",
       "sessionFetchGeneric": "Une erreur est survenue lors de la récupération de la session"
+    },
+    "sso": {
+      "signIn": "Se connecter avec {name}",
+      "signUp": "S'inscrire avec {name}",
+      "redirecting": "Redirection…",
+      "error": "La connexion par SSO a échoué"
     }
   },
   "authSchema": {
@@ -681,9 +687,6 @@
     "emailLabel": "Adresse email",
     "emailPlaceholder": "vous{'@'}exemple.com",
     "forgotPassword": "Mot de passe oublié ?",
-    "keycloakDefaultLabel": "Se connecter avec Keycloak",
-    "keycloakError": "Erreur lors de la connexion Keycloak",
-    "keycloakLoading": "Connexion...",
     "loginButton": "Se connecter",
     "noAccount": "Pas encore de compte ?",
     "noAuthDescription": "Contactez l'administrateur système. La configuration de l'authentification est",
@@ -1972,11 +1975,9 @@
     "invitationCodeLabel": "Code d'invitation",
     "invitationCodePlaceholder": "Code d'invitation",
     "invitationRequired": "Code d'invitation requis",
-    "keycloakLabel": "S'inscrire avec Keycloak (SSO)",
     "noAuthMethodDesc": "Contactez l'administrateur système. La configuration de l'authentification est",
     "noAuthMethodTitle": "Aucune méthode d'authentification n'est disponible",
     "oauthError": "Une erreur est survenue lors de l'inscription",
-    "signingIn": "Connexion en cours...",
     "subtitle": "Créer un compte",
     "validating": "Validation en cours...",
     "validationError": "Erreur lors de la validation"

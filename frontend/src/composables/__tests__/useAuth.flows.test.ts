@@ -13,13 +13,9 @@ const authClient = {
   listAccounts: vi.fn(),
 }
 const me = vi.fn()
-let keycloak: { enabled: boolean; issuer?: string; clientId?: string | null } | undefined
 
 vi.mock('@/lib/auth-client', () => ({ authClient }))
 vi.mock('@/composables/user/user.api', () => ({ userApi: { me: (...a: unknown[]) => me(...a) } }))
-vi.mock('@/composables/config/config.service', () => ({
-  useConfigService: () => ({ config: { value: keycloak ? { auth: { keycloak } } : null } }),
-}))
 vi.mock('@/i18n', () => ({
   i18n: { global: { t: (key: string) => key, te: () => false } },
 }))
@@ -36,7 +32,6 @@ const PLAYER = { id: 'u1', email: 'a@b.c', role: 'player', avatarVersion: null }
 beforeEach(() => {
   vi.clearAllMocks()
   localStorage.clear()
-  keycloak = undefined
   authClient.getSession.mockResolvedValue(SESSION)
   me.mockResolvedValue(PLAYER)
 })
@@ -165,44 +160,15 @@ describe('useAuth — logout', () => {
     expect(auth.isInitialized.value).toBe(false)
   })
 
-  it('redirects to the Keycloak end-session endpoint when SSO is on', async () => {
+  it('asks Better Auth to bring the browser back to /login after the IdP logout', async () => {
     authClient.signOut.mockResolvedValue({})
-    keycloak = { enabled: true, issuer: 'https://sso.example/realms/skol', clientId: 'skol-app' }
-    const original = window.location
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { origin: 'https://app.example', href: '' },
-    })
-    try {
-      const auth = await loadUseAuth()
-      await auth.logout()
+    const auth = await loadUseAuth()
 
-      const href = window.location.href
-      expect(href).toContain('https://sso.example/realms/skol/protocol/openid-connect/logout?')
-      expect(href).toContain('client_id=skol-app')
-      expect(decodeURIComponent(href)).toContain(
-        'post_logout_redirect_uri=https://app.example/login',
-      )
-    } finally {
-      Object.defineProperty(window, 'location', { configurable: true, value: original })
-    }
-  })
+    await auth.logout()
 
-  it('omits the client id when the issuer has none', async () => {
-    authClient.signOut.mockResolvedValue({})
-    keycloak = { enabled: true, issuer: 'https://sso.example', clientId: null }
-    const original = window.location
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { origin: 'https://a', href: '' },
+    expect(authClient.signOut).toHaveBeenCalledWith({
+      callbackURL: `${window.location.origin}/login`,
     })
-    try {
-      const auth = await loadUseAuth()
-      await auth.logout()
-      expect(window.location.href).not.toContain('client_id')
-    } finally {
-      Object.defineProperty(window, 'location', { configurable: true, value: original })
-    }
   })
 
   it('reports a failure', async () => {

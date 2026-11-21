@@ -31,6 +31,7 @@ import {
   rankTiers,
   playerMmr,
   mmrHistory,
+  invitationCodes,
 } from "../src/db/schema";
 import { eq } from "drizzle-orm";
 import { CHAMPIONSHIP_LIMITS } from "@skol-arena/shared";
@@ -90,7 +91,7 @@ async function seedUsers() {
     await db.insert(account).values({
       id: newId(),
       providerId: "credential",
-      accountId: d.email,
+      accountId: d.auth,
       userId: d.auth,
       password: await hashPassword(d.password),
     });
@@ -103,6 +104,17 @@ async function seedUsers() {
     });
   }
   console.log(`Seeded ${defs.length} users`);
+}
+
+/** Used by the SSO suite (frontend/e2e/sso) to sign up through an identity provider. */
+async function seedInvitationCode() {
+  await db.insert(invitationCodes).values({
+    code: "skol-sso-invitation-test",
+    createdBy: IDS.adminApp,
+    maxUses: 100,
+    notes: "e2e SSO sign-up",
+  });
+  console.log("Seeded SSO invitation code");
 }
 
 async function seedDiscipline() {
@@ -323,6 +335,7 @@ async function main() {
   }
 
   await seedUsers();
+  await seedInvitationCode();
   await seedDiscipline();
   await seedChampionship();
   await seedRankedSeason();

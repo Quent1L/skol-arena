@@ -51,8 +51,12 @@
                 <UBadge
                   v-for="provider in authProviders"
                   :key="provider"
-                  :label="t(`adminUsersList.authProviders.${provider}`)"
-                  :color="provider === 'keycloak' ? 'warning' : 'info'"
+                  :label="
+                    provider === 'credential'
+                      ? t('adminUsersList.authProviders.credential')
+                      : t('adminUsersList.authProviders.sso', { id: provider })
+                  "
+                  :color="provider === 'credential' ? 'info' : 'warning'"
                   variant="subtle"
                 />
               </div>

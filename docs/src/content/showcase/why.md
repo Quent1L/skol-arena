@@ -14,4 +14,4 @@ The other half of the idea is who does the work. In most tools every result funn
 
 Letting players report freely costs you credibility unless you protect it, so that's where the guardrails sit: a validation mode chosen per tournament, a trust score that fast-tracks reliable reporters and resets the moment one of their reports is disputed, and championship limits capping how many matches count and how often the same players can face or partner with each other.
 
-Under the hood it's a Vue 3 frontend on a Hono/Bun API with PostgreSQL, real-time updates, and native or Keycloak SSO login. Self-hostable today, open source under AGPL-3.0.
+Under the hood it's a Vue 3 frontend on a Hono/Bun API with PostgreSQL, real-time updates, and native or OpenID Connect SSO login. Self-hostable today, open source under AGPL-3.0.

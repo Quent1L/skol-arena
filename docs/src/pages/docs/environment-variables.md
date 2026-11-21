@@ -44,25 +44,39 @@ bad deploy).
 
 ## Authentication (Better Auth)
 
-| Variable                   | Purpose                                                                                                                                         | Required                                                                | Default                                                |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------ |
-| `BETTER_AUTH_SECRET`       | Signing secret for sessions and cookies.                                                                                                        | **Yes**                                                                 | —                                                      |
-| `BETTER_AUTH_URL`          | Better Auth's own base URL; also added as a trusted origin.                                                                                     | No                                                                      | falls back to `BASE_URL`, then `http://localhost:3000` |
-| `BASE_URL`                 | Secondary fallback for the auth base URL.                                                                                                       | No                                                                      | `http://localhost:3000`                                |
-| `SHOW_EMAIL_PASSWORD_FORM` | Shows/hides the email+password login form on the frontend (set to the literal string `"false"` to hide it). Frontend only — see the note below. | No                                                                      | shown                                                  |
-| `ENABLE_EMAIL_PASSWORD`    | Deprecated name for `SHOW_EMAIL_PASSWORD_FORM`. Still read when the new name is unset, and warns at startup.                                    | No                                                                      | —                                                      |
-| `KEYCLOAK_CLIENT_ID`       | Keycloak OAuth client ID.                                                                                                                       | No — but all three Keycloak variables are needed together to enable SSO | —                                                      |
-| `KEYCLOAK_CLIENT_SECRET`   | Keycloak OAuth client secret.                                                                                                                   | No (see above)                                                          | —                                                      |
-| `KEYCLOAK_ISSUER`          | Keycloak issuer URL (also used to derive the realm name shown on the login button).                                                             | No (see above)                                                          | —                                                      |
-| `KEYCLOAK_PKCE`            | Enables PKCE for the Keycloak OAuth flow (literal `"true"` to enable).                                                                          | No                                                                      | disabled                                               |
-| `KEYCLOAK_LOGIN_LABEL`     | Custom label for the Keycloak login button.                                                                                                     | No                                                                      | —                                                      |
+| Variable                   | Purpose                                                                                                                                         | Required                      | Default                                                |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------ |
+| `BETTER_AUTH_SECRET`       | Signing secret for sessions and cookies.                                                                                                        | **Yes**                       | —                                                      |
+| `BETTER_AUTH_URL`          | Better Auth's own base URL; also added as a trusted origin.                                                                                     | No                            | falls back to `BASE_URL`, then `http://localhost:3000` |
+| `BASE_URL`                 | Secondary fallback for the auth base URL.                                                                                                       | No                            | `http://localhost:3000`                                |
+| `SHOW_EMAIL_PASSWORD_FORM` | Shows/hides the email+password login form on the frontend (set to the literal string `"false"` to hide it). Frontend only — see the note below. | No                            | shown                                                  |
+| `ENABLE_EMAIL_PASSWORD`    | Deprecated name for `SHOW_EMAIL_PASSWORD_FORM`. Still read when the new name is unset, and warns at startup.                                    | No                            | —                                                      |
+| `OIDC_PROVIDERS`           | Comma-separated ids of the OpenID Connect providers to offer, e.g. `keycloak,authentik`. Lowercase letters, digits and dashes.                  | No                            | —                                                      |
+| `OIDC_<ID>_ISSUER`         | Issuer URL of provider `<ID>` (the id upper-cased, dashes turned into underscores). Its `/.well-known/openid-configuration` must answer.        | Yes, for each listed provider | —                                                      |
+| `OIDC_<ID>_CLIENT_ID`      | OAuth client ID registered for Skol Arena on that provider.                                                                                     | Yes, for each listed provider | —                                                      |
+| `OIDC_<ID>_CLIENT_SECRET`  | OAuth client secret.                                                                                                                            | Yes, for each listed provider | —                                                      |
+| `OIDC_<ID>_LABEL`          | Label of that provider's login button.                                                                                                          | No                            | "Sign in with `<id>`"                                  |
+| `OIDC_<ID>_PKCE`           | Set to the literal `"false"` for a provider that rejects PKCE.                                                                                  | No                            | enabled                                                |
+| `KEYCLOAK_CLIENT_ID`       | Deprecated: the three `KEYCLOAK_*` variables declare a provider with the id `keycloak`. Still read, and warns at startup.                       | No                            | —                                                      |
+| `KEYCLOAK_CLIENT_SECRET`   | Deprecated, see above.                                                                                                                          | No                            | —                                                      |
+| `KEYCLOAK_ISSUER`          | Deprecated, see above.                                                                                                                          | No                            | —                                                      |
+| `KEYCLOAK_PKCE`            | Ignored: PKCE is always on for a `KEYCLOAK_*` provider.                                                                                         | No                            | —                                                      |
+| `KEYCLOAK_LOGIN_LABEL`     | Deprecated: label of the `keycloak` provider's button.                                                                                          | No                            | —                                                      |
 
 At least one authentication method must be active: the app refuses to start if
-`SHOW_EMAIL_PASSWORD_FORM` is disabled and Keycloak isn't fully configured.
+`SHOW_EMAIL_PASSWORD_FORM` is disabled and no OpenID Connect provider is configured.
+A listed provider with a missing variable stops the startup too.
+
+Register this redirect URI on each provider, with your public URL in front:
+`https://<your-domain>/api/auth/callback/<id>`, and `https://<your-domain>/login` as the
+post-logout redirect URI. An install configured through `KEYCLOAK_*` keeps the redirect
+URI it registered before (`/api/auth/oauth2/callback/keycloak`): it still works, nothing
+needs changing on the Keycloak side. Moving to `OIDC_KEYCLOAK_*` switches it to the new
+URI. Keep the id `keycloak` when you do: accounts are linked to the provider id.
 
 > **`SHOW_EMAIL_PASSWORD_FORM=false` hides the form, it does not close the endpoint.**
 > `POST /api/auth/sign-in/email` keeps accepting valid credentials. This is deliberate:
-> it leaves administrators a way in when Keycloak is unreachable, which is exactly when
+> it leaves administrators a way in when the SSO provider is unreachable, which is exactly when
 > you need one. If your threat model requires password sign-in to be genuinely
 > unavailable, block the `/api/auth/sign-in/email` path at your reverse proxy — the
 > variable will not do it for you. The old name, `ENABLE_EMAIL_PASSWORD`, claimed

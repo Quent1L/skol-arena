@@ -74,7 +74,7 @@ plain `depends_on: - db` only waits for the database _container_ to start, not f
 Postgres to accept connections — the app would then fail its startup migrations and,
 under `restart: unless-stopped`, crash-loop until the database happens to be ready.
 
-Add SMTP, VAPID, or Keycloak variables from the
+Add SMTP, VAPID, or SSO variables from the
 [Environment Variables](/docs/environment-variables) reference as needed; none of
 them are required to get a working instance running.
 
@@ -308,7 +308,7 @@ database:
   other storage — see [Switching avatar storage](#switching-avatar-storage).
 - **Environment variables**: every variable listed in
   [Environment Variables](/docs/environment-variables), grouped the same way.
-  Secrets (`DATABASE_URL`, `BETTER_AUTH_SECRET`, `KEYCLOAK_CLIENT_SECRET`,
+  Secrets (`DATABASE_URL`, `BETTER_AUTH_SECRET`, `OIDC_<ID>_CLIENT_SECRET`,
   `SMTP_USER`, `SMTP_PASSWORD`, `VAPID_PRIVATE_KEY`) only show whether they are
   set, never their value, and a variable not on that page is never shown.
 

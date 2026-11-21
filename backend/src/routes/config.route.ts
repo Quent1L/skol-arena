@@ -1,5 +1,5 @@
 import { describe } from "../api/describe";
-import { showEmailPasswordForm } from "../config/auth";
+import { oidcProviders, showEmailPasswordForm } from "../config/auth";
 import { appConfigSchema } from "@skol-arena/shared/types/index";
 import { createAppHono } from "../types/hono";
 import { rankedMatchMaxAgeHours } from "../config/ranked";
@@ -22,18 +22,13 @@ configRoute.get(
   async (c) => {
     // Resolved once in config/auth.ts, including the deprecated-name fallback.
     const isEmailPasswordEnabled = showEmailPasswordForm;
-    const isKeycloakEnabled = !!(
-      process.env.KEYCLOAK_CLIENT_ID &&
-      process.env.KEYCLOAK_CLIENT_SECRET &&
-      process.env.KEYCLOAK_ISSUER
-    );
-
+    const keycloak = oidcProviders.find((provider) => provider.id === "keycloak");
     const keycloakConfig = {
-      enabled: isKeycloakEnabled,
-      clientId: process.env.KEYCLOAK_CLIENT_ID || null,
-      issuer: process.env.KEYCLOAK_ISSUER || null,
-      realm: process.env.KEYCLOAK_ISSUER ? process.env.KEYCLOAK_ISSUER.split("/realms/")[1]?.split("/")[0] : null,
-      loginLabel: process.env.KEYCLOAK_LOGIN_LABEL || null,
+      enabled: !!keycloak,
+      clientId: keycloak?.clientId ?? null,
+      issuer: keycloak?.issuer ?? null,
+      realm: keycloak?.issuer.split("/realms/")[1]?.split("/")[0] ?? null,
+      loginLabel: keycloak?.label ?? null,
     };
 
     return c.json({
@@ -42,6 +37,7 @@ configRoute.get(
         emailPassword: {
           enabled: isEmailPasswordEnabled,
         },
+        oidc: oidcProviders.map(({ id, label }) => ({ id, label })),
         keycloak: keycloakConfig,
       },
       ranked: {

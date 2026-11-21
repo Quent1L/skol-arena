@@ -36,6 +36,7 @@
     "type-check:docs": "cd docs && bun run type-check",
     "test:unit": "bun run test:unit:scripts && bun run test:unit:shared && bun run test:unit:backend && bun run test:unit:frontend",
     "test:e2e": "cd frontend && bun run e2e:prepare && bun run test:e2e",
+    "test:e2e:sso": "cd frontend && bun run test:e2e:sso",
     "test:unit:scripts": "bun test scripts --isolate",
     "test:unit:shared": "cd shared && bun run test",
     "test:unit:backend": "cd backend && bun run test",
@@ -82,7 +83,7 @@
     ],
     "catalog": {
       "zod": "4.6.7",
-      "better-auth": "1.6.35",
+      "better-auth": "1.7.27",
       "typescript": "6.0.3"
     }
   }
