@@ -198,7 +198,10 @@ export function useAuth() {
         throw new Error(errorMessage)
       }
 
-      await initialize()
+      // Not initialize(): the guard of /register already pinned the logged-out
+      // session, so it would return early and the next guard would bounce to /login.
+      await checkSession(true)
+      await fetchUserData()
 
       return result
     } catch (err: unknown) {

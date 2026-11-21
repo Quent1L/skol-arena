@@ -116,6 +116,11 @@ async function onSubmit({ data: values }: FormSubmitEvent<RegisterFormData>) {
     const redirectPath = route.query.redirect as string
     router.push(redirectPath || '/')
   } catch (err) {
+    // Account created but no usable code (cookie lost or code exhausted meanwhile).
+    if ((err as { cause?: string })?.cause === 'INVITATION_CODE_REQUIRED') {
+      await router.push('/submit-invitation')
+      return
+    }
     console.error("Erreur d'inscription:", err)
   }
 }

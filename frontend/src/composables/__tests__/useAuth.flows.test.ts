@@ -114,6 +114,18 @@ describe('useAuth — register', () => {
     expect(auth.isAuthenticated.value).toBe(true)
   })
 
+  it('signs in even when the session was already loaded as logged out', async () => {
+    authClient.getSession.mockResolvedValueOnce({ data: null, error: { status: 401 } })
+    authClient.signUp.email.mockResolvedValue({ data: {} })
+    const auth = await loadUseAuth()
+    await auth.initialize()
+    expect(auth.isAuthenticated.value).toBe(false)
+
+    await auth.register({ email: 'jane@x.io', password: 'pw', passwordConfirm: 'pw' })
+
+    expect(auth.isAuthenticated.value).toBe(true)
+  })
+
   it('passes the given name through', async () => {
     authClient.signUp.email.mockResolvedValue({ data: {} })
     const auth = await loadUseAuth()
