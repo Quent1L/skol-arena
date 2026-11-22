@@ -5,6 +5,8 @@ import * as schema from "../../../db/schema";
 
 // Initialize the test database BEFORE any imports that use `db`.
 const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
+// Bun loads backend/.env into tests: pin the invite-only default against a local override.
+delete process.env.REQUIRE_INVITATION_CODE;
 
 let resetImpl: (opts: { body: { email: string; redirectTo: string } }) => Promise<unknown> = async () => ({});
 const requestPasswordReset = mock((opts: { body: { email: string; redirectTo: string } }) => resetImpl(opts));

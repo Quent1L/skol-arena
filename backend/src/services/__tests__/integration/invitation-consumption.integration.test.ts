@@ -5,6 +5,8 @@ import * as schema from "../../../db/schema";
 
 // Initialize the test database BEFORE any imports that use `db`.
 const testDb: PgliteDatabase<typeof schema> = await createTestDatabase();
+// Bun loads backend/.env into tests: pin the invite-only default against a local override.
+delete process.env.REQUIRE_INVITATION_CODE;
 
 import { appUsers, invitationCodes, organizations, user as betterAuthUser } from "../../../db/schema";
 import { eq } from "drizzle-orm";
