@@ -15,7 +15,9 @@ describe('MvpBadge', () => {
     expect(badge.attributes('aria-label')).toBe(fr.matchVotes.mvp.badgeTitle)
   })
 
-  it('shows the MVP label otherwise', () => {
-    expect(mountBadge(false).get('[data-testid="mvp-badge"]').text()).toBe('MVP')
+  it('shows the MVP label otherwise, from sm up', () => {
+    const label = mountBadge(false).findAll('[data-testid="mvp-badge"] span').at(-1)!
+    expect(label.text()).toBe('MVP')
+    expect(label.classes()).toEqual(['hidden', 'sm:inline'])
   })
 })

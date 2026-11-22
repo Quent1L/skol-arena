@@ -14,12 +14,14 @@
   <UPopover v-else mode="hover" enable-touch :content="{ side: 'top', sideOffset: 6 }">
     <button
       type="button"
-      class="font-headline inline-flex shrink-0 cursor-help items-center gap-0.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-amber-300 focus:outline-none"
+      class="font-headline inline-flex shrink-0 cursor-help items-center gap-0.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-1.5 py-0.5 text-xs font-black sm:text-[10px] uppercase tracking-wide text-amber-300 focus:outline-none"
       :aria-label="t('matchVotes.mvp.badgeTitle')"
       data-testid="mvp-badge"
     >
-      <i class="fa fa-medal text-[9px]" aria-hidden="true" />
-      MVP
+      <!-- The medal alone on mobile spares the name. `.fa` has line-height 1, so the icon
+           sits in a span carrying text-xs's line height: same height as the points pill. -->
+      <span><i class="fa fa-medal text-[9px]" aria-hidden="true" /></span>
+      <span class="hidden sm:inline">MVP</span>
     </button>
     <template #content>
       <div class="max-w-xs px-3 py-2 text-sm">{{ t('matchVotes.mvp.badgeTitle') }}</div>
