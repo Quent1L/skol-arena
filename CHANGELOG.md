@@ -1,5 +1,112 @@
 # Changelog
 
+## [2.6.0](https://github.com/Quent1L/skol-arena/compare/2.5.0...2.6.0) (2026-11-22)
+
+### ✨ New Features
+
+* **auth:** migrate to Better Auth 1.7 and support any OpenID Connect provider ([90b1bde](https://github.com/Quent1L/skol-arena/commit/90b1bde38d90ceef7e2ae48eb882f1692c523ccf))
+* **backend:** load demo data on first boot with INIT_DEMO_DATA ([608792d](https://github.com/Quent1L/skol-arena/commit/608792d0257ec9b6e3985d2e4d80366de4c68e81))
+* **backend:** play about 200 matches in the demo ranked season ([9ce7fce](https://github.com/Quent1L/skol-arena/commit/9ce7fce1e45f91f5da01b56a1478e0156f73ab9a))
+* **demo:** default rank tiers and fair-play/MVP votes in the seeds ([3f059a2](https://github.com/Quent1L/skol-arena/commit/3f059a26d0a982cdf03a04b502eb919bff19194f))
+* **demo:** play the demo ranked season 1v1 to 2v2 ([5bb091c](https://github.com/Quent1L/skol-arena/commit/5bb091cab36641ba2713b2b63ac862921030f719))
+* **demo:** show the demo sign-in on the login page ([b8ea596](https://github.com/Quent1L/skol-arena/commit/b8ea596a96896ab5f7a43613e054ab14b9d3d969))
+* **docs:** preview the next release on /changelog and title its bullets ([e3636ce](https://github.com/Quent1L/skol-arena/commit/e3636ce255df14b3c114e131a32efe9346682820))
+* **frontend:** pick static teams like players in match entry ([db7134e](https://github.com/Quent1L/skol-arena/commit/db7134e61c8283c037a1bc43dc947b8d7fc9bb1f))
+* **invitations:** custom and unlimited codes, optional open sign-up ([a4aee3a](https://github.com/Quent1L/skol-arena/commit/a4aee3a302170f8485b73b90fd4af9e372bb90c3))
+* **matches:** team names on match cards ([ae99731](https://github.com/Quent1L/skol-arena/commit/ae997316e7c3612193fb56d5d556c9a9c987e5d4))
+* **match:** state the match format upfront and flag player counts early ([2b16513](https://github.com/Quent1L/skol-arena/commit/2b16513cfe9196612406afc9bfd53959bc19066b))
+* **notifications:** announcements to the players of a ranked season ([4dea814](https://github.com/Quent1L/skol-arena/commit/4dea814d9a5891ab9f8ee0a65cbd66820a290584))
+* **notifications:** optional end date on announcements ([bcb83b5](https://github.com/Quent1L/skol-arena/commit/bcb83b55436f571f8f775ae49ad942a5ad2ecf07))
+* **notifications:** organizer announcements and auto-read of match notifications ([bf0e2b8](https://github.com/Quent1L/skol-arena/commit/bf0e2b87059aca5d3faa31636a6fce52cb8b6b36))
+* **profile:** "My profile" in every tournament, votes and team-aware stats ([ff7a897](https://github.com/Quent1L/skol-arena/commit/ff7a8970139b2e94e0fbe875a68311b391051763))
+* **settings:** let each user choose to be pre-selected in match entry ([fd97c6d](https://github.com/Quent1L/skol-arena/commit/fd97c6d00cdd1589ef8a102abbdb624f2cd561a3))
+* **stats:** rank fixed teams instead of each teammate ([c08acb6](https://github.com/Quent1L/skol-arena/commit/c08acb69534c394fc09754691a8f08882968c7d6))
+* **tournament:** add a "Format & rules" sub-tab to the info tab ([f776387](https://github.com/Quent1L/skol-arena/commit/f776387d580b26d200bed845b21c03fbad62fb9b))
+* **tournament:** tell the format apart from the written rulebook ([bd12821](https://github.com/Quent1L/skol-arena/commit/bd12821ad65844280bbdd74d4901701f8bc677aa))
+* **votes:** fair-play and MVP awards in the season recap ([086196c](https://github.com/Quent1L/skol-arena/commit/086196cb24b8f39d157e99f313e63e8767566589))
+* **votes:** fair-play and MVP sections on the match page ([d2a58dd](https://github.com/Quent1L/skol-arena/commit/d2a58ddd7dca773de94d4c5e13a5d9cf8f775b2c))
+* **votes:** fair-play and MVP stats, organizer moderation view ([42b5dee](https://github.com/Quent1L/skol-arena/commit/42b5deefe6d5b485d714d26c60065900be116da8))
+* **votes:** fair-play and MVP votes on matches ([6d30e1d](https://github.com/Quent1L/skol-arena/commit/6d30e1d0c92bd3df01c59812640d027ba79fbc19))
+* **votes:** hide the vote panels once voting has closed ([1b4834f](https://github.com/Quent1L/skol-arena/commit/1b4834faa721a57e0d2d726fed52f7462ab402ed))
+* **votes:** live 30-day MVP ranking and MVP of the week ([ccaa2a8](https://github.com/Quent1L/skol-arena/commit/ccaa2a869802947d865e7d9f6d1592dbe0657c9d))
+* **votes:** live MVP everywhere, a vote card that asks rather than notifies ([e98fb7b](https://github.com/Quent1L/skol-arena/commit/e98fb7becf199edc6d3aad88e117704d431f01a5))
+* **votes:** live vote rankings, tied players of the week, fair-play tooltip ([8590fad](https://github.com/Quent1L/skol-arena/commit/8590fad04319bc432013cd88e699cfbdcca0c724))
+* **votes:** open vote rankings on the top 5 with a "show more" ([2108dcd](https://github.com/Quent1L/skol-arena/commit/2108dcd05607eb1245189b033c23c0f9ee3a8175))
+* **votes:** polish the post-match vote prompt ([b875f0a](https://github.com/Quent1L/skol-arena/commit/b875f0a3fb99366abc745dc08437ce0cf5fb7f13))
+* **votes:** rank fair-play on real rate × √votes ([9e7f9d6](https://github.com/Quent1L/skol-arena/commit/9e7f9d60786572fc83db10080941228785229cbd))
+* **votes:** rank fair-play over the last 30 days ([6f0645a](https://github.com/Quent1L/skol-arena/commit/6f0645ac08043fe1805d2d633533879aa1609024))
+* **votes:** show the MVP medal alone on match cards ([75a2a25](https://github.com/Quent1L/skol-arena/commit/75a2a25315c40d8e95e3c9223646f63ed9d5c813))
+* **votes:** two-step vote prompt after a match ([ec7c189](https://github.com/Quent1L/skol-arena/commit/ec7c189c6ecebf7082a6ab144320962a36b5dd57))
+* **votes:** vote card only on the match's tournament page, never under a reveal ([f601070](https://github.com/Quent1L/skol-arena/commit/f601070b5cf5301e81800cf7701624554ad26481))
+
+### 🐛 Bug Fixes
+
+* **a11y:** use output elements for status regions and label bare inputs ([f11baaa](https://github.com/Quent1L/skol-arena/commit/f11baaa34c0c8dc9b0954f72c788d1978e83821b))
+* address the beta review findings ([2c45048](https://github.com/Quent1L/skol-arena/commit/2c45048c6af1c6259fb359bb746ced98edd99798))
+* **admin:** drop the empty team size from the tournament list ([1f5a14b](https://github.com/Quent1L/skol-arena/commit/1f5a14bf20e84d8806ef5f6875214732a9b834c5))
+* **auth:** sign in right after email sign-up instead of bouncing to /login ([dbc702a](https://github.com/Quent1L/skol-arena/commit/dbc702aeb8f30fefdf00d5253082516ffcdbaaa4))
+* **backend:** enter demo ranked pool matches without scores ([82b06b2](https://github.com/Quent1L/skol-arena/commit/82b06b28398c5c54b533a42fb812229b0d46f6c3))
+* **championship:** ignore the same-partner cap for fixed teams ([a46255a](https://github.com/Quent1L/skol-arena/commit/a46255a1702f5c9d6c5df05a54703a16bf0ef90a))
+* **demo:** point the demo compose file at the published image ([596e502](https://github.com/Quent1L/skol-arena/commit/596e5026f963c366f0aed5f72c1a77176d902257))
+* **disputes:** notify every tournament admin and super admin ([9f632e2](https://github.com/Quent1L/skol-arena/commit/9f632e2f41e75d12a606f1639f9f5945a0a4e546))
+* **frontend:** make the type-check actually check the app ([4f7dcac](https://github.com/Quent1L/skol-arena/commit/4f7dcac680d19b3e3e56ee4ae5b84e2997f2657e))
+* **frontend:** open a confirmation more than once per page ([4107bea](https://github.com/Quent1L/skol-arena/commit/4107beadfb029f3ada3cdbea1bcae0966be93c78))
+* **frontend:** restore the image toolbar handler broken by Prettier ([4e5c246](https://github.com/Quent1L/skol-arena/commit/4e5c246426cb95bad95b96ff31619b07c79f1f83))
+* linear-time regexes, unbiased shuffle and CSPRNG draws ([eba0019](https://github.com/Quent1L/skol-arena/commit/eba0019b4c471950538a8dfe2d77a302e11218e1))
+* **lint:** reference the caught error in the boot recovery script ([39bad6a](https://github.com/Quent1L/skol-arena/commit/39bad6ad5710469af9318c45d2220cd8f57a1ee4))
+* **matches:** finalize a match only once under concurrent confirmations ([6086ef5](https://github.com/Quent1L/skol-arena/commit/6086ef599400ce5c4f88a764bc1c9aa598ce1074))
+* **matches:** restore the match list scroll when coming back ([00fefa1](https://github.com/Quent1L/skol-arena/commit/00fefa1e8306297c08cab401fbbda75a9f9b40e5))
+* **matches:** show fixed teams in the result step, let scores be typed ([30ba1a0](https://github.com/Quent1L/skol-arena/commit/30ba1a0b1f8675a31168f0ecd365038705e396fb))
+* **notifications:** give each announcement channel checkbox its own id ([e35008e](https://github.com/Quent1L/skol-arena/commit/e35008e928ab4a67534062f493b22bbbbabd5750))
+* **notifications:** remove a deleted announcement from open bells ([6037d58](https://github.com/Quent1L/skol-arena/commit/6037d58932952ef515d0d6dc55f4cc62921e34ca))
+* **ranked:** save team sizes, organization and cleared description on season update ([8df3a81](https://github.com/Quent1L/skol-arena/commit/8df3a81baf1a57da0a1794e0be3d3b988461bdfc))
+* **tournament:** open the default tab when returning to a kept-alive tournament ([b775655](https://github.com/Quent1L/skol-arena/commit/b77565513e3a12645d905d9d291d833950c7bd56))
+* **tournament:** show start dates and a join button before kickoff ([35add13](https://github.com/Quent1L/skol-arena/commit/35add13f6fe209bb7f1d7dc332a7509843d196e6))
+* **votes:** keep the player's name readable next to the MVP badge on mobile ([b38b385](https://github.com/Quent1L/skol-arena/commit/b38b3852ef358f7b61a031a317f21b00fa0071e9))
+* **votes:** vote card easier to use on phones ([960dc0a](https://github.com/Quent1L/skol-arena/commit/960dc0adb7435646e379bc8df008e6a611e5e675))
+* **ws:** keep tournament subscriptions per connection ([a141cb7](https://github.com/Quent1L/skol-arena/commit/a141cb702ecc338c651163aa999f407d02d1bf8d))
+
+### ⚡ Performance
+
+* **tournament:** keep the tournament page alive across match and player visits ([31b816a](https://github.com/Quent1L/skol-arena/commit/31b816a51086800a86f7ac315d508d3c778ff246))
+
+### ♻️ Refactoring
+
+* address SonarQube maintainability findings ([c4b6d4c](https://github.com/Quent1L/skol-arena/commit/c4b6d4c5aac670a29101b5d267d7091058992904))
+* clear the remaining SonarQube code smells ([a5e7e10](https://github.com/Quent1L/skol-arena/commit/a5e7e10e78dd8b4125340b8a021c32b966613dd0))
+* clear the SonarQube findings on beta ([8e4ca63](https://github.com/Quent1L/skol-arena/commit/8e4ca636e70ab00e33549e04982d163873215b06))
+* flatten nested ternaries and merge duplicate imports ([9b2a95f](https://github.com/Quent1L/skol-arena/commit/9b2a95ffaf4c556c39d8aa31e6c8d342ec5f6768))
+* **frontend:** move useNow to a scheduler for @vueuse/core 15 ([fc77188](https://github.com/Quent1L/skol-arena/commit/fc7718887f630b78838d29195bd2fd37f51e25c7))
+* replace deprecated zod, hono and ZodIssue APIs ([c106b29](https://github.com/Quent1L/skol-arena/commit/c106b292ebc9b18370cebd130812a6c9ec923bae))
+* **scripts:** parse release-note frontmatter without a backtracking regex ([63c75ac](https://github.com/Quent1L/skol-arena/commit/63c75acfc80c1255c8e018d773a435b95c9bc15f))
+* **tournament:** drop the Teams tab, already reachable from Info ([efaa06e](https://github.com/Quent1L/skol-arena/commit/efaa06eb04725316a6be3877454a3576fe17a917))
+
+### 🔧 Maintenance
+
+* **deps-dev:** bump vite-plugin-pwa from 1.3.0 to 2.0.0 ([26097f0](https://github.com/Quent1L/skol-arena/commit/26097f01e9c7d7b43879950e18a2e2544914750f))
+* **deps:** bump @vueuse/core from 14.4.0 to 15.0.0 ([3255009](https://github.com/Quent1L/skol-arena/commit/3255009c0c7863b76c00cb2f17e129c83f8547e7))
+* **deps:** bump dotenv from 17.4.2 to 18.0.9 ([8a6efcf](https://github.com/Quent1L/skol-arena/commit/8a6efcf96c8c6d442678f5e759b76d764ec5aceb))
+* **deps:** bump i18next, web-push, pinia, vitest, jsdom and friends ([b7d8812](https://github.com/Quent1L/skol-arena/commit/b7d8812d2d47ef8c77f2e8e91bdcced4ad247d36))
+* **deps:** bump the minor-and-patch group across 1 directory with 64 updates ([8ffed5d](https://github.com/Quent1L/skol-arena/commit/8ffed5d5ca10f724e2374f6447bbe78ce9ca1a84))
+* **frontend:** drop the removed FairPlayOfTheWeek from components.d.ts ([4891ce1](https://github.com/Quent1L/skol-arena/commit/4891ce1b1fddd932dfd82d59fb0904ee33ba662a))
+
+### 🎨 Style
+
+* **backend:** add a Prettier config, format and check it in lint ([b6b0349](https://github.com/Quent1L/skol-arena/commit/b6b03493de6e7e0d4af788104a36bbfb4a1a231a))
+* **frontend:** format with Prettier and check it in lint ([b8d1658](https://github.com/Quent1L/skol-arena/commit/b8d165814af2877af760c97f2853f65c67648224))
+* **notifications:** give notification cards the app's card surface ([0b2ab03](https://github.com/Quent1L/skol-arena/commit/0b2ab03923499c42768cde5b04012f04e567bdae))
+* **profile:** align the vote stats card with the profile above it ([cfc1fe7](https://github.com/Quent1L/skol-arena/commit/cfc1fe7a07a31bfdbe09d171c2592112980d4670))
+* **profile:** line "My votes" up with the other profile cards ([90172d2](https://github.com/Quent1L/skol-arena/commit/90172d2766e52522dac59424856b0bef8ea026ae))
+* **shared:** add a Prettier config, format and check it in lint ([3d7402e](https://github.com/Quent1L/skol-arena/commit/3d7402e87dc3dd643e8b68041c405be4e96d0541))
+* **stats:** give the fair-play of the week its own section ([e01b519](https://github.com/Quent1L/skol-arena/commit/e01b519d306065b481c1544ee711bd08184dccf3))
+* **tournament:** drop the card around the participants page ([45fd18d](https://github.com/Quent1L/skol-arena/commit/45fd18de5ab9eefa2a304aea38aff1a3d03ff8af))
+
+### 📝 Documentation
+
+* point to the demo data from the self-hosting entry page ([faaa051](https://github.com/Quent1L/skol-arena/commit/faaa05177917d89d770cb7fc857ea6dd10c7c8b6))
+* **release-notes:** tighten the notes of the next release ([5cb68a2](https://github.com/Quent1L/skol-arena/commit/5cb68a21e26487fa973ffb0de6c5795acef5e369))
+* **site:** present fair-play and MVP votes with new screenshots ([9c7e330](https://github.com/Quent1L/skol-arena/commit/9c7e3300f4dabdce52471fd0bab4fedfa8cf847c))
+
 ## [2.5.0](https://github.com/Quent1L/skol-arena/compare/2.4.1...2.5.0) (2026-11-03)
 
 ### ✨ New Features
