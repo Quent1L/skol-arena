@@ -70,9 +70,9 @@
     "release-it": "^21.1.2"
   },
   "overrides": {
-    "prosemirror-model": "1.25.11",
-    "prosemirror-view": "1.42.2",
-    "prosemirror-transform": "1.12.0"
+    "prosemirror-model": "1.25.13",
+    "prosemirror-view": "1.43.0",
+    "prosemirror-transform": "1.12.7"
   },
   "workspaces": {
     "packages": [
