@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, ne, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, ne, notInArray, or, sql } from "drizzle-orm";
 import { db } from "../config/database";
 import {
   appUsers,
@@ -229,6 +229,39 @@ export class VoteRepository {
       await tx.delete(fairPlayVotes).where(eq(fairPlayVotes.matchId, matchId));
       await tx.delete(mvpVotes).where(eq(mvpVotes.matchId, matchId));
       await tx.delete(matchSpectators).where(eq(matchSpectators.matchId, matchId));
+    });
+  }
+
+  /**
+   * Fair-play votes need both ends in the line-up. An MVP vote needs its target in it,
+   * and a voter who is still a player or a declared spectator.
+   */
+  async deleteOutsideLineup(matchId: string, playerIds: string[]): Promise<void> {
+    if (playerIds.length === 0) return this.deleteAllForMatch(matchId);
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(fairPlayVotes)
+        .where(
+          and(
+            eq(fairPlayVotes.matchId, matchId),
+            or(notInArray(fairPlayVotes.voterId, playerIds), notInArray(fairPlayVotes.targetId, playerIds)),
+          ),
+        );
+      const spectators = tx
+        .select({ userId: matchSpectators.userId })
+        .from(matchSpectators)
+        .where(eq(matchSpectators.matchId, matchId));
+      await tx
+        .delete(mvpVotes)
+        .where(
+          and(
+            eq(mvpVotes.matchId, matchId),
+            or(
+              notInArray(mvpVotes.targetId, playerIds),
+              and(notInArray(mvpVotes.voterId, playerIds), notInArray(mvpVotes.voterId, spectators)),
+            ),
+          ),
+        );
     });
   }
 

@@ -309,6 +309,8 @@ export const updateMatchSchema = z.object({
   outcomeReasonId: z.uuid(vmsg("validation.invalidOutcomeReasonId")).optional(),
   winnerPosition: winnerPositionSchema,
   sideResults: matchSideResultsSchema.optional(),
+  /** The full line-up; only applied before finalization, and only when it changed. */
+  sides: matchSidesSchema.optional(),
 });
 
 export const reportMatchResultSchema = z

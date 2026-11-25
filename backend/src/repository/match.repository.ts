@@ -19,6 +19,7 @@ import {
   type ClientMatchDetail,
   type MatchDetailSide,
   type MatchDetailPlayer,
+  type MatchSideInput,
   type MatchSideResultInput,
   type RankableSide,
   resolveScoringConfig,
@@ -78,6 +79,8 @@ export interface UpdateMatchData {
   winnerPosition?: number | null;
   /** Per-side results of a match of any size; wins over scoreA/scoreB/winnerPosition. */
   sideResults?: MatchSideResultInput[];
+  /** A new line-up: replaces every side, before the result fields are applied to it. */
+  sides?: MatchSideInput[];
   status?: MatchStatus;
   reportedBy?: string;
   reportProof?: string;
@@ -605,6 +608,8 @@ export class MatchRepository {
       }
       if (!updated) throw new Error(`Match ${id} not found`);
 
+      if (data.sides) await this.replaceSides(tx, id, updated.tournamentId, data.sides);
+
       // A winner-only result (score disabled) still has to settle the winner and points.
       const changesResult =
         data.sideResults !== undefined ||
@@ -619,6 +624,21 @@ export class MatchRepository {
 
       return updated;
     });
+  }
+
+  /**
+   * Swap the line-up of a match. The new sides start without a result: the caller sends
+   * the result along, applied right after on these sides.
+   */
+  private async replaceSides(tx: Tx, id: string, tournamentId: string, sides: MatchSideInput[]) {
+    await tx.delete(matchSides).where(eq(matchSides.matchId, id));
+    const rows = [];
+    for (const side of sides) {
+      const entry = await entryRepository.getOrCreateForMatch(tournamentId, side.teamId, side.playerIds, tx);
+      if (!entry) throw new Error("Failed to create or find entry");
+      rows.push({ entryId: entry.id, position: side.position, score: 0, rank: null, pointsAwarded: 0 });
+    }
+    await matchSidesRepository.createSides(id, rows, tx);
   }
 
   /** Update the match row itself, or just fetch it when no match fields changed */

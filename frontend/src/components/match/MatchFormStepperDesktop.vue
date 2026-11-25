@@ -288,7 +288,7 @@ async function submitMatch() {
   if (isEditMode.value && props.matchId) {
     await updateMatchWithNavigation(
       props.matchId,
-      buildUpdateMatchRequest(formState.value, options),
+      buildUpdateMatchRequest(formState.value, { ...options, includeLineup: !props.resultOnly }),
       props.tournamentId,
       tournament.value?.mode,
     )

@@ -94,6 +94,31 @@ function mergeStoredScores(
   });
 }
 
+type StoredMatch = NonNullable<Awaited<ReturnType<typeof matchRepository.getById>>>;
+
+/** Whether a line-up differs from the stored one: a team, or a set of players, per position. */
+export function lineupChanged(stored: StoredMatch["sides"], sides: MatchSideInput[]): boolean {
+  const key = (teamId: string | null | undefined, playerIds: string[]) =>
+    teamId ? `t:${teamId}` : `p:${[...playerIds].sort().join(",")}`;
+  const before = new Map(
+    stored.map((s) => [
+      s.position,
+      key(
+        s.teamId,
+        s.players.map((p) => p.id),
+      ),
+    ]),
+  );
+  return (
+    sides.length !== stored.length || sides.some((s) => before.get(s.position) !== key(s.teamId, s.playerIds ?? []))
+  );
+}
+
+/** The match as its result will be validated after a line-up change: new sides, no scores yet. */
+function withNewLineup(match: StoredMatch, sides: MatchSideInput[]): StoredMatch {
+  return { ...match, sides: sides.map((s) => ({ ...match.sides[0]!, position: s.position, score: null })) };
+}
+
 export class MatchService {
   async canManageMatches(tournamentId: string, userId: string): Promise<boolean> {
     return await matchPermissionValidator.canManageMatches(tournamentId, userId);
@@ -380,16 +405,21 @@ export class MatchService {
   async updateMatch(id: string, input: UpdateMatchInput, updatedBy: string) {
     const match = await this.getMatchById(id);
     if (match.status === "finalized") {
+      // A correction only touches the result: the line-up of a finalized match is settled.
+      if (input.sides && lineupChanged(match.sides, input.sides))
+        matchStatusValidator.validateNotFinalized(match.status);
       return await this.correctFinalizedMatch(id, match, input, updatedBy);
     }
     const tournament = await matchRepository.getTournament(match.tournamentId);
 
     await this.runUpdateValidations(id, match, updatedBy, tournament);
+    const lineup = await this.resolveLineupChange(id, match, input, updatedBy, tournament);
 
-    const isRevision = this.isResultRevision(match, input);
-    const updateData = await this.buildUpdateMatchData(id, input, match, tournament, updatedBy, isRevision);
+    const isRevision = (!!lineup && match.status !== "scheduled") || this.isResultRevision(match, input);
+    const updateData = await this.buildUpdateMatchData(id, input, match, tournament, updatedBy, isRevision, lineup);
     const result = await matchRepository.update(id, updateData);
     await notificationService.deleteActionsByMatchId(id);
+    if (lineup) await this.dropLeftPlayers(id, match, lineup.playerIds);
 
     if (isRevision) {
       await this.handleResultRevision(id, match, updatedBy);
@@ -420,6 +450,55 @@ export class MatchService {
       input.outcomeTypeId !== undefined ||
       input.outcomeReasonId !== undefined
     );
+  }
+
+  /**
+   * The new line-up when an update changes it, checked like a new match: team sizes,
+   * side cap, partner and opponent caps, schedule clashes. Undefined when unchanged. A
+   * player who is not an organizer can only fix a line-up they still play in.
+   */
+  private async resolveLineupChange(
+    id: string,
+    match: NonNullable<Awaited<ReturnType<typeof matchRepository.getById>>>,
+    input: UpdateMatchInput,
+    updatedBy: string,
+    tournament: TournamentFromRepository,
+  ): Promise<{ sides: MatchSideInput[]; playerIds: string[] } | undefined> {
+    if (!input.sides || !tournament || !lineupChanged(match.sides, input.sides)) return undefined;
+    // A bracket seeds its line-ups; a match with a result needs the result of the new sides.
+    if (tournament.mode === "bracket") throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
+    const sendsResult =
+      input.sideResults !== undefined ||
+      input.scoreA !== undefined ||
+      input.scoreB !== undefined ||
+      input.winnerPosition !== undefined;
+    if (match.status !== "scheduled" && !sendsResult) throw new BadRequestError(ErrorCode.MATCH_RANKING_REQUIRED);
+    const sides = input.sides.map(({ position, playerIds, teamId }) => ({ position, playerIds, teamId }));
+    const lineupInput = { tournamentId: match.tournamentId, sides, matchId: id } as CreateMatchInput & {
+      matchId: string;
+    };
+    await this.validateMatchInput(lineupInput, tournament);
+    await this.validateMatchRules(lineupInput, tournament);
+
+    const playerIds = await this.resolvePlayerIds(lineupInput, tournament);
+    if (!playerIds.includes(updatedBy) && !(await this.canManageMatches(match.tournamentId, updatedBy))) {
+      throw new ForbiddenError(ErrorCode.INSUFFICIENT_PERMISSIONS);
+    }
+    await this.validateNoPlayerConflict(playerIds, input.playedAt ?? match.playedAt, match.tournamentId, id);
+    if (tournament.mode === "ranked") await this.autoRegisterRankedPlayers(lineupInput);
+    return { sides, playerIds };
+  }
+
+  /** Players taken off the line-up leave their confirmation and the votes they cast or got. */
+  private async dropLeftPlayers(
+    id: string,
+    previous: NonNullable<Awaited<ReturnType<typeof matchRepository.getById>>>,
+    playerIds: string[],
+  ): Promise<void> {
+    const kept = new Set(playerIds);
+    const left = previous.sides.flatMap((s) => s.players.map((p) => p.id)).filter((pid) => !kept.has(pid));
+    for (const playerId of left) await matchConfirmationRepository.delete(id, playerId);
+    await voteService.onLineupChanged(id, playerIds);
   }
 
   private async runUpdateValidations(
@@ -461,6 +540,7 @@ export class MatchService {
     tournament: TournamentFromRepository,
     updatedBy: string,
     isRevision = false,
+    lineup?: { sides: MatchSideInput[]; playerIds: string[] },
   ): Promise<UpdateMatchData> {
     // The status is never copied from the input: the only transition a client may ask
     // for here is "reported", applied below once the result passes validation. Result
@@ -469,12 +549,16 @@ export class MatchService {
     const updateData: UpdateMatchData = writesResult ? this.pickResultFields(input) : {};
     if (input.playedAt !== undefined) {
       updateData.playedAt = new Date(input.playedAt);
-      const playerIds = await matchRepository.getPlayerIdsForMatch(id);
-      await this.validateNoPlayerConflict(playerIds, input.playedAt, match.tournamentId, id);
+      // A new line-up was already checked against the new date.
+      if (!lineup) {
+        const playerIds = await matchRepository.getPlayerIdsForMatch(id);
+        await this.validateNoPlayerConflict(playerIds, input.playedAt, match.tournamentId, id);
+      }
     }
+    if (lineup) updateData.sides = lineup.sides;
 
     if (writesResult) {
-      await this.validateUpdatedResult(input, match, tournament);
+      await this.validateUpdatedResult(input, lineup ? withNewLineup(match, lineup.sides) : match, tournament);
 
       // A corrected entry re-opens the validation round, including on a contested match.
       updateData.status = "reported";

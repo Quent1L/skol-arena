@@ -17,7 +17,7 @@ import {
 } from "../../../db/schema";
 import { asc, eq } from "drizzle-orm";
 import { insertTournamentConfigs } from "../helpers/tournament-config-test-helpers";
-import { BadRequestError } from "../../../types/errors";
+import { BadRequestError, ForbiddenError } from "../../../types/errors";
 
 async function createUser(label: string, role: "player" | "super_admin" = "player") {
   const id = `${label}-${crypto.randomUUID()}`;
@@ -39,6 +39,8 @@ describe("N-way matches", () => {
     playerIds: [players[position - 1]],
     ...extra,
   });
+
+  const playersOf = (position: number) => players[position - 1]!;
 
   const storedSides = (matchId: string) =>
     testDb
@@ -204,5 +206,98 @@ describe("N-way matches", () => {
     const [row] = await testDb.select().from(matches).where(eq(matches.id, match!.id));
     expect(row.winnerSide).toBe("B");
     expect((await storedSides(match!.id)).map((s) => s.rank)).toEqual([2, 1]);
+  });
+
+  describe("line-up edit", () => {
+    const lineupOf = (matchId: string) =>
+      matchService.getMatchById(matchId).then((m) => m.sides.map((s) => s.players.map((p) => p.id)));
+
+    it("swaps a player and adds a side to a scheduled match", async () => {
+      const match = await matchService.createMatch(
+        { tournamentId, status: "scheduled", sides: [side(1), side(2)] },
+        adminId,
+      );
+
+      await matchService.updateMatch(
+        match!.id,
+        { playedAt: new Date().toISOString(), sides: [side(1), side(3), side(4)] },
+        adminId,
+      );
+
+      expect(await lineupOf(match!.id)).toEqual([[playersOf(1)], [playersOf(3)], [playersOf(4)]]);
+      expect((await storedSides(match!.id)).map((s) => s.rank)).toEqual([null, null, null]);
+    });
+
+    it("ranks the new sides of a reported match from the result sent along", async () => {
+      const match = await matchService.createMatch(
+        { tournamentId, status: "reported", sides: [side(1), side(2)], scoreA: 3, scoreB: 1 },
+        adminId,
+      );
+
+      await matchService.updateMatch(
+        match!.id,
+        {
+          playedAt: new Date().toISOString(),
+          sides: [side(1), side(2), side(3)],
+          sideResults: [
+            { position: 1, rank: 2, score: 3 },
+            { position: 2, rank: 3, score: 1 },
+            { position: 3, rank: 1, score: 6 },
+          ],
+        },
+        adminId,
+      );
+
+      expect((await storedSides(match!.id)).map((s) => s.rank)).toEqual([2, 3, 1]);
+    });
+
+    it("refuses a new line-up on a reported match without its result", async () => {
+      const match = await matchService.createMatch(
+        { tournamentId, status: "reported", sides: [side(1), side(2)], scoreA: 3, scoreB: 1 },
+        adminId,
+      );
+
+      const update = matchService.updateMatch(
+        match!.id,
+        { playedAt: new Date().toISOString(), sides: [side(1), side(3)] },
+        adminId,
+      );
+      await expect(update).rejects.toBeInstanceOf(BadRequestError);
+    });
+
+    it("refuses more sides than the competition allows", async () => {
+      const match = await matchService.createMatch(
+        { tournamentId, status: "scheduled", sides: [side(1), side(2)] },
+        adminId,
+      );
+
+      const update = matchService.updateMatch(
+        match!.id,
+        { playedAt: new Date().toISOString(), sides: [side(1), side(2), side(3), side(4), side(5)] },
+        adminId,
+      );
+      await expect(update).rejects.toBeInstanceOf(BadRequestError);
+    });
+
+    it("lets a player fix a line-up they still play in, never one they leave", async () => {
+      const match = await matchService.createMatch(
+        { tournamentId, status: "scheduled", sides: [side(1), side(2)] },
+        playersOf(1),
+      );
+
+      const leave = matchService.updateMatch(
+        match!.id,
+        { playedAt: new Date().toISOString(), sides: [side(2), side(3)].map((s, i) => ({ ...s, position: i + 1 })) },
+        playersOf(1),
+      );
+      await expect(leave).rejects.toBeInstanceOf(ForbiddenError);
+
+      await matchService.updateMatch(
+        match!.id,
+        { playedAt: new Date().toISOString(), sides: [side(1), side(3)].map((s, i) => ({ ...s, position: i + 1 })) },
+        playersOf(1),
+      );
+      expect(await lineupOf(match!.id)).toEqual([[playersOf(1)], [playersOf(3)]]);
+    });
   });
 });

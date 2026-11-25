@@ -82,6 +82,14 @@ describe('match requests', () => {
     ])
     expect(request).not.toHaveProperty('winnerPosition')
   })
+
+  it('sends the line-up along on an edit, never on a correction', () => {
+    const edit = buildUpdateMatchRequest(state(threeSides), { ...options, includeLineup: true })
+    expect(edit.sides?.map((s) => s.playerIds)).toEqual([['a'], ['b'], ['c']])
+    expect(edit.sides?.[0]).not.toHaveProperty('rank')
+
+    expect(buildUpdateMatchRequest(state(), options)).not.toHaveProperty('sides')
+  })
 })
 
 describe('isResultReady', () => {

@@ -79,15 +79,26 @@ export function buildCreateMatchRequest(
   }
 }
 
+/**
+ * The line-up travels with every edit, so a changed one is no longer dropped; the server
+ * ignores it when unchanged. A correction of a finalized match only touches the result.
+ */
 export function buildUpdateMatchRequest(
   state: MatchFormState,
-  options: MatchRequestOptions,
+  options: MatchRequestOptions & { includeLineup?: boolean },
 ): ClientUpdateMatchRequest {
   const { isScheduled, scoreEnabled } = options
   const base = {
     playedAt: state.playedAt ?? new Date(),
     status: isScheduled ? ('scheduled' as const) : ('reported' as const),
     ...outcomeFields(state, isScheduled),
+    ...(options.includeLineup && {
+      sides: state.sides.map(({ position, playerIds, teamId }) => ({
+        position,
+        playerIds,
+        teamId,
+      })),
+    }),
   }
   if (!isNwayForm(state)) return { ...base, ...duelResult(state, isScheduled) }
   if (isScheduled) return base

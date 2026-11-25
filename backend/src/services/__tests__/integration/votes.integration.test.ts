@@ -260,6 +260,25 @@ describe("Fair-play & MVP votes (integration)", () => {
     });
   });
 
+  describe("line-up change", () => {
+    it("drops the votes of, and on, a player taken off the match", async () => {
+      const id = await match2v2();
+      await voteService.castFairPlay(id, alice, carol, { value: "up", tags: [] });
+      await voteService.castFairPlay(id, alice, dave, { value: "up", tags: [] });
+      await voteService.castFairPlay(id, dave, alice, { value: "up", tags: [] });
+      await voteService.castMvp(id, bob, dave);
+      await voteService.castMvp(id, carol, alice);
+
+      // Dave leaves, Member takes his place.
+      await voteService.onLineupChanged(id, [alice, bob, carol, member]);
+
+      const votes = await voteService.getMatchVotes(id, alice);
+      expect(votes.fairPlay?.myVotes.map((v) => v.targetId)).toEqual([carol]);
+      expect(await testDb.select().from(fairPlayVotes)).toHaveLength(1);
+      expect((await testDb.select().from(mvpVotes)).map((v) => v.targetId)).toEqual([alice]);
+    });
+  });
+
   describe("stats", () => {
     async function finalize(id: string) {
       await testDb.update(matches).set({ status: "finalized" }).where(eq(matches.id, id));

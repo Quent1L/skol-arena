@@ -40,9 +40,8 @@ interface VoteContext {
  * Fair-play and MVP votes. Never touches MMR or standings. A player only ever gets
  * their own votes and the public aggregates back — never who voted what on them.
  *
- * Matches never change players once entered (`updateMatchSchema` has no side or
- * player field), so the spec's "votes of players who left the match" case cannot
- * happen; a cancellation drops every vote (`onMatchCancelled`).
+ * A line-up corrected before finalization drops the votes of, and on, the players who
+ * left the match (`onLineupChanged`); a cancellation drops every vote (`onMatchCancelled`).
  */
 /** Every side of the match, in position order: two for a duel, N for an N-way match. */
 function sidePositions(players: VoteMatchPlayer[]): number[] {
@@ -306,6 +305,11 @@ export class VoteService {
 
   async onMatchCancelled(matchId: string): Promise<void> {
     await voteRepository.deleteAllForMatch(matchId);
+  }
+
+  /** A corrected line-up drops the votes cast by, or on, players no longer in the match. */
+  async onLineupChanged(matchId: string, playerIds: string[]): Promise<void> {
+    await voteRepository.deleteOutsideLineup(matchId, playerIds);
   }
 
   /**
