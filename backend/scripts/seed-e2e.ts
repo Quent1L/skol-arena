@@ -54,6 +54,7 @@ const IDS = {
   forfeitReason: "e2e00000-0000-4000-8000-00000000c003",
   championship: "e2e00000-0000-4000-8000-00000000f001",
   season: "e2e00000-0000-4000-8000-00000000f002",
+  nwayChampionship: "e2e00000-0000-4000-8000-00000000f003",
   champMatch: "e2e00000-0000-4000-8000-00000000e001",
   rankedMatch1: "e2e00000-0000-4000-8000-00000000e002",
   rankedMatch2: "e2e00000-0000-4000-8000-00000000e003",
@@ -74,11 +75,51 @@ function dateStr(d: Date): string {
 
 async function seedUsers() {
   const defs = [
-    { app: IDS.adminApp, auth: "e2e-auth-admin", email: ADMIN_EMAIL, name: "E2E Admin", short: "ADM", role: "super_admin" as const, password: ADMIN_PASSWORD },
-    { app: IDS.player1App, auth: "e2e-auth-player1", email: "e2e-player1@skol.test", name: "E2E Player One", short: "P1", role: "player" as const, password: PLAYER_PASSWORD },
-    { app: IDS.player2App, auth: "e2e-auth-player2", email: "e2e-player2@skol.test", name: "E2E Player Two", short: "P2", role: "player" as const, password: PLAYER_PASSWORD },
-    { app: IDS.player3App, auth: "e2e-auth-player3", email: "e2e-player3@skol.test", name: "E2E Player Three", short: "P3", role: "player" as const, password: PLAYER_PASSWORD },
-    { app: IDS.player4App, auth: "e2e-auth-player4", email: "e2e-player4@skol.test", name: "E2E Player Four", short: "P4", role: "player" as const, password: PLAYER_PASSWORD },
+    {
+      app: IDS.adminApp,
+      auth: "e2e-auth-admin",
+      email: ADMIN_EMAIL,
+      name: "E2E Admin",
+      short: "ADM",
+      role: "super_admin" as const,
+      password: ADMIN_PASSWORD,
+    },
+    {
+      app: IDS.player1App,
+      auth: "e2e-auth-player1",
+      email: "e2e-player1@skol.test",
+      name: "E2E Player One",
+      short: "P1",
+      role: "player" as const,
+      password: PLAYER_PASSWORD,
+    },
+    {
+      app: IDS.player2App,
+      auth: "e2e-auth-player2",
+      email: "e2e-player2@skol.test",
+      name: "E2E Player Two",
+      short: "P2",
+      role: "player" as const,
+      password: PLAYER_PASSWORD,
+    },
+    {
+      app: IDS.player3App,
+      auth: "e2e-auth-player3",
+      email: "e2e-player3@skol.test",
+      name: "E2E Player Three",
+      short: "P3",
+      role: "player" as const,
+      password: PLAYER_PASSWORD,
+    },
+    {
+      app: IDS.player4App,
+      auth: "e2e-auth-player4",
+      email: "e2e-player4@skol.test",
+      name: "E2E Player Four",
+      short: "P4",
+      role: "player" as const,
+      password: PLAYER_PASSWORD,
+    },
   ];
 
   for (const d of defs) {
@@ -125,7 +166,14 @@ async function seedDiscipline() {
   });
   await db.insert(outcomeTypes).values([
     { id: IDS.outcomeNormal, disciplineId: IDS.discipline, name: "Normal", isDefault: true, points: 3 },
-    { id: IDS.outcomeForfeit, disciplineId: IDS.discipline, name: "Forfeit", isDefault: false, points: 3, scoreCountsForMmr: false },
+    {
+      id: IDS.outcomeForfeit,
+      disciplineId: IDS.discipline,
+      name: "Forfeit",
+      isDefault: false,
+      points: 3,
+      scoreCountsForMmr: false,
+    },
   ]);
   await db.insert(outcomeReasons).values({
     id: IDS.forfeitReason,
@@ -168,8 +216,20 @@ async function insertFinalizedMatch(opts: {
     outcomeTypeId: IDS.outcomeNormal,
   });
   await db.insert(matchSides).values([
-    { matchId: opts.matchId, entryId: entryA, position: 1, score: opts.scoreA, pointsAwarded: winnerSide === "A" ? 3 : winnerSide === null ? 1 : 0 },
-    { matchId: opts.matchId, entryId: entryB, position: 2, score: opts.scoreB, pointsAwarded: winnerSide === "B" ? 3 : winnerSide === null ? 1 : 0 },
+    {
+      matchId: opts.matchId,
+      entryId: entryA,
+      position: 1,
+      score: opts.scoreA,
+      pointsAwarded: winnerSide === "A" ? 3 : winnerSide === null ? 1 : 0,
+    },
+    {
+      matchId: opts.matchId,
+      entryId: entryB,
+      position: 2,
+      score: opts.scoreB,
+      pointsAwarded: winnerSide === "B" ? 3 : winnerSide === null ? 1 : 0,
+    },
   ]);
   if (status === "finalized") {
     await db.insert(matchResults).values({
@@ -212,9 +272,7 @@ async function seedChampionship() {
   });
 
   const players = [IDS.player1App, IDS.player2App, IDS.player3App, IDS.player4App];
-  await db.insert(tournamentParticipants).values(
-    players.map((userId) => ({ tournamentId: IDS.championship, userId })),
-  );
+  await db.insert(tournamentParticipants).values(players.map((userId) => ({ tournamentId: IDS.championship, userId })));
 
   await insertFinalizedMatch({
     matchId: IDS.champMatch,
@@ -226,6 +284,47 @@ async function seedChampionship() {
     playedAt: daysAgo(2),
   });
   console.log("Seeded championship + participants + 1 finalized match");
+}
+
+/** A solo championship whose matches may oppose up to three sides (1v1v1). */
+async function seedNwayChampionship() {
+  await db.insert(tournaments).values({
+    id: IDS.nwayChampionship,
+    name: "E2E N-way Championship",
+    mode: "championship",
+    teamMode: "flex",
+    status: "ongoing",
+    minTeamSize: 1,
+    maxTeamSize: 1,
+    maxSidesPerMatch: 3,
+    scoreEnabled: true,
+    allowDraw: false,
+    validationMode: "none",
+    startDate: dateStr(daysAgo(30)),
+    endDate: dateStr(daysAgo(-30)),
+    disciplineId: IDS.discipline,
+    createdBy: IDS.adminApp,
+  });
+  await db.insert(tournamentScoringConfigs).values({
+    tournamentId: IDS.nwayChampionship,
+    pointsSource: "rank",
+    rankPoints: [5, 3, 1],
+  });
+  await db.insert(championshipConfigs).values({
+    tournamentId: IDS.nwayChampionship,
+    maxMatchesPerPlayer: CHAMPIONSHIP_LIMITS.maxMatchesPerPlayer.max,
+    maxTimesWithSamePartner: CHAMPIONSHIP_LIMITS.maxTimesWithSamePartner.max,
+    maxTimesWithSameOpponent: CHAMPIONSHIP_LIMITS.maxTimesWithSameOpponent.max,
+  });
+  await db
+    .insert(tournamentParticipants)
+    .values(
+      [IDS.player1App, IDS.player2App, IDS.player3App].map((userId) => ({
+        tournamentId: IDS.nwayChampionship,
+        userId,
+      })),
+    );
+  console.log("Seeded N-way championship");
 }
 
 async function seedRankedSeason() {
@@ -258,24 +357,80 @@ async function seedRankedSeason() {
   // (recalculateOutdatedRankedSeasons) and every MMR the specs expect would be gone.
   await stampEngineVersion(IDS.season);
   await db.insert(rankTiers).values([
-    { seasonId: IDS.season, level: 1, name: "Bronze", percentile: 0, minMmr: 700, subRanks: 1, iconClass: "fa fa-seedling" },
-    { seasonId: IDS.season, level: 2, name: "Silver", percentile: 0.4, minMmr: 900, subRanks: 1, iconClass: "fa fa-shield" },
-    { seasonId: IDS.season, level: 3, name: "Gold", percentile: 0.65, minMmr: 1100, subRanks: 1, iconClass: "fa fa-star" },
-    { seasonId: IDS.season, level: 4, name: "Platinum", percentile: 0.85, minMmr: 1300, subRanks: 1, iconClass: "fa fa-gem" },
-    { seasonId: IDS.season, level: 5, name: "Diamond", percentile: 0.95, minMmr: 1500, subRanks: 1, iconClass: "fa fa-crown" },
+    {
+      seasonId: IDS.season,
+      level: 1,
+      name: "Bronze",
+      percentile: 0,
+      minMmr: 700,
+      subRanks: 1,
+      iconClass: "fa fa-seedling",
+    },
+    {
+      seasonId: IDS.season,
+      level: 2,
+      name: "Silver",
+      percentile: 0.4,
+      minMmr: 900,
+      subRanks: 1,
+      iconClass: "fa fa-shield",
+    },
+    {
+      seasonId: IDS.season,
+      level: 3,
+      name: "Gold",
+      percentile: 0.65,
+      minMmr: 1100,
+      subRanks: 1,
+      iconClass: "fa fa-star",
+    },
+    {
+      seasonId: IDS.season,
+      level: 4,
+      name: "Platinum",
+      percentile: 0.85,
+      minMmr: 1300,
+      subRanks: 1,
+      iconClass: "fa fa-gem",
+    },
+    {
+      seasonId: IDS.season,
+      level: 5,
+      name: "Diamond",
+      percentile: 0.95,
+      minMmr: 1500,
+      subRanks: 1,
+      iconClass: "fa fa-crown",
+    },
   ]);
 
   const players = [IDS.player1App, IDS.player2App, IDS.player3App, IDS.player4App];
-  await db.insert(tournamentParticipants).values(
-    players.map((userId) => ({ tournamentId: IDS.season, userId })),
-  );
+  await db.insert(tournamentParticipants).values(players.map((userId) => ({ tournamentId: IDS.season, userId })));
 
   // player4 stays below placementMatches (3 < 5) so the provisional list is non-empty
   await db.insert(playerMmr).values([
-    { seasonId: IDS.season, playerId: IDS.player1App, currentMmr: 1550, matchesPlayed: 8, wins: 7, losses: 1, winStreak: 3, maxWinStreak: 5 },
+    {
+      seasonId: IDS.season,
+      playerId: IDS.player1App,
+      currentMmr: 1550,
+      matchesPlayed: 8,
+      wins: 7,
+      losses: 1,
+      winStreak: 3,
+      maxWinStreak: 5,
+    },
     { seasonId: IDS.season, playerId: IDS.player2App, currentMmr: 1200, matchesPlayed: 8, wins: 4, losses: 4 },
     { seasonId: IDS.season, playerId: IDS.player3App, currentMmr: 1000, matchesPlayed: 8, wins: 3, losses: 5 },
-    { seasonId: IDS.season, playerId: IDS.player4App, currentMmr: 850, matchesPlayed: 3, wins: 1, losses: 2, lossStreak: 2, maxLossStreak: 2 },
+    {
+      seasonId: IDS.season,
+      playerId: IDS.player4App,
+      currentMmr: 850,
+      matchesPlayed: 3,
+      wins: 1,
+      losses: 2,
+      lossStreak: 2,
+      maxLossStreak: 2,
+    },
   ]);
 
   await insertFinalizedMatch({
@@ -310,10 +465,58 @@ async function seedRankedSeason() {
   });
 
   await db.insert(mmrHistory).values([
-    { seasonId: IDS.season, playerId: IDS.player1App, matchId: IDS.rankedMatch1, mmrBefore: 1500, mmrAfter: 1526, mmrDelta: 26, kEffective: 32, opponentAvgMmr: 1200, outcome: "win", winStreakAfter: 2, matchesPlayedAfter: 7 },
-    { seasonId: IDS.season, playerId: IDS.player2App, matchId: IDS.rankedMatch1, mmrBefore: 1226, mmrAfter: 1200, mmrDelta: -26, kEffective: 32, opponentAvgMmr: 1500, outcome: "loss", lossStreakAfter: 1, matchesPlayedAfter: 8 },
-    { seasonId: IDS.season, playerId: IDS.player1App, matchId: IDS.rankedMatch2, mmrBefore: 1526, mmrAfter: 1550, mmrDelta: 24, kEffective: 32, opponentAvgMmr: 1000, outcome: "win", winStreakAfter: 3, matchesPlayedAfter: 8 },
-    { seasonId: IDS.season, playerId: IDS.player3App, matchId: IDS.rankedMatch2, mmrBefore: 1024, mmrAfter: 1000, mmrDelta: -24, kEffective: 32, opponentAvgMmr: 1526, outcome: "loss", lossStreakAfter: 1, matchesPlayedAfter: 8 },
+    {
+      seasonId: IDS.season,
+      playerId: IDS.player1App,
+      matchId: IDS.rankedMatch1,
+      mmrBefore: 1500,
+      mmrAfter: 1526,
+      mmrDelta: 26,
+      kEffective: 32,
+      opponentAvgMmr: 1200,
+      outcome: "win",
+      winStreakAfter: 2,
+      matchesPlayedAfter: 7,
+    },
+    {
+      seasonId: IDS.season,
+      playerId: IDS.player2App,
+      matchId: IDS.rankedMatch1,
+      mmrBefore: 1226,
+      mmrAfter: 1200,
+      mmrDelta: -26,
+      kEffective: 32,
+      opponentAvgMmr: 1500,
+      outcome: "loss",
+      lossStreakAfter: 1,
+      matchesPlayedAfter: 8,
+    },
+    {
+      seasonId: IDS.season,
+      playerId: IDS.player1App,
+      matchId: IDS.rankedMatch2,
+      mmrBefore: 1526,
+      mmrAfter: 1550,
+      mmrDelta: 24,
+      kEffective: 32,
+      opponentAvgMmr: 1000,
+      outcome: "win",
+      winStreakAfter: 3,
+      matchesPlayedAfter: 8,
+    },
+    {
+      seasonId: IDS.season,
+      playerId: IDS.player3App,
+      matchId: IDS.rankedMatch2,
+      mmrBefore: 1024,
+      mmrAfter: 1000,
+      mmrDelta: -24,
+      kEffective: 32,
+      opponentAvgMmr: 1526,
+      outcome: "loss",
+      lossStreakAfter: 1,
+      matchesPlayedAfter: 8,
+    },
   ]);
   console.log("Seeded ranked season + tiers + MMR + history");
 }
@@ -338,6 +541,7 @@ async function main() {
   await seedInvitationCode();
   await seedDiscipline();
   await seedChampionship();
+  await seedNwayChampionship();
   await seedRankedSeason();
 
   console.log("E2E seed complete.");

@@ -13,7 +13,7 @@ import { execSync } from 'node:child_process'
 export default function globalSetup() {
   const sql = `
     DELETE FROM matches
-    WHERE tournament_id = 'e2e00000-0000-4000-8000-00000000f001'
+    WHERE tournament_id IN ('e2e00000-0000-4000-8000-00000000f001', 'e2e00000-0000-4000-8000-00000000f003')
       AND id::text NOT LIKE 'e2e%';
     DELETE FROM announcements;
   `
