@@ -191,6 +191,20 @@ describe('ParticipantsStep — tournament format', () => {
     expect(validateParticipants).not.toHaveBeenCalled()
   })
 
+  it('lets an N-way solo competition take one player per side', () => {
+    const { wrapper } = mountStep({
+      players: [],
+      allPlayerIds: ['a', 'b', 'c'],
+      minTeamSize: 1,
+      maxTeamSize: 1,
+      maxSides: 3,
+    })
+    expect(wrapper.find('[data-testid="too-many-players"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="format-hint"]').text()).toBe(
+      'participantsStep.formatHint.nway',
+    )
+  })
+
   it('accepts a selection within a range of formats', () => {
     const { wrapper } = mountStep({
       players: [],

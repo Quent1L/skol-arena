@@ -20,6 +20,7 @@ type Tournament = Pick<
   | 'teamMode'
   | 'minTeamSize'
   | 'maxTeamSize'
+  | 'maxSidesPerMatch'
   | 'allowDraw'
   | 'scoreEnabled'
   | 'minScore'
@@ -36,7 +37,16 @@ const K = 'tournamentSettingsTab'
 function formatRow(tn: Tournament, t: Translate): SettingsRow {
   const { minTeamSize: min, maxTeamSize: max } = tn
   const exact = min === max
+  const maxSides = tn.maxSidesPerMatch ?? 2
   let text: string
+  if (exact && min === 1 && maxSides > 2 && tn.teamMode !== 'static') {
+    return {
+      id: 'format',
+      icon: 'fa-users',
+      title: t(`${K}.format.title`),
+      text: t(`${K}.format.soloNway`, { max: maxSides }),
+    }
+  }
   if (tn.teamMode === 'static') {
     text = exact
       ? t(`${K}.format.staticExact`, { size: min })
@@ -49,6 +59,7 @@ function formatRow(tn: Tournament, t: Translate): SettingsRow {
       : t('matchFormat.range', { min, max })
     text = t(exact ? `${K}.format.flexExact` : `${K}.format.flexRange`, { format })
   }
+  if (maxSides > 2) text += ` ${t(`${K}.format.nway`, { max: maxSides })}`
   return { id: 'format', icon: 'fa-users', title: t(`${K}.format.title`), text }
 }
 

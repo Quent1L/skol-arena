@@ -54,6 +54,15 @@ describe('summarizeTournamentSettings', () => {
     expect(textOf(rows, 'votes')).not.toContain('MVP')
   })
 
+  it('tells how many sides an N-way competition may oppose', () => {
+    expect(textOf(summarize({ maxSidesPerMatch: 4 }), 'format')).toBe(
+      "Chacun joue pour soi : de 2 à 4 joueurs par match, classés par ordre d'arrivée.",
+    )
+    expect(textOf(summarize({ maxTeamSize: 2, maxSidesPerMatch: 3 }), 'format')).toContain(
+      "jusqu'à 3 camps",
+    )
+  })
+
   it('describes a flex 1-to-2 ranked season without the league-only rows', () => {
     const rows = summarize({
       mode: 'ranked',

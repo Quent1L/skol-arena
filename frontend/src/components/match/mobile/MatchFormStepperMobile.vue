@@ -65,6 +65,7 @@
           :players="participants"
           :min-team-size="tournament?.minTeamSize"
           :max-team-size="tournament?.maxTeamSize"
+          :max-sides="tournament?.maxSidesPerMatch ?? 2"
           hide-navigation
           @previous="activeStep = 'when'"
           @next="goToStepFromParticipants"
@@ -309,7 +310,11 @@ const canProceedStep = computed(() => {
       )
     case 'participants': {
       const count = formState.value.allPlayerIds.length
-      return count >= 2 && count <= (tournament.value?.maxTeamSize ?? Infinity) * 2
+      return (
+        count >= 2 &&
+        count <=
+          (tournament.value?.maxTeamSize ?? Infinity) * (tournament.value?.maxSidesPerMatch ?? 2)
+      )
     }
     case 'teams':
       return formState.value.sides.every((s) => !!s.teamId)

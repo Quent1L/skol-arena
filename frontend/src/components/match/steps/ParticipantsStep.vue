@@ -129,6 +129,8 @@ interface Props {
   /** Players per side allowed by the tournament; absent = no live check. */
   minTeamSize?: number
   maxTeamSize?: number
+  /** Most sides a match may oppose: an N-way competition takes more players. */
+  maxSides?: number
 }
 
 interface Emits {
@@ -203,12 +205,17 @@ function getPlayerName(id: string): string {
   return allPlayers.value.find((p) => p.id === id)?.displayName ?? id
 }
 
-const fixedFormat = computed(() => props.minTeamSize === props.maxTeamSize)
-const formatLabel = computed(() =>
-  fixedFormat.value
-    ? t('matchFormat.exact', { size: props.minTeamSize })
-    : t('matchFormat.range', { min: props.minTeamSize, max: props.maxTeamSize }),
-)
+const maxSides = computed(() => props.maxSides ?? 2)
+// A fixed team size still leaves the player count open when sides can be added.
+const fixedFormat = computed(() => props.minTeamSize === props.maxTeamSize && maxSides.value === 2)
+const maxPlayers = computed(() => (props.maxTeamSize ?? 0) * maxSides.value)
+const formatLabel = computed(() => {
+  const size =
+    props.minTeamSize === props.maxTeamSize
+      ? t('matchFormat.exact', { size: props.minTeamSize })
+      : t('matchFormat.range', { min: props.minTeamSize, max: props.maxTeamSize })
+  return maxSides.value > 2 ? `${size} · ${t('matchFormat.sides', { max: maxSides.value })}` : size
+})
 
 /** "Format: 1 vs 1 · 2 players", told upfront rather than after Next. */
 const formatHint = computed(() => {
@@ -218,10 +225,10 @@ const formatHint = computed(() => {
         format: formatLabel.value,
         total: props.minTeamSize * 2,
       })
-    : t('participantsStep.formatHint.range', {
+    : t(`participantsStep.formatHint.${maxSides.value > 2 ? 'nway' : 'range'}`, {
         format: formatLabel.value,
         min: props.minTeamSize * 2,
-        max: props.maxTeamSize * 2,
+        max: maxPlayers.value,
       })
 })
 
@@ -229,11 +236,11 @@ const formatHint = computed(() => {
 const tooManyError = computed(() => {
   if (!props.minTeamSize || !props.maxTeamSize) return null
   const count = allPlayerIdsModel.value.length
-  const max = props.maxTeamSize * 2
+  const max = maxPlayers.value
   if (count <= max) return null
   const key = fixedFormat.value
     ? 'participantsStep.tooMany.exact'
-    : 'participantsStep.tooMany.range'
+    : `participantsStep.tooMany.${maxSides.value > 2 ? 'nway' : 'range'}`
   return t(key, { format: formatLabel.value, total: max, max, count })
 })
 

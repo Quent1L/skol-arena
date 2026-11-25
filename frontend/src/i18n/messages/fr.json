@@ -1182,11 +1182,13 @@
     "title": "Participants",
     "formatHint": {
       "exact": "Format : {format} · {total} joueurs",
-      "range": "Format : de {format} · {min} à {max} joueurs"
+      "range": "Format : de {format} · {min} à {max} joueurs",
+      "nway": "Format : {format} · {min} à {max} joueurs"
     },
     "tooMany": {
       "exact": "Ce tournoi se joue en {format} : il faut exactement {total} joueurs (sélection actuelle : {count})",
-      "range": "Ce tournoi se joue de {format} : {max} joueurs maximum (sélection actuelle : {count})"
+      "range": "Ce tournoi se joue de {format} : {max} joueurs maximum (sélection actuelle : {count})",
+      "nway": "Ce tournoi se joue en {format} : {max} joueurs maximum (sélection actuelle : {count})"
     }
   },
   "playerTournamentProfile": {
@@ -3095,7 +3097,8 @@
   },
   "matchFormat": {
     "exact": "{size} contre {size}",
-    "range": "{min} contre {min} à {max} contre {max}"
+    "range": "{min} contre {min} à {max} contre {max}",
+    "sides": "2 à {max} camps"
   },
   "tournamentSettingsTab": {
     "intro": "Comment cette compétition est configurée : format des matchs, points, validation des résultats.",
@@ -3111,7 +3114,9 @@
       "flexExact": "Matchs en {format}, les équipes se forment librement à chaque match.",
       "flexRange": "Matchs de {format}, les équipes se forment librement à chaque match.",
       "staticExact": "Équipes fixes de {size} joueurs : vous jouez toujours avec les mêmes coéquipiers.",
-      "staticRange": "Équipes fixes de {min} à {max} joueurs : vous jouez toujours avec les mêmes coéquipiers."
+      "staticRange": "Équipes fixes de {min} à {max} joueurs : vous jouez toujours avec les mêmes coéquipiers.",
+      "soloNway": "Chacun joue pour soi : de 2 à {max} joueurs par match, classés par ordre d'arrivée.",
+      "nway": "Un match peut opposer jusqu'à {max} camps, classés par ordre d'arrivée."
     },
     "result": {
       "title": "Résultat",

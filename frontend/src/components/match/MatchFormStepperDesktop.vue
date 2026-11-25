@@ -63,6 +63,7 @@
             :players="participants"
             :min-team-size="tournament?.minTeamSize"
             :max-team-size="tournament?.maxTeamSize"
+            :max-sides="tournament?.maxSidesPerMatch ?? 2"
             :next-label="
               isFutureDate && isLastStepBeforeResult
                 ? t('matchFormStepperMobile.scheduleMatch')

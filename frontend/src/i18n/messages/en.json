@@ -1182,11 +1182,13 @@
     "title": "Participants",
     "formatHint": {
       "exact": "Format: {format} · {total} players",
-      "range": "Format: {format} · {min} to {max} players"
+      "range": "Format: {format} · {min} to {max} players",
+      "nway": "Format: {format} · {min} to {max} players"
     },
     "tooMany": {
       "exact": "This tournament is played {format}: select exactly {total} players ({count} selected)",
-      "range": "This tournament is played from {format}: {max} players at most ({count} selected)"
+      "range": "This tournament is played from {format}: {max} players at most ({count} selected)",
+      "nway": "This tournament is played {format}: {max} players at most ({count} selected)"
     }
   },
   "playerTournamentProfile": {
@@ -3095,7 +3097,8 @@
   },
   "matchFormat": {
     "exact": "{size} vs {size}",
-    "range": "{min} vs {min} to {max} vs {max}"
+    "range": "{min} vs {min} to {max} vs {max}",
+    "sides": "2 to {max} sides"
   },
   "tournamentSettingsTab": {
     "intro": "How this competition is set up: match format, points, result validation.",
@@ -3111,7 +3114,9 @@
       "flexExact": "{format} matches, teams are formed freely for each match.",
       "flexRange": "Matches from {format}, teams are formed freely for each match.",
       "staticExact": "Fixed teams of {size} players: you always play with the same teammates.",
-      "staticRange": "Fixed teams of {min} to {max} players: you always play with the same teammates."
+      "staticRange": "Fixed teams of {min} to {max} players: you always play with the same teammates.",
+      "soloNway": "Everyone plays for themselves: 2 to {max} players per match, ranked by finishing order.",
+      "nway": "A match can oppose up to {max} sides, ranked by finishing order."
     },
     "result": {
       "title": "Result",
