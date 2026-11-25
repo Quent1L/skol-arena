@@ -53,7 +53,15 @@ function stats(overrides: Partial<PlayerDetailStats> = {}): PlayerDetailStats {
     nemeses: relation,
     outcomeTypeStats: [],
     formatStats: [
-      { teamSize: 2, opponentSize: 2, wins: 3, draws: 0, losses: 1, winRate: 75, matchesPlayed: 4 },
+      {
+        teamSize: 2,
+        opponentSizes: [2],
+        wins: 3,
+        draws: 0,
+        losses: 1,
+        winRate: 75,
+        matchesPlayed: 4,
+      },
     ],
     h2hStats: [],
     tournamentHistory: [],

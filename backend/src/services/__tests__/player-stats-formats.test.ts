@@ -58,10 +58,10 @@ describe("tallyFormats", () => {
     );
 
     expect(formats).toEqual([
-      { teamSize: 1, opponentSize: 1, wins: 2, losses: 1, draws: 0, matchesPlayed: 3, winRate: 67 },
-      { teamSize: 2, opponentSize: 2, wins: 0, losses: 1, draws: 0, matchesPlayed: 1, winRate: 0 },
-      { teamSize: 1, opponentSize: 2, wins: 0, losses: 1, draws: 0, matchesPlayed: 1, winRate: 0 },
-      { teamSize: 2, opponentSize: 1, wins: 1, losses: 0, draws: 0, matchesPlayed: 1, winRate: 100 },
+      { teamSize: 1, opponentSizes: [1], wins: 2, losses: 1, draws: 0, matchesPlayed: 3, winRate: 67 },
+      { teamSize: 2, opponentSizes: [2], wins: 0, losses: 1, draws: 0, matchesPlayed: 1, winRate: 0 },
+      { teamSize: 1, opponentSizes: [2], wins: 0, losses: 1, draws: 0, matchesPlayed: 1, winRate: 0 },
+      { teamSize: 2, opponentSizes: [1], wins: 1, losses: 0, draws: 0, matchesPlayed: 1, winRate: 100 },
     ]);
   });
 
@@ -76,7 +76,7 @@ describe("tallyFormats", () => {
       SIZES,
     );
 
-    expect(formats.map((f) => `${f.teamSize}v${f.opponentSize}`)).toEqual(["1v1", "2v2", "3v3", "1v3"]);
+    expect(formats.map((f) => [f.teamSize, ...f.opponentSizes].join("v"))).toEqual(["1v1", "2v2", "3v3", "1v3"]);
   });
 
   it("counts a draw only where the tournament allows draws", () => {
@@ -92,6 +92,21 @@ describe("tallyFormats", () => {
     const [format] = tallyFormats([result("m1", "solo", "opp1", "A"), result("m1", "solo", "opp1", "A")], SIZES);
 
     expect(format.matchesPlayed).toBe(1);
+  });
+
+  it("keeps an N-way match as its own format, after the duels of the same size", () => {
+    const formats = tallyFormats(
+      [
+        result("m1", "solo", "opp1", null),
+        result("m1", "solo", "opp2", null),
+        result("m2", "solo", "opp1", "A"),
+        result("m3", "solo", "opp1", null),
+        result("m3", "solo", "solo2", null),
+      ],
+      new Map([...SIZES, ["solo2", 1]]),
+    );
+
+    expect(formats.map((f) => [f.teamSize, ...f.opponentSizes].join("v"))).toEqual(["1v1", "1v1v1", "1v2v1"]);
   });
 
   it("skips a match whose side has no known player", () => {

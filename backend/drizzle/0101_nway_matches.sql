@@ -40,3 +40,11 @@ ALTER TABLE "tournament_scoring_configs" ADD COLUMN IF NOT EXISTS "rank_points" 
 -- Rules-engine snapshots frozen before this migration carry no `sideCount`/placement facts. The
 -- lazy backfill rebuilds missing rows on the next count, so clearing them is lossless.
 DELETE FROM "match_player_facts";
+
+--> statement-breakpoint
+-- Cached player stats predate ranked placements and the N-way match formats (1v1v1). Both
+-- caches are read-through: dropping the rows only costs one recompute on the next read.
+DELETE FROM "player_computed_data";
+
+--> statement-breakpoint
+DELETE FROM "computed_data" WHERE "key" = 'stats';

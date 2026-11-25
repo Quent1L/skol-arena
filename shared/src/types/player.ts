@@ -49,7 +49,8 @@ export type PlayerOutcomeTypeStat = z.infer<typeof playerOutcomeTypeStatSchema>;
 export const playerFormatStatSchema = z
   .object({
     teamSize: z.number(),
-    opponentSize: z.number(),
+    /** One size per opposing side, largest first: [1] for 1v1, [1, 1] for 1v1v1. */
+    opponentSizes: z.array(z.number()),
     wins: z.number(),
     losses: z.number(),
     draws: z.number(),

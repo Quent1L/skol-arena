@@ -141,7 +141,7 @@ describe('PlayerMmrProfile peak tile', () => {
 describe('PlayerMmrProfile format win rates', () => {
   const format = (teamSize: number, opponentSize: number, wins: number, losses: number) => ({
     teamSize,
-    opponentSize,
+    opponentSizes: [opponentSize],
     wins,
     losses,
     draws: 0,

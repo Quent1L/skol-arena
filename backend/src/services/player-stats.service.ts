@@ -84,7 +84,7 @@ type EntryPlayer = { playerId: string; displayName: string; shortName: string };
 
 type FormatAcc = {
   teamSize: number;
-  opponentSize: number;
+  opponentSizes: number[];
   played: number;
   wins: number;
   losses: number;
@@ -93,21 +93,24 @@ type FormatAcc = {
 
 /**
  * Splits a player's record by match format, from their side of the table: 2v1 (two of
- * them against one) is not 1v2. Even formats come first, smallest first (1v1, 2v2, 3v3),
- * then the uneven ones: the order stays the same from one player to the next.
+ * them against one) is not 1v2, and an N-way match is its own format (1v1v1). Even
+ * formats come first, then by number of sides and size (1v1, 2v2, 1v1v1), then the
+ * uneven ones: the order stays the same from one player to the next.
  */
 export function tallyFormats(matchResults: MatchResult[], entrySizes: Map<string, number>): PlayerFormatStat[] {
-  const seen = new Set<string>();
-  const byFormat = new Map<string, FormatAcc>();
+  // One row per opposing entry: an N-way match spans several rows of the same match.
+  const byMatch = new Map<string, MatchResult[]>();
+  for (const r of matchResults) byMatch.set(r.matchId, [...(byMatch.get(r.matchId) ?? []), r]);
 
-  for (const r of matchResults) {
-    if (seen.has(r.matchId)) continue;
-    seen.add(r.matchId);
+  const byFormat = new Map<string, FormatAcc>();
+  for (const rows of byMatch.values()) {
+    const r = rows[0]!;
     const teamSize = entrySizes.get(r.entryId) ?? 0;
-    const opponentSize = entrySizes.get(r.oppEntryId) ?? 0;
-    if (teamSize === 0 || opponentSize === 0) continue;
-    const key = `${teamSize}v${opponentSize}`;
-    if (!byFormat.has(key)) byFormat.set(key, { teamSize, opponentSize, played: 0, wins: 0, losses: 0, draws: 0 });
+    const opponentEntries = [...new Set(rows.map((row) => row.oppEntryId))];
+    const opponentSizes = opponentEntries.map((id) => entrySizes.get(id) ?? 0).sort((a, b) => b - a);
+    if (teamSize === 0 || opponentSizes.includes(0)) continue;
+    const key = [teamSize, ...opponentSizes].join("v");
+    if (!byFormat.has(key)) byFormat.set(key, { teamSize, opponentSizes, played: 0, wins: 0, losses: 0, draws: 0 });
     const s = byFormat.get(key)!;
     s.played++;
     tally(s, matchOutcome(r), r.allowDraw);
@@ -115,11 +118,22 @@ export function tallyFormats(matchResults: MatchResult[], entrySizes: Map<string
 
   return [...byFormat.values()]
     .map(({ played, ...s }) => ({ ...s, matchesPlayed: played, winRate: winRatePercent(s.wins, played) }))
-    .sort((a, b) => isUneven(a) - isUneven(b) || a.teamSize - b.teamSize || a.opponentSize - b.opponentSize);
+    .sort(
+      (a, b) =>
+        isUneven(a) - isUneven(b) ||
+        a.opponentSizes.length - b.opponentSizes.length ||
+        a.teamSize - b.teamSize ||
+        compareSizes(a.opponentSizes, b.opponentSizes),
+    );
 }
 
-function isUneven(format: { teamSize: number; opponentSize: number }): number {
-  return format.teamSize === format.opponentSize ? 0 : 1;
+function isUneven(format: { teamSize: number; opponentSizes: number[] }): number {
+  return format.opponentSizes.every((size) => size === format.teamSize) ? 0 : 1;
+}
+
+function compareSizes(a: number[], b: number[]): number {
+  for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i]! - b[i]!;
+  return a.length - b.length;
 }
 
 function groupPlayersByEntry(

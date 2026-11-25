@@ -1280,7 +1280,7 @@
     "weeklyMmrMatches": "{count} match | {count} matches",
     "winrateByOpponentLevel": "Win rate by opponent level",
     "winrateByFormat": "Win rate by format",
-    "formatTooltip": "Read from your side: in 2v1, you are two against one opponent.",
+    "formatTooltip": "Read from your side: in 2v1, you are two against one opponent; 1v1v1 is a match of three sides.",
     "winrateLabel": "Win rate",
     "winsDrawsLosses": "Wins / Draws / Losses",
     "winsLosses": "Wins / Losses",

@@ -32,13 +32,13 @@
     <div class="space-y-1">
       <div
         v-for="format in formatStats"
-        :key="`${format.teamSize}v${format.opponentSize}`"
+        :key="formatLabel(format)"
         class="grid grid-cols-[4rem_1fr_3rem_3rem] items-center text-xs px-3 py-1.5 rounded-lg bg-gray-700/50"
         data-test="format-row"
       >
         <span class="text-gray-400">
           <i class="fa mr-1" :class="format.teamSize === 1 ? 'fa-user' : 'fa-users'" />
-          {{ format.teamSize }}v{{ format.opponentSize }}
+          {{ formatLabel(format) }}
         </span>
         <span class="tabular-nums font-bold text-center">
           <span class="text-green-400">{{ format.wins }}</span>
@@ -96,4 +96,9 @@ defineProps<{
 }>()
 
 const { t } = useI18n()
+
+/** "2v1", or "1v1v1" for an N-way match: the player's side first. */
+function formatLabel(format: PlayerFormatStat): string {
+  return [format.teamSize, ...format.opponentSizes].join('v')
+}
 </script>
