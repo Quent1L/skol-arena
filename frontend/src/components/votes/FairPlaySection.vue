@@ -20,7 +20,11 @@
     <div v-else class="space-y-3">
       <UButton
         v-if="votes.isOpen && fairPlay.opponentIds.length >= 2"
-        :label="t('matchVotes.fairPlay.wholeTeam')"
+        :label="
+          opponentsOneSide
+            ? t('matchVotes.fairPlay.wholeTeam')
+            : t('matchVotes.fairPlay.allOpponents')
+        "
         icon="i-fa7-solid:thumbs-up"
         variant="soft"
         size="sm"
@@ -92,11 +96,16 @@ import SectionHeader from '@/components/ui/SectionHeader.vue'
 import SurfacePanel from '@/components/ui/SurfacePanel.vue'
 import type { VotePlayer } from './vote-players'
 
-const props = defineProps<{
-  votes: MatchVotes & { fairPlay: NonNullable<MatchVotes['fairPlay']> }
-  players: Map<string, VotePlayer>
-  saving: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    votes: MatchVotes & { fairPlay: NonNullable<MatchVotes['fairPlay']> }
+    players: Map<string, VotePlayer>
+    /** False when the opponents play on different sides (N-way match). */
+    opponentsOneSide?: boolean
+    saving: boolean
+  }>(),
+  { opponentsOneSide: true },
+)
 
 const emit = defineEmits<{
   cast: [targetId: string, value: FairPlayVoteValue, tags: FairPlayTag[]]

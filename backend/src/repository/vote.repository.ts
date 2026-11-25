@@ -30,7 +30,6 @@ export interface VoteMatch {
   /** When the result was entered: a match scheduled ahead is created long before. */
   enteredAt: Date;
   playedAt: Date;
-  winnerSide: string | null;
   players: VoteMatchPlayer[];
 }
 
@@ -45,7 +44,6 @@ export class VoteRepository {
         createdAt: matches.createdAt,
         reportedAt: matchResults.reportedAt,
         playedAt: matches.playedAt,
-        winnerSide: matches.winnerSide,
       })
       .from(matches)
       .leftJoin(matchResults, eq(matchResults.matchId, matches.id))

@@ -412,6 +412,22 @@ describe("Fair-play & MVP votes (integration)", () => {
       expect(await voteService.getPromptForMatch(id, alice)).toBeNull();
     });
 
+    it("lists every side of an N-way match, so third-side players have a name", async () => {
+      const at = new Date();
+      const [m] = await testDb
+        .insert(matches)
+        .values({ tournamentId, status: "reported", createdBy: alice, createdAt: at, playedAt: at })
+        .returning();
+      await testDb.insert(matchSides).values([
+        { matchId: m.id, entryId: await entry([alice, bob]), position: 1, rank: 1 },
+        { matchId: m.id, entryId: await entry([carol]), position: 2, rank: 2 },
+        { matchId: m.id, entryId: await entry([dave]), position: 3, rank: 3 },
+      ]);
+      const prompt = await voteService.getPromptForMatch(m.id, alice);
+      expect(prompt?.sides.map((s) => s.players.map((p) => p.id))).toEqual([[alice, bob], [carol], [dave]]);
+      expect(prompt?.fairPlayTargetIds.sort()).toEqual([carol, dave].sort());
+    });
+
     it("offers nothing for a match older than the max age", async () => {
       expect(await voteService.getPromptForMatch(await match2v2(2), alice)).toBeNull();
     });

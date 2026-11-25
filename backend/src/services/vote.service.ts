@@ -44,6 +44,11 @@ interface VoteContext {
  * player field), so the spec's "votes of players who left the match" case cannot
  * happen; a cancellation drops every vote (`onMatchCancelled`).
  */
+/** Every side of the match, in position order: two for a duel, N for an N-way match. */
+function sidePositions(players: VoteMatchPlayer[]): number[] {
+  return [...new Set(players.map((p) => p.position))].sort((a, b) => a - b);
+}
+
 export class VoteService {
   private async loadContext(matchId: string, userId: string, now = new Date()): Promise<VoteContext> {
     const match = await voteRepository.getMatch(matchId);
@@ -52,7 +57,7 @@ export class VoteService {
     const config = resolveVoteConfig(await tournamentRepository.getVoteConfig(match.tournamentId));
     const me = match.players.find((p) => p.id === userId);
     const closesAt = voteWindowCloseAt(match.enteredAt);
-    const sideSizes = [1, 2].map((pos) => match.players.filter((p) => p.position === pos).length);
+    const sideSizes = sidePositions(match.players).map((pos) => match.players.filter((p) => p.position === pos).length);
     return {
       match,
       config,
@@ -375,7 +380,7 @@ export class VoteService {
       expiresAt: new Date(
         Math.min(ctx.match.playedAt.getTime() + ctx.config.promptMaxMatchAgeMinutes * 60_000, ctx.closesAt.getTime()),
       ),
-      sides: [1, 2].map((position) => ({
+      sides: sidePositions(ctx.match.players).map((position) => ({
         position,
         players: ctx.match.players.filter((p) => p.position === position).map(({ position: _, ...p }) => p),
       })),

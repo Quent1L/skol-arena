@@ -15,6 +15,7 @@
       v-if="fairPlayVotes"
       :votes="fairPlayVotes"
       :players="players"
+      :opponents-one-side="opponentsOneSide"
       :saving="saving"
       @cast="castFairPlay"
       @remove="removeFairPlay"
@@ -77,6 +78,11 @@ const players = computed(() => playersById(props.sides))
 type WithFairPlay = MatchVotes & { fairPlay: NonNullable<MatchVotes['fairPlay']> }
 type WithMvp = MatchVotes & { mvp: NonNullable<MatchVotes['mvp']> }
 const fairPlayVotes = computed(() => (votes.value?.fairPlay ? (votes.value as WithFairPlay) : null))
+// In a 1v1v1 the opponents are not a team: the shortcut then rates "all opponents".
+const opponentsOneSide = computed(() => {
+  const ids = fairPlayVotes.value?.fairPlay.opponentIds ?? []
+  return props.sides.some((side) => ids.every((id) => side.players.some((p) => p.id === id)))
+})
 const mvpVotes = computed(() => (votes.value?.mvp ? (votes.value as WithMvp) : null))
 
 // "More options" on the vote card links to `#fair-play`: the panel only exists once the
