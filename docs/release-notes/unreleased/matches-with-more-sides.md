@@ -9,4 +9,5 @@ ranked season settings; it stays at two by default.
 When entering such a match, add the sides you need, then put them in finishing order — or let
 the scores do it. Ties are possible. Championships can award points by result, by a table of
 points per place, or by score, and ranked seasons adjust everyone's rating from where they
-finished.
+finished. Profiles show your win rate in these formats too (1v1v1), and fair-play and MVP votes
+include every side.
